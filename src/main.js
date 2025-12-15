@@ -1062,11 +1062,26 @@ class TradingSystemRunner extends EventEmitter {
     try {
       // 创建回测运行器 / Create backtest runner
       const runner = new BacktestRunner({
-        // 策略名称 / Strategy name
-        strategyName: this.options.strategy || DEFAULT_OPTIONS.strategy,
+        // 数据目录 / Data directory
+        dataDir: './data/historical',
 
-        // 交易对 / Symbols
-        symbols: this.options.symbols.length > 0 ? this.options.symbols : DEFAULT_OPTIONS.symbols,
+        // 结果输出目录 / Results output directory
+        outputDir: './backtest-results',
+      });
+
+      // 获取交易对 / Get symbols
+      const symbols = this.options.symbols.length > 0 ? this.options.symbols : DEFAULT_OPTIONS.symbols;
+
+      // 回测配置 / Backtest configuration
+      const backtestConfig = {
+        // 策略实例 / Strategy instance
+        strategy: this.strategy,
+
+        // 交易对 (使用第一个) / Symbol (use first one)
+        symbol: symbols[0].replace(':USDT', ''),
+
+        // 时间周期 / Timeframe
+        timeframe: '1h',
 
         // 开始日期 / Start date
         startDate: this.options.startDate || '2024-01-01',
@@ -1077,12 +1092,15 @@ class TradingSystemRunner extends EventEmitter {
         // 初始资金 / Initial capital
         initialCapital: this.options.capital || DEFAULT_OPTIONS.initialCapital,
 
-        // 交易所 / Exchange
-        exchange: this.options.exchange || 'binance',
-      });
+        // 手续费率 / Commission rate
+        commissionRate: 0.0004,
+
+        // 滑点 / Slippage
+        slippage: 0.0001,
+      };
 
       // 运行回测 / Run backtest
-      const results = await runner.run();
+      const results = await runner.run(backtestConfig);
 
       // 输出结果 / Output results
       this._printBacktestResults(results);

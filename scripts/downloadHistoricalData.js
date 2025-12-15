@@ -167,10 +167,12 @@ async function downloadData() {
     const exchange = ExchangeFactory.create(options.exchange, {
       // 下载历史数据不需要 API 密钥 / No API key needed for downloading
       enableRateLimit: true,
+      // 跳过 API 验证（仅下载公开数据）/ Skip API verification (only downloading public data)
+      skipApiVerification: true,
     });
 
-    // 加载市场信息 / Load market info
-    await exchange.loadMarkets();
+    // 连接交易所并加载市场信息 / Connect to exchange and load market info
+    await exchange.connect();
     console.log('✓ 交易所连接成功 / Exchange connected\n');
 
     // 验证交易对 / Validate symbol
@@ -264,7 +266,8 @@ async function downloadData() {
     ensureDirectory(options.output);
 
     // 生成文件名 / Generate filename
-    const safeSymbol = options.symbol.replace('/', '-');
+    // 替换所有不安全字符: / 和 : / Replace all unsafe chars: / and :
+    const safeSymbol = options.symbol.replace(/[/:]/g, '_');
     const extension = options.format === 'csv' ? 'csv' : 'json';
     const filename = `${safeSymbol}_${options.timeframe}_${options.start}_${options.end}.${extension}`;
     const filePath = path.join(options.output, filename);

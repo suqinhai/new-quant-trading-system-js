@@ -29,6 +29,7 @@
     "axios": "^1.6.2",
     "better-sqlite3": "^9.2.2",
     "ccxt": "^4.2.0",
+    "commander": "^14.0.2",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.3.1",
     "eventemitter3": "^5.0.1",

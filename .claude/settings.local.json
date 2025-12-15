@@ -7,7 +7,19 @@
       "Bash(timeout 30 npm run shadow)",
       "Bash(timeout 45 npm run shadow)",
       "Bash(timeout 60 npm run shadow)",
-      "Bash(cat /tmp/claude/tasks/b7ca7dc.output)"
+      "Bash(cat /tmp/claude/tasks/b7ca7dc.output)",
+      "Bash(timeout 30 npm run backtest)",
+      "Bash(node scripts/downloadHistoricalData.js --symbol BTC/USDT --timeframe 1h --start 2024-11-01 --end 2024-12-01)",
+      "Bash(npm install commander)",
+      "Bash(cat package.json)",
+      "Bash(pnpm add commander)",
+      "Bash(yarn add commander)",
+      "Bash(node scripts/downloadHistoricalData.js --symbol \"BTC/USDT:USDT\" --timeframe 1h --start 2024-11-01 --end 2024-12-01)",
+      "Bash(dir data\\historical)",
+      "Bash(node src/main.js backtest --strategy FundingArb --start 2024-11-01 --end 2024-12-01)",
+      "Bash(node src/main.js backtest --strategy SMA --start 2024-11-01 --end 2024-12-01)",
+      "Bash(npm run backtest:*)",
+      "Bash(timeout 60 npm run:*)"
     ]
   }
 }

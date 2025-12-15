@@ -1297,15 +1297,21 @@ export class FundingArbStrategy extends BaseStrategy {
    */
   async onInit(exchanges) {
     // 保存交易所引用 / Save exchange references
-    this.exchanges = exchanges;
+    this.exchanges = exchanges || new Map();
 
-    // 设置交易所给管理器 / Set exchanges to managers
-    this.fundingManager.setExchanges(exchanges);
-    this.positionManager.setExchanges(exchanges);
+    // 设置交易所给管理器（如果有交易所） / Set exchanges to managers (if available)
+    if (exchanges) {
+      this.fundingManager.setExchanges(exchanges);
+      this.positionManager.setExchanges(exchanges);
+    }
 
     // 记录日志 / Log
     this.log(`策略初始化: 监控 ${this.config.symbols.length} 个交易对`, 'info');
-    this.log(`交易所: ${Array.from(exchanges.keys()).join(', ')}`, 'info');
+    if (exchanges && exchanges.size > 0) {
+      this.log(`交易所: ${Array.from(exchanges.keys()).join(', ')}`, 'info');
+    } else {
+      this.log(`回测模式: 无实时交易所连接`, 'info');
+    }
     this.log(`最小年化利差: ${(this.config.minAnnualizedSpread * 100).toFixed(1)}%`, 'info');
     this.log(`最大仓位: ${this.config.maxPositionSize} USDT`, 'info');
 
@@ -1901,6 +1907,192 @@ export class FundingArbStrategy extends BaseStrategy {
 
     // 返回结果 / Return results
     return results;
+  }
+
+  /**
+   * 每个 K 线/tick 触发的方法 (回测模式)
+   * Method triggered on each candle/tick (backtest mode)
+   *
+   * @param {Object} candle - 当前 K 线数据 / Current candle data
+   * @param {Array} history - 历史 K 线数据 / Historical candle data
+   * @returns {Promise<void>}
+   */
+  async onTick(candle, history) {
+    // 在回测模式下，模拟资金费率套利逻辑
+    // In backtest mode, simulate funding rate arbitrage logic
+
+    // 如果没有交易所连接（回测模式），使用模拟逻辑
+    // If no exchange connection (backtest mode), use simulated logic
+    if (!this.exchanges || this.exchanges.size === 0) {
+      // 回测模式下的简化处理
+      // Simplified handling in backtest mode
+      await this._backtestOnTick(candle, history);
+      return;
+    }
+
+    // 实盘模式：检查套利机会
+    // Live mode: check arbitrage opportunities
+    await this._checkArbitrageOpportunities();
+  }
+
+  /**
+   * 回测模式下的 onTick 处理
+   * onTick handling in backtest mode
+   *
+   * @param {Object} candle - 当前 K 线数据 / Current candle data
+   * @param {Array} history - 历史 K 线数据 / Historical candle data
+   * @private
+   */
+  async _backtestOnTick(candle, history) {
+    // 在回测模式下，我们模拟资金费率套利
+    // In backtest mode, we simulate funding rate arbitrage
+
+    // 资金费率套利策略在回测中需要多交易所数据
+    // Funding rate arbitrage strategy needs multi-exchange data in backtest
+    // 由于回测数据通常只有单交易所，这里提供简化的模拟
+    // Since backtest data usually only has single exchange, provide simplified simulation
+
+    // 检查是否有足够的历史数据 / Check if enough history
+    if (!history || history.length < 24) {
+      return;
+    }
+
+    // 获取当前价格 / Get current price
+    const currentPrice = candle.close;
+
+    // 模拟资金费率 (基于价格波动) / Simulate funding rate (based on price volatility)
+    // 这是一个简化的模拟，实际资金费率取决于多种因素
+    // This is a simplified simulation, actual funding rate depends on many factors
+    const priceChange24h = (currentPrice - history[history.length - 24].close) / history[history.length - 24].close;
+
+    // 计算价格波动率 (用于模拟资金费率波动)
+    // Calculate price volatility (for simulating funding rate fluctuation)
+    const prices = history.slice(-24).map(c => c.close);
+    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const variance = prices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / prices.length;
+    const volatility = Math.sqrt(variance) / avgPrice;
+
+    // 模拟资金费率：结合价格变化和波动率
+    // Simulated funding rate: combining price change and volatility
+    // 实际资金费率通常在 -0.1% 到 0.3% 之间 (每8小时)
+    // Actual funding rate is usually between -0.1% to 0.3% (per 8 hours)
+    const baseRate = priceChange24h * 0.01; // 基于趋势
+    const volatilityRate = volatility * 0.5; // 基于波动
+    const simulatedFundingRate = baseRate + (Math.random() - 0.5) * volatilityRate;
+
+    // 年化利差 / Annualized spread
+    // 假设两个交易所之间存在利差 (模拟跨所套利场景)
+    // Assume spread exists between two exchanges (simulate cross-exchange arbitrage)
+    const spreadMultiplier = 1 + volatility * 10; // 波动越大，利差越大
+    const annualizedSpread = Math.abs(simulatedFundingRate) * FUNDING_SETTLEMENTS_PER_YEAR * spreadMultiplier;
+
+    // 获取当前持仓状态 / Get current position state
+    const hasPosition = this.getState('hasPosition', false);
+    const positionSide = this.getState('positionSide', null);
+    const entryPrice = this.getState('entryPrice', 0);
+    const entryTime = this.getState('entryTime', 0);
+
+    // 持仓时长 (小时) / Position duration (hours)
+    const holdingHours = hasPosition ? (candle.timestamp - entryTime) / (60 * 60 * 1000) : 0;
+
+    // 开仓逻辑 / Open position logic
+    if (!hasPosition && annualizedSpread >= this.config.minAnnualizedSpread) {
+      // 发现套利机会 / Found arbitrage opportunity
+      const side = simulatedFundingRate > 0 ? 'short' : 'long';
+
+      // 计算仓位大小 / Calculate position size
+      const capital = this.getCapital();
+      const positionSize = Math.min(
+        capital * this.config.positionRatio,
+        this.config.maxPositionSize
+      );
+
+      // 执行开仓 / Execute open
+      if (positionSize >= this.config.minPositionSize) {
+        const amount = positionSize / currentPrice;
+
+        if (side === 'long') {
+          this.buy(candle.symbol || 'BTC/USDT', amount);
+        } else {
+          this.sell(candle.symbol || 'BTC/USDT', amount);
+        }
+
+        // 记录状态 / Record state
+        this.setState('hasPosition', true);
+        this.setState('positionSide', side);
+        this.setState('entryPrice', currentPrice);
+        this.setState('entryTime', candle.timestamp);
+        this.setState('openSpread', annualizedSpread);
+
+        // 设置信号 / Set signal
+        this.setBuySignal(
+          `模拟套利开仓: ${side} @ ${currentPrice.toFixed(2)} 年化利差: ${(annualizedSpread * 100).toFixed(2)}%`
+        );
+
+        this.log(
+          `[回测] 开仓: ${side} ${amount.toFixed(4)} @ ${currentPrice.toFixed(2)} 年化利差: ${(annualizedSpread * 100).toFixed(2)}%`,
+          'info'
+        );
+      }
+    }
+
+    // 平仓逻辑 / Close position logic
+    if (hasPosition) {
+      let shouldClose = false;
+      let closeReason = '';
+
+      // 条件1: 利差收窄 / Condition 1: Spread narrowed
+      if (annualizedSpread < this.config.closeSpreadThreshold) {
+        shouldClose = true;
+        closeReason = `利差收窄: ${(annualizedSpread * 100).toFixed(2)}%`;
+      }
+
+      // 条件2: 持仓超过8小时 (模拟一个资金费率结算周期)
+      // Condition 2: Held for more than 8 hours (simulate one funding settlement period)
+      if (holdingHours >= 8) {
+        // 模拟收取/支付资金费后平仓
+        // Simulate closing after receiving/paying funding
+        shouldClose = true;
+        closeReason = `结算周期结束: 持仓${holdingHours.toFixed(1)}小时`;
+      }
+
+      // 条件3: 价格反向移动过大 (止损)
+      // Condition 3: Price moved against position too much (stop loss)
+      const priceMove = (currentPrice - entryPrice) / entryPrice;
+      const adverseMove = positionSide === 'long' ? -priceMove : priceMove;
+      if (adverseMove > 0.02) { // 2% 止损
+        shouldClose = true;
+        closeReason = `止损: 价格反向移动 ${(adverseMove * 100).toFixed(2)}%`;
+      }
+
+      // 执行平仓 / Execute close
+      if (shouldClose) {
+        this.closePosition(candle.symbol || 'BTC/USDT');
+
+        // 计算模拟 PnL / Calculate simulated PnL
+        const pricePnl = positionSide === 'long'
+          ? (currentPrice - entryPrice) / entryPrice
+          : (entryPrice - currentPrice) / entryPrice;
+
+        // 模拟资金费收入 (如果持仓超过8小时)
+        // Simulate funding income (if held for more than 8 hours)
+        const fundingIncome = holdingHours >= 8 ? this.getState('openSpread', 0) / FUNDING_SETTLEMENTS_PER_YEAR : 0;
+
+        // 重置状态 / Reset state
+        this.setState('hasPosition', false);
+        this.setState('positionSide', null);
+        this.setState('entryPrice', 0);
+        this.setState('entryTime', 0);
+
+        // 设置信号 / Set signal
+        this.setSellSignal(closeReason);
+
+        this.log(
+          `[回测] 平仓: ${closeReason} 价格PnL: ${(pricePnl * 100).toFixed(2)}% 资金费: ${(fundingIncome * 100).toFixed(4)}%`,
+          'info'
+        );
+      }
+    }
   }
 
   /**
