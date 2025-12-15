@@ -576,8 +576,8 @@ class TradingSystemRunner extends EventEmitter {
       },
     });
 
-    // 加载市场信息 / Load market info
-    await this.exchange.loadMarkets();
+    // 连接交易所并加载市场信息 / Connect exchange and load market info
+    await this.exchange.connect();
 
     // 输出日志 / Output log
     this._log('info', `交易所连接成功: ${exchangeName} / Exchange connected: ${exchangeName}`);

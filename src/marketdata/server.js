@@ -377,7 +377,7 @@ class MarketDataServer {
         try {
           const engine = this.aggregator.engines.get(exchange);
           if (engine) {
-            await engine.subscribeTicker(symbol);
+            await engine.subscribe(symbol, ['ticker']);
             console.log(`[MarketDataServer] 已订阅 ${exchange}/${symbol} / Subscribed to ${exchange}/${symbol}`);
           }
         } catch (error) {
