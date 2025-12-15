@@ -101,7 +101,7 @@ export class DataAggregator extends EventEmitter {
     }
 
     // 断开连接 / Disconnect
-    await engine.disconnect();
+    await engine.stop();
 
     // 移除实例 / Remove instance
     this.engines.delete(exchangeName);
@@ -123,7 +123,7 @@ export class DataAggregator extends EventEmitter {
 
     for (const [name, engine] of this.engines) {
       connectPromises.push(
-        engine.connect().catch(error => {
+        engine.start().catch(error => {
           console.error(`[Aggregator] 连接 ${name} 失败 / Failed to connect ${name}:`, error.message);
         })
       );
@@ -154,7 +154,7 @@ export class DataAggregator extends EventEmitter {
 
     for (const [name, engine] of this.engines) {
       disconnectPromises.push(
-        engine.disconnect().catch(error => {
+        engine.stop().catch(error => {
           console.error(`[Aggregator] 断开 ${name} 失败 / Failed to disconnect ${name}:`, error.message);
         })
       );
