@@ -13,6 +13,7 @@
 - [运行模式](#运行模式)
 - [核心模块](#核心模块)
 - [策略开发](#策略开发)
+- [ClickHouse 数据库](#clickhouse-数据库)
 - [部署指南](#部署指南)
 - [API 参考](#api-参考)
 - [常见问题](#常见问题)
@@ -953,14 +954,182 @@ await executor.executeSmartLimitOrder({
 
 ### Q: 回测数据从哪里获取？
 
-1. **本地文件**: 将 CSV 数据放入 `data/` 目录
-2. **API 获取**: 配置交易所 API 自动下载
+1. **ClickHouse 数据库**: 使用历史数据下载脚本存储到 ClickHouse (推荐)
+2. **本地文件**: 将 CSV 数据放入 `data/` 目录
+3. **API 获取**: 配置交易所 API 自动下载
 
 ```javascript
 const backtest = new BacktestEngine({
   dataSource: 'api',  // 或 'local'
   // ...
 });
+```
+
+---
+
+## ClickHouse 数据库
+
+项目使用 **ClickHouse** 作为历史数据存储引擎，提供高性能的时序数据查询能力。
+
+### 安装 ClickHouse
+
+```bash
+# Docker 方式 (推荐)
+docker run -d \
+  --name clickhouse \
+  -p 8123:8123 \
+  -p 9000:9000 \
+  -v clickhouse-data:/var/lib/clickhouse \
+  clickhouse/clickhouse-server
+
+# 验证安装
+curl http://localhost:8123/ping
+```
+
+### 数据表结构
+
+系统自动创建以下表结构 (每个交易所一套):
+
+| 表名 | 用途 | 字段说明 |
+|------|------|----------|
+| `ohlcv_{exchange}` | K线数据 | symbol, timestamp, open, high, low, close, volume |
+| `funding_rate_{exchange}` | 资金费率 | symbol, timestamp, funding_rate, mark_price, index_price |
+| `open_interest_{exchange}` | 持仓量 | symbol, timestamp, open_interest, open_interest_value |
+| `mark_price_{exchange}` | 标记价格 | symbol, timestamp, mark_price, index_price |
+
+**表引擎**: `ReplacingMergeTree` (自动去重)
+**分区方式**: 按月分区 (`toYYYYMM(timestamp)`)
+**排序键**: `(symbol, timestamp)`
+
+### 历史数据下载
+
+使用 `scripts/download-history.js` 下载历史数据:
+
+```bash
+# 基本用法
+node scripts/download-history.js [options]
+
+# 选项说明
+-e, --exchange <name>    交易所 (binance, bybit, okx, all)
+-s, --symbol <symbol>    交易对 (BTC/USDT:USDT)
+-t, --type <type>        数据类型 (ohlcv, funding_rate, open_interest, mark_price, all)
+--start <date>           起始日期 (YYYY-MM-DD)
+--end <date>             结束日期 (YYYY-MM-DD)
+--ch-host <url>          ClickHouse 主机 (默认: http://localhost:8123)
+--ch-database <name>     数据库名 (默认: quant)
+```
+
+**使用示例:**
+
+```bash
+# 下载所有交易所的 BTC/ETH 全部数据类型
+node scripts/download-history.js -s BTC/USDT:USDT,ETH/USDT:USDT
+
+# 只下载 Binance 的 K线数据
+node scripts/download-history.js -e binance -t ohlcv -s BTC/USDT:USDT
+
+# 指定时间范围下载
+node scripts/download-history.js --start 2023-01-01 --end 2023-12-31 -s BTC/USDT:USDT
+
+# 下载资金费率数据 (用于套利策略)
+node scripts/download-history.js -t funding_rate -s BTC/USDT:USDT,ETH/USDT:USDT
+
+# 连接远程 ClickHouse
+node scripts/download-history.js --ch-host http://192.168.1.100:8123 --ch-database trading
+```
+
+### ClickHouse 配置
+
+默认配置 (可在脚本中修改):
+
+```javascript
+const DEFAULT_CONFIG = {
+  clickhouse: {
+    host: 'http://localhost:8123',  // ClickHouse HTTP 接口
+    database: 'quant',               // 数据库名
+    username: 'default',             // 用户名
+    password: '',                    // 密码
+  },
+  download: {
+    startDate: '2020-01-01',         // 默认起始日期
+    endDate: null,                   // null = 今天
+    batchSize: 1000,                 // 批量插入大小
+    rateLimit: 100,                  // 请求间隔 (ms)
+    maxRetries: 3,                   // 最大重试次数
+  },
+};
+```
+
+### 数据查询示例
+
+```sql
+-- 查询 BTC 最近 24 小时 K线
+SELECT *
+FROM quant.ohlcv_binance
+WHERE symbol = 'BTC/USDT:USDT'
+  AND timestamp >= now() - INTERVAL 24 HOUR
+ORDER BY timestamp DESC
+LIMIT 100;
+
+-- 查询资金费率历史
+SELECT
+  timestamp,
+  funding_rate,
+  funding_rate * 3 * 365 as annualized_rate
+FROM quant.funding_rate_binance
+WHERE symbol = 'BTC/USDT:USDT'
+ORDER BY timestamp DESC
+LIMIT 50;
+
+-- 对比不同交易所的资金费率
+SELECT
+  b.timestamp,
+  b.funding_rate as binance_rate,
+  y.funding_rate as bybit_rate,
+  o.funding_rate as okx_rate,
+  (b.funding_rate - y.funding_rate) * 3 * 365 as spread_annualized
+FROM quant.funding_rate_binance b
+JOIN quant.funding_rate_bybit y ON b.timestamp = y.timestamp AND b.symbol = y.symbol
+JOIN quant.funding_rate_okx o ON b.timestamp = o.timestamp AND b.symbol = o.symbol
+WHERE b.symbol = 'BTC/USDT:USDT'
+ORDER BY b.timestamp DESC
+LIMIT 20;
+
+-- 查询持仓量变化
+SELECT
+  timestamp,
+  open_interest,
+  open_interest - lagInFrame(open_interest) OVER (ORDER BY timestamp) as oi_change
+FROM quant.open_interest_binance
+WHERE symbol = 'BTC/USDT:USDT'
+ORDER BY timestamp DESC
+LIMIT 100;
+```
+
+### 数据下载特性
+
+| 特性 | 说明 |
+|------|------|
+| **增量更新** | 自动检测已有数据，只下载新数据 |
+| **断点续传** | 中断后可继续下载 |
+| **多交易所** | 支持 Binance、Bybit、OKX |
+| **速率限制** | 自动处理 API 限频 |
+| **批量插入** | 高效批量写入 ClickHouse |
+| **自动建表** | 首次运行自动创建数据库和表 |
+
+### 定时同步
+
+使用 cron 定时同步最新数据:
+
+```bash
+# 编辑 crontab
+crontab -e
+
+# 每小时同步一次 K线数据
+0 * * * * cd /path/to/project && node scripts/download-history.js -t ohlcv -s BTC/USDT:USDT,ETH/USDT:USDT >> /var/log/quant-sync.log 2>&1
+
+# 每 8 小时同步资金费率 (资金费率每 8 小时结算一次)
+0 */8 * * * cd /path/to/project && node scripts/download-history.js -t funding_rate -s BTC/USDT:USDT,ETH/USDT:USDT >> /var/log/quant-sync.log 2>&1
 ```
 
 ### Q: 如何监控系统运行状态？
@@ -994,3 +1163,330 @@ MIT License
 - 实现风险管理模块
 - 实现回测引擎
 - PM2 部署支持
+
+---
+
+## 附录
+
+### A. 内置策略详解
+
+#### 1. SMA 双均线策略 (SMAStrategy)
+
+**原理**: 利用快慢两条移动平均线的交叉产生交易信号。
+
+```javascript
+import { SMAStrategy } from './src/strategies/index.js';
+
+const strategy = new SMAStrategy({
+  fastPeriod: 10,   // 快线周期
+  slowPeriod: 20,   // 慢线周期
+  symbols: ['BTC/USDT'],
+  timeframe: '1h',
+});
+```
+
+**信号逻辑**:
+- 金叉 (快线上穿慢线): 买入信号
+- 死叉 (快线下穿慢线): 卖出信号
+
+#### 2. RSI 策略 (RSIStrategy)
+
+**原理**: 利用相对强弱指标判断超买超卖。
+
+```javascript
+import { RSIStrategy } from './src/strategies/index.js';
+
+const strategy = new RSIStrategy({
+  period: 14,        // RSI 周期
+  overbought: 70,    // 超买阈值
+  oversold: 30,      // 超卖阈值
+  symbols: ['BTC/USDT'],
+});
+```
+
+**信号逻辑**:
+- RSI < 30: 超卖，买入信号
+- RSI > 70: 超买，卖出信号
+
+#### 3. MACD 策略 (MACDStrategy)
+
+**原理**: 利用 MACD 指标的金叉死叉和柱状图变化。
+
+```javascript
+import { MACDStrategy } from './src/strategies/index.js';
+
+const strategy = new MACDStrategy({
+  fastPeriod: 12,    // 快线周期
+  slowPeriod: 26,    // 慢线周期
+  signalPeriod: 9,   // 信号线周期
+  symbols: ['BTC/USDT'],
+});
+```
+
+#### 4. 布林带策略 (BollingerBandsStrategy)
+
+**原理**: 利用价格突破布林带产生交易信号。
+
+```javascript
+import { BollingerBandsStrategy } from './src/strategies/index.js';
+
+const strategy = new BollingerBandsStrategy({
+  period: 20,        // 周期
+  stdDev: 2,         // 标准差倍数
+  symbols: ['BTC/USDT'],
+});
+```
+
+**信号逻辑**:
+- 价格触及下轨: 买入信号
+- 价格触及上轨: 卖出信号
+
+#### 5. 网格策略 (GridStrategy)
+
+**原理**: 在价格区间内设置多个买卖点，低买高卖赚取差价。
+
+```javascript
+import { GridStrategy } from './src/strategies/index.js';
+
+const strategy = new GridStrategy({
+  gridCount: 10,       // 网格数量
+  gridSpacing: 0.01,   // 网格间距 (1%)
+  upperPrice: 70000,   // 上限价格
+  lowerPrice: 50000,   // 下限价格
+  symbols: ['BTC/USDT'],
+});
+```
+
+#### 6. 资金费率套利策略 (FundingArbStrategy)
+
+**原理**: 利用不同交易所之间的资金费率差异进行对冲套利。
+
+```javascript
+import { FundingArbStrategy } from './src/strategies/index.js';
+
+const strategy = new FundingArbStrategy({
+  symbols: ['BTC/USDT:USDT', 'ETH/USDT:USDT'],
+  minAnnualizedSpread: 0.15,   // 最小年化利差 15%
+  closeSpreadThreshold: 0.05,  // 平仓阈值 5%
+  maxPositionSize: 10000,      // 最大仓位
+  leverage: 5,                 // 杠杆倍数
+});
+```
+
+**策略流程**:
+1. 监控多交易所资金费率
+2. 计算年化利差
+3. 当利差 > 15%: 做空高费率交易所，做多低费率交易所
+4. 当利差 < 5%: 平仓获利
+
+### B. 技术指标完整列表
+
+| 指标 | 函数 | 参数 | 用途 |
+|------|------|------|------|
+| **移动平均** |
+| SMA | `SMA(data, period)` | 数据, 周期 | 简单移动平均 |
+| EMA | `EMA(data, period)` | 数据, 周期 | 指数移动平均 |
+| WMA | `WMA(data, period)` | 数据, 周期 | 加权移动平均 |
+| VWMA | `VWMA(closes, volumes, period)` | 收盘价, 成交量, 周期 | 成交量加权移动平均 |
+| **震荡指标** |
+| RSI | `RSI(data, period)` | 数据, 周期 | 相对强弱指数 |
+| Stochastic | `Stochastic(h, l, c, k, d, dma)` | 高, 低, 收, K周期, D周期, D平滑 | 随机指标 |
+| WilliamsR | `WilliamsR(h, l, c, period)` | 高, 低, 收, 周期 | 威廉指标 |
+| CCI | `CCI(h, l, c, period)` | 高, 低, 收, 周期 | 商品通道指数 |
+| **趋势指标** |
+| MACD | `MACD(data, fast, slow, signal)` | 数据, 快周期, 慢周期, 信号周期 | 移动平均收敛/发散 |
+| ADX | `ADX(h, l, c, period)` | 高, 低, 收, 周期 | 平均趋向指数 |
+| PSAR | `PSAR(h, l, step, max)` | 高, 低, 步进, 最大值 | 抛物线转向 |
+| **波动率指标** |
+| BollingerBands | `BollingerBands(data, period, stdDev)` | 数据, 周期, 标准差倍数 | 布林带 |
+| ATR | `ATR(h, l, c, period)` | 高, 低, 收, 周期 | 真实波幅 |
+| KeltnerChannels | `KeltnerChannels(h, l, c, period, mult)` | 高, 低, 收, 周期, 倍数 | 肯特纳通道 |
+| **成交量指标** |
+| OBV | `OBV(closes, volumes)` | 收盘价, 成交量 | 能量潮 |
+| MFI | `MFI(h, l, c, v, period)` | 高, 低, 收, 量, 周期 | 资金流量指数 |
+| VROC | `VROC(volumes, period)` | 成交量, 周期 | 成交量变化率 |
+| **动量指标** |
+| Momentum | `Momentum(data, period)` | 数据, 周期 | 动量 |
+| ROC | `ROC(data, period)` | 数据, 周期 | 变化率 |
+| **支撑阻力** |
+| PivotPoints | `PivotPoints(h, l, c)` | 高, 低, 收 | 枢轴点 |
+| FibonacciRetracement | `FibonacciRetracement(high, low)` | 高点, 低点 | 斐波那契回撤 |
+
+### C. 配置项完整参考
+
+```javascript
+// config/default.js 完整配置项
+export default {
+  // 交易所配置
+  exchange: {
+    default: 'binance',
+    binance: {
+      enabled: true,
+      sandbox: false,
+      timeout: 30000,
+      enableRateLimit: true,
+      defaultType: 'spot',  // spot | future | swap
+    },
+    okx: { /* ... */ },
+  },
+
+  // 行情配置
+  marketData: {
+    websocket: {
+      pingInterval: 30000,
+      pongTimeout: 10000,
+      reconnectDelay: 5000,
+      maxReconnectAttempts: 10,
+    },
+    aggregator: {
+      aggregateInterval: 1000,
+      arbitrageThreshold: 0.5,
+    },
+    cache: {
+      maxCandles: 1000,
+      tickerExpiry: 5000,
+    },
+  },
+
+  // 策略配置
+  strategy: {
+    default: 'sma',
+    defaults: {
+      timeframe: '1h',
+      capitalRatio: 0.1,
+      stopLoss: 0.02,
+      takeProfit: 0.04,
+    },
+    sma: { fastPeriod: 10, slowPeriod: 20 },
+    rsi: { period: 14, overbought: 70, oversold: 30 },
+    bollingerBands: { period: 20, stdDev: 2 },
+    macd: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+    grid: { gridCount: 10, gridSpacing: 0.01 },
+  },
+
+  // 风控配置
+  risk: {
+    enabled: true,
+    maxPositionRatio: 0.3,
+    maxRiskPerTrade: 0.02,
+    maxDailyLoss: 1000,
+    maxDrawdown: 0.2,
+    maxPositions: 5,
+    maxLeverage: 3,
+    positionSizing: 'risk_based',  // fixed | risk_based | kelly | atr_based
+    stopLoss: {
+      enabled: true,
+      defaultRatio: 0.02,
+      trailingStop: true,
+      trailingRatio: 0.015,
+    },
+    takeProfit: {
+      enabled: true,
+      defaultRatio: 0.04,
+      partialTakeProfit: false,
+      partialRatios: [0.5, 0.3, 0.2],
+    },
+    blacklist: [],
+    whitelist: [],
+  },
+
+  // 执行器配置
+  executor: {
+    maxRetries: 3,
+    retryDelay: 1000,
+    maxSlippage: 0.5,
+    orderTimeout: 30000,
+    enableTWAP: true,
+    twap: {
+      splitThreshold: 10000,
+      splitCount: 5,
+      splitInterval: 2000,
+    },
+    concurrency: 3,
+  },
+
+  // 回测配置
+  backtest: {
+    initialCapital: 10000,
+    commission: 0.001,
+    slippage: 0.0005,
+    dataDir: 'data/historical',
+    outputDir: 'data/backtest_results',
+  },
+
+  // 监控配置
+  monitor: {
+    collectInterval: 10000,
+    healthCheckInterval: 30000,
+    memoryWarningThreshold: 512,
+    cpuWarningThreshold: 80,
+    prometheus: { enabled: true, port: 9090 },
+  },
+
+  // 告警配置
+  alert: {
+    cooldown: 60000,
+    email: { enabled: false },
+    telegram: { enabled: false },
+    dingtalk: { enabled: false },
+    webhook: { enabled: false },
+  },
+
+  // 日志配置
+  logging: {
+    level: 'info',
+    dir: 'logs',
+    console: true,
+    file: true,
+    maxSize: 10485760,
+    maxFiles: 5,
+  },
+
+  // 数据库配置
+  database: {
+    type: 'sqlite',
+    sqlite: { filename: 'data/trading.db' },
+    redis: { enabled: false },
+  },
+
+  // 服务端口配置
+  server: {
+    httpPort: 3000,
+    wsPort: 3001,
+    dashboardPort: 8080,
+  },
+};
+```
+
+### D. 错误代码参考
+
+| 错误代码 | 含义 | 处理方式 |
+|---------|------|---------|
+| `ERR_INSUFFICIENT_BALANCE` | 余额不足 | 检查账户余额 |
+| `ERR_ORDER_REJECTED` | 订单被拒绝 | 检查订单参数 |
+| `ERR_RATE_LIMIT` | 请求频率超限 | 自动退避重试 |
+| `ERR_NETWORK_TIMEOUT` | 网络超时 | 自动重连 |
+| `ERR_INVALID_SYMBOL` | 无效交易对 | 检查交易对格式 |
+| `ERR_POSITION_LIMIT` | 仓位超限 | 检查风控配置 |
+| `ERR_LEVERAGE_LIMIT` | 杠杆超限 | 降低杠杆倍数 |
+| `ERR_DAILY_LOSS_LIMIT` | 日亏损超限 | 等待第二天重置 |
+
+### E. 性能优化建议
+
+1. **数据缓存**: 启用 Redis 缓存行情数据
+2. **批量订阅**: 使用 `batchSubscribe` 批量订阅行情
+3. **连接池**: 复用交易所 HTTP 连接
+4. **日志级别**: 生产环境使用 `info` 级别
+5. **内存管理**: 定期清理历史数据缓存
+
+### F. 安全建议
+
+1. **API 密钥**: 仅授予必要权限，禁止提币权限
+2. **IP 白名单**: 在交易所设置 IP 白名单
+3. **环境变量**: 敏感信息使用环境变量
+4. **日志脱敏**: 日志中不记录完整 API 密钥
+5. **定期轮换**: 定期更换 API 密钥
+
+---
+
+*文档版本: 1.0.0 | 最后更新: 2025-01*

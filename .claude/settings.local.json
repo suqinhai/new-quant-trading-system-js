@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /s /b *.js *.json)"
+      "Bash(dir /s /b *.js *.json)",
+      "Bash(mkdir -p \"C:\\Users\\46745\\Desktop\\pro\\new-quant-trading-system-js\\docs\")"
     ]
   }
 }
