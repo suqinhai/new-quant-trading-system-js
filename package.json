@@ -1,0 +1,66 @@
+{
+  "name": "quant-trading-system",
+  "version": "1.0.0",
+  "description": "工业级加密货币量化交易系统 - Industrial-grade Cryptocurrency Quantitative Trading System",
+  "main": "src/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/main.js live",
+    "dev": "node --watch src/main.js shadow --verbose",
+    "backtest": "node src/main.js backtest",
+    "shadow": "node src/main.js shadow",
+    "live": "node src/main.js live",
+    "download-data": "node scripts/downloadHistoricalData.js",
+    "download-history": "node scripts/download-history.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs",
+    "pm2:status": "pm2 status",
+    "lint": "eslint src/",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^1.0.1",
+    "axios": "^1.6.2",
+    "better-sqlite3": "^9.2.2",
+    "ccxt": "^4.2.0",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^16.3.1",
+    "eventemitter3": "^5.0.1",
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "lodash-es": "^4.17.21",
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.67.0",
+    "nodemailer": "^6.9.7",
+    "p-queue": "^8.0.1",
+    "p-retry": "^6.2.0",
+    "pino": "^10.1.0",
+    "prom-client": "^15.1.0",
+    "socket.io": "^4.7.2",
+    "technicalindicators": "^3.1.0",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
+  "keywords": [
+    "cryptocurrency",
+    "trading",
+    "quantitative",
+    "bitcoin",
+    "ethereum",
+    "backtesting",
+    "algorithmic-trading"
+  ],
+  "author": "",
+  "license": "MIT"
+}

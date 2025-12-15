@@ -1,0 +1,436 @@
+/**
+ * 验证工具
+ * Validation Utility
+ *
+ * 提供数据验证和模式匹配功能
+ * Provides data validation and pattern matching functionality
+ */
+
+// ============================================
+// 交易参数验证 / Trading Parameter Validation
+// ============================================
+
+/**
+ * 验证订单参数
+ * Validate order parameters
+ * @param {Object} order - 订单对象 / Order object
+ * @returns {Object} 验证结果 { valid, errors } / Validation result
+ */
+export function validateOrder(order) {
+  // 错误列表 / Error list
+  const errors = [];
+
+  // 检查必需字段 / Check required fields
+  if (!order) {
+    return { valid: false, errors: ['订单对象不能为空 / Order object cannot be null'] };
+  }
+
+  // 验证交易对 / Validate symbol
+  if (!order.symbol || typeof order.symbol !== 'string') {
+    errors.push('交易对无效 / Invalid symbol');
+  } else if (!order.symbol.includes('/')) {
+    errors.push('交易对格式错误，应为 BASE/QUOTE / Symbol format error, should be BASE/QUOTE');
+  }
+
+  // 验证订单类型 / Validate order type
+  const validTypes = ['market', 'limit', 'stop', 'stop_limit'];
+  if (!order.type || !validTypes.includes(order.type.toLowerCase())) {
+    errors.push(`订单类型无效，应为: ${validTypes.join(', ')} / Invalid order type`);
+  }
+
+  // 验证订单方向 / Validate order side
+  const validSides = ['buy', 'sell'];
+  if (!order.side || !validSides.includes(order.side.toLowerCase())) {
+    errors.push('订单方向无效，应为: buy, sell / Invalid order side');
+  }
+
+  // 验证数量 / Validate amount
+  if (order.amount === undefined || order.amount === null) {
+    errors.push('订单数量不能为空 / Order amount cannot be null');
+  } else if (typeof order.amount !== 'number' || order.amount <= 0) {
+    errors.push('订单数量必须为正数 / Order amount must be positive');
+  }
+
+  // 验证限价单价格 / Validate limit order price
+  if (order.type === 'limit' || order.type === 'stop_limit') {
+    if (order.price === undefined || order.price === null) {
+      errors.push('限价单必须指定价格 / Limit order must specify price');
+    } else if (typeof order.price !== 'number' || order.price <= 0) {
+      errors.push('订单价格必须为正数 / Order price must be positive');
+    }
+  }
+
+  // 返回验证结果 / Return validation result
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * 验证策略配置
+ * Validate strategy configuration
+ * @param {Object} config - 策略配置 / Strategy configuration
+ * @returns {Object} 验证结果 { valid, errors } / Validation result
+ */
+export function validateStrategyConfig(config) {
+  // 错误列表 / Error list
+  const errors = [];
+
+  // 检查必需字段 / Check required fields
+  if (!config) {
+    return { valid: false, errors: ['策略配置不能为空 / Strategy config cannot be null'] };
+  }
+
+  // 验证交易对列表 / Validate symbols list
+  if (!config.symbols || !Array.isArray(config.symbols) || config.symbols.length === 0) {
+    errors.push('必须指定至少一个交易对 / Must specify at least one symbol');
+  }
+
+  // 验证时间周期 / Validate timeframe
+  const validTimeframes = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '12h', '1d', '1w', '1M'];
+  if (config.timeframe && !validTimeframes.includes(config.timeframe)) {
+    errors.push(`时间周期无效，应为: ${validTimeframes.join(', ')} / Invalid timeframe`);
+  }
+
+  // 验证资金比例 / Validate capital ratio
+  if (config.capitalRatio !== undefined) {
+    if (typeof config.capitalRatio !== 'number' || config.capitalRatio <= 0 || config.capitalRatio > 1) {
+      errors.push('资金比例必须在 0-1 之间 / Capital ratio must be between 0 and 1');
+    }
+  }
+
+  // 验证止损比例 / Validate stop loss ratio
+  if (config.stopLoss !== undefined) {
+    if (typeof config.stopLoss !== 'number' || config.stopLoss <= 0 || config.stopLoss >= 1) {
+      errors.push('止损比例必须在 0-1 之间 / Stop loss must be between 0 and 1');
+    }
+  }
+
+  // 验证止盈比例 / Validate take profit ratio
+  if (config.takeProfit !== undefined) {
+    if (typeof config.takeProfit !== 'number' || config.takeProfit <= 0) {
+      errors.push('止盈比例必须为正数 / Take profit must be positive');
+    }
+  }
+
+  // 返回验证结果 / Return validation result
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * 验证风控配置
+ * Validate risk management configuration
+ * @param {Object} config - 风控配置 / Risk management configuration
+ * @returns {Object} 验证结果 { valid, errors } / Validation result
+ */
+export function validateRiskConfig(config) {
+  // 错误列表 / Error list
+  const errors = [];
+
+  // 检查必需字段 / Check required fields
+  if (!config) {
+    return { valid: false, errors: ['风控配置不能为空 / Risk config cannot be null'] };
+  }
+
+  // 验证最大持仓比例 / Validate max position ratio
+  if (config.maxPositionRatio !== undefined) {
+    if (typeof config.maxPositionRatio !== 'number' || config.maxPositionRatio <= 0 || config.maxPositionRatio > 1) {
+      errors.push('最大持仓比例必须在 0-1 之间 / Max position ratio must be between 0 and 1');
+    }
+  }
+
+  // 验证单笔风险比例 / Validate risk per trade
+  if (config.riskPerTrade !== undefined) {
+    if (typeof config.riskPerTrade !== 'number' || config.riskPerTrade <= 0 || config.riskPerTrade > 0.1) {
+      errors.push('单笔风险比例必须在 0-10% 之间 / Risk per trade must be between 0 and 10%');
+    }
+  }
+
+  // 验证最大回撤 / Validate max drawdown
+  if (config.maxDrawdown !== undefined) {
+    if (typeof config.maxDrawdown !== 'number' || config.maxDrawdown <= 0 || config.maxDrawdown > 1) {
+      errors.push('最大回撤必须在 0-100% 之间 / Max drawdown must be between 0 and 100%');
+    }
+  }
+
+  // 验证每日亏损限制 / Validate daily loss limit
+  if (config.dailyLossLimit !== undefined) {
+    if (typeof config.dailyLossLimit !== 'number' || config.dailyLossLimit <= 0) {
+      errors.push('每日亏损限制必须为正数 / Daily loss limit must be positive');
+    }
+  }
+
+  // 返回验证结果 / Return validation result
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+// ============================================
+// 数据验证 / Data Validation
+// ============================================
+
+/**
+ * 验证 K 线数据
+ * Validate candle data
+ * @param {Object} candle - K 线对象 / Candle object
+ * @returns {Object} 验证结果 { valid, errors } / Validation result
+ */
+export function validateCandle(candle) {
+  // 错误列表 / Error list
+  const errors = [];
+
+  // 检查必需字段 / Check required fields
+  if (!candle) {
+    return { valid: false, errors: ['K线数据不能为空 / Candle data cannot be null'] };
+  }
+
+  // 验证时间戳 / Validate timestamp
+  if (!candle.timestamp && !candle.time) {
+    errors.push('缺少时间戳 / Missing timestamp');
+  }
+
+  // 验证 OHLCV 数据 / Validate OHLCV data
+  const fields = ['open', 'high', 'low', 'close'];
+  for (const field of fields) {
+    if (candle[field] === undefined || candle[field] === null) {
+      errors.push(`缺少 ${field} 字段 / Missing ${field} field`);
+    } else if (typeof candle[field] !== 'number' || candle[field] < 0) {
+      errors.push(`${field} 必须为非负数 / ${field} must be non-negative`);
+    }
+  }
+
+  // 验证价格逻辑 / Validate price logic
+  if (candle.high < candle.low) {
+    errors.push('最高价不能低于最低价 / High cannot be less than low');
+  }
+  if (candle.high < candle.open || candle.high < candle.close) {
+    errors.push('最高价必须大于等于开盘价和收盘价 / High must be >= open and close');
+  }
+  if (candle.low > candle.open || candle.low > candle.close) {
+    errors.push('最低价必须小于等于开盘价和收盘价 / Low must be <= open and close');
+  }
+
+  // 验证成交量 / Validate volume
+  if (candle.volume !== undefined && (typeof candle.volume !== 'number' || candle.volume < 0)) {
+    errors.push('成交量必须为非负数 / Volume must be non-negative');
+  }
+
+  // 返回验证结果 / Return validation result
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * 验证 K 线数据数组
+ * Validate candle data array
+ * @param {Object[]} candles - K 线数组 / Candle array
+ * @returns {Object} 验证结果 { valid, errors, validCandles } / Validation result
+ */
+export function validateCandles(candles) {
+  // 错误列表 / Error list
+  const errors = [];
+
+  // 有效 K 线列表 / Valid candles list
+  const validCandles = [];
+
+  // 检查数组 / Check array
+  if (!candles || !Array.isArray(candles)) {
+    return { valid: false, errors: ['K线数据必须为数组 / Candles must be an array'], validCandles: [] };
+  }
+
+  // 检查是否为空 / Check if empty
+  if (candles.length === 0) {
+    return { valid: false, errors: ['K线数据不能为空数组 / Candles cannot be empty'], validCandles: [] };
+  }
+
+  // 验证每根 K 线 / Validate each candle
+  for (let i = 0; i < candles.length; i++) {
+    const result = validateCandle(candles[i]);
+    if (result.valid) {
+      validCandles.push(candles[i]);
+    } else {
+      errors.push(`第 ${i + 1} 根K线无效: ${result.errors.join(', ')} / Candle ${i + 1} invalid`);
+    }
+  }
+
+  // 返回验证结果 / Return validation result
+  return {
+    valid: errors.length === 0,
+    errors,
+    validCandles,
+  };
+}
+
+// ============================================
+// 类型验证 / Type Validation
+// ============================================
+
+/**
+ * 检查是否为有效数字
+ * Check if valid number
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为有效数字 / Is valid number
+ */
+export function isValidNumber(value) {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+}
+
+/**
+ * 检查是否为正数
+ * Check if positive number
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为正数 / Is positive number
+ */
+export function isPositiveNumber(value) {
+  return isValidNumber(value) && value > 0;
+}
+
+/**
+ * 检查是否为非负数
+ * Check if non-negative number
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为非负数 / Is non-negative number
+ */
+export function isNonNegativeNumber(value) {
+  return isValidNumber(value) && value >= 0;
+}
+
+/**
+ * 检查是否为有效百分比
+ * Check if valid percentage
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为有效百分比 (0-100) / Is valid percentage
+ */
+export function isValidPercentage(value) {
+  return isValidNumber(value) && value >= 0 && value <= 100;
+}
+
+/**
+ * 检查是否为有效比例
+ * Check if valid ratio
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为有效比例 (0-1) / Is valid ratio
+ */
+export function isValidRatio(value) {
+  return isValidNumber(value) && value >= 0 && value <= 1;
+}
+
+/**
+ * 检查是否为非空字符串
+ * Check if non-empty string
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为非空字符串 / Is non-empty string
+ */
+export function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/**
+ * 检查是否为有效日期
+ * Check if valid date
+ * @param {any} value - 要检查的值 / Value to check
+ * @returns {boolean} 是否为有效日期 / Is valid date
+ */
+export function isValidDate(value) {
+  // 如果是 Date 对象 / If Date object
+  if (value instanceof Date) {
+    return !isNaN(value.getTime());
+  }
+
+  // 尝试解析 / Try to parse
+  const date = new Date(value);
+  return !isNaN(date.getTime());
+}
+
+/**
+ * 检查是否为有效邮箱
+ * Check if valid email
+ * @param {string} email - 邮箱地址 / Email address
+ * @returns {boolean} 是否为有效邮箱 / Is valid email
+ */
+export function isValidEmail(email) {
+  // 基本邮箱正则 / Basic email regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return typeof email === 'string' && emailRegex.test(email);
+}
+
+/**
+ * 检查是否为有效 URL
+ * Check if valid URL
+ * @param {string} url - URL 地址 / URL address
+ * @returns {boolean} 是否为有效 URL / Is valid URL
+ */
+export function isValidUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================
+// 范围验证 / Range Validation
+// ============================================
+
+/**
+ * 检查数字是否在范围内
+ * Check if number is in range
+ * @param {number} value - 要检查的值 / Value to check
+ * @param {number} min - 最小值 / Minimum
+ * @param {number} max - 最大值 / Maximum
+ * @returns {boolean} 是否在范围内 / Is in range
+ */
+export function isInRange(value, min, max) {
+  return isValidNumber(value) && value >= min && value <= max;
+}
+
+/**
+ * 限制数字在范围内
+ * Clamp number to range
+ * @param {number} value - 要限制的值 / Value to clamp
+ * @param {number} min - 最小值 / Minimum
+ * @param {number} max - 最大值 / Maximum
+ * @returns {number} 限制后的值 / Clamped value
+ */
+export function clamp(value, min, max) {
+  if (!isValidNumber(value)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, value));
+}
+
+// 默认导出所有函数 / Default export all functions
+export default {
+  // 交易参数验证 / Trading parameter validation
+  validateOrder,
+  validateStrategyConfig,
+  validateRiskConfig,
+
+  // 数据验证 / Data validation
+  validateCandle,
+  validateCandles,
+
+  // 类型验证 / Type validation
+  isValidNumber,
+  isPositiveNumber,
+  isNonNegativeNumber,
+  isValidPercentage,
+  isValidRatio,
+  isNonEmptyString,
+  isValidDate,
+  isValidEmail,
+  isValidUrl,
+
+  // 范围验证 / Range validation
+  isInRange,
+  clamp,
+};

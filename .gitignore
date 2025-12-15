@@ -1,0 +1,158 @@
+# ============================================
+# 量化交易系统 Git 忽略配置
+# Quantitative Trading System Git Ignore Configuration
+# ============================================
+
+# --------------------------------------------
+# 环境和配置文件 / Environment and Config Files
+# --------------------------------------------
+# 环境变量文件 (包含 API 密钥等敏感信息)
+.env
+.env.local
+.env.*.local
+
+# 本地配置覆盖
+config/local.js
+config/*.local.js
+
+# --------------------------------------------
+# 依赖目录 / Dependencies
+# --------------------------------------------
+# Node.js 依赖
+node_modules/
+
+# pnpm 锁文件 (如果需要可以取消注释)
+# pnpm-lock.yaml
+
+# --------------------------------------------
+# 日志文件 / Log Files
+# --------------------------------------------
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# PM2 日志
+.pm2/
+
+# --------------------------------------------
+# 数据文件 / Data Files
+# --------------------------------------------
+# 数据库文件
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 历史数据
+historical/
+backtest-data/
+
+# 交易记录导出
+exports/
+reports/
+
+# --------------------------------------------
+# 缓存 / Cache
+# --------------------------------------------
+.cache/
+*.cache
+
+# Redis 持久化文件
+dump.rdb
+appendonly.aof
+
+# --------------------------------------------
+# 编辑器和 IDE / Editors and IDEs
+# --------------------------------------------
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# --------------------------------------------
+# 操作系统文件 / OS Files
+# --------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# --------------------------------------------
+# 测试和覆盖率 / Testing and Coverage
+# --------------------------------------------
+coverage/
+.nyc_output/
+test-results/
+
+# --------------------------------------------
+# 构建输出 / Build Output
+# --------------------------------------------
+dist/
+build/
+out/
+
+# --------------------------------------------
+# 临时文件 / Temporary Files
+# --------------------------------------------
+tmp/
+temp/
+*.tmp
+*.temp
+
+# --------------------------------------------
+# 密钥和证书 / Keys and Certificates
+# --------------------------------------------
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+
+# --------------------------------------------
+# 回测结果 / Backtest Results
+# --------------------------------------------
+# 保留目录结构但忽略结果文件
+backtest-results/
+!backtest-results/.gitkeep
+
+# --------------------------------------------
+# 其他 / Others
+# --------------------------------------------
+# 锁文件 (进程锁)
+*.lock
+!pnpm-lock.yaml
+
+# 备份文件
+*.bak
+*.backup
+
+# 调试文件
+debug/
