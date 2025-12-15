@@ -1286,8 +1286,17 @@ export class MarketDataEngine extends EventEmitter {
     this.stats.messagesReceived++;
 
     try {
+      // 转换为字符串 / Convert to string
+      const dataStr = data.toString();
+
+      // 处理非 JSON 响应 (如 OKX 的 "pong") / Handle non-JSON responses (like OKX's "pong")
+      if (dataStr === 'pong' || dataStr === 'ping') {
+        // 心跳响应，忽略 / Heartbeat response, ignore
+        return;
+      }
+
       // 解析 JSON 数据 / Parse JSON data
-      const message = JSON.parse(data.toString());
+      const message = JSON.parse(dataStr);
 
       // 根据交易所处理消息 / Handle message based on exchange
       switch (exchange) {

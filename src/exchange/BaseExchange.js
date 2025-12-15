@@ -108,15 +108,27 @@ export class BaseExchange extends EventEmitter {
     // 记录日志 / Log
     console.log(`[${this.name}] 正在连接交易所... / Connecting to exchange...`);
 
+    // 调试：打印配置信息 / Debug: print config info
+    console.log(`[${this.name}] 配置信息 / Config info:`, {
+      hasApiKey: !!this.config.apiKey,
+      hasSecret: !!this.config.secret,
+      sandbox: this.config.sandbox,
+      defaultType: this.config.defaultType,
+    });
+
     try {
       // 1. 创建 CCXT 实例 / Create CCXT instance
       this.exchange = this._createExchange();
 
-      // 2. 设置沙盒模式 / Set sandbox mode
-      if (this.config.sandbox && this.exchange.setSandboxMode) {
+      // 2. 设置沙盒模式 (如果子类没有在 _createExchange 中处理) / Set sandbox mode (if subclass didn't handle it in _createExchange)
+      // 检查是否已经设置了 sandboxMode 选项 / Check if sandboxMode option is already set
+      const alreadySandbox = this.exchange.options?.sandboxMode === true;
+      if (this.config.sandbox && this.exchange.setSandboxMode && !alreadySandbox) {
         // 启用沙盒/测试网 / Enable sandbox/testnet
         this.exchange.setSandboxMode(true);
-        console.log(`[${this.name}] 已启用沙盒模式 / Sandbox mode enabled`);
+        console.log(`[${this.name}] 已启用沙盒模式 (via setSandboxMode) / Sandbox mode enabled (via setSandboxMode)`);
+      } else if (this.config.sandbox) {
+        console.log(`[${this.name}] 沙盒模式已在创建时配置 / Sandbox mode configured during creation`);
       }
 
       // 3. 加载市场信息 (带重试) / Load market info (with retry)
@@ -129,11 +141,26 @@ export class BaseExchange extends EventEmitter {
       this._cachePrecisions();
 
       // 5. 验证 API 连接 (带重试) / Verify API connection (with retry)
-      if (this.config.apiKey && this.config.secret) {
-        await this._executeWithRetry(async () => {
-          // 获取账户余额来验证连接 / Fetch balance to verify connection
-          await this.exchange.fetchBalance();
-        }, '验证 API 连接 / Verify API connection');
+      // 只在非沙盒模式 或 明确要求验证时才验证 API / Only verify API in non-sandbox mode or when explicitly requested
+      // 沙盒/测试网的 API 密钥通常与主网不同 / Sandbox/testnet API keys are usually different from mainnet
+      const shouldVerifyApi = this.config.apiKey && this.config.secret && !this.config.skipApiVerification;
+      if (shouldVerifyApi) {
+        try {
+          await this._executeWithRetry(async () => {
+            // 获取账户余额来验证连接 / Fetch balance to verify connection
+            await this.exchange.fetchBalance();
+          }, '验证 API 连接 / Verify API connection');
+        } catch (apiError) {
+          // 如果是沙盒模式且 API 验证失败，发出警告但不阻止连接 / If sandbox mode and API verification fails, warn but don't block
+          if (this.config.sandbox) {
+            console.warn(`[${this.name}] ⚠ API 验证失败，但沙盒模式将继续 / API verification failed, but sandbox mode will continue`);
+            console.warn(`[${this.name}]   注意：部分功能可能受限 / Note: Some features may be limited`);
+            console.warn(`[${this.name}]   提示：如需完整功能，请使用测试网专用 API 密钥 / Tip: Use testnet-specific API keys for full functionality`);
+          } else {
+            // 非沙盒模式，继续抛出错误 / Non-sandbox mode, continue to throw error
+            throw apiError;
+          }
+        }
       }
 
       // 6. 更新连接状态 / Update connection status
@@ -153,11 +180,19 @@ export class BaseExchange extends EventEmitter {
       // 更新连接状态 / Update connection status
       this.connected = false;
 
+      // 调试：打印原始错误信息 / Debug: print raw error info
+      console.error(`[${this.name}] 原始错误 / Raw error:`, {
+        message: error?.message,
+        name: error?.name,
+        code: error?.code,
+        type: typeof error,
+      });
+
       // 发出错误事件 / Emit error event
       this.emit('error', { type: 'connect', error: this._normalizeError(error) });
 
       // 记录错误 / Log error
-      console.error(`[${this.name}] ✗ 连接失败 / Connection failed:`, error.message);
+      console.error(`[${this.name}] ✗ 连接失败 / Connection failed:`, error?.message || 'Unknown error');
 
       // 抛出标准化错误 / Throw normalized error
       throw this._normalizeError(error);
@@ -792,7 +827,27 @@ export class BaseExchange extends EventEmitter {
    */
   _normalizeError(error) {
     // 创建统一的错误对象 / Create unified error object
-    const normalizedError = new Error(error.message);
+    // 处理 error 为 null 或 undefined 的情况 / Handle null or undefined error
+    let errorMessage = 'Unknown error';
+
+    try {
+      if (error) {
+        if (typeof error.message === 'string') {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (typeof error.toString === 'function') {
+          const str = error.toString();
+          if (typeof str === 'string') {
+            errorMessage = str;
+          }
+        }
+      }
+    } catch (e) {
+      errorMessage = 'Error occurred (unable to extract message)';
+    }
+
+    const normalizedError = new Error(errorMessage);
 
     // 错误类型 / Error type
     normalizedError.type = this._getErrorType(error);
@@ -827,6 +882,11 @@ export class BaseExchange extends EventEmitter {
    * @private
    */
   _getErrorType(error) {
+    // 如果 error 为空，返回未知错误 / If error is null, return unknown error
+    if (!error) {
+      return 'UNKNOWN_ERROR';
+    }
+
     // 根据 CCXT 错误类型判断 / Determine by CCXT error type
     if (error instanceof ccxt.AuthenticationError) {
       return 'AUTHENTICATION_ERROR';     // 认证错误 / Authentication error

@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(dir /s /b *.js *.json)",
-      "Bash(mkdir -p \"C:\\Users\\46745\\Desktop\\pro\\new-quant-trading-system-js\\docs\")"
+      "Bash(mkdir -p \"C:\\Users\\46745\\Desktop\\pro\\new-quant-trading-system-js\\docs\")",
+      "Bash(npm run shadow)",
+      "Bash(timeout 30 npm run shadow)",
+      "Bash(timeout 45 npm run shadow)",
+      "Bash(timeout 60 npm run shadow)",
+      "Bash(cat /tmp/claude/tasks/b7ca7dc.output)"
     ]
   }
 }

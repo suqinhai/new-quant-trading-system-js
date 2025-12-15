@@ -555,16 +555,27 @@ class TradingSystemRunner extends EventEmitter {
     // 获取交易所配置 / Get exchange configuration
     const exchangeConfig = this.config.exchange?.[exchangeName] || {};
 
+    // 获取 API 密钥 (支持多种环境变量命名) / Get API credentials (support multiple env var naming)
+    const upperName = exchangeName.toUpperCase();
+    const apiKey = exchangeConfig.apiKey ||
+                   process.env[`${upperName}_API_KEY`];
+    const secret = exchangeConfig.secret ||
+                   process.env[`${upperName}_SECRET`] ||
+                   process.env[`${upperName}_API_SECRET`];
+    const sandbox = exchangeConfig.sandbox ||
+                    process.env[`${upperName}_SANDBOX`] === 'true' ||
+                    process.env[`${upperName}_TESTNET`] === 'true';
+
     // 创建交易所实例 / Create exchange instance
     this.exchange = ExchangeFactory.create(exchangeName, {
       // API 密钥 / API key
-      apiKey: exchangeConfig.apiKey || process.env[`${exchangeName.toUpperCase()}_API_KEY`],
+      apiKey,
 
       // API 密钥 / API secret
-      secret: exchangeConfig.secret || process.env[`${exchangeName.toUpperCase()}_SECRET`],
+      secret,
 
       // 是否沙盒模式 / Sandbox mode
-      sandbox: exchangeConfig.sandbox || false,
+      sandbox,
 
       // 默认类型 (合约) / Default type (futures)
       defaultType: 'swap',
@@ -1159,13 +1170,16 @@ class TradingSystemRunner extends EventEmitter {
     // 遍历订阅 / Iterate and subscribe
     for (const symbol of symbols) {
       // 订阅 ticker / Subscribe ticker
-      this.marketDataEngine.subscribe(symbol, 'ticker');
+      await this.marketDataEngine.subscribe(symbol, ['ticker']);
 
-      // 订阅 K 线 / Subscribe candles
-      this.marketDataEngine.subscribe(symbol, 'candle', { timeframe: '1m' });
+      // 订阅深度数据 / Subscribe depth (order book)
+      await this.marketDataEngine.subscribe(symbol, ['depth']);
 
-      // 订阅订单簿 / Subscribe order book
-      this.marketDataEngine.subscribe(symbol, 'orderbook');
+      // 订阅成交数据 / Subscribe trades
+      await this.marketDataEngine.subscribe(symbol, ['trade']);
+
+      // 订阅资金费率 / Subscribe funding rate
+      await this.marketDataEngine.subscribe(symbol, ['fundingRate']);
     }
   }
 

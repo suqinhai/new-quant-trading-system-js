@@ -49,20 +49,13 @@ export class BinanceExchange extends BaseExchange {
       ? ccxt.binance           // 现货交易 / Spot trading
       : ccxt.binanceusdm;      // U 本位合约 (包含 swap 和 future) / USDT-margined (swap and future)
 
-    // 创建并返回 CCXT 交易所实例 / Create and return CCXT exchange instance
-    return new ExchangeClass({
-      // API 认证信息 / API authentication
-      apiKey: this.config.apiKey,         // API 密钥 / API key
-      secret: this.config.secret,         // API 密钥 / API secret
-
+    // 构建配置对象 / Build configuration object
+    const exchangeConfig = {
       // 是否启用速率限制 / Whether to enable rate limiting
       enableRateLimit: this.config.enableRateLimit,
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
       timeout: this.config.timeout,
-
-      // 代理设置 / Proxy settings
-      proxy: this.config.proxy,
 
       // 配置选项 / Configuration options
       options: {
@@ -78,7 +71,37 @@ export class BinanceExchange extends BaseExchange {
         // 合并额外选项 / Merge additional options
         ...this.config.options,
       },
-    });
+    };
+
+    // 沙盒模式处理 / Sandbox mode handling
+    if (this.config.sandbox) {
+      // 对于 binanceusdm (USDT-M 合约)，设置测试网 URL / For binanceusdm (USDT-M futures), set testnet URLs
+      if (this.config.defaultType !== 'spot') {
+        exchangeConfig.options.sandboxMode = true;
+        // 设置测试网 hostname / Set testnet hostname
+        exchangeConfig.hostname = 'testnet.binancefuture.com';
+      }
+      // 沙盒模式下不传递 API 密钥（除非是测试网专用密钥）/ In sandbox mode, don't pass API keys (unless testnet-specific)
+      // 主网 API 密钥在测试网会返回 Invalid Api-Key ID / Mainnet API keys return Invalid Api-Key ID on testnet
+      console.log(`[${this.name}] 沙盒模式: 不使用 API 密钥 (使用公开端点) / Sandbox mode: Not using API keys (using public endpoints)`);
+    } else {
+      // 只在有值时添加 API 认证信息 / Only add API auth when values exist
+      // 避免传递 null/undefined 导致 CCXT 内部错误 / Avoid passing null/undefined causing CCXT internal errors
+      if (this.config.apiKey && typeof this.config.apiKey === 'string' && this.config.apiKey.length > 0) {
+        exchangeConfig.apiKey = this.config.apiKey;
+      }
+      if (this.config.secret && typeof this.config.secret === 'string' && this.config.secret.length > 0) {
+        exchangeConfig.secret = this.config.secret;
+      }
+    }
+
+    // 只在有值时添加代理设置 / Only add proxy when value exists
+    if (this.config.proxy) {
+      exchangeConfig.proxy = this.config.proxy;
+    }
+
+    // 创建并返回 CCXT 交易所实例 / Create and return CCXT exchange instance
+    return new ExchangeClass(exchangeConfig);
   }
 
   // ============================================
