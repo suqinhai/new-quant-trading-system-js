@@ -35,6 +35,12 @@ import fs from 'fs';
 // 导入路径模块 / Import path module
 import path from 'path';
 
+// 导入 dotenv / Import dotenv
+import dotenv from 'dotenv';
+
+// 加载环境变量 / Load environment variables
+dotenv.config();
+
 // ============================================
 // 常量定义 / Constants Definition
 // ============================================
@@ -63,10 +69,10 @@ const DATA_TYPES = {
 const DEFAULT_CONFIG = {
   // ClickHouse 连接配置 / ClickHouse connection config
   clickhouse: {
-    host: 'http://localhost:8123',  // ClickHouse 主机地址 / ClickHouse host
-    database: 'quant',               // 数据库名称 / Database name
-    username: 'default',             // 用户名 / Username
-    password: '',                    // 密码 / Password
+    host: `http://${process.env.CLICKHOUSE_HOST || 'localhost'}:${process.env.CLICKHOUSE_PORT || '8123'}`,  // ClickHouse 主机地址 / ClickHouse host
+    database: process.env.CLICKHOUSE_DATABASE || 'default',               // 数据库名称 / Database name
+    username: process.env.CLICKHOUSE_USERNAME || 'default',             // 用户名 / Username
+    password: process.env.CLICKHOUSE_PASSWORD || '',                    // 密码 / Password
   },
   // 下载配置 / Download config
   download: {
@@ -277,7 +283,7 @@ class ClickHouseClient {
 
     // 创建 ClickHouse 客户端实例 / Create ClickHouse client instance
     this.client = createClient({
-      host: config.host,           // 主机地址 / Host address
+      url: config.host,           // URL 地址 / URL address
       database: config.database,   // 数据库名 / Database name
       username: config.username,   // 用户名 / Username
       password: config.password,   // 密码 / Password
@@ -430,7 +436,7 @@ class ClickHouseClient {
     // 转换数据格式 / Convert data format
     const rows = data.map(candle => ({
       symbol,                                        // 交易对 / Trading pair
-      timestamp: new Date(candle[0]),                // 时间戳 / Timestamp
+      timestamp: Math.floor(candle[0]),              // 时间戳 / Timestamp (milliseconds as number)
       open: candle[1],                               // 开盘价 / Open
       high: candle[2],                               // 最高价 / High
       low: candle[3],                                // 最低价 / Low
@@ -468,9 +474,9 @@ class ClickHouseClient {
     // 转换数据格式 / Convert data format
     const rows = data.map(item => ({
       symbol,                                                // 交易对 / Trading pair
-      timestamp: new Date(item.timestamp),                   // 时间戳 / Timestamp
+      timestamp: Math.floor(item.timestamp || 0),            // 时间戳 / Timestamp (milliseconds as number)
       funding_rate: item.fundingRate || 0,                   // 资金费率 / Funding rate
-      funding_time: new Date(item.fundingTimestamp || item.timestamp),  // 资金费率时间 / Funding time
+      funding_time: Math.floor(item.fundingTimestamp || item.timestamp || 0),  // 资金费率时间 / Funding time
       mark_price: item.markPrice || 0,                       // 标记价格 / Mark price
       index_price: item.indexPrice || 0,                     // 指数价格 / Index price
     }));
@@ -503,7 +509,7 @@ class ClickHouseClient {
     // 转换数据格式 / Convert data format
     const rows = data.map(item => ({
       symbol,                                                // 交易对 / Trading pair
-      timestamp: new Date(item.timestamp),                   // 时间戳 / Timestamp
+      timestamp: Math.floor(item.timestamp || 0),            // 时间戳 / Timestamp (milliseconds as number)
       open_interest: item.openInterest || item.openInterestAmount || 0,  // 持仓量 / Open interest
       open_interest_value: item.openInterestValue || 0,      // 持仓价值 / OI value
     }));
@@ -536,7 +542,7 @@ class ClickHouseClient {
     // 转换数据格式 / Convert data format
     const rows = data.map(item => ({
       symbol,                                                // 交易对 / Trading pair
-      timestamp: new Date(item.timestamp),                   // 时间戳 / Timestamp
+      timestamp: Math.floor(item.timestamp || 0),            // 时间戳 / Timestamp (milliseconds as number)
       mark_price: item.markPrice || 0,                       // 标记价格 / Mark price
       index_price: item.indexPrice || 0,                     // 指数价格 / Index price
       estimated_settle_price: item.estimatedSettlePrice || 0, // 预估结算价 / Est. settle price
@@ -1807,7 +1813,7 @@ function parseCliArgs() {
     // ClickHouse 数据库 / ClickHouse database
     'ch-database': {
       type: 'string',
-      default: 'quant',
+      default: 'default',
     },
     // 帮助 / Help
     help: {
@@ -1859,7 +1865,7 @@ function printHelp() {
                            ClickHouse host (default: http://localhost:8123)
 
   --ch-database <name>     ClickHouse 数据库名
-                           ClickHouse database (default: quant)
+                           ClickHouse database (default: default)
 
   -h, --help               显示帮助信息
                            Show help message
