@@ -46,7 +46,11 @@
       "WebSearch",
       "WebFetch(domain:www.okx.com)",
       "Bash(tree:*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(pm2 status:*)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(pm2 delete:*)"
     ]
   }
 }

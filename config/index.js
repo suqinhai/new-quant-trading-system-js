@@ -151,6 +151,7 @@ function buildEnvConfig() {
       httpPort: getEnvNumber('HTTP_PORT', 3000),
       wsPort: getEnvNumber('WS_PORT', 3001),
       dashboardPort: getEnvNumber('DASHBOARD_PORT', 8080),
+      metricsPort: getEnvNumber('METRICS_PORT', 9090),
     },
   };
 }

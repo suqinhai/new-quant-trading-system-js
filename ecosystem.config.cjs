@@ -1,321 +1,280 @@
 /**
- * PM2 生态系统配置文件
- * PM2 Ecosystem Configuration File
+ * PM2 生态系统配置文件 - 多策略版本
+ * PM2 Ecosystem Configuration File - Multi-Strategy Version
  *
  * 使用方式 / Usage:
- * - pm2 start ecosystem.config.cjs                      # 启动所有应用 / Start all apps
- * - pm2 start ecosystem.config.cjs --only quant-live    # 仅启动实盘 / Start live only
- * - pm2 start ecosystem.config.cjs --only quant-shadow  # 仅启动影子 / Start shadow only
- * - pm2 reload ecosystem.config.cjs                     # 零停机重载 / Zero-downtime reload
- * - pm2 stop ecosystem.config.cjs                       # 停止所有 / Stop all
- * - pm2 delete ecosystem.config.cjs                     # 删除所有 / Delete all
- * - pm2 logs                                            # 查看日志 / View logs
- * - pm2 monit                                           # 监控面板 / Monitor dashboard
+ * - pm2 start ecosystem.config.cjs                              # 启动所有应用 / Start all apps
+ * - pm2 start ecosystem.config.cjs --only quant-live-funding    # 仅启动 FundingArb 实盘
+ * - pm2 start ecosystem.config.cjs --only quant-live-grid       # 仅启动 Grid 实盘
+ * - pm2 start ecosystem.config.cjs --only quant-shadow-funding  # 仅启动 FundingArb 影子
+ * - pm2 reload ecosystem.config.cjs                             # 零停机重载 / Zero-downtime reload
+ * - pm2 stop ecosystem.config.cjs                               # 停止所有 / Stop all
+ * - pm2 delete ecosystem.config.cjs                             # 删除所有 / Delete all
+ * - pm2 logs                                                    # 查看日志 / View logs
+ * - pm2 monit                                                   # 监控面板 / Monitor dashboard
+ *
+ * 端口分配 / Port Assignment:
+ * ┌─────────────────────┬────────────┬─────────┬──────────────┬─────────────┐
+ * │ 应用名称             │ HTTP_PORT  │ WS_PORT │ DASHBOARD    │ METRICS     │
+ * ├─────────────────────┼────────────┼─────────┼──────────────┼─────────────┤
+ * │ quant-live-funding  │ 3000       │ 3001    │ 8080         │ 9090        │
+ * │ quant-live-grid     │ 3010       │ 3011    │ 8081         │ 9091        │
+ * │ quant-live-sma      │ 3020       │ 3021    │ 8082         │ 9092        │
+ * │ quant-live-rsi      │ 3030       │ 3031    │ 8083         │ 9093        │
+ * │ quant-live-macd     │ 3040       │ 3041    │ 8084         │ 9094        │
+ * │ quant-live-bb       │ 3050       │ 3051    │ 8085         │ 9095        │
+ * │ quant-shadow-*      │ 31xx       │ 31xx    │ 81xx         │ 91xx        │
+ * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
 
 // 使用 CommonJS 语法因为 PM2 不支持 ES modules 配置
 // Using CommonJS syntax because PM2 doesn't support ES modules config
 
+// ============================================
+// 通用配置模板 / Common Configuration Template
+// ============================================
+
+/**
+ * 创建应用配置
+ * Create application configuration
+ *
+ * @param {Object} options - 配置选项
+ * @param {string} options.name - 应用名称
+ * @param {string} options.mode - 运行模式 (live/shadow)
+ * @param {string} options.strategy - 策略名称
+ * @param {string} options.symbols - 交易对
+ * @param {number} options.httpPort - HTTP 端口
+ * @param {number} options.wsPort - WebSocket 端口
+ * @param {number} options.dashboardPort - 仪表盘端口
+ * @param {number} options.metricsPort - 指标服务端口
+ * @param {string} options.maxMemory - 最大内存
+ * @returns {Object} PM2 应用配置
+ */
+function createAppConfig(options) {
+  const {
+    name,
+    mode,
+    strategy,
+    symbols,
+    httpPort,
+    wsPort,
+    dashboardPort,
+    metricsPort,
+    maxMemory = '1G',
+  } = options;
+
+  const isLive = mode === 'live';
+  const verboseFlag = isLive ? '' : ' --verbose';
+
+  return {
+    // 应用名称 / Application name
+    name,
+
+    // 入口脚本 / Entry script
+    script: 'src/main.js',
+
+    // 命令行参数 / Command line arguments
+    args: `${mode} --strategy ${strategy} --symbols ${symbols}${verboseFlag}`,
+
+    // ============================================
+    // 进程配置 / Process Configuration
+    // ============================================
+
+    instances: 1,
+    exec_mode: 'fork',
+    autorestart: true,
+    watch: false,
+    max_memory_restart: maxMemory,
+
+    // ============================================
+    // 环境变量配置 / Environment Variables
+    // ============================================
+
+    env: {
+      NODE_ENV: isLive ? 'production' : 'development',
+      TZ: 'Asia/Shanghai',
+      HTTP_PORT: httpPort,
+      WS_PORT: wsPort,
+      MARKETDATA_PORT: wsPort,
+      DASHBOARD_PORT: dashboardPort,
+      METRICS_PORT: metricsPort,
+    },
+
+    env_production: {
+      NODE_ENV: 'production',
+      TZ: 'Asia/Shanghai',
+      HTTP_PORT: httpPort,
+      WS_PORT: wsPort,
+      MARKETDATA_PORT: wsPort,
+      DASHBOARD_PORT: dashboardPort,
+      METRICS_PORT: metricsPort,
+    },
+
+    // ============================================
+    // 日志配置 / Logging Configuration
+    // ============================================
+
+    out_file: `./logs/pm2/${name}-out.log`,
+    error_file: `./logs/pm2/${name}-error.log`,
+    merge_logs: true,
+    time: true,
+    log_date_format: 'YYYY-MM-DD HH:mm:ss',
+
+    // ============================================
+    // 重启策略 / Restart Strategy
+    // ============================================
+
+    min_uptime: isLive ? '60s' : '30s',
+    max_restarts: isLive ? 10 : 15,
+    restart_delay: isLive ? 5000 : 3000,
+
+    // ============================================
+    // 优雅关闭配置 / Graceful Shutdown Configuration
+    // ============================================
+
+    wait_ready: true,
+    listen_timeout: 30000,
+    kill_timeout: 10000,
+    shutdown_with_message: true,
+  };
+}
+
+// ============================================
+// 策略配置定义 / Strategy Configuration Definition
+// ============================================
+
+const STRATEGIES = [
+  {
+    id: 'funding',
+    name: 'FundingArb',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '资金费率套利 / Funding Rate Arbitrage',
+  },
+  {
+    id: 'grid',
+    name: 'Grid',
+    symbols: 'BTC/USDT:USDT',
+    description: '网格交易 / Grid Trading',
+  },
+  {
+    id: 'sma',
+    name: 'SMA',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '简单移动平均 / Simple Moving Average',
+  },
+  {
+    id: 'rsi',
+    name: 'RSI',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '相对强弱指标 / Relative Strength Index',
+  },
+  {
+    id: 'macd',
+    name: 'MACD',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: 'MACD 指标策略 / MACD Indicator Strategy',
+  },
+  {
+    id: 'bb',
+    name: 'BollingerBands',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '布林带策略 / Bollinger Bands Strategy',
+  },
+];
+
+// ============================================
+// 生成应用配置列表 / Generate Application Config List
+// ============================================
+
+const apps = [];
+
+// 为每个策略生成 live 和 shadow 配置
+// Generate live and shadow config for each strategy
+STRATEGIES.forEach((strategy, index) => {
+  // 端口基数计算 / Port base calculation
+  // live: 3000, 3010, 3020... / shadow: 3100, 3110, 3120...
+  const livePortBase = 3000 + index * 10;
+  const shadowPortBase = 3100 + index * 10;
+  const liveDashboardPort = 8080 + index;
+  const shadowDashboardPort = 8180 + index;
+  const liveMetricsPort = 9090 + index;
+  const shadowMetricsPort = 9190 + index;
+
+  // 实盘配置 / Live configuration
+  apps.push(
+    createAppConfig({
+      name: `quant-live-${strategy.id}`,
+      mode: 'live',
+      strategy: strategy.name,
+      symbols: strategy.symbols,
+      httpPort: livePortBase,
+      wsPort: livePortBase + 1,
+      dashboardPort: liveDashboardPort,
+      metricsPort: liveMetricsPort,
+      maxMemory: '1G',
+    })
+  );
+
+  // 影子配置 / Shadow configuration
+  apps.push(
+    createAppConfig({
+      name: `quant-shadow-${strategy.id}`,
+      mode: 'shadow',
+      strategy: strategy.name,
+      symbols: strategy.symbols,
+      httpPort: shadowPortBase,
+      wsPort: shadowPortBase + 1,
+      dashboardPort: shadowDashboardPort,
+      metricsPort: shadowMetricsPort,
+      maxMemory: '512M',
+    })
+  );
+});
+
+// ============================================
+// 回测应用配置 / Backtest Application Configuration
+// ============================================
+
+apps.push({
+  name: 'quant-backtest',
+  script: 'src/main.js',
+  args: 'backtest --strategy FundingArb --start 2024-01-01 --end 2024-06-01',
+  instances: 1,
+  exec_mode: 'fork',
+  autorestart: false,
+  watch: false,
+  max_memory_restart: '2G',
+  env: {
+    NODE_ENV: 'development',
+    TZ: 'Asia/Shanghai',
+  },
+  out_file: './logs/pm2/backtest-out.log',
+  error_file: './logs/pm2/backtest-error.log',
+  merge_logs: true,
+  time: true,
+  log_date_format: 'YYYY-MM-DD HH:mm:ss',
+});
+
+// ============================================
+// 导出配置 / Export Configuration
+// ============================================
+
 module.exports = {
-  // ============================================
-  // 应用配置列表 / Application Configuration List
-  // ============================================
-  apps: [
-    // ============================================
-    // 实盘交易应用 / Live Trading Application
-    // ============================================
-    {
-      // 应用名称 / Application name
-      name: 'quant-live',
-
-      // 入口脚本 / Entry script
-      script: 'src/main.js',
-
-      // 命令行参数 / Command line arguments
-      args: 'live --strategy FundingArb --symbols BTC/USDT:USDT',
-
-      // ============================================
-      // 进程配置 / Process Configuration
-      // ============================================
-
-      // 实例数量 (1 表示单实例) / Number of instances (1 for single)
-      instances: 1,
-
-      // 执行模式 (fork 或 cluster) / Execution mode (fork or cluster)
-      exec_mode: 'fork',
-
-      // 是否自动重启 / Auto restart on crash
-      autorestart: true,
-
-      // 是否监听文件变化 / Watch for file changes
-      watch: false,
-
-      // 最大内存限制 (超出时重启) / Max memory limit (restart when exceeded)
-      max_memory_restart: '1G',
-
-      // ============================================
-      // 环境变量配置 / Environment Variables
-      // ============================================
-
-      // 默认环境变量 / Default environment variables
-      env: {
-        // Node 环境 / Node environment
-        NODE_ENV: 'production',
-
-        // 时区设置 / Timezone setting
-        TZ: 'Asia/Shanghai',
-
-        // 端口配置 (避免与 shadow 冲突) / Port configuration (avoid conflict with shadow)
-        HTTP_PORT: 3000,
-        WS_PORT: 3001,
-        MARKETDATA_PORT: 3001,
-        DASHBOARD_PORT: 8080,
-      },
-
-      // 生产环境变量 / Production environment variables
-      env_production: {
-        NODE_ENV: 'production',
-        TZ: 'Asia/Shanghai',
-        HTTP_PORT: 3000,
-        WS_PORT: 3001,
-        MARKETDATA_PORT: 3001,
-        DASHBOARD_PORT: 8080,
-      },
-
-      // 开发环境变量 / Development environment variables
-      env_development: {
-        NODE_ENV: 'development',
-        TZ: 'Asia/Shanghai',
-        HTTP_PORT: 3000,
-        WS_PORT: 3001,
-        MARKETDATA_PORT: 3001,
-        DASHBOARD_PORT: 8080,
-      },
-
-      // ============================================
-      // 日志配置 / Logging Configuration
-      // ============================================
-
-      // 标准输出日志文件 / Standard output log file
-      out_file: './logs/pm2/live-out.log',
-
-      // 错误输出日志文件 / Error output log file
-      error_file: './logs/pm2/live-error.log',
-
-      // 合并日志 (所有实例写入同一文件) / Merge logs (all instances to same file)
-      merge_logs: true,
-
-      // 日志添加时间戳 / Add timestamp to logs
-      time: true,
-
-      // 日志格式化 / Log formatting
-      log_date_format: 'YYYY-MM-DD HH:mm:ss',
-
-      // ============================================
-      // 重启策略 / Restart Strategy
-      // ============================================
-
-      // 最小运行时间 (毫秒)，少于此时间重启会被视为异常
-      // Min uptime (ms), restart within this time considered unstable
-      min_uptime: '60s',
-
-      // 异常重启时的最大重试次数 / Max restarts when unstable
-      max_restarts: 10,
-
-      // 重启延迟时间 (毫秒) / Restart delay (ms)
-      restart_delay: 5000,
-
-      // ============================================
-      // 优雅关闭配置 / Graceful Shutdown Configuration
-      // ============================================
-
-      // 等待应用准备就绪 / Wait for app ready
-      wait_ready: true,
-
-      // 监听超时时间 (毫秒) / Listen timeout (ms)
-      listen_timeout: 30000,
-
-      // 关闭超时时间 (毫秒) / Kill timeout (ms)
-      kill_timeout: 10000,
-
-      // 关闭信号 / Shutdown signal
-      shutdown_with_message: true,
-
-      // ============================================
-      // Cron 配置 / Cron Configuration
-      // ============================================
-
-      // 定时重启 (每天凌晨 4 点) / Scheduled restart (daily at 4 AM)
-      // cron_restart: '0 4 * * *',
-    },
-
-    // ============================================
-    // 影子模式应用 / Shadow Mode Application
-    // ============================================
-    {
-      // 应用名称 / Application name
-      name: 'quant-shadow',
-
-      // 入口脚本 / Entry script
-      script: 'src/main.js',
-
-      // 命令行参数 / Command line arguments
-      args: 'shadow --strategy FundingArb --symbols BTC/USDT:USDT --verbose',
-
-      // ============================================
-      // 进程配置 / Process Configuration
-      // ============================================
-
-      // 实例数量 / Number of instances
-      instances: 1,
-
-      // 执行模式 / Execution mode
-      exec_mode: 'fork',
-
-      // 是否自动重启 / Auto restart
-      autorestart: true,
-
-      // 是否监听文件变化 / Watch for file changes
-      watch: false,
-
-      // 最大内存限制 / Max memory limit
-      max_memory_restart: '512M',
-
-      // ============================================
-      // 环境变量 / Environment Variables
-      // ============================================
-
-      env: {
-        NODE_ENV: 'development',
-        TZ: 'Asia/Shanghai',
-        // 使用不同端口避免与 live 冲突 / Use different ports to avoid conflict with live
-        HTTP_PORT: 3100,
-        WS_PORT: 3101,
-        MARKETDATA_PORT: 3101,
-        DASHBOARD_PORT: 8180,
-      },
-
-      env_production: {
-        NODE_ENV: 'production',
-        TZ: 'Asia/Shanghai',
-        HTTP_PORT: 3100,
-        WS_PORT: 3101,
-        MARKETDATA_PORT: 3101,
-        DASHBOARD_PORT: 8180,
-      },
-
-      // ============================================
-      // 日志配置 / Logging Configuration
-      // ============================================
-
-      out_file: './logs/pm2/shadow-out.log',
-      error_file: './logs/pm2/shadow-error.log',
-      merge_logs: true,
-      time: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss',
-
-      // ============================================
-      // 重启策略 / Restart Strategy
-      // ============================================
-
-      min_uptime: '30s',
-      max_restarts: 15,
-      restart_delay: 3000,
-
-      // ============================================
-      // 优雅关闭配置 / Graceful Shutdown Configuration
-      // ============================================
-
-      wait_ready: true,
-      listen_timeout: 30000,
-      kill_timeout: 10000,
-      shutdown_with_message: true,
-    },
-
-    // ============================================
-    // 回测应用 (可选，一般手动运行)
-    // Backtest Application (optional, usually run manually)
-    // ============================================
-    {
-      // 应用名称 / Application name
-      name: 'quant-backtest',
-
-      // 入口脚本 / Entry script
-      script: 'src/main.js',
-
-      // 命令行参数 / Command line arguments
-      args: 'backtest --strategy FundingArb --start 2024-01-01 --end 2024-06-01',
-
-      // ============================================
-      // 进程配置 / Process Configuration
-      // ============================================
-
-      // 实例数量 / Number of instances
-      instances: 1,
-
-      // 执行模式 / Execution mode
-      exec_mode: 'fork',
-
-      // 是否自动重启 (回测完成后不需要重启)
-      // Auto restart (no need after backtest completes)
-      autorestart: false,
-
-      // 是否监听文件变化 / Watch for file changes
-      watch: false,
-
-      // 最大内存限制 / Max memory limit
-      max_memory_restart: '2G',
-
-      // ============================================
-      // 环境变量 / Environment Variables
-      // ============================================
-
-      env: {
-        NODE_ENV: 'development',
-        TZ: 'Asia/Shanghai',
-      },
-
-      // ============================================
-      // 日志配置 / Logging Configuration
-      // ============================================
-
-      out_file: './logs/pm2/backtest-out.log',
-      error_file: './logs/pm2/backtest-error.log',
-      merge_logs: true,
-      time: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss',
-    },
-  ],
+  apps,
 
   // ============================================
   // 部署配置 (可选) / Deployment Configuration (optional)
   // ============================================
   deploy: {
-    // 生产环境部署配置 / Production deployment configuration
     production: {
-      // SSH 用户 / SSH user
       user: 'deploy',
-
-      // 服务器地址 / Server address
       host: ['your-server.com'],
-
-      // Git 引用 / Git reference
       ref: 'origin/main',
-
-      // Git 仓库地址 / Git repository URL
       repo: 'git@github.com:your-username/quant-trading-system.git',
-
-      // 部署路径 / Deployment path
       path: '/var/www/quant-trading-system',
-
-      // 部署后执行的命令 / Commands to run after deployment
       'post-deploy': 'npm install && pm2 reload ecosystem.config.cjs --env production',
-
-      // 部署前执行的命令 / Commands to run before deployment
       'pre-setup': 'mkdir -p /var/www/quant-trading-system/logs/pm2',
     },
-
-    // 测试环境部署配置 / Staging deployment configuration
     staging: {
       user: 'deploy',
       host: ['staging-server.com'],
