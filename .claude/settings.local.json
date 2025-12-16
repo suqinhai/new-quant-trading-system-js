@@ -42,7 +42,11 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nFix ClickHouse timestamp serialization issue and environment variable loading\n\nResolved multiple critical issues with ClickHouse integration:\n\n1. Fixed timestamp format issue in JSONEachRow inserts\n   - Changed new Date() to Math.floor() in all data insert methods\n   - Timestamps now sent as Unix milliseconds (numbers) instead of ISO strings\n   - Eliminates \"Cannot parse input: expected '\\\"\"' before: 'Z'\" errors\n   - Affects: insertOHLCV, insertFundingRate, insertOpenInterest, insertMarkPrice\n\n2. Added environment variable support\n   - Added dotenv import and config() call\n   - Updated DEFAULT_CONFIG to use process.env with fallbacks\n   - Configuration now properly loaded from .env file\n   - Supports: CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_DATABASE, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD\n\n3. Fixed ClickHouse client initialization\n   - Changed deprecated ''host'' parameter to ''url'' in createClient()\n   - Properly constructs HTTP URL for API access\n\nTest Results:\n- ✅ Single day download: 2000 records, 0 errors, 7 seconds\n- ✅ Timestamps verified with proper DateTime64(3) precision\n- ✅ Incremental updates work correctly\n- ✅ Zero parsing errors across all data types\n- ✅ Data quality verified through SQL queries\n\nFiles modified:\n- scripts/download-history.js: 4 timestamp fixes + env var support + client config fix\n- Documentation: Added TIMESTAMP_FIX_SUMMARY.md and CLICKHOUSE_FINAL_TEST_REPORT.md\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
       "Bash(curl:*)",
-      "Bash(node ./scripts/download-history.js:*)"
+      "Bash(node ./scripts/download-history.js:*)",
+      "WebSearch",
+      "WebFetch(domain:www.okx.com)",
+      "Bash(tree:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

@@ -1406,17 +1406,181 @@ class HistoricalDataDownloader {
    * 下载 OKX 持仓量历史
    * Download OKX open interest history
    *
+   * 使用 OKX Rubik API: GET /api/v5/rubik/stat/contracts/open-interest-history
+   * Using OKX Rubik API: GET /api/v5/rubik/stat/contracts/open-interest-history
+   *
    * @param {string} symbol - 交易对 / Trading pair
    * @param {number} startTime - 开始时间戳 / Start timestamp
    * @param {number} endTime - 结束时间戳 / End timestamp
    * @private
    */
   async _downloadOKXOpenInterest(symbol, startTime, endTime) {
-    // OKX open interest history is not available through CCXT
-    // The publicGetPublicOpenInterestHistory method is not implemented
-    // This would require direct REST API calls to OKX
-    // For now, we skip this data type
-    console.log(`${this.logPrefix} OKX 持仓量历史数据暂不支持 (需要直接调用 REST API)`);
+    console.log(`${this.logPrefix} 使用 OKX Rubik API 下载持仓量历史...`);
+    console.log(`${this.logPrefix} Using OKX Rubik API to download open interest history...`);
+
+    // 获取交易所实例 / Get exchange instance
+    const exchange = this._getExchange('okx');
+
+    // 数据缓冲区 / Data buffer
+    let buffer = [];
+
+    // OKX instId 格式: BTC-USDT-SWAP / OKX instId format
+    // 将 BTC/USDT:USDT 转换为 BTC-USDT-SWAP / Convert BTC/USDT:USDT to BTC-USDT-SWAP
+    const instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP';
+
+    // OKX 支持的周期: 5m, 1H, 1D / OKX supported periods
+    // 使用 5m 获取更细粒度的数据 / Use 5m for finer granularity
+    const period = '5m';
+
+    // 计算总时间范围（用于进度显示）/ Calculate total time range (for progress display)
+    const totalRange = endTime - startTime;
+    let downloadedRange = 0;
+
+    // 当前结束时间（OKX API 从后往前获取）/ Current end time (OKX API fetches backwards)
+    let currentEndTime = endTime;
+
+    // 已处理的时间戳集合（避免重复）/ Processed timestamps set (avoid duplicates)
+    const processedTimestamps = new Set();
+
+    console.log(`${this.logPrefix} instId: ${instId}, period: ${period}`);
+
+    // 循环获取数据 / Loop to fetch data
+    while (currentEndTime > startTime) {
+      try {
+        // 构建请求参数 / Build request params
+        const params = {
+          instId,
+          period,
+        };
+
+        // 调用 OKX Rubik API / Call OKX Rubik API
+        // 端点: GET /api/v5/rubik/stat/contracts/open-interest-history
+        const response = await exchange.publicGetRubikStatContractsOpenInterestHistory(params);
+
+        // 增加请求计数 / Increment request count
+        this.stats.totalRequests++;
+
+        // 获取数据列表 / Get data list
+        // OKX 返回格式: [[timestamp, oi, oiValue], ...] / OKX return format
+        const data = response.data || [];
+
+        // 如果没有数据，跳出循环 / If no data, break
+        if (data.length === 0) {
+          console.log(`${this.logPrefix} 未获取到更多数据 / No more data available`);
+          break;
+        }
+
+        // 打印 API 返回的数据时间范围（仅首次）/ Print API data time range (first time only)
+        if (processedTimestamps.size === 0 && data.length > 0) {
+          const apiStartTime = parseInt(data[data.length - 1][0]);
+          const apiEndTime = parseInt(data[0][0]);
+          console.log(`${this.logPrefix} API 返回数据时间范围 / API data time range: ${formatTimestamp(apiStartTime)} ~ ${formatTimestamp(apiEndTime)}`);
+          console.log(`${this.logPrefix} 请求时间范围 / Requested time range: ${formatTimestamp(startTime)} ~ ${formatTimestamp(endTime)}`);
+
+          // 检查是否有重叠 / Check if there's overlap
+          if (apiEndTime < startTime || apiStartTime > endTime) {
+            console.log(`${this.logPrefix} ⚠ 警告: API 返回的数据与请求的时间范围没有重叠！`);
+            console.log(`${this.logPrefix} ⚠ Warning: API data does not overlap with requested time range!`);
+            console.log(`${this.logPrefix} OKX Rubik API 只提供近期历史数据，不支持获取更早的历史数据。`);
+            console.log(`${this.logPrefix} OKX Rubik API only provides recent historical data, earlier history is not available.`);
+          }
+        }
+
+        // 转换数据格式 / Convert data format
+        const openInterestData = [];
+        let skippedOutOfRange = 0;
+
+        for (const item of data) {
+          const timestamp = parseInt(item[0]);
+
+          // 跳过已处理的时间戳 / Skip processed timestamps
+          if (processedTimestamps.has(timestamp)) {
+            continue;
+          }
+
+          // 跳过时间范围外的数据 / Skip data outside time range
+          if (timestamp < startTime || timestamp > endTime) {
+            skippedOutOfRange++;
+            continue;
+          }
+
+          // 标记为已处理 / Mark as processed
+          processedTimestamps.add(timestamp);
+
+          // 添加到结果 / Add to result
+          openInterestData.push({
+            timestamp,
+            openInterest: parseFloat(item[1]),       // 持仓量（合约张数）/ OI (contracts)
+            openInterestValue: parseFloat(item[2]),  // 持仓价值（USD）/ OI value (USD)
+          });
+        }
+
+        // 如果没有有效数据，跳出循环 / If no valid data, break
+        if (openInterestData.length === 0) {
+          if (skippedOutOfRange > 0) {
+            console.log(`${this.logPrefix} 跳过 ${skippedOutOfRange} 条时间范围外的数据 / Skipped ${skippedOutOfRange} records outside time range`);
+          }
+          console.log(`${this.logPrefix} 已获取所有时间范围内的数据 / All data within time range fetched`);
+          break;
+        }
+
+        // 添加到缓冲区 / Add to buffer
+        buffer.push(...openInterestData);
+
+        // 增加记录计数 / Increment record count
+        this.stats.totalRecords += openInterestData.length;
+
+        // 更新当前结束时间为最早一条数据的时间 / Update current end time
+        const earliestTimestamp = Math.min(...openInterestData.map(d => d.timestamp));
+
+        // 检查是否有进展 / Check if making progress
+        if (earliestTimestamp >= currentEndTime) {
+          console.log(`${this.logPrefix} OKX API 不支持更早的历史数据 / OKX API doesn't support earlier historical data`);
+          break;
+        }
+
+        currentEndTime = earliestTimestamp - 1;
+
+        // 更新已下载的时间范围 / Update downloaded range
+        downloadedRange = endTime - currentEndTime;
+        const progress = Math.min(Math.floor((downloadedRange / totalRange) * 100), 100);
+
+        // 打印进度 / Print progress
+        console.log(`${this.logPrefix} 已下载 ${buffer.length} 条 OKX 持仓量记录 (${progress}%)`);
+
+        // 如果缓冲区达到批量大小，插入数据库 / If buffer reaches batch size, insert to DB
+        if (buffer.length >= this.config.download.batchSize) {
+          await this.clickhouse.insertOpenInterest('okx', symbol, buffer);
+          buffer = [];
+        }
+
+        // 遵守速率限制 / Respect rate limit
+        await sleep(this.config.download.rateLimit);
+
+      } catch (error) {
+        // 记录错误 / Log error
+        console.error(`${this.logPrefix} OKX 持仓量下载出错 / OKX OI download error: ${error.message}`);
+        this.stats.errors++;
+
+        // 如果是速率限制错误，等待更长时间 / If rate limit error, wait longer
+        if (error.message.includes('rate') || error.message.includes('limit') || error.message.includes('429')) {
+          console.log(`${this.logPrefix} 触发速率限制，等待 30 秒... / Rate limit triggered, waiting 30s...`);
+          await sleep(30000);
+        } else {
+          // 其他错误，等待后跳出 / Other errors, wait and break
+          await sleep(5000);
+          break;
+        }
+      }
+    }
+
+    // 插入剩余的缓冲数据 / Insert remaining buffer data
+    if (buffer.length > 0) {
+      await this.clickhouse.insertOpenInterest('okx', symbol, buffer);
+    }
+
+    console.log(`${this.logPrefix} OKX ${symbol} 持仓量下载完成，共 ${processedTimestamps.size} 条记录`);
+    console.log(`${this.logPrefix} OKX ${symbol} open interest download completed, ${processedTimestamps.size} records total`);
   }
 
   /**

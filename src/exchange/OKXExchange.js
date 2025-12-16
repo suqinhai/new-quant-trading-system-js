@@ -545,6 +545,65 @@ export class OKXExchange extends BaseExchange {
   }
 
   /**
+   * 获取持仓量历史数据
+   * Fetch open interest history data
+   *
+   * 使用 OKX Rubik API: GET /api/v5/rubik/stat/contracts/open-interest-history
+   * Using OKX Rubik API: GET /api/v5/rubik/stat/contracts/open-interest-history
+   *
+   * @param {string} symbol - 交易对 / Trading pair (例如: BTC/USDT:USDT)
+   * @param {string} period - 时间周期 ('5m' | '1H' | '1D') / Time period
+   * @returns {Promise<Array>} 持仓量历史数据 / Open interest history data
+   */
+  async fetchOpenInterestHistory(symbol, period = '5m') {
+    // 确保已连接 / Ensure connected
+    this._ensureConnected();
+
+    // 验证交易对 / Validate symbol
+    this._validateSymbol(symbol);
+
+    // 验证周期参数 / Validate period parameter
+    const validPeriods = ['5m', '1H', '1D'];
+    if (!validPeriods.includes(period)) {
+      throw this._createError('INVALID_PARAM', `无效的时间周期 / Invalid period: ${period}. 支持 / Supported: ${validPeriods.join(', ')}`);
+    }
+
+    // 执行带重试的请求 / Execute request with retry
+    return this._executeWithRetry(async () => {
+      // 获取 OKX 格式的 instId / Get OKX format instId
+      // 将 BTC/USDT:USDT 转换为 BTC-USDT-SWAP / Convert BTC/USDT:USDT to BTC-USDT-SWAP
+      const market = this.markets[symbol];
+      let instId;
+
+      if (market && market.id) {
+        instId = market.id;
+      } else {
+        // 手动转换格式 / Manual format conversion
+        instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP';
+      }
+
+      // 调用 OKX Rubik API / Call OKX Rubik API
+      const response = await this.exchange.publicGetRubikStatContractsOpenInterestHistory({
+        instId,
+        period,
+      });
+
+      // 获取数据列表 / Get data list
+      // OKX 返回格式: [[timestamp, oi, oiValue], ...] / OKX return format
+      const data = response.data || [];
+
+      // 转换为统一格式 / Convert to unified format
+      return data.map(item => ({
+        timestamp: parseInt(item[0]),           // 时间戳 / Timestamp
+        openInterest: parseFloat(item[1]),      // 持仓量（合约张数）/ OI (contracts)
+        openInterestValue: parseFloat(item[2]), // 持仓价值（USD）/ OI value (USD)
+        symbol,                                 // 交易对 / Trading pair
+        exchange: this.name,                    // 交易所名称 / Exchange name
+      }));
+    }, `获取持仓量历史 / Fetch OI history: ${symbol}`);
+  }
+
+  /**
    * 创建止盈止损订单
    * Create take profit / stop loss order
    * @param {string} symbol - 交易对 / Trading pair

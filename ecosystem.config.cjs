@@ -3,14 +3,14 @@
  * PM2 Ecosystem Configuration File
  *
  * 使用方式 / Usage:
- * - pm2 start ecosystem.config.cjs                 # 启动所有应用 / Start all apps
- * - pm2 start ecosystem.config.cjs --only live     # 仅启动实盘 / Start live only
- * - pm2 start ecosystem.config.cjs --only shadow   # 仅启动影子 / Start shadow only
- * - pm2 reload ecosystem.config.cjs                # 零停机重载 / Zero-downtime reload
- * - pm2 stop ecosystem.config.cjs                  # 停止所有 / Stop all
- * - pm2 delete ecosystem.config.cjs                # 删除所有 / Delete all
- * - pm2 logs                                       # 查看日志 / View logs
- * - pm2 monit                                      # 监控面板 / Monitor dashboard
+ * - pm2 start ecosystem.config.cjs                      # 启动所有应用 / Start all apps
+ * - pm2 start ecosystem.config.cjs --only quant-live    # 仅启动实盘 / Start live only
+ * - pm2 start ecosystem.config.cjs --only quant-shadow  # 仅启动影子 / Start shadow only
+ * - pm2 reload ecosystem.config.cjs                     # 零停机重载 / Zero-downtime reload
+ * - pm2 stop ecosystem.config.cjs                       # 停止所有 / Stop all
+ * - pm2 delete ecosystem.config.cjs                     # 删除所有 / Delete all
+ * - pm2 logs                                            # 查看日志 / View logs
+ * - pm2 monit                                           # 监控面板 / Monitor dashboard
  */
 
 // 使用 CommonJS 语法因为 PM2 不支持 ES modules 配置
