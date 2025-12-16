@@ -241,14 +241,19 @@ const safeSymbol = (symbol) => {
  * @param {string} prefix - 前缀文本 / Prefix text
  */
 const printProgress = (current, total, prefix = '') => {
+  // 防止除以零或负数 / Prevent division by zero or negative
+  if (total <= 0) {
+    total = 1;
+  }
+
   // 计算进度百分比 / Calculate progress percentage
   const percent = Math.floor((current / total) * 100);
 
   // 计算进度条长度 / Calculate progress bar length
   const barLength = 30;
 
-  // 计算已完成长度 / Calculate filled length
-  const filled = Math.floor(barLength * current / total);
+  // 计算已完成长度 (限制在 0 到 barLength 之间) / Calculate filled length (clamp to 0-barLength)
+  const filled = Math.min(Math.max(Math.floor(barLength * current / total), 0), barLength);
 
   // 构建进度条 / Build progress bar
   const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
