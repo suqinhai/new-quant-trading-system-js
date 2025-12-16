@@ -1412,83 +1412,11 @@ class HistoricalDataDownloader {
    * @private
    */
   async _downloadOKXOpenInterest(symbol, startTime, endTime) {
-    // 获取交易所实例 / Get exchange instance
-    const exchange = this._getExchange('okx');
-
-    // OKX instId 格式 / OKX instId format
-    const instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP';
-
-    // 数据缓冲区 / Data buffer
-    let buffer = [];
-
-    // 当前时间 (OKX 需要从后往前获取) / Current time
-    let beforeTime = endTime;
-
-    // 循环获取数据 / Loop to fetch data
-    while (beforeTime > startTime) {
-      try {
-        // 调用 OKX API / Call OKX API
-        const response = await exchange.publicGetPublicOpenInterestHistory({
-          instId,
-          period: '5m',
-          before: beforeTime,
-          limit: 100,
-        });
-
-        // 增加请求计数 / Increment request count
-        this.stats.totalRequests++;
-
-        // 获取数据 / Get data
-        const data = response.data || [];
-
-        // 如果没有数据，跳出循环 / If no data, break
-        if (data.length === 0) {
-          break;
-        }
-
-        // 转换数据格式 / Convert data format
-        const openInterestData = data.map(item => ({
-          timestamp: parseInt(item.ts),
-          openInterest: parseFloat(item.oi),
-          openInterestValue: parseFloat(item.oiCcy || 0),
-        }));
-
-        // 过滤掉早于 startTime 的数据 / Filter out data before startTime
-        const filteredData = openInterestData.filter(d => d.timestamp >= startTime);
-
-        // 添加到缓冲区 / Add to buffer
-        buffer.push(...filteredData);
-
-        // 增加记录计数 / Increment record count
-        this.stats.totalRecords += filteredData.length;
-
-        // 更新 beforeTime / Update beforeTime
-        beforeTime = parseInt(data[data.length - 1].ts) - 1;
-
-        // 打印进度 / Print progress
-        console.log(`${this.logPrefix} 已下载 ${buffer.length} 条 OKX 持仓量记录`);
-
-        // 如果缓冲区达到批量大小，插入数据库 / If buffer reaches batch size, insert to DB
-        if (buffer.length >= this.config.download.batchSize) {
-          await this.clickhouse.insertOpenInterest('okx', symbol, buffer);
-          buffer = [];
-        }
-
-        // 遵守速率限制 / Respect rate limit
-        await sleep(this.config.download.rateLimit);
-
-      } catch (error) {
-        console.error(`${this.logPrefix} OKX 持仓量下载出错: ${error.message}`);
-        this.stats.errors++;
-        await sleep(5000);
-        break;
-      }
-    }
-
-    // 插入剩余数据 / Insert remaining data
-    if (buffer.length > 0) {
-      await this.clickhouse.insertOpenInterest('okx', symbol, buffer);
-    }
+    // OKX open interest history is not available through CCXT
+    // The publicGetPublicOpenInterestHistory method is not implemented
+    // This would require direct REST API calls to OKX
+    // For now, we skip this data type
+    console.log(`${this.logPrefix} OKX 持仓量历史数据暂不支持 (需要直接调用 REST API)`);
   }
 
   /**
