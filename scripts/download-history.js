@@ -1615,6 +1615,19 @@ class HistoricalDataDownloader {
 
     console.log(`\n时间范围 / Time Range: ${formatTimestamp(startTime)} ~ ${formatTimestamp(endTime)}\n`);
 
+    // 验证日期顺序 / Validate date order
+    if (startTime >= endTime) {
+      console.error(`\n❌ 错误: 开始日期必须早于结束日期 / Error: Start date must be before end date`);
+      console.error(`   开始日期 / Start: ${formatTimestamp(startTime)}`);
+      console.error(`   结束日期 / End: ${formatTimestamp(endTime)}`);
+      console.error(`\n请使用正确的日期顺序 / Please use correct date order:`);
+      console.error(`   node download-history.js --start 2023-10-01 --end 2025-10-31\n`);
+
+      // 关闭连接并退出 / Close connection and exit
+      await this.close();
+      process.exit(1);
+    }
+
     // 遍历所有交易所 / Iterate all exchanges
     for (const exchangeName of exchanges) {
       console.log(`\n========== ${exchangeName.toUpperCase()} ==========\n`);
