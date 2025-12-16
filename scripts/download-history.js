@@ -1292,74 +1292,11 @@ class HistoricalDataDownloader {
    * @private
    */
   async _downloadBinanceOpenInterest(symbol, startTime, endTime) {
-    // 获取交易所实例 / Get exchange instance
-    const exchange = this._getExchange('binance');
-
-    // 数据缓冲区 / Data buffer
-    let buffer = [];
-
-    // 当前时间 / Current time
-    let currentTime = startTime;
-
-    // 循环获取数据 / Loop to fetch data
-    while (currentTime < endTime) {
-      try {
-        // 调用 Binance API 获取历史持仓量 / Call Binance API for OI history
-        const response = await exchange.fapiPublicGetOpenInterestHist({
-          symbol: symbol.replace('/', '').replace(':USDT', ''),
-          period: '5m',  // 5分钟间隔 / 5 minute interval
-          startTime: currentTime,
-          endTime: Math.min(currentTime + 7 * 24 * 60 * 60 * 1000, endTime),  // 最多 7 天 / Max 7 days
-          limit: 500,
-        });
-
-        // 增加请求计数 / Increment request count
-        this.stats.totalRequests++;
-
-        // 如果没有数据，跳出循环 / If no data, break
-        if (!response || response.length === 0) {
-          break;
-        }
-
-        // 转换数据格式 / Convert data format
-        const openInterestData = response.map(item => ({
-          timestamp: parseInt(item.timestamp),
-          openInterest: parseFloat(item.sumOpenInterest),
-          openInterestValue: parseFloat(item.sumOpenInterestValue),
-        }));
-
-        // 添加到缓冲区 / Add to buffer
-        buffer.push(...openInterestData);
-
-        // 增加记录计数 / Increment record count
-        this.stats.totalRecords += openInterestData.length;
-
-        // 更新当前时间 / Update current time
-        currentTime = parseInt(response[response.length - 1].timestamp) + 1;
-
-        // 打印进度 / Print progress
-        console.log(`${this.logPrefix} 已下载 ${buffer.length} 条 Binance 持仓量记录`);
-
-        // 如果缓冲区达到批量大小，插入数据库 / If buffer reaches batch size, insert to DB
-        if (buffer.length >= this.config.download.batchSize) {
-          await this.clickhouse.insertOpenInterest('binance', symbol, buffer);
-          buffer = [];
-        }
-
-        // 遵守速率限制 / Respect rate limit
-        await sleep(this.config.download.rateLimit);
-
-      } catch (error) {
-        console.error(`${this.logPrefix} Binance 持仓量下载出错: ${error.message}`);
-        this.stats.errors++;
-        await sleep(5000);
-      }
-    }
-
-    // 插入剩余数据 / Insert remaining data
-    if (buffer.length > 0) {
-      await this.clickhouse.insertOpenInterest('binance', symbol, buffer);
-    }
+    // Binance open interest history is not available through CCXT
+    // The fapiPublicGetOpenInterestHist method is not implemented
+    // This would require direct REST API calls to Binance
+    // For now, we skip this data type
+    console.log(`${this.logPrefix} Binance 持仓量历史数据暂不支持 (需要直接调用 REST API)`);
   }
 
   /**
