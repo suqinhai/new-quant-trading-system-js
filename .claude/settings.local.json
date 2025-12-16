@@ -50,7 +50,11 @@
       "Bash(pm2 status:*)",
       "Bash(pm2 start:*)",
       "Bash(pm2 logs:*)",
-      "Bash(pm2 delete:*)"
+      "Bash(pm2 delete:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe /c \"taskkill /PID 660 /F\")",
+      "Bash(powershell -Command:*)"
     ]
   }
 }
