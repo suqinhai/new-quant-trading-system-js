@@ -64,18 +64,32 @@ module.exports = {
 
         // 时区设置 / Timezone setting
         TZ: 'Asia/Shanghai',
+
+        // 端口配置 (避免与 shadow 冲突) / Port configuration (avoid conflict with shadow)
+        HTTP_PORT: 3000,
+        WS_PORT: 3001,
+        MARKETDATA_PORT: 3001,
+        DASHBOARD_PORT: 8080,
       },
 
       // 生产环境变量 / Production environment variables
       env_production: {
         NODE_ENV: 'production',
         TZ: 'Asia/Shanghai',
+        HTTP_PORT: 3000,
+        WS_PORT: 3001,
+        MARKETDATA_PORT: 3001,
+        DASHBOARD_PORT: 8080,
       },
 
       // 开发环境变量 / Development environment variables
       env_development: {
         NODE_ENV: 'development',
         TZ: 'Asia/Shanghai',
+        HTTP_PORT: 3000,
+        WS_PORT: 3001,
+        MARKETDATA_PORT: 3001,
+        DASHBOARD_PORT: 8080,
       },
 
       // ============================================
@@ -174,11 +188,20 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         TZ: 'Asia/Shanghai',
+        // 使用不同端口避免与 live 冲突 / Use different ports to avoid conflict with live
+        HTTP_PORT: 3100,
+        WS_PORT: 3101,
+        MARKETDATA_PORT: 3101,
+        DASHBOARD_PORT: 8180,
       },
 
       env_production: {
         NODE_ENV: 'production',
         TZ: 'Asia/Shanghai',
+        HTTP_PORT: 3100,
+        WS_PORT: 3101,
+        MARKETDATA_PORT: 3101,
+        DASHBOARD_PORT: 8180,
       },
 
       // ============================================
