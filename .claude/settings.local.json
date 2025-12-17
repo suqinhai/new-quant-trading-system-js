@@ -59,7 +59,9 @@
       "Bash(pm2 restart:*)",
       "Bash(tasklist /FI \"PID eq 22492\")",
       "Bash(wmic process where processid=22492 get name,commandline:*)",
-      "Bash(node src/main.js:*)"
+      "Bash(node src/main.js:*)",
+      "Bash(node:*)",
+      "Bash(npm run download-data:*)"
     ]
   }
 }
