@@ -8,6 +8,35 @@
  * Downloads historical candlestick data from exchanges and saves locally
  */
 
+
+//  必需参数：
+//   - -s, --symbol - 交易对（必填）
+
+//   可选参数：
+//   - -e, --exchange - 交易所（默认：binance）
+//   - -t, --timeframe - 时间周期（默认：1h）
+//   - --start - 开始日期（默认：30天前）
+//   - --end - 结束日期（默认：今天）
+//   - -o, --output - 输出目录（默认：data/historical）
+//   - --format - 输出格式 json/csv（默认：json）
+//   - --limit - 每次请求K线数量（默认：1000）
+
+//   完整示例：
+
+//   # 最简单用法（只指定交易对）
+//   npm run download-data -- -s BTC/USDT
+
+//   # 完整参数示例
+//   npm run download-data -- -s BTC/USDT -e binance -t 1h --start 2024-01-01 --end 2024-12-01 --format json
+
+//   # 下载 4小时K线 CSV格式
+//   npm run download-data -- -s ETH/USDT -t 4h --start 2024-06-01 --end 2024-12-01 --format csv
+
+//   # 下载日线数据
+//   npm run download-data -- -s BTC/USDT -t 1d --start 2023-01-01 --end 2024-12-01
+
+//   支持的时间周期： 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 12h, 1d, 1w
+
 // 导入环境变量 / Import environment variables
 import 'dotenv/config';
 
