@@ -9,6 +9,10 @@
 // 导入环境变量 / Import environment variables
 import 'dotenv/config';
 
+// 导入路径模块 / Import path module
+import { fileURLToPath } from 'url';
+import { resolve } from 'path';
+
 // 导入 HTTP 服务器 / Import HTTP server
 import { createServer } from 'http';
 
@@ -392,27 +396,35 @@ class MarketDataServer {
 // 主入口 / Main Entry
 // ============================================
 
-// 创建服务器实例 / Create server instance
-const server = new MarketDataServer();
+// 判断是否直接运行此文件 / Check if this file is run directly
+// 只有直接运行时才启动服务器，被导入时不启动
+// Only start server when run directly, not when imported
+const __filename = fileURLToPath(import.meta.url);
+const isMainModule = resolve(process.argv[1]) === __filename;
 
-// 启动服务器 / Start server
-server.start().catch(error => {
-  console.error('[MarketDataServer] 启动错误 / Start error:', error);
-  process.exit(1);
-});
+if (isMainModule) {
+  // 创建服务器实例 / Create server instance
+  const server = new MarketDataServer();
 
-// 优雅退出处理 / Graceful shutdown handling
-process.on('SIGTERM', async () => {
-  console.log('[MarketDataServer] 收到 SIGTERM 信号，正在关闭... / Received SIGTERM, shutting down...');
-  await server.stop();
-  process.exit(0);
-});
+  // 启动服务器 / Start server
+  server.start().catch(error => {
+    console.error('[MarketDataServer] 启动错误 / Start error:', error);
+    process.exit(1);
+  });
 
-process.on('SIGINT', async () => {
-  console.log('[MarketDataServer] 收到 SIGINT 信号，正在关闭... / Received SIGINT, shutting down...');
-  await server.stop();
-  process.exit(0);
-});
+  // 优雅退出处理 / Graceful shutdown handling
+  process.on('SIGTERM', async () => {
+    console.log('[MarketDataServer] 收到 SIGTERM 信号，正在关闭... / Received SIGTERM, shutting down...');
+    await server.stop();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('[MarketDataServer] 收到 SIGINT 信号，正在关闭... / Received SIGINT, shutting down...');
+    await server.stop();
+    process.exit(0);
+  });
+}
 
 // 导出服务器类 / Export server class
 export { MarketDataServer };

@@ -466,7 +466,7 @@ class TradingSystemRunner extends EventEmitter {
       // 指标导出配置 / Metrics exporter configuration
       metricsExporter: {
         httpEnabled: this.mode !== RUN_MODE.BACKTEST,  // 非回测模式启用 / Enable in non-backtest mode
-        httpPort: this.config.server?.metricsPort || 9090,  // HTTP 端口 / HTTP port
+        httpPort: parseInt(process.env.METRICS_PORT, 10) || this.config.server?.metricsPort || 9090,  // HTTP 端口 / HTTP port
       },
     });
 

@@ -54,7 +54,11 @@
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "Bash(cmd.exe /c \"taskkill /PID 660 /F\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(pm2 list:*)",
+      "Bash(pm2 restart:*)",
+      "Bash(tasklist /FI \"PID eq 22492\")",
+      "Bash(wmic process where processid=22492 get name,commandline:*)"
     ]
   }
 }
