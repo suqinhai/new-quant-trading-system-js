@@ -1,3 +1,10 @@
+<!-- 行情喂策略，策略喂执行，风控卡在最前面，回测只用来练手 -->
+
+<!-- “先活下来，再活得好，最后活得久。”
+→ 对应模块就是：
+RiskManager + ExchangeAdapter + OrderExecutor > MarketData > Strategy >>> Backtest
+把前三板斧练到极致，你已经秒杀了市面上90%的量化团队。 -->
+
 # 量化交易系统 (Quant Trading System)
 
 一个功能完整的 JavaScript/Node.js 量化交易系统，支持多交易所实时行情、智能订单执行、风险管理、策略回测等功能。
@@ -112,9 +119,6 @@ quant-trading-system-js/
 ```
 
 ---
-
-<!-- 行情喂策略，策略喂执行，风控卡在最前面，回测只用来练手 -->
-
 
 ## 快速开始
 
