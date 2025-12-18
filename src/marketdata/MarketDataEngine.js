@@ -56,6 +56,7 @@ const DATA_TYPES = {
   DEPTH: 'depth',             // 深度数据 / Order book depth
   TRADE: 'trade',             // 成交数据 / Trade data
   FUNDING_RATE: 'fundingRate', // 资金费率 / Funding rate
+  KLINE: 'kline',             // K线数据 / Candlestick data
 };
 
 /**
@@ -67,6 +68,7 @@ const REDIS_KEYS = {
   DEPTH_HASH: 'market:depth:',           // 深度哈希键前缀 / Depth hash key prefix
   TRADE_STREAM: 'market:trades:',        // 成交流键前缀 / Trade stream key prefix
   FUNDING_HASH: 'market:funding:',       // 资金费率哈希键前缀 / Funding hash key prefix
+  KLINE_HASH: 'market:kline:',           // K线哈希键前缀 / Kline hash key prefix
   CHANNEL: 'market_data',                // 发布频道名称 / Publish channel name
 };
 
@@ -178,6 +180,7 @@ export class MarketDataEngine extends EventEmitter {
       tickers: new Map(),     // { symbol: ticker } 行情缓存 / Ticker cache
       depths: new Map(),      // { symbol: depth } 深度缓存 / Depth cache
       fundingRates: new Map(), // { symbol: fundingRate } 资金费率缓存 / Funding rate cache
+      klines: new Map(),      // { symbol: kline[] } K线缓存 / Kline cache
     };
 
     // 统计信息 / Statistics
@@ -1142,6 +1145,11 @@ export class MarketDataEngine extends EventEmitter {
         stream = `${binanceSymbol}@markPrice@1s`;
         break;
 
+      case DATA_TYPES.KLINE:
+        // K线数据 (1小时) / Kline data (1 hour)
+        stream = `${binanceSymbol}@kline_1h`;
+        break;
+
       default:
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
     }
@@ -1188,6 +1196,11 @@ export class MarketDataEngine extends EventEmitter {
       case DATA_TYPES.FUNDING_RATE:
         // 行情数据 (包含资金费率) / Ticker data (includes funding rate)
         topic = `tickers.${bybitSymbol}`;
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 (60分钟) / Kline data (60 minutes)
+        topic = `kline.60.${bybitSymbol}`;
         break;
 
       default:

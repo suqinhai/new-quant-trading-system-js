@@ -710,6 +710,17 @@ class TradingSystemRunner extends EventEmitter {
       this.strategy.setExchange(this.exchange);
     }
 
+    // 构建交易所 Map (用于多交易所策略如 FundingArbStrategy)
+    // Build exchanges Map (for multi-exchange strategies like FundingArbStrategy)
+    const exchangesMap = new Map();
+    const exchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
+    exchangesMap.set(exchangeName, this.exchange);
+
+    // 调用策略的 onInit 方法 (如果存在) / Call strategy's onInit method (if exists)
+    if (this.strategy.onInit && typeof this.strategy.onInit === 'function') {
+      await this.strategy.onInit(exchangesMap);
+    }
+
     // 初始化策略 / Initialize strategy
     if (this.strategy.initialize) {
       await this.strategy.initialize();
@@ -1156,7 +1167,13 @@ class TradingSystemRunner extends EventEmitter {
       this.marketDataEngine.start();
     }
 
-    // 5. 发送 PM2 ready 信号 / Send PM2 ready signal
+    // 5. 启动策略 (如果策略有 start 方法) / Start strategy (if strategy has start method)
+    if (this.strategy && typeof this.strategy.start === 'function') {
+      this._log('info', '启动策略... / Starting strategy...');
+      await this.strategy.start();
+    }
+
+    // 6. 发送 PM2 ready 信号 / Send PM2 ready signal
     if (process.send) {
       process.send('ready');
     }

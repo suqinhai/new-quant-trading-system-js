@@ -1309,6 +1309,16 @@ export class FundingArbStrategy extends BaseStrategy {
     this.log(`策略初始化: 监控 ${this.config.symbols.length} 个交易对`, 'info');
     if (exchanges && exchanges.size > 0) {
       this.log(`交易所: ${Array.from(exchanges.keys()).join(', ')}`, 'info');
+
+      // 跨交易所套利警告 / Cross-exchange arbitrage warning
+      if (exchanges.size < 2) {
+        this.log(
+          `⚠️ 警告: 跨交易所资金费率套利需要至少2个交易所，当前只有${exchanges.size}个。` +
+          `套利机会检查将只能比较来自MarketDataEngine的不同来源数据。` +
+          `/ Warning: Cross-exchange funding arbitrage requires at least 2 exchanges.`,
+          'warn'
+        );
+      }
     } else {
       this.log(`回测模式: 无实时交易所连接`, 'info');
     }
@@ -1386,6 +1396,13 @@ export class FundingArbStrategy extends BaseStrategy {
 
     // 检查风控 / Check risk control
     if (!this._checkRiskControl()) {
+      this.log('风控检查未通过，跳过套利检查 / Risk control check failed', 'warn');
+      return;
+    }
+
+    // 检查是否有交易所连接 / Check if exchanges are connected
+    if (!this.exchanges || this.exchanges.size === 0) {
+      this.log('警告: 无交易所连接，无法执行套利检查 / Warning: No exchanges connected', 'warn');
       return;
     }
 
@@ -1394,10 +1411,27 @@ export class FundingArbStrategy extends BaseStrategy {
       // 查找最佳机会 / Find best opportunity
       const opportunity = this.fundingManager.findBestOpportunity(symbol);
 
-      // 如果没有机会，跳过 / If no opportunity, skip
+      // 如果没有机会，记录日志 / If no opportunity, log it
       if (!opportunity) {
+        if (this.config.verbose) {
+          // 获取当前资金费率数据用于调试 / Get current funding rate data for debugging
+          const rates = this.fundingManager.getFundingRates(symbol);
+          const ratesInfo = rates.size > 0
+            ? Array.from(rates.entries()).map(([ex, data]) => `${ex}:${(data.current * 100).toFixed(4)}%`).join(', ')
+            : '无数据';
+          this.log(`${symbol} 无套利机会 (费率: ${ratesInfo}) / No arbitrage opportunity`, 'debug');
+        }
         continue;
       }
+
+      // 记录发现的机会 / Log found opportunity
+      this.log(
+        `${symbol} 发现机会: 多@${opportunity.longExchange}(${(opportunity.longRate * 100).toFixed(4)}%) ` +
+        `空@${opportunity.shortExchange}(${(opportunity.shortRate * 100).toFixed(4)}%) ` +
+        `年化利差: ${(opportunity.annualizedSpread * 100).toFixed(2)}% ` +
+        `(阈值: ${(this.config.minAnnualizedSpread * 100).toFixed(2)}%)`,
+        'info'
+      );
 
       // 检查年化利差是否达到阈值 / Check if annualized spread meets threshold
       if (opportunity.annualizedSpread >= this.config.minAnnualizedSpread) {
@@ -1907,6 +1941,71 @@ export class FundingArbStrategy extends BaseStrategy {
 
     // 返回结果 / Return results
     return results;
+  }
+
+  /**
+   * 处理资金费率更新事件
+   * Handle funding rate update event
+   *
+   * @param {Object} data - 资金费率数据 / Funding rate data
+   * @returns {Promise<void>}
+   */
+  async onFundingRate(data) {
+    // 如果未运行，跳过 / If not running, skip
+    if (!this.running) {
+      return;
+    }
+
+    // 记录收到资金费率更新 / Log funding rate update received
+    if (this.config.verbose) {
+      this.log(
+        `收到资金费率更新: ${data.symbol} ${data.exchange} rate=${(data.fundingRate * 100).toFixed(4)}%`,
+        'debug'
+      );
+    }
+
+    // 保存资金费率数据到管理器 / Save funding rate data to manager
+    if (data.symbol && data.exchange && data.fundingRate !== undefined) {
+      this.fundingManager._saveFundingRate(data.symbol, data.exchange, {
+        fundingRate: data.fundingRate,
+        fundingRatePredicted: data.fundingRatePredicted || data.fundingRate,
+        fundingTimestamp: data.fundingTimestamp || Date.now(),
+        markPrice: data.markPrice || 0,
+        indexPrice: data.indexPrice || 0,
+      });
+    }
+
+    // 检查套利机会 / Check arbitrage opportunities
+    await this._checkArbitrageOpportunities();
+  }
+
+  /**
+   * 处理 Ticker 更新事件
+   * Handle ticker update event
+   *
+   * @param {Object} data - Ticker 数据 / Ticker data
+   * @returns {Promise<void>}
+   */
+  async onTicker(data) {
+    // Ticker 更新时记录价格但不触发套利检查 (资金费率套利主要依赖资金费率事件)
+    // Log price on ticker update but don't trigger arbitrage check (funding arb mainly relies on funding rate events)
+    if (this.config.verbose) {
+      this.log(`Ticker 更新: ${data.symbol} price=${data.last}`, 'debug');
+    }
+  }
+
+  /**
+   * 处理 K 线更新事件
+   * Handle candle update event
+   *
+   * @param {Object} data - K 线数据 / Candle data
+   * @returns {Promise<void>}
+   */
+  async onCandle(data) {
+    // K 线更新时可以定期检查套利机会 / Check arbitrage opportunities periodically on candle update
+    if (this.running) {
+      await this._checkArbitrageOpportunities();
+    }
   }
 
   /**
