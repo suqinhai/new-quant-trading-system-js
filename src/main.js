@@ -1468,13 +1468,13 @@ class TradingSystemRunner extends EventEmitter {
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    回测结果 / Backtest Results                     ║
 ╠══════════════════════════════════════════════════════════════════╣
-║ 初始资金 / Initial Capital:    ${String(results.initialCapital || 0).padEnd(30)}  ║
-║ 最终资金 / Final Capital:      ${String(results.finalCapital || 0).padEnd(30)}  ║
-║ 总收益 / Total Return:         ${String((results.totalReturn * 100 || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 年化收益 / Annual Return:      ${String((results.annualReturn * 100 || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 最大回撤 / Max Drawdown:       ${String((results.maxDrawdown * 100 || 0).toFixed(2) + '%').padEnd(30)}  ║
+║ 初始资金 / Initial Capital:    ${String((results.initialCapital || 0).toFixed(2)).padEnd(30)}  ║
+║ 最终资金 / Final Capital:      ${String((results.finalEquity || 0).toFixed(2)).padEnd(30)}  ║
+║ 总收益 / Total Return:         ${String((results.totalReturn || 0).toFixed(2) + '%').padEnd(30)}  ║
+║ 年化收益 / Annual Return:      ${String((results.annualReturn || 0).toFixed(2) + '%').padEnd(30)}  ║
+║ 最大回撤 / Max Drawdown:       ${String((results.maxDrawdownPercent || 0).toFixed(2) + '%').padEnd(30)}  ║
 ║ 夏普比率 / Sharpe Ratio:       ${String((results.sharpeRatio || 0).toFixed(2)).padEnd(30)}  ║
-║ 胜率 / Win Rate:               ${String((results.winRate * 100 || 0).toFixed(2) + '%').padEnd(30)}  ║
+║ 胜率 / Win Rate:               ${String((results.winRate || 0).toFixed(2) + '%').padEnd(30)}  ║
 ║ 交易次数 / Total Trades:       ${String(results.totalTrades || 0).padEnd(30)}  ║
 ╚══════════════════════════════════════════════════════════════════╝
 `;

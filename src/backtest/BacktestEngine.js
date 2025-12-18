@@ -560,6 +560,19 @@ export class BacktestEngine extends EventEmitter {
     const finalEquity = this.getEquity();
     const totalReturn = ((finalEquity - initialCapital) / initialCapital) * 100;
 
+    // 计算年化收益 / Calculate annualized return
+    let annualReturn = 0;
+    if (this.data && this.data.length >= 2) {
+      const startTime = this.data[0].timestamp;
+      const endTime = this.data[this.data.length - 1].timestamp;
+      const days = (endTime - startTime) / (1000 * 60 * 60 * 24);
+      if (days > 0) {
+        // 年化收益率 = ((1 + 总收益率) ^ (365/天数) - 1) * 100
+        const totalReturnDecimal = totalReturn / 100;
+        annualReturn = (Math.pow(1 + totalReturnDecimal, 365 / days) - 1) * 100;
+      }
+    }
+
     // 交易统计 / Trade statistics
     const totalTrades = this.state.trades.length;
     const winningTrades = this.state.trades.filter(t => t.pnl > 0);
@@ -587,6 +600,7 @@ export class BacktestEngine extends EventEmitter {
       initialCapital,                    // 初始资金 / Initial capital
       finalEquity,                       // 最终权益 / Final equity
       totalReturn,                       // 总收益率 (%) / Total return (%)
+      annualReturn,                      // 年化收益率 (%) / Annual return (%)
       totalReturnAmount: finalEquity - initialCapital,  // 总收益额 / Total return amount
 
       // 交易统计 / Trade statistics

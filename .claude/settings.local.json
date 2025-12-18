@@ -61,7 +61,8 @@
       "Bash(wmic process where processid=22492 get name,commandline:*)",
       "Bash(node src/main.js:*)",
       "Bash(node:*)",
-      "Bash(npm run download-data:*)"
+      "Bash(npm run download-data:*)",
+      "Bash(copy \"data\\historical\\BTC_USDT_USDT_1h_2024-01-01_2024-03-01.json\" \"data\\historical\\BTC_USDT_USDT_1h.json\")"
     ]
   }
 }
