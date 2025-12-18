@@ -78,6 +78,77 @@ export class BaseStrategy extends EventEmitter {
   }
 
   /**
+   * K 线更新事件处理 - 实盘/影子模式下由 main.js 调用
+   * Candle update event handler - called by main.js in live/shadow mode
+   * @param {Object} data - K 线数据 / Candle data
+   * @returns {Promise<void>}
+   */
+  async onCandle(data) {
+    // 将 K 线数据转换为 onTick 格式并调用
+    // Convert candle data to onTick format and call
+    try {
+      // 构建 candle 对象 / Build candle object
+      const candle = {
+        symbol: data.symbol,
+        timestamp: data.timestamp || Date.now(),
+        open: data.open,
+        high: data.high,
+        low: data.low,
+        close: data.close,
+        volume: data.volume,
+      };
+
+      // 获取历史数据 (如果有) / Get history data (if available)
+      const history = this._candleHistory || [];
+
+      // 保存到历史 / Save to history
+      if (!this._candleHistory) {
+        this._candleHistory = [];
+      }
+      this._candleHistory.push(candle);
+
+      // 保留最近 200 根 K 线 / Keep last 200 candles
+      if (this._candleHistory.length > 200) {
+        this._candleHistory.shift();
+      }
+
+      // 调用 onTick / Call onTick
+      await this.onTick(candle, this._candleHistory);
+
+    } catch (error) {
+      // 忽略未实现 onTick 的错误 / Ignore unimplemented onTick error
+      if (!error.message.includes('必须由子类实现') && !error.message.includes('must be implemented')) {
+        this.log(`onCandle 错误: ${error.message}`, 'error');
+      }
+    }
+  }
+
+  /**
+   * Ticker 更新事件处理 - 实盘/影子模式下由 main.js 调用
+   * Ticker update event handler - called by main.js in live/shadow mode
+   * @param {Object} data - Ticker 数据 / Ticker data
+   * @returns {Promise<void>}
+   */
+  async onTicker(data) {
+    // Ticker 事件用于实时价格更新，子类可覆盖
+    // Ticker event for real-time price updates, subclass can override
+    // 默认不做处理，避免过于频繁调用 onTick
+    // Default does nothing to avoid calling onTick too frequently
+  }
+
+  /**
+   * 资金费率更新事件处理 - 实盘/影子模式下由 main.js 调用
+   * Funding rate update event handler - called by main.js in live/shadow mode
+   * @param {Object} data - 资金费率数据 / Funding rate data
+   * @returns {Promise<void>}
+   */
+  async onFundingRate(data) {
+    // 资金费率事件，主要用于资金费率套利策略
+    // Funding rate event, mainly for funding rate arbitrage strategy
+    // 默认不做处理，子类可覆盖 / Default does nothing, subclass can override
+  }
+
+  /**
    * 结束方法 - 在回测/交易结束时调用
    * Finish method - called when backtest/trading ends
    * @returns {Promise<void>}
