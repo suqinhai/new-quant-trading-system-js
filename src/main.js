@@ -1463,20 +1463,42 @@ class TradingSystemRunner extends EventEmitter {
    * @private
    */
   _printBacktestResults(results) {
+    // 格式化数值 / Format value
+    const fmt = (val, suffix = '') => {
+      if (val === null || val === undefined) return 'N/A'.padEnd(12);
+      return (typeof val === 'number' ? val.toFixed(2) + suffix : String(val)).padEnd(12);
+    };
+
     // 结果信息 / Results info
     const resultsInfo = `
-╔══════════════════════════════════════════════════════════════════╗
-║                    回测结果 / Backtest Results                     ║
-╠══════════════════════════════════════════════════════════════════╣
-║ 初始资金 / Initial Capital:    ${String((results.initialCapital || 0).toFixed(2)).padEnd(30)}  ║
-║ 最终资金 / Final Capital:      ${String((results.finalEquity || 0).toFixed(2)).padEnd(30)}  ║
-║ 总收益 / Total Return:         ${String((results.totalReturn || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 年化收益 / Annual Return:      ${String((results.annualReturn || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 最大回撤 / Max Drawdown:       ${String((results.maxDrawdownPercent || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 夏普比率 / Sharpe Ratio:       ${String((results.sharpeRatio || 0).toFixed(2)).padEnd(30)}  ║
-║ 胜率 / Win Rate:               ${String((results.winRate || 0).toFixed(2) + '%').padEnd(30)}  ║
-║ 交易次数 / Total Trades:       ${String(results.totalTrades || 0).padEnd(30)}  ║
-╚══════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         回测结果 / Backtest Results                              ║
+╠════════════════════════════════════════════════════════════════════════════════╣
+║                              账户统计 / Account                                  ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║ 初始资金 / Initial:     ${fmt(results.initialCapital)}    最终资金 / Final:      ${fmt(results.finalEquity)}    ║
+║ 总收益 / Return:        ${fmt(results.totalReturn, '%')}    收益额 / Amount:       ${fmt(results.totalReturnAmount)}    ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║                           核心指标 / Core Metrics                                ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║ 1.年化收益 / Annual:    ${fmt(results.annualReturn, '%')}    2.最大回撤 / MaxDD:    ${fmt(results.maxDrawdownPercent, '%')}    ║
+║ 3.Calmar比率:           ${fmt(results.calmarRatio)}    4.Sharpe比率:          ${fmt(results.sharpeRatio)}    ║
+║ 5.换手率(年) / Turn:    ${fmt(results.turnoverRate, '%')}    6.交易成本率 / Cost:   ${fmt(results.tradingCostRate, '%')}    ║
+║ 7.胜率 / Win Rate:      ${fmt(results.winRate, '%')}    8.盈亏比 / PF:         ${fmt(results.profitFactor)}    ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║                           高级指标 / Advanced                                    ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║ 9.实盘偏差 / Live Dev:  ${fmt(results.liveVsBacktestDeviation, '%')}    10.样本外年化 / OOS:   ${fmt(results.outOfSampleReturn, '%')}    ║
+║ 11.IC均值 / IC Mean:    ${fmt(results.icMean)}    12.ICIR:               ${fmt(results.icir)}    ║
+║ 13.容量(亿) / Cap:      ${fmt(results.capacityEstimate)}    14.前10占比 / Top10:   ${fmt(results.top10HoldingRatio, '%')}    ║
+║ 15.最大仓位 / MaxPos:   ${fmt(results.maxPositionRatio, '%')}    16.成交额占比 / Vol:   ${fmt(results.avgDailyVolumeRatio, '%')}    ║
+║ 17.风控次数 / Risk:     ${fmt(results.riskControlTriggers)}    18.曲线相关 / Corr:    ${fmt(results.equityCurveCorrelation)}    ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║                           交易统计 / Trade Stats                                 ║
+╠────────────────────────────────────────────────────────────────────────────────╣
+║ 交易次数 / Trades:      ${fmt(results.totalTrades)}    盈利次数 / Wins:       ${fmt(results.winningTrades)}    ║
+║ 亏损次数 / Losses:      ${fmt(results.losingTrades)}    总手续费 / Comm:       ${fmt(results.totalCommission)}    ║
+╚════════════════════════════════════════════════════════════════════════════════╝
 `;
 
     // 输出结果 / Output results

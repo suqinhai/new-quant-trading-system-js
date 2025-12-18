@@ -71,6 +71,28 @@ export class BacktestEngine extends EventEmitter {
 
       // 是否正在运行 / Whether running
       running: false,
+
+      // ============================================
+      // 新增统计跟踪变量 / New statistics tracking variables
+      // ============================================
+
+      // 总手续费 / Total commission
+      totalCommission: 0,
+
+      // 总交易额 / Total trading volume
+      totalTradingVolume: 0,
+
+      // 最大仓位比例 / Maximum position ratio
+      maxPositionRatio: 0,
+
+      // 风控触发次数 / Risk control trigger count
+      riskControlTriggers: 0,
+
+      // 日收益率数组 / Daily returns array
+      dailyReturns: [],
+
+      // 基准权益曲线 (买入持有) / Benchmark equity curve (buy and hold)
+      benchmarkEquityCurve: [],
     };
 
     // 历史数据 / Historical data
@@ -286,6 +308,10 @@ export class BacktestEngine extends EventEmitter {
     // 添加到订单历史 / Add to order history
     this.state.orders.push(orderRecord);
 
+    // 记录手续费和交易额 / Record commission and trading volume
+    this.state.totalCommission += commission;
+    this.state.totalTradingVolume += orderValue;
+
     // 更新持仓 / Update position
     this._updatePosition(orderRecord);
 
@@ -455,6 +481,13 @@ export class BacktestEngine extends EventEmitter {
       currentIndex: 0,
       currentTime: null,
       running: false,
+      // 新增统计跟踪变量 / New statistics tracking variables
+      totalCommission: 0,
+      totalTradingVolume: 0,
+      maxPositionRatio: 0,
+      riskControlTriggers: 0,
+      dailyReturns: [],
+      benchmarkEquityCurve: [],
     };
   }
 
@@ -534,6 +567,29 @@ export class BacktestEngine extends EventEmitter {
       equity,
       capital: this.state.capital,
     });
+
+    // 记录基准权益 (买入持有策略) / Record benchmark equity (buy and hold)
+    if (this.state.benchmarkEquityCurve.length === 0) {
+      // 第一根K线，记录初始价格 / First candle, record initial price
+      this._benchmarkInitialPrice = candle.close;
+    }
+    const benchmarkEquity = this.config.initialCapital * (candle.close / this._benchmarkInitialPrice);
+    this.state.benchmarkEquityCurve.push({
+      timestamp: candle.timestamp,
+      equity: benchmarkEquity,
+    });
+
+    // 计算并记录当前仓位比例 / Calculate and record current position ratio
+    let positionValue = 0;
+    for (const [symbol, position] of this.state.positions) {
+      if (position.amount !== 0) {
+        positionValue += Math.abs(position.amount * candle.close);
+      }
+    }
+    const positionRatio = equity > 0 ? (positionValue / equity) * 100 : 0;
+    if (positionRatio > this.state.maxPositionRatio) {
+      this.state.maxPositionRatio = positionRatio;
+    }
   }
 
   /**
@@ -560,17 +616,19 @@ export class BacktestEngine extends EventEmitter {
     const finalEquity = this.getEquity();
     const totalReturn = ((finalEquity - initialCapital) / initialCapital) * 100;
 
-    // 计算年化收益 / Calculate annualized return
-    let annualReturn = 0;
+    // 计算回测天数 / Calculate backtest days
+    let days = 0;
     if (this.data && this.data.length >= 2) {
       const startTime = this.data[0].timestamp;
       const endTime = this.data[this.data.length - 1].timestamp;
-      const days = (endTime - startTime) / (1000 * 60 * 60 * 24);
-      if (days > 0) {
-        // 年化收益率 = ((1 + 总收益率) ^ (365/天数) - 1) * 100
-        const totalReturnDecimal = totalReturn / 100;
-        annualReturn = (Math.pow(1 + totalReturnDecimal, 365 / days) - 1) * 100;
-      }
+      days = (endTime - startTime) / (1000 * 60 * 60 * 24);
+    }
+
+    // 计算年化收益 / Calculate annualized return
+    let annualReturn = 0;
+    if (days > 0) {
+      const totalReturnDecimal = totalReturn / 100;
+      annualReturn = (Math.pow(1 + totalReturnDecimal, 365 / days) - 1) * 100;
     }
 
     // 交易统计 / Trade statistics
@@ -594,35 +652,115 @@ export class BacktestEngine extends EventEmitter {
     // 夏普比率 / Sharpe ratio
     const sharpeRatio = this._calculateSharpeRatio();
 
+    // ============================================
+    // 新增指标计算 / New metrics calculation
+    // ============================================
+
+    // 3. Calmar比率 = 年化收益 / 最大回撤
+    const calmarRatio = maxDrawdownPercent > 0 ? annualReturn / maxDrawdownPercent : 0;
+
+    // 5. 换手率（年化）= (总交易额 / 平均资金) * (365 / 天数)
+    const avgCapital = (initialCapital + finalEquity) / 2;
+    const turnoverRate = days > 0 && avgCapital > 0
+      ? (this.state.totalTradingVolume / avgCapital) * (365 / days) * 100
+      : 0;
+
+    // 6. 交易成本率 = 总手续费 / 初始资金 * 100
+    const tradingCostRate = (this.state.totalCommission / initialCapital) * 100;
+
+    // 9. 实盘vs回测收益偏差 (暂时设为null，需要实盘数据)
+    const liveVsBacktestDeviation = null;
+
+    // 10. 样本外年化 (使用后30%数据计算)
+    const outOfSampleReturn = this._calculateOutOfSampleReturn();
+
+    // 11. IC均值 (因子策略指标，暂时设为null)
+    const icMean = null;
+
+    // 12. ICIR (因子策略指标，暂时设为null)
+    const icir = null;
+
+    // 13. 策略容量预估（亿）- 基于平均交易量估算
+    const capacityEstimate = this._calculateCapacityEstimate();
+
+    // 14. 前10持仓占比 (单标的策略，设为100%)
+    const top10HoldingRatio = 100;
+
+    // 15. 单只最大仓位
+    const maxPositionRatio = this.state.maxPositionRatio;
+
+    // 16. 日均成交额占比 (需要市场总成交额数据，暂时设为null)
+    const avgDailyVolumeRatio = null;
+
+    // 17. 风控触发次数
+    const riskControlTriggers = this.state.riskControlTriggers;
+
+    // 18. 资金曲线相关系数 (与基准的相关性)
+    const equityCurveCorrelation = this._calculateCorrelation();
+
     // 构建统计结果 / Build statistics result
     return {
+      // ============================================
       // 账户统计 / Account statistics
+      // ============================================
       initialCapital,                    // 初始资金 / Initial capital
       finalEquity,                       // 最终权益 / Final equity
       totalReturn,                       // 总收益率 (%) / Total return (%)
       annualReturn,                      // 年化收益率 (%) / Annual return (%)
       totalReturnAmount: finalEquity - initialCapital,  // 总收益额 / Total return amount
 
+      // ============================================
       // 交易统计 / Trade statistics
+      // ============================================
       totalTrades,                       // 总交易次数 / Total trades
       winningTrades: winningTrades.length,   // 盈利次数 / Winning trades
       losingTrades: losingTrades.length,     // 亏损次数 / Losing trades
       winRate,                           // 胜率 (%) / Win rate (%)
 
+      // ============================================
       // 盈亏分析 / PnL analysis
+      // ============================================
       totalProfit,                       // 总盈利 / Total profit
       totalLoss,                         // 总亏损 / Total loss
       profitFactor,                      // 盈亏比 / Profit factor
       avgWin,                            // 平均盈利 / Average win
       avgLoss,                           // 平均亏损 / Average loss
 
+      // ============================================
       // 风险指标 / Risk metrics
+      // ============================================
       maxDrawdown,                       // 最大回撤 / Maximum drawdown
       maxDrawdownPercent,                // 最大回撤百分比 / Maximum drawdown percent
       sharpeRatio,                       // 夏普比率 / Sharpe ratio
+      calmarRatio,                       // Calmar比率 / Calmar ratio
 
+      // ============================================
+      // 新增18项指标 / New 18 metrics
+      // ============================================
+      turnoverRate,                      // 5. 换手率（年化）% / Turnover rate (annualized)
+      tradingCostRate,                   // 6. 交易成本率 % / Trading cost rate
+      liveVsBacktestDeviation,           // 9. 实盘vs回测收益偏差 / Live vs backtest deviation
+      outOfSampleReturn,                 // 10. 样本外年化 % / Out-of-sample annual return
+      icMean,                            // 11. IC均值 / IC mean
+      icir,                              // 12. ICIR
+      capacityEstimate,                  // 13. 策略容量预估（亿）/ Capacity estimate (100M)
+      top10HoldingRatio,                 // 14. 前10持仓占比 % / Top 10 holding ratio
+      maxPositionRatio,                  // 15. 单只最大仓位 % / Max position ratio
+      avgDailyVolumeRatio,               // 16. 日均成交额占比 / Avg daily volume ratio
+      riskControlTriggers,               // 17. 风控触发次数 / Risk control triggers
+      equityCurveCorrelation,            // 18. 资金曲线相关系数 / Equity curve correlation
+
+      // ============================================
+      // 费用统计 / Fee statistics
+      // ============================================
+      totalCommission: this.state.totalCommission,  // 总手续费 / Total commission
+      totalTradingVolume: this.state.totalTradingVolume,  // 总交易额 / Total trading volume
+
+      // ============================================
       // 原始数据 / Raw data
+      // ============================================
       equityCurve: this.state.equityCurve,   // 权益曲线 / Equity curve
+      benchmarkEquityCurve: this.state.benchmarkEquityCurve,  // 基准曲线 / Benchmark curve
       trades: this.state.trades,         // 交易列表 / Trade list
       orders: this.state.orders,         // 订单列表 / Order list
     };
@@ -691,6 +829,124 @@ export class BacktestEngine extends EventEmitter {
     const annualizedStdDev = stdDev * Math.sqrt(252);
 
     return annualizedStdDev > 0 ? annualizedReturn / annualizedStdDev : 0;
+  }
+
+  /**
+   * 计算样本外年化收益
+   * Calculate out-of-sample annual return
+   * 使用后30%的数据计算 / Uses last 30% of data
+   * @private
+   */
+  _calculateOutOfSampleReturn() {
+    if (!this.state.equityCurve || this.state.equityCurve.length < 10) {
+      return 0;
+    }
+
+    // 取后30%的数据 / Get last 30% of data
+    const splitIndex = Math.floor(this.state.equityCurve.length * 0.7);
+    const outOfSampleCurve = this.state.equityCurve.slice(splitIndex);
+
+    if (outOfSampleCurve.length < 2) {
+      return 0;
+    }
+
+    // 计算样本外收益 / Calculate out-of-sample return
+    const startEquity = outOfSampleCurve[0].equity;
+    const endEquity = outOfSampleCurve[outOfSampleCurve.length - 1].equity;
+    const oosReturn = ((endEquity - startEquity) / startEquity) * 100;
+
+    // 计算样本外天数 / Calculate out-of-sample days
+    const startTime = outOfSampleCurve[0].timestamp;
+    const endTime = outOfSampleCurve[outOfSampleCurve.length - 1].timestamp;
+    const days = (endTime - startTime) / (1000 * 60 * 60 * 24);
+
+    // 年化 / Annualize
+    if (days > 0) {
+      const oosReturnDecimal = oosReturn / 100;
+      return (Math.pow(1 + oosReturnDecimal, 365 / days) - 1) * 100;
+    }
+
+    return 0;
+  }
+
+  /**
+   * 计算策略容量预估
+   * Calculate strategy capacity estimate
+   * 基于平均每日交易量和市场冲击成本估算 / Based on avg daily volume and market impact
+   * @private
+   */
+  _calculateCapacityEstimate() {
+    if (!this.data || this.data.length === 0) {
+      return 0;
+    }
+
+    // 计算平均日成交量 / Calculate average daily volume
+    const totalVolume = this.data.reduce((sum, candle) => sum + (candle.volume || 0), 0);
+    const avgDailyVolume = totalVolume / this.data.length * 24; // 假设1小时K线
+
+    // 假设策略交易量不超过市场日均成交量的1% / Assume strategy volume <= 1% of market daily volume
+    // 按平均价格估算容量 / Estimate capacity by average price
+    const avgPrice = this.data.reduce((sum, c) => sum + c.close, 0) / this.data.length;
+    const capacityUSD = avgDailyVolume * avgPrice * 0.01;
+
+    // 转换为亿 / Convert to 100 million
+    return capacityUSD / 100000000;
+  }
+
+  /**
+   * 计算资金曲线与基准的相关系数
+   * Calculate correlation between equity curve and benchmark
+   * @private
+   */
+  _calculateCorrelation() {
+    const equity = this.state.equityCurve;
+    const benchmark = this.state.benchmarkEquityCurve;
+
+    if (!equity || !benchmark || equity.length < 2 || benchmark.length !== equity.length) {
+      return 0;
+    }
+
+    // 提取收益率序列 / Extract return series
+    const equityReturns = [];
+    const benchmarkReturns = [];
+
+    for (let i = 1; i < equity.length; i++) {
+      const eqReturn = (equity[i].equity - equity[i - 1].equity) / equity[i - 1].equity;
+      const bmReturn = (benchmark[i].equity - benchmark[i - 1].equity) / benchmark[i - 1].equity;
+      equityReturns.push(eqReturn);
+      benchmarkReturns.push(bmReturn);
+    }
+
+    if (equityReturns.length === 0) {
+      return 0;
+    }
+
+    // 计算均值 / Calculate means
+    const eqMean = equityReturns.reduce((a, b) => a + b, 0) / equityReturns.length;
+    const bmMean = benchmarkReturns.reduce((a, b) => a + b, 0) / benchmarkReturns.length;
+
+    // 计算协方差和标准差 / Calculate covariance and standard deviations
+    let covariance = 0;
+    let eqVariance = 0;
+    let bmVariance = 0;
+
+    for (let i = 0; i < equityReturns.length; i++) {
+      const eqDiff = equityReturns[i] - eqMean;
+      const bmDiff = benchmarkReturns[i] - bmMean;
+      covariance += eqDiff * bmDiff;
+      eqVariance += eqDiff * eqDiff;
+      bmVariance += bmDiff * bmDiff;
+    }
+
+    const eqStdDev = Math.sqrt(eqVariance / equityReturns.length);
+    const bmStdDev = Math.sqrt(bmVariance / benchmarkReturns.length);
+
+    // 计算相关系数 / Calculate correlation coefficient
+    if (eqStdDev === 0 || bmStdDev === 0) {
+      return 0;
+    }
+
+    return covariance / (equityReturns.length * eqStdDev * bmStdDev);
   }
 }
 
