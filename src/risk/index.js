@@ -28,5 +28,18 @@ export {
   DEFAULT_CONFIG as RISK_DEFAULT_CONFIG,
 } from './manager.js';
 
+// ============================================
+// 组合风控管理器导出
+// Portfolio Risk Manager Exports
+// ============================================
+
+// 导出组合风控管理器 / Export portfolio risk manager
+export {
+  PortfolioRiskManager,
+  PORTFOLIO_RISK_LEVEL,
+  RISK_ACTION as PORTFOLIO_RISK_ACTION,
+  DEFAULT_CONFIG as PORTFOLIO_RISK_CONFIG,
+} from './PortfolioRiskManager.js';
+
 // 默认导出风险管理器 / Default export risk manager
 export { RiskManager as default } from './RiskManager.js';
