@@ -33,5 +33,54 @@ export {
   NonceManager,
 } from './orderExecutor.js';
 
+// ============================================
+// 执行质量监控器导出
+// Execution Quality Monitor Exports
+// ============================================
+
+// 导出执行质量监控器 / Export execution quality monitor
+export { ExecutionQualityMonitor } from './ExecutionQualityMonitor.js';
+
+// 导出执行质量常量 / Export execution quality constants
+export {
+  EXECUTION_QUALITY,
+  SLIPPAGE_TYPE,
+  ORDER_STATUS as EXECUTION_ORDER_STATUS,
+  DEFAULT_CONFIG as QUALITY_MONITOR_CONFIG,
+} from './ExecutionQualityMonitor.js';
+
+// ============================================
+// 交易所故障切换导出
+// Exchange Failover Exports
+// ============================================
+
+// 导出交易所故障切换管理器 / Export exchange failover manager
+export { ExchangeFailover } from './ExchangeFailover.js';
+
+// 导出故障切换常量 / Export failover constants
+export {
+  EXCHANGE_STATUS,
+  FAILURE_TYPE,
+  FAILOVER_REASON,
+  DEFAULT_CONFIG as FAILOVER_CONFIG,
+} from './ExchangeFailover.js';
+
+// ============================================
+// 网络分区处理器导出
+// Network Partition Handler Exports
+// ============================================
+
+// 导出网络分区处理器 / Export network partition handler
+export { NetworkPartitionHandler } from './NetworkPartitionHandler.js';
+
+// 导出网络分区常量 / Export network partition constants
+export {
+  SYNC_STATUS,
+  INCONSISTENCY_TYPE,
+  REPAIR_ACTION,
+  PARTITION_STATUS,
+  DEFAULT_CONFIG as PARTITION_HANDLER_CONFIG,
+} from './NetworkPartitionHandler.js';
+
 // 默认导出智能订单执行器 / Default export smart order executor
 export { SmartOrderExecutor as default } from './orderExecutor.js';

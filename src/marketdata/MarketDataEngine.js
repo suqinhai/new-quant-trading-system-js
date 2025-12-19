@@ -1253,6 +1253,11 @@ export class MarketDataEngine extends EventEmitter {
         args = [{ channel: 'funding-rate', instId: okxSymbol }];
         break;
 
+      case DATA_TYPES.KLINE:
+        // K线数据 (1小时) / Kline data (1 hour)
+        args = [{ channel: 'candle1H', instId: okxSymbol }];
+        break;
+
       default:
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
     }
@@ -1370,6 +1375,11 @@ export class MarketDataEngine extends EventEmitter {
         // 处理标记价格和资金费率 / Handle mark price and funding rate
         this._processFundingRate('binance', message);
         break;
+
+      case 'kline':
+        // 处理K线数据 / Handle kline data
+        this._processKline('binance', message);
+        break;
     }
   }
 
@@ -1409,6 +1419,9 @@ export class MarketDataEngine extends EventEmitter {
     } else if (topic.startsWith('publicTrade.')) {
       // 处理成交数据 / Handle trade data
       this._processTrade('bybit', message);
+    } else if (topic.startsWith('kline.')) {
+      // 处理K线数据 / Handle kline data
+      this._processKline('bybit', message);
     }
   }
 
@@ -1461,6 +1474,13 @@ export class MarketDataEngine extends EventEmitter {
       case 'funding-rate':
         // 处理资金费率 / Handle funding rate
         this._processFundingRate('okx', message);
+        break;
+
+      default:
+        // 检查是否是K线频道 (candle1H, candle1D 等) / Check if it's a kline channel (candle1H, candle1D, etc.)
+        if (channel.startsWith('candle')) {
+          this._processKline('okx', message);
+        }
         break;
     }
   }
@@ -1603,6 +1623,58 @@ export class MarketDataEngine extends EventEmitter {
 
     // 发出事件 / Emit event
     this.emit('fundingRate', fundingRate);
+  }
+
+  /**
+   * 处理K线数据
+   * Process kline (candlestick) data
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {Object} message - 原始消息 / Raw message
+   * @private
+   */
+  _processKline(exchange, message) {
+    // 标准化K线数据 / Normalize kline data
+    const candle = this._normalizeKline(exchange, message);
+
+    // 如果标准化失败，返回 / If normalization failed, return
+    if (!candle) {
+      return;
+    }
+
+    // 计算统一时间戳 / Calculate unified timestamp
+    candle.unifiedTimestamp = this._calculateUnifiedTimestamp(exchange, candle.exchangeTimestamp);
+
+    // 更新缓存 / Update cache
+    const cacheKey = `${exchange}:${candle.symbol}`;
+    if (!this.cache.klines.has(cacheKey)) {
+      this.cache.klines.set(cacheKey, []);
+    }
+    const klineCache = this.cache.klines.get(cacheKey);
+
+    // 如果是同一根K线更新，替换最后一根 / If same candle update, replace last one
+    if (klineCache.length > 0 && klineCache[klineCache.length - 1].openTime === candle.openTime) {
+      klineCache[klineCache.length - 1] = candle;
+    } else {
+      // 新K线，添加到缓存 / New candle, add to cache
+      klineCache.push(candle);
+      // 限制缓存大小 / Limit cache size
+      if (klineCache.length > 500) {
+        klineCache.shift();
+      }
+    }
+
+    // 存储到 Redis Hash / Store to Redis Hash
+    this._storeToRedisHash(REDIS_KEYS.KLINE_HASH, cacheKey, candle);
+
+    // 发布到 Redis Channel / Publish to Redis Channel
+    this._publishToChannel(DATA_TYPES.KLINE, candle);
+
+    // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
+    this.emit('candle', {
+      ...candle,
+      history: klineCache.slice(-100), // 附带最近100根K线历史 / Attach last 100 candles history
+    });
   }
 
   // ============================================
@@ -2063,6 +2135,139 @@ export class MarketDataEngine extends EventEmitter {
       nextFundingTime: parseInt(data.fundingTime), // 下次资金费率时间 / Next funding time
       exchangeTimestamp: parseInt(data.ts),   // 交易所时间戳 / Exchange timestamp
       localTimestamp: Date.now(),             // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化K线数据
+   * Normalize kline (candlestick) data
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object|null} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeKline(exchange, message) {
+    try {
+      // 根据交易所标准化 / Normalize based on exchange
+      switch (exchange) {
+        case 'binance':
+          return this._normalizeBinanceKline(message);
+
+        case 'bybit':
+          return this._normalizeBybitKline(message);
+
+        case 'okx':
+          return this._normalizeOKXKline(message);
+
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error(`${this.logPrefix} 标准化K线数据失败 / Failed to normalize kline:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * 标准化 Binance K线数据
+   * Normalize Binance kline data
+   *
+   * @param {Object} data - 原始数据 / Raw data
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeBinanceKline(data) {
+    // Binance kline 数据结构 / Binance kline data structure
+    // { e: 'kline', E: eventTime, s: symbol, k: { t, T, s, i, o, c, h, l, v, ... } }
+    const k = data.k;
+    const symbol = this._binanceToStandardSymbol(data.s);
+
+    return {
+      exchange: 'binance',              // 交易所 / Exchange
+      symbol,                            // 交易对 / Trading pair
+      interval: k.i,                     // 时间间隔 / Time interval
+      openTime: k.t,                     // 开盘时间 / Open time
+      closeTime: k.T,                    // 收盘时间 / Close time
+      open: parseFloat(k.o),             // 开盘价 / Open price
+      high: parseFloat(k.h),             // 最高价 / High price
+      low: parseFloat(k.l),              // 最低价 / Low price
+      close: parseFloat(k.c),            // 收盘价 / Close price
+      volume: parseFloat(k.v),           // 成交量 / Volume
+      quoteVolume: parseFloat(k.q),      // 成交额 / Quote volume
+      trades: k.n,                       // 成交笔数 / Number of trades
+      isClosed: k.x,                     // 是否收盘 / Is candle closed
+      exchangeTimestamp: data.E,         // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Bybit K线数据
+   * Normalize Bybit kline data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeBybitKline(message) {
+    // Bybit kline 数据结构 / Bybit kline data structure
+    // { topic: 'kline.60.BTCUSDT', data: [{ start, end, interval, open, close, high, low, volume, ... }] }
+    const data = message.data[0];
+    const topic = message.topic;
+    const symbolMatch = topic.match(/kline\.\d+\.(\w+)/);
+    const rawSymbol = symbolMatch ? symbolMatch[1] : '';
+    const symbol = this._bybitToStandardSymbol(rawSymbol);
+
+    return {
+      exchange: 'bybit',                 // 交易所 / Exchange
+      symbol,                            // 交易对 / Trading pair
+      interval: data.interval,           // 时间间隔 / Time interval
+      openTime: data.start,              // 开盘时间 / Open time
+      closeTime: data.end,               // 收盘时间 / Close time
+      open: parseFloat(data.open),       // 开盘价 / Open price
+      high: parseFloat(data.high),       // 最高价 / High price
+      low: parseFloat(data.low),         // 最低价 / Low price
+      close: parseFloat(data.close),     // 收盘价 / Close price
+      volume: parseFloat(data.volume),   // 成交量 / Volume
+      quoteVolume: parseFloat(data.turnover || 0), // 成交额 / Quote volume
+      trades: 0,                         // Bybit 不提供成交笔数 / Bybit doesn't provide trade count
+      isClosed: data.confirm,            // 是否收盘 / Is candle closed
+      exchangeTimestamp: data.timestamp, // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 OKX K线数据
+   * Normalize OKX kline data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeOKXKline(message) {
+    // OKX kline 数据结构 / OKX kline data structure
+    // { arg: { channel, instId }, data: [[ts, o, h, l, c, vol, volCcy, ...]] }
+    const data = message.data[0];
+    const symbol = this._okxToStandardSymbol(message.arg.instId);
+
+    return {
+      exchange: 'okx',                   // 交易所 / Exchange
+      symbol,                            // 交易对 / Trading pair
+      interval: message.arg.channel.replace('candle', ''), // 时间间隔 / Time interval
+      openTime: parseInt(data[0]),       // 开盘时间 / Open time
+      closeTime: parseInt(data[0]) + 3600000, // 收盘时间 (1小时后) / Close time (1 hour later)
+      open: parseFloat(data[1]),         // 开盘价 / Open price
+      high: parseFloat(data[2]),         // 最高价 / High price
+      low: parseFloat(data[3]),          // 最低价 / Low price
+      close: parseFloat(data[4]),        // 收盘价 / Close price
+      volume: parseFloat(data[5]),       // 成交量 / Volume
+      quoteVolume: parseFloat(data[6] || 0), // 成交额 / Quote volume
+      trades: 0,                         // OKX 不提供成交笔数 / OKX doesn't provide trade count
+      isClosed: data[8] === '1',         // 是否收盘 / Is candle closed
+      exchangeTimestamp: parseInt(data[0]), // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),        // 本地时间戳 / Local timestamp
     };
   }
 

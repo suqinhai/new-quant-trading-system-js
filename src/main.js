@@ -1215,6 +1215,11 @@ class TradingSystemRunner extends EventEmitter {
 
       // 订阅资金费率 / Subscribe funding rate
       await this.marketDataEngine.subscribe(symbol, ['fundingRate']);
+
+      // 订阅K线数据 / Subscribe kline (candlestick) data
+      // 策略需要K线数据来计算技术指标 (如SMA)
+      // Strategies need kline data to calculate technical indicators (like SMA)
+      await this.marketDataEngine.subscribe(symbol, ['kline']);
     }
   }
 
