@@ -17,10 +17,12 @@ RiskManager + ExchangeAdapter + OrderExecutor > MarketData > Strategy >>> Backte
 - [系统架构](#系统架构)
 - [快速开始](#快速开始)
 - [环境配置](#环境配置)
+  - [API 密钥加密存储](#api-密钥加密存储-推荐)
 - [运行模式](#运行模式)
 - [核心模块](#核心模块)
 - [策略开发](#策略开发)
 - [ClickHouse 数据库](#clickhouse-数据库)
+- [CI/CD 自动化测试](#cicd-自动化测试)
 - [部署指南](#部署指南)
 - [API 参考](#api-参考)
 - [常见问题](#常见问题)
@@ -224,6 +226,76 @@ MAX_POSITION_SIZE=10000
 MAX_DRAWDOWN=0.1
 STOP_LOSS_PERCENT=0.02
 ```
+
+### API 密钥加密存储 (推荐)
+
+为了保护敏感的 API 密钥，系统提供了加密存储功能，使用 **AES-256-GCM** 加密算法。
+
+#### 快速设置
+
+```bash
+# 1. 生成安全的主密码
+pnpm keys:generate
+
+# 2. 加密 API 密钥 (可从 .env 自动读取或手动输入)
+pnpm keys:encrypt
+
+# 3. 设置主密码环境变量
+export MASTER_KEY="你生成的主密码"    # Linux/Mac
+$env:MASTER_KEY="你生成的主密码"      # Windows PowerShell
+
+# 4. 启动系统 (自动解密)
+pnpm start
+```
+
+#### 密钥管理命令
+
+| 命令 | 说明 |
+|------|------|
+| `pnpm keys:encrypt` | 加密 API 密钥并保存到 `.keys.enc` |
+| `pnpm keys:decrypt` | 解密并显示存储的密钥 |
+| `pnpm keys:verify` | 验证加密文件完整性 |
+| `pnpm keys:generate` | 生成安全的随机主密码 |
+| `pnpm keys:rotate` | 轮换主密码 |
+
+#### 两种加密方式
+
+**方式一：加密文件存储 (推荐)**
+
+密钥加密后存储在 `.keys.enc` 文件中，启动时自动解密：
+
+```bash
+pnpm keys:encrypt  # 交互式加密
+```
+
+**方式二：环境变量内加密**
+
+在 `.env` 中使用 `ENC(...)` 格式存储加密值：
+
+```bash
+BINANCE_API_KEY=ENC(base64加密后的值)
+BINANCE_SECRET=ENC(base64加密后的值)
+```
+
+#### 加载优先级
+
+```
+加密文件 (.keys.enc) > 加密环境变量 ENC(...) > 明文环境变量
+```
+
+#### 安全特性
+
+- **AES-256-GCM** 认证加密算法
+- **PBKDF2** 密钥派生 (100,000 次迭代)
+- 密码强度验证 (最少12位，包含大小写、数字、特殊字符)
+- 加密文件权限设置为 600 (仅所有者可读写)
+- 支持主密码定期轮换
+
+#### 注意事项
+
+- 主密码丢失后无法恢复加密的密钥，请妥善保管
+- `.keys.enc` 文件已添加到 `.gitignore`，不会被提交
+- 生产环境建议通过环境变量传入 `MASTER_KEY`，而非写入文件
 
 ### config/default.js 配置说明
 
@@ -743,6 +815,112 @@ node src/main.js shadow --strategy MyStrategy --symbols BTC/USDT:USDT
 | `onFundingRate` | 资金费率更新 | `fundingRate` |
 | `onOrderFilled` | 订单成交 | `order` |
 | `onPositionChange` | 仓位变化 | `position` |
+
+---
+
+## CI/CD 自动化测试
+
+### 概述
+
+项目已配置 GitHub Actions 实现自动化测试和代码质量检查，每次推送和 PR 都会触发以下流程：
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│    Lint     │────▶│    Test     │────▶│    Build    │
+│  代码检查    │     │   单元测试   │     │   构建验证   │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                   │                   │
+       ▼                   ▼                   ▼
+   ESLint 检查        Node 20/22          语法检查
+   代码规范           测试覆盖率           CLI 验证
+```
+
+### 本地测试命令
+
+```bash
+# 运行所有测试
+pnpm test
+
+# 仅运行单元测试
+pnpm test:unit
+
+# 仅运行集成测试
+pnpm test:integration
+
+# 监视模式 (文件变化自动重跑)
+pnpm test:watch
+
+# 测试覆盖率
+pnpm test:coverage
+
+# 代码检查
+pnpm lint
+
+# 自动修复代码风格
+pnpm lint:fix
+
+# CI 完整流程 (lint + test)
+pnpm ci
+```
+
+### 测试目录结构
+
+```
+tests/
+├── unit/                    # 单元测试
+│   ├── crypto.test.js      # 加密模块测试
+│   ├── helpers.test.js     # 辅助函数测试
+│   └── validators.test.js  # 验证器测试
+└── integration/            # 集成测试
+    └── config.test.js      # 配置加载测试
+```
+
+### GitHub Actions 工作流
+
+| 工作流 | 文件 | 触发条件 | 功能 |
+|--------|------|----------|------|
+| CI | `.github/workflows/ci.yml` | push/PR | 完整测试流程 |
+| PR Check | `.github/workflows/pr.yml` | PR | 快速检查 + 自动标签 |
+
+### CI 流程详解
+
+1. **Lint (代码检查)**
+   - ESLint 静态分析
+   - 代码风格检查
+
+2. **Test (测试)**
+   - Node.js 20/22 双版本测试
+   - 单元测试 + 集成测试
+
+3. **Security (安全审计)**
+   - 依赖漏洞扫描
+   - `pnpm audit`
+
+4. **Build (构建验证)**
+   - 模块导入验证
+   - CLI 可执行性检查
+
+### 编写测试
+
+使用 Node.js 内置测试框架：
+
+```javascript
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+
+describe('MyModule', () => {
+  it('should work correctly', () => {
+    const result = myFunction();
+    assert.strictEqual(result, expected);
+  });
+});
+```
+
+### PR 合并要求
+
+- [ ] 所有测试通过
+- [ ] ESLint 检查通过
+- [ ] 无高危依赖漏洞
 
 ---
 

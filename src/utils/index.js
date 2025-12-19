@@ -16,6 +16,24 @@ export {
   perfLogger,
 } from './logger.js';
 
+// 导出加密工具 / Export crypto utilities
+export {
+  encrypt,
+  decrypt,
+  encryptKeys,
+  decryptKeys,
+  saveEncryptedKeys,
+  loadEncryptedKeys,
+  hasEncryptedKeys,
+  getMasterPassword,
+  generateMasterPassword,
+  validatePasswordStrength,
+  encryptValue,
+  decryptValue,
+  isEncrypted,
+  decryptObject,
+} from './crypto.js';
+
 // 导出辅助函数 / Export helpers
 export {
   // 数字处理 / Number handling
@@ -136,6 +154,7 @@ import helpers from './helpers.js';
 import indicators from './indicators.js';
 import validators from './validators.js';
 import { logger } from './logger.js';
+import crypto from './crypto.js';
 
 // 默认导出工具集合 / Default export utility collection
 export default {
@@ -143,4 +162,5 @@ export default {
   indicators,
   validators,
   logger,
+  crypto,
 };

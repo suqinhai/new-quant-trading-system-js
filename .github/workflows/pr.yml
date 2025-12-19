@@ -1,0 +1,136 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ================================
+  # PR 信息 / PR Information
+  # ================================
+  pr-info:
+    name: PR Info
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: PR Details
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "Source Branch: ${{ github.head_ref }}"
+          echo "Target Branch: ${{ github.base_ref }}"
+
+  # ================================
+  # 变更文件检查 / Changed Files Check
+  # ================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      tests: ${{ steps.filter.outputs.tests }}
+      config: ${{ steps.filter.outputs.config }}
+      docs: ${{ steps.filter.outputs.docs }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+            tests:
+              - 'tests/**'
+            config:
+              - 'config/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+
+  # ================================
+  # 快速检查 / Quick Check
+  # ================================
+  quick-check:
+    name: Quick Check
+    runs-on: ubuntu-latest
+    needs: changes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+  # ================================
+  # PR 标签 / PR Labels
+  # ================================
+  label:
+    name: Auto Label
+    runs-on: ubuntu-latest
+    needs: changes
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Add labels based on changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [];
+
+            if ('${{ needs.changes.outputs.src }}' === 'true') {
+              labels.push('source-code');
+            }
+            if ('${{ needs.changes.outputs.tests }}' === 'true') {
+              labels.push('tests');
+            }
+            if ('${{ needs.changes.outputs.config }}' === 'true') {
+              labels.push('configuration');
+            }
+            if ('${{ needs.changes.outputs.docs }}' === 'true') {
+              labels.push('documentation');
+            }
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }

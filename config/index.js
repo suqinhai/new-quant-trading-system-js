@@ -2,8 +2,8 @@
  * 配置加载器
  * Configuration Loader
  *
- * 加载和合并配置，支持环境变量覆盖
- * Loads and merges configuration, supports environment variable overrides
+ * 加载和合并配置，支持环境变量覆盖和加密密钥
+ * Loads and merges configuration, supports environment variable overrides and encrypted keys
  */
 
 // 导入默认配置 / Import default configuration
@@ -11,6 +11,17 @@ import defaultConfig from './default.js';
 
 // 导入辅助函数 / Import helper functions
 import { deepMerge, get } from '../src/utils/helpers.js';
+
+// 导入加密工具 / Import encryption utilities
+import {
+  loadEncryptedKeys,
+  hasEncryptedKeys,
+  getMasterPassword,
+  decryptValue,
+  isEncrypted,
+  ENCRYPTED_KEYS_FILE,
+  MASTER_KEY_ENV,
+} from '../src/utils/crypto.js';
 
 /**
  * 从环境变量获取值
@@ -69,6 +80,122 @@ function getEnvNumber(key, defaultValue = 0) {
 }
 
 /**
+ * 缓存的加密密钥 / Cached encrypted keys
+ * @type {Object|null}
+ */
+let cachedEncryptedKeys = null;
+
+/**
+ * 是否已尝试加载加密密钥 / Whether attempted to load encrypted keys
+ * @type {boolean}
+ */
+let encryptedKeysLoadAttempted = false;
+
+/**
+ * 加载加密的API密钥
+ * Load encrypted API keys
+ * @returns {Object|null} 解密后的密钥对象 / Decrypted keys object
+ */
+function loadEncryptedApiKeys() {
+  // 只尝试加载一次 / Only attempt to load once
+  if (encryptedKeysLoadAttempted) {
+    return cachedEncryptedKeys;
+  }
+
+  encryptedKeysLoadAttempted = true;
+
+  // 检查是否存在加密文件 / Check if encrypted file exists
+  if (!hasEncryptedKeys()) {
+    return null;
+  }
+
+  // 获取主密码 / Get master password
+  const masterPassword = getMasterPassword();
+
+  if (!masterPassword) {
+    console.warn(
+      `[Config] 发现加密密钥文件但未设置 ${MASTER_KEY_ENV} 环境变量 / ` +
+      `Found encrypted keys file but ${MASTER_KEY_ENV} not set`
+    );
+    return null;
+  }
+
+  try {
+    cachedEncryptedKeys = loadEncryptedKeys(masterPassword);
+    console.log('[Config] ✓ 已加载加密的API密钥 / Encrypted API keys loaded');
+    return cachedEncryptedKeys;
+  } catch (error) {
+    console.error(
+      `[Config] ✗ 加密密钥解密失败 / Failed to decrypt keys: ${error.message}`
+    );
+    return null;
+  }
+}
+
+/**
+ * 从环境变量获取值（支持解密）
+ * Get value from environment variable (with decryption support)
+ * @param {string} key - 环境变量键 / Environment variable key
+ * @param {any} defaultValue - 默认值 / Default value
+ * @returns {any} 解密后的值 / Decrypted value
+ */
+function getEnvDecrypted(key, defaultValue = undefined) {
+  const value = process.env[key];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  // 检查是否是加密值 / Check if encrypted value
+  if (isEncrypted(value)) {
+    const masterPassword = getMasterPassword();
+    if (!masterPassword) {
+      console.warn(
+        `[Config] 环境变量 ${key} 已加密但未设置 ${MASTER_KEY_ENV} / ` +
+        `Env ${key} is encrypted but ${MASTER_KEY_ENV} not set`
+      );
+      return defaultValue;
+    }
+
+    try {
+      return decryptValue(value, masterPassword);
+    } catch (error) {
+      console.error(
+        `[Config] 解密环境变量 ${key} 失败 / Failed to decrypt ${key}: ${error.message}`
+      );
+      return defaultValue;
+    }
+  }
+
+  // 非加密值，尝试解析JSON / Non-encrypted, try to parse JSON
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * 获取交易所API密钥（优先使用加密存储）
+ * Get exchange API key (prefer encrypted storage)
+ * @param {string} exchange - 交易所名称 / Exchange name
+ * @param {string} keyName - 密钥名称 / Key name
+ * @param {string} envKey - 环境变量名 / Environment variable name
+ * @returns {string|undefined} API密钥 / API key
+ */
+function getExchangeKey(exchange, keyName, envKey) {
+  // 优先使用加密存储的密钥 / Prefer encrypted stored keys
+  const encryptedKeys = loadEncryptedApiKeys();
+
+  if (encryptedKeys && encryptedKeys[exchange] && encryptedKeys[exchange][keyName]) {
+    return encryptedKeys[exchange][keyName];
+  }
+
+  // 回退到环境变量（支持加密值）/ Fallback to env (with decryption)
+  return getEnvDecrypted(envKey);
+}
+
+/**
  * 构建环境配置
  * Build environment configuration
  * @returns {Object} 环境配置 / Environment configuration
@@ -79,15 +206,24 @@ function buildEnvConfig() {
     exchange: {
       default: getEnv('DEFAULT_EXCHANGE', 'binance'),
       binance: {
-        apiKey: getEnv('BINANCE_API_KEY'),
-        secret: getEnv('BINANCE_SECRET'),
-        sandbox: getEnvBool('BINANCE_SANDBOX'),
+        apiKey: getExchangeKey('binance', 'apiKey', 'BINANCE_API_KEY'),
+        secret: getExchangeKey('binance', 'secret', 'BINANCE_SECRET') ||
+                getExchangeKey('binance', 'secret', 'BINANCE_API_SECRET'),
+        sandbox: getEnvBool('BINANCE_SANDBOX') || getEnvBool('BINANCE_TESTNET'),
       },
       okx: {
-        apiKey: getEnv('OKX_API_KEY'),
-        secret: getEnv('OKX_SECRET'),
-        password: getEnv('OKX_PASSWORD'),
+        apiKey: getExchangeKey('okx', 'apiKey', 'OKX_API_KEY'),
+        secret: getExchangeKey('okx', 'secret', 'OKX_SECRET') ||
+                getExchangeKey('okx', 'secret', 'OKX_API_SECRET'),
+        password: getExchangeKey('okx', 'passphrase', 'OKX_PASSWORD') ||
+                  getExchangeKey('okx', 'passphrase', 'OKX_PASSPHRASE'),
         sandbox: getEnvBool('OKX_SANDBOX'),
+      },
+      bybit: {
+        apiKey: getExchangeKey('bybit', 'apiKey', 'BYBIT_API_KEY'),
+        secret: getExchangeKey('bybit', 'secret', 'BYBIT_SECRET') ||
+                getExchangeKey('bybit', 'secret', 'BYBIT_API_SECRET'),
+        sandbox: getEnvBool('BYBIT_SANDBOX') || getEnvBool('BYBIT_TESTNET'),
       },
     },
 
@@ -106,19 +242,19 @@ function buildEnvConfig() {
         enabled: !!getEnv('SMTP_HOST'),
         host: getEnv('SMTP_HOST'),
         port: getEnvNumber('SMTP_PORT', 587),
-        user: getEnv('SMTP_USER'),
-        pass: getEnv('SMTP_PASS'),
+        user: getEnvDecrypted('SMTP_USER'),
+        pass: getEnvDecrypted('SMTP_PASS'),
         to: getEnv('ALERT_EMAIL_TO'),
       },
       telegram: {
         enabled: !!getEnv('TELEGRAM_BOT_TOKEN'),
-        botToken: getEnv('TELEGRAM_BOT_TOKEN'),
-        chatId: getEnv('TELEGRAM_CHAT_ID'),
+        botToken: getEnvDecrypted('TELEGRAM_BOT_TOKEN'),
+        chatId: getEnvDecrypted('TELEGRAM_CHAT_ID'),
       },
       dingtalk: {
         enabled: !!getEnv('DINGTALK_WEBHOOK'),
-        webhook: getEnv('DINGTALK_WEBHOOK'),
-        secret: getEnv('DINGTALK_SECRET'),
+        webhook: getEnvDecrypted('DINGTALK_WEBHOOK'),
+        secret: getEnvDecrypted('DINGTALK_SECRET'),
       },
       webhook: {
         enabled: !!getEnv('ALERT_WEBHOOK_URL'),
@@ -132,11 +268,12 @@ function buildEnvConfig() {
       host: getEnv('DB_HOST'),
       port: getEnvNumber('DB_PORT'),
       name: getEnv('DB_NAME'),
-      user: getEnv('DB_USER'),
-      password: getEnv('DB_PASSWORD'),
+      user: getEnvDecrypted('DB_USER'),
+      password: getEnvDecrypted('DB_PASSWORD'),
       redis: {
         enabled: !!getEnv('REDIS_URL'),
-        url: getEnv('REDIS_URL'),
+        url: getEnvDecrypted('REDIS_URL'),
+        password: getEnvDecrypted('REDIS_PASSWORD'),
       },
     },
 
