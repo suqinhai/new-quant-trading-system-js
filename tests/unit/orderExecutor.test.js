@@ -860,3 +860,1057 @@ describe('Exchange Mock', () => {
     expect(filledOrder.status).toBe('closed');
   });
 });
+
+// ============================================
+// 源码类测试 - AccountLockManager, RateLimitManager, NonceManager
+// ============================================
+
+import {
+  SmartOrderExecutor,
+  AccountLockManager,
+  RateLimitManager,
+  NonceManager,
+  SIDE,
+  ORDER_TYPE,
+  ORDER_STATUS,
+  ERROR_TYPE,
+  DEFAULT_CONFIG,
+} from '../../src/executor/orderExecutor.js';
+
+describe('AccountLockManager', () => {
+  let lockManager;
+
+  beforeEach(() => {
+    lockManager = new AccountLockManager();
+  });
+
+  describe('队列管理', () => {
+    it('应该为新账户创建队列', () => {
+      const queue = lockManager.getAccountQueue('account1');
+      expect(queue).toBeDefined();
+      expect(lockManager.locks.has('account1')).toBe(true);
+    });
+
+    it('应该返回已存在的账户队列', () => {
+      const queue1 = lockManager.getAccountQueue('account1');
+      const queue2 = lockManager.getAccountQueue('account1');
+      expect(queue1).toBe(queue2);
+    });
+
+    it('应该支持自定义并发数', () => {
+      const queue = lockManager.getAccountQueue('account1', 10);
+      expect(queue).toBeDefined();
+    });
+  });
+
+  describe('执行队列任务', () => {
+    it('应该在队列中执行任务', async () => {
+      let executed = false;
+      await lockManager.executeInQueue('account1', async () => {
+        executed = true;
+        return 'result';
+      });
+      expect(executed).toBe(true);
+    });
+
+    it('应该返回任务结果', async () => {
+      const result = await lockManager.executeInQueue('account1', async () => {
+        return 'test_result';
+      });
+      expect(result).toBe('test_result');
+    });
+
+    it('应该更新活跃计数', async () => {
+      // 开始时活跃数应为 0
+      const statusBefore = lockManager.getAccountStatus('account1');
+      expect(statusBefore.exists).toBe(false);
+
+      // 执行任务后应该创建账户
+      await lockManager.executeInQueue('account1', async () => {
+        return true;
+      });
+
+      const statusAfter = lockManager.getAccountStatus('account1');
+      expect(statusAfter.exists).toBe(true);
+      expect(statusAfter.activeCount).toBe(0); // 任务完成后应该为 0
+    });
+  });
+
+  describe('账户状态', () => {
+    it('应该返回不存在账户的状态', () => {
+      const status = lockManager.getAccountStatus('unknown');
+      expect(status.exists).toBe(false);
+      expect(status.activeCount).toBe(0);
+      expect(status.pendingCount).toBe(0);
+    });
+
+    it('应该返回存在账户的状态', async () => {
+      await lockManager.executeInQueue('account1', async () => {});
+
+      const status = lockManager.getAccountStatus('account1');
+      expect(status.exists).toBe(true);
+    });
+  });
+
+  describe('清理空闲账户', () => {
+    it('应该清理空闲时间超过阈值的账户', async () => {
+      // 创建账户
+      await lockManager.executeInQueue('account1', async () => {});
+
+      // 模拟时间流逝 - 由于我们不能真正等待，只测试函数不会崩溃
+      lockManager.cleanupIdleAccounts(0); // 设置为0会清理所有空闲账户
+
+      // 账户可能被清理也可能没有（取决于创建时间）
+      // 这里只验证函数能正常执行
+    });
+
+    it('应该保留有活跃任务的账户', async () => {
+      let taskCompleted = false;
+
+      // 创建一个长时间运行的任务
+      const taskPromise = lockManager.executeInQueue('account1', async () => {
+        await new Promise(r => setTimeout(r, 100));
+        taskCompleted = true;
+      });
+
+      // 尝试清理
+      lockManager.cleanupIdleAccounts(0);
+
+      // 账户应该仍然存在
+      expect(lockManager.locks.has('account1')).toBe(true);
+
+      await taskPromise;
+      expect(taskCompleted).toBe(true);
+    });
+  });
+});
+
+describe('RateLimitManager', () => {
+  let rateLimitManager;
+  const testConfig = {
+    rateLimitInitialWait: 100,
+    rateLimitMaxWait: 1000,
+    rateLimitBackoffMultiplier: 2,
+  };
+
+  beforeEach(() => {
+    rateLimitManager = new RateLimitManager(testConfig);
+  });
+
+  describe('限频状态检查', () => {
+    it('应该初始时不被限频', () => {
+      expect(rateLimitManager.isRateLimited('binance')).toBe(false);
+    });
+
+    it('应该在记录错误后被限频', () => {
+      rateLimitManager.recordRateLimitError('binance', new Error('Rate limit'));
+      expect(rateLimitManager.isRateLimited('binance')).toBe(true);
+    });
+  });
+
+  describe('等待时间计算', () => {
+    it('应该返回 0 如果未被限频', () => {
+      expect(rateLimitManager.getWaitTime('binance')).toBe(0);
+    });
+
+    it('应该返回正数等待时间如果被限频', () => {
+      rateLimitManager.recordRateLimitError('binance', new Error('Rate limit'));
+      expect(rateLimitManager.getWaitTime('binance')).toBeGreaterThan(0);
+    });
+
+    it('应该使用指数退避增加等待时间', () => {
+      const error = new Error('Rate limit');
+
+      rateLimitManager.recordRateLimitError('binance', error);
+      const wait1 = rateLimitManager.getWaitTime('binance');
+
+      rateLimitManager.recordRateLimitError('binance', error);
+      const wait2 = rateLimitManager.getWaitTime('binance');
+
+      expect(wait2).toBeGreaterThan(wait1);
+    });
+
+    it('应该不超过最大等待时间', () => {
+      const error = new Error('Rate limit');
+
+      // 多次记录错误
+      for (let i = 0; i < 10; i++) {
+        rateLimitManager.recordRateLimitError('binance', error);
+      }
+
+      const waitTime = rateLimitManager.getWaitTime('binance');
+      expect(waitTime).toBeLessThanOrEqual(testConfig.rateLimitMaxWait);
+    });
+  });
+
+  describe('清除限频状态', () => {
+    it('应该清除连续错误计数', () => {
+      rateLimitManager.recordRateLimitError('binance', new Error('Rate limit'));
+      rateLimitManager.clearRateLimitStatus('binance');
+
+      const status = rateLimitManager.rateLimitStatus.get('binance');
+      expect(status.consecutiveErrors).toBe(0);
+    });
+
+    it('应该对不存在的交易所无副作用', () => {
+      rateLimitManager.clearRateLimitStatus('unknown');
+      // 不应该抛出错误
+    });
+  });
+
+  describe('等待限频解除', () => {
+    it('应该等待指定时间', async () => {
+      rateLimitManager.recordRateLimitError('binance', new Error('Rate limit'));
+
+      const startTime = Date.now();
+      await rateLimitManager.waitForRateLimit('binance');
+      const elapsed = Date.now() - startTime;
+
+      // 应该等待了一些时间（至少接近初始等待时间）
+      expect(elapsed).toBeGreaterThan(50);
+    });
+
+    it('应该对未限频的交易所立即返回', async () => {
+      const startTime = Date.now();
+      await rateLimitManager.waitForRateLimit('binance');
+      const elapsed = Date.now() - startTime;
+
+      expect(elapsed).toBeLessThan(50);
+    });
+  });
+});
+
+describe('NonceManager', () => {
+  let nonceManager;
+  const testConfig = {
+    timestampOffset: 0,
+  };
+
+  beforeEach(() => {
+    nonceManager = new NonceManager(testConfig);
+  });
+
+  describe('Nonce 生成', () => {
+    it('应该生成基于时间戳的 nonce', () => {
+      const nonce = nonceManager.getNextNonce('binance');
+      expect(nonce).toBeGreaterThan(0);
+      expect(nonce).toBeLessThanOrEqual(Date.now() + 1000);
+    });
+
+    it('应该保证 nonce 递增', () => {
+      const nonce1 = nonceManager.getNextNonce('binance');
+      const nonce2 = nonceManager.getNextNonce('binance');
+      expect(nonce2).toBeGreaterThan(nonce1);
+    });
+
+    it('应该为不同交易所生成独立的 nonce', () => {
+      const nonce1 = nonceManager.getNextNonce('binance');
+      const nonce2 = nonceManager.getNextNonce('okx');
+
+      // 两个 nonce 应该都是有效的
+      expect(nonce1).toBeGreaterThan(0);
+      expect(nonce2).toBeGreaterThan(0);
+    });
+  });
+
+  describe('时间戳偏移', () => {
+    it('应该更新时间戳偏移', () => {
+      const serverTime = Date.now() + 1000; // 服务器比本地快 1 秒
+      nonceManager.updateTimestampOffset('binance', serverTime);
+
+      const status = nonceManager.nonceStatus.get('binance');
+      expect(status.timestampOffset).toBeGreaterThan(0);
+      expect(status.serverTime).toBe(serverTime);
+    });
+
+    it('应该在生成 nonce 时考虑偏移', () => {
+      // 设置一个较大的偏移
+      const serverTime = Date.now() + 5000;
+      nonceManager.updateTimestampOffset('binance', serverTime);
+
+      const nonce = nonceManager.getNextNonce('binance');
+      // nonce 应该大于当前本地时间
+      expect(nonce).toBeGreaterThan(Date.now());
+    });
+  });
+
+  describe('Nonce 冲突处理', () => {
+    it('应该从错误消息中提取服务器时间', () => {
+      // 先创建一个状态
+      nonceManager.getNextNonce('binance');
+
+      const error = new Error('timestamp: 1703131200000');
+      nonceManager.handleNonceConflict('binance', error);
+
+      const status = nonceManager.nonceStatus.get('binance');
+      // 应该重置了 lastNonce
+      expect(status.lastNonce).toBe(0);
+    });
+
+    it('应该在无法提取时间时增加偏移', () => {
+      nonceManager.getNextNonce('binance');
+      const statusBefore = { ...nonceManager.nonceStatus.get('binance') };
+
+      const error = new Error('Some nonce error without timestamp');
+      nonceManager.handleNonceConflict('binance', error);
+
+      const statusAfter = nonceManager.nonceStatus.get('binance');
+      expect(statusAfter.timestampOffset).toBeGreaterThan(statusBefore.timestampOffset);
+    });
+  });
+
+  describe('Nonce 冲突检测', () => {
+    it('应该检测包含 nonce 关键词的错误', () => {
+      expect(nonceManager.isNonceConflict(new Error('Invalid nonce'))).toBe(true);
+      expect(nonceManager.isNonceConflict(new Error('Timestamp too old'))).toBe(true);
+      expect(nonceManager.isNonceConflict(new Error('recvWindow exceeded'))).toBe(true);
+    });
+
+    it('应该不匹配普通错误', () => {
+      expect(nonceManager.isNonceConflict(new Error('Network error'))).toBe(false);
+      expect(nonceManager.isNonceConflict(new Error('Insufficient balance'))).toBe(false);
+    });
+
+    it('应该处理空错误消息', () => {
+      expect(nonceManager.isNonceConflict(new Error())).toBe(false);
+      expect(nonceManager.isNonceConflict({})).toBe(false);
+    });
+  });
+});
+
+describe('SmartOrderExecutor 源码测试', () => {
+  let executor;
+  let mockExchange;
+
+  beforeEach(() => {
+    mockExchange = createExchangeMock();
+    executor = new SmartOrderExecutor({
+      unfillTimeout: 100,
+      checkInterval: 50,
+      maxResubmitAttempts: 2,
+      rateLimitInitialWait: 50,
+      rateLimitMaxWait: 200,
+      verbose: false,
+    });
+    executor.exchanges.set('binance', mockExchange);
+    executor.running = true;
+  });
+
+  afterEach(() => {
+    executor.stop();
+    vi.clearAllMocks();
+  });
+
+  describe('常量导出', () => {
+    it('应该导出 SIDE 常量', () => {
+      expect(SIDE.BUY).toBe('buy');
+      expect(SIDE.SELL).toBe('sell');
+    });
+
+    it('应该导出 ORDER_TYPE 常量', () => {
+      expect(ORDER_TYPE.MARKET).toBe('market');
+      expect(ORDER_TYPE.LIMIT).toBe('limit');
+      expect(ORDER_TYPE.POST_ONLY).toBe('post_only');
+      expect(ORDER_TYPE.IOC).toBe('ioc');
+      expect(ORDER_TYPE.FOK).toBe('fok');
+    });
+
+    it('应该导出 ORDER_STATUS 常量', () => {
+      expect(ORDER_STATUS.PENDING).toBe('pending');
+      expect(ORDER_STATUS.SUBMITTED).toBe('submitted');
+      expect(ORDER_STATUS.FILLED).toBe('filled');
+      expect(ORDER_STATUS.CANCELED).toBe('canceled');
+      expect(ORDER_STATUS.FAILED).toBe('failed');
+    });
+
+    it('应该导出 ERROR_TYPE 常量', () => {
+      expect(ERROR_TYPE.RATE_LIMIT).toBe('rate_limit');
+      expect(ERROR_TYPE.NONCE_CONFLICT).toBe('nonce');
+      expect(ERROR_TYPE.INSUFFICIENT_BALANCE).toBe('balance');
+      expect(ERROR_TYPE.INVALID_ORDER).toBe('invalid');
+      expect(ERROR_TYPE.NETWORK).toBe('network');
+    });
+
+    it('应该导出 DEFAULT_CONFIG', () => {
+      expect(DEFAULT_CONFIG.unfillTimeout).toBe(500);
+      expect(DEFAULT_CONFIG.maxResubmitAttempts).toBe(5);
+      expect(DEFAULT_CONFIG.rateLimitInitialWait).toBe(1000);
+    });
+  });
+
+  describe('初始化', () => {
+    it('应该正确初始化内部管理器', () => {
+      const newExecutor = new SmartOrderExecutor();
+      expect(newExecutor.lockManager).toBeInstanceOf(AccountLockManager);
+      expect(newExecutor.rateLimitManager).toBeInstanceOf(RateLimitManager);
+      expect(newExecutor.nonceManager).toBeInstanceOf(NonceManager);
+    });
+
+    it('应该初始化统计信息', () => {
+      const newExecutor = new SmartOrderExecutor();
+      expect(newExecutor.stats.totalOrders).toBe(0);
+      expect(newExecutor.stats.filledOrders).toBe(0);
+      expect(newExecutor.stats.failedOrders).toBe(0);
+    });
+
+    it('应该使用对象初始化交易所', async () => {
+      const newExecutor = new SmartOrderExecutor({ verbose: false });
+      await newExecutor.init({ binance: mockExchange });
+
+      expect(newExecutor.exchanges.size).toBe(1);
+      expect(newExecutor.running).toBe(true);
+    });
+
+    it('应该使用 Map 初始化交易所', async () => {
+      const newExecutor = new SmartOrderExecutor({ verbose: false });
+      const exchangeMap = new Map([['binance', mockExchange]]);
+      await newExecutor.init(exchangeMap);
+
+      expect(newExecutor.exchanges.size).toBe(1);
+    });
+  });
+
+  describe('时间同步', () => {
+    it('应该尝试同步交易所时间', async () => {
+      const exchangeWithTime = {
+        ...mockExchange,
+        fetchTime: vi.fn().mockResolvedValue(Date.now() + 1000),
+      };
+
+      const newExecutor = new SmartOrderExecutor({ verbose: false });
+      await newExecutor.init({ binance: exchangeWithTime });
+
+      expect(exchangeWithTime.fetchTime).toHaveBeenCalled();
+    });
+
+    it('应该处理时间同步失败', async () => {
+      const exchangeWithFailingTime = {
+        ...mockExchange,
+        fetchTime: vi.fn().mockRejectedValue(new Error('Network error')),
+      };
+
+      const newExecutor = new SmartOrderExecutor({ verbose: false });
+      // 不应该抛出错误
+      await expect(newExecutor.init({ binance: exchangeWithFailingTime })).resolves.not.toThrow();
+    });
+  });
+
+  describe('错误分析', () => {
+    it('应该识别 429 限频错误', () => {
+      const error = { status: 429, message: 'Too many requests' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.RATE_LIMIT);
+    });
+
+    it('应该识别限频消息', () => {
+      const error = { message: 'Rate limit exceeded' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.RATE_LIMIT);
+    });
+
+    it('应该识别余额不足错误', () => {
+      const error = { message: 'Insufficient balance for this order' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.INSUFFICIENT_BALANCE);
+    });
+
+    it('应该识别无效订单错误', () => {
+      const error = { message: 'Invalid order parameters' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.INVALID_ORDER);
+
+      const error2 = { message: 'Order rejected: post only mode' };
+      expect(executor._analyzeError(error2)).toBe(ERROR_TYPE.INVALID_ORDER);
+    });
+
+    it('应该识别网络错误', () => {
+      const error = { message: 'Network timeout' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.NETWORK);
+
+      const error2 = { message: 'Connection refused' };
+      expect(executor._analyzeError(error2)).toBe(ERROR_TYPE.NETWORK);
+    });
+
+    it('应该识别交易所错误', () => {
+      const error = { message: 'Exchange server unavailable' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.EXCHANGE);
+    });
+
+    it('应该返回未知错误类型', () => {
+      const error = { message: 'Some random error' };
+      expect(executor._analyzeError(error)).toBe(ERROR_TYPE.UNKNOWN);
+    });
+  });
+
+  describe('订单参数构建', () => {
+    it('应该构建基本限价单参数', () => {
+      const orderInfo = {
+        clientOrderId: 'test123',
+        postOnly: false,
+        reduceOnly: false,
+        options: {},
+      };
+
+      const params = executor._buildOrderParams(orderInfo);
+
+      expect(params.type).toBe('limit');
+      expect(params.params.clientOrderId).toBe('test123');
+    });
+
+    it('应该添加 post-only 参数', () => {
+      const orderInfo = {
+        clientOrderId: 'test123',
+        postOnly: true,
+        reduceOnly: false,
+        options: {},
+      };
+
+      const params = executor._buildOrderParams(orderInfo);
+
+      expect(params.params.postOnly).toBe(true);
+      expect(params.params.timeInForce).toBe('PO');
+    });
+
+    it('应该添加 reduce-only 参数', () => {
+      const orderInfo = {
+        clientOrderId: 'test123',
+        postOnly: false,
+        reduceOnly: true,
+        options: {},
+      };
+
+      const params = executor._buildOrderParams(orderInfo);
+
+      expect(params.params.reduceOnly).toBe(true);
+    });
+
+    it('应该合并用户自定义选项', () => {
+      const orderInfo = {
+        clientOrderId: 'test123',
+        postOnly: false,
+        reduceOnly: false,
+        options: {
+          customParam: 'value',
+        },
+      };
+
+      const params = executor._buildOrderParams(orderInfo);
+
+      expect(params.params.customParam).toBe('value');
+    });
+  });
+
+  describe('取消订单', () => {
+    it('应该取消活跃订单', async () => {
+      // 先创建一个活跃订单
+      executor.activeOrders.set('test123', {
+        clientOrderId: 'test123',
+        exchangeOrderId: 'exchange123',
+        exchangeId: 'binance',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+
+      const result = await executor.cancelOrder('test123');
+
+      expect(result).toBe(true);
+      expect(mockExchange.cancelOrder).toHaveBeenCalled();
+    });
+
+    it('应该返回 false 如果订单不存在', async () => {
+      const result = await executor.cancelOrder('nonexistent');
+      expect(result).toBe(false);
+    });
+
+    it('应该返回 false 如果交易所不存在', async () => {
+      executor.activeOrders.set('test123', {
+        clientOrderId: 'test123',
+        exchangeId: 'unknown',
+        symbol: 'BTC/USDT',
+      });
+
+      const result = await executor.cancelOrder('test123');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('取消所有订单', () => {
+    it('应该取消所有活跃订单', async () => {
+      // 添加多个活跃订单
+      executor.activeOrders.set('order1', {
+        clientOrderId: 'order1',
+        exchangeOrderId: 'ex1',
+        exchangeId: 'binance',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+      executor.activeOrders.set('order2', {
+        clientOrderId: 'order2',
+        exchangeOrderId: 'ex2',
+        exchangeId: 'binance',
+        symbol: 'ETH/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+
+      const count = await executor.cancelAllOrders();
+
+      expect(count).toBe(2);
+    });
+
+    it('应该按交易所过滤', async () => {
+      executor.activeOrders.set('order1', {
+        clientOrderId: 'order1',
+        exchangeOrderId: 'ex1',
+        exchangeId: 'binance',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+      executor.activeOrders.set('order2', {
+        clientOrderId: 'order2',
+        exchangeOrderId: 'ex2',
+        exchangeId: 'okx',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+
+      // 只取消 binance 的订单
+      const count = await executor.cancelAllOrders('binance');
+
+      expect(count).toBe(1);
+    });
+
+    it('应该按交易对过滤', async () => {
+      executor.activeOrders.set('order1', {
+        clientOrderId: 'order1',
+        exchangeOrderId: 'ex1',
+        exchangeId: 'binance',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+      executor.activeOrders.set('order2', {
+        clientOrderId: 'order2',
+        exchangeOrderId: 'ex2',
+        exchangeId: 'binance',
+        symbol: 'ETH/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      });
+
+      const count = await executor.cancelAllOrders(null, 'BTC/USDT');
+
+      expect(count).toBe(1);
+    });
+  });
+
+  describe('获取订单状态', () => {
+    it('应该返回订单状态副本', () => {
+      const orderInfo = {
+        clientOrderId: 'test123',
+        symbol: 'BTC/USDT',
+        status: ORDER_STATUS.SUBMITTED,
+      };
+      executor.activeOrders.set('test123', orderInfo);
+
+      const status = executor.getOrderStatus('test123');
+
+      expect(status).toEqual(orderInfo);
+      expect(status).not.toBe(orderInfo); // 应该是副本
+    });
+
+    it('应该返回 null 如果订单不存在', () => {
+      const status = executor.getOrderStatus('nonexistent');
+      expect(status).toBeNull();
+    });
+  });
+
+  describe('获取活跃订单', () => {
+    it('应该返回所有活跃订单的副本', () => {
+      executor.activeOrders.set('order1', { clientOrderId: 'order1' });
+      executor.activeOrders.set('order2', { clientOrderId: 'order2' });
+
+      const orders = executor.getActiveOrders();
+
+      expect(orders).toHaveLength(2);
+      expect(orders[0]).not.toBe(executor.activeOrders.get('order1'));
+    });
+  });
+
+  describe('获取统计信息', () => {
+    it('应该返回统计信息', () => {
+      executor.stats.totalOrders = 10;
+      executor.stats.filledOrders = 8;
+
+      const stats = executor.getStats();
+
+      expect(stats.totalOrders).toBe(10);
+      expect(stats.filledOrders).toBe(8);
+      expect(stats.timestamp).toBeDefined();
+      expect(stats.activeOrders).toBe(0);
+    });
+  });
+
+  describe('获取账户状态', () => {
+    it('应该返回账户状态', () => {
+      const status = executor.getAccountStatus('binance');
+      expect(status).toBeDefined();
+      expect(status.exists).toBe(false);
+    });
+  });
+
+  describe('日志功能', () => {
+    it('应该在 verbose 模式下输出日志', () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      executor.config.verbose = true;
+
+      executor.log('Test message', 'info');
+
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('应该在非 verbose 模式下不输出 info 日志', () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      executor.config.verbose = false;
+
+      executor.log('Test message', 'info');
+
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('应该始终输出错误日志', () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      executor.config.verbose = false;
+
+      executor.log('Test error', 'error');
+
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('应该始终输出警告日志', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      executor.config.verbose = false;
+
+      executor.log('Test warning', 'warn');
+
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('停止执行器', () => {
+    it('应该清除所有监控定时器', () => {
+      // 添加一些监控定时器
+      const timer1 = setTimeout(() => {}, 10000);
+      const timer2 = setTimeout(() => {}, 10000);
+      executor.orderMonitors.set('order1', timer1);
+      executor.orderMonitors.set('order2', timer2);
+
+      executor.stop();
+
+      expect(executor.running).toBe(false);
+      expect(executor.orderMonitors.size).toBe(0);
+    });
+  });
+});
+
+describe('SmartOrderExecutor 事件测试', () => {
+  let executor;
+  let mockExchange;
+
+  beforeEach(() => {
+    mockExchange = createExchangeMock();
+    mockExchange.fetchOrder.mockResolvedValue({
+      id: 'order_123',
+      status: 'closed',
+      filled: 0.1,
+      amount: 0.1,
+      average: 50000,
+    });
+
+    executor = new SmartOrderExecutor({
+      unfillTimeout: 50,
+      checkInterval: 20,
+      maxResubmitAttempts: 2,
+      verbose: false,
+    });
+    executor.exchanges.set('binance', mockExchange);
+    executor.running = true;
+  });
+
+  afterEach(() => {
+    executor.stop();
+    vi.clearAllMocks();
+  });
+
+  it('应该继承 EventEmitter', () => {
+    expect(typeof executor.on).toBe('function');
+    expect(typeof executor.emit).toBe('function');
+    expect(typeof executor.removeListener).toBe('function');
+  });
+
+  it('应该在订单提交时发出 orderSubmitted 事件', async () => {
+    const eventSpy = vi.fn();
+    executor.on('orderSubmitted', eventSpy);
+
+    await executor.executeSmartLimitOrder({
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(eventSpy).toHaveBeenCalled();
+  });
+
+  it('应该在订单成交时发出 orderFilled 事件', async () => {
+    const eventSpy = vi.fn();
+    executor.on('orderFilled', eventSpy);
+
+    await executor.executeSmartLimitOrder({
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    // 等待事件触发
+    await new Promise(r => setTimeout(r, 100));
+
+    expect(eventSpy).toHaveBeenCalled();
+  });
+
+  it('应该在市价单成交时发出 orderFilled 事件', async () => {
+    const eventSpy = vi.fn();
+    executor.on('orderFilled', eventSpy);
+
+    await executor.executeMarketOrder({
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+    });
+
+    expect(eventSpy).toHaveBeenCalled();
+  });
+
+  it('应该在取消订单时发出 orderCanceled 事件', async () => {
+    const eventSpy = vi.fn();
+    executor.on('orderCanceled', eventSpy);
+
+    executor.activeOrders.set('test123', {
+      clientOrderId: 'test123',
+      exchangeOrderId: 'ex123',
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      status: ORDER_STATUS.SUBMITTED,
+    });
+
+    await executor.cancelOrder('test123');
+
+    expect(eventSpy).toHaveBeenCalled();
+  });
+});
+
+describe('SmartOrderExecutor 边界条件', () => {
+  let executor;
+  let mockExchange;
+
+  beforeEach(() => {
+    mockExchange = createExchangeMock();
+    executor = new SmartOrderExecutor({
+      unfillTimeout: 50,
+      checkInterval: 20,
+      maxResubmitAttempts: 1,
+      verbose: false,
+    });
+    executor.exchanges.set('binance', mockExchange);
+    executor.running = true;
+  });
+
+  afterEach(() => {
+    executor.stop();
+    vi.clearAllMocks();
+  });
+
+  it('应该处理交易所不存在的情况', async () => {
+    await expect(executor.executeSmartLimitOrder({
+      exchangeId: 'unknown',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    })).rejects.toThrow(/not found|不存在/);
+  });
+
+  it('应该处理市价单交易所不存在的情况', async () => {
+    await expect(executor.executeMarketOrder({
+      exchangeId: 'unknown',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+    })).rejects.toThrow(/not found|不存在/);
+  });
+
+  it('应该处理余额不足错误', async () => {
+    mockExchange.createOrder.mockRejectedValue(new Error('Insufficient balance'));
+
+    await expect(executor.executeSmartLimitOrder({
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 100,
+      price: 50000,
+    })).rejects.toThrow(/Insufficient|余额/);
+  });
+
+  it('应该处理无效订单错误', async () => {
+    mockExchange.createOrder.mockRejectedValue(new Error('Invalid order: price too low'));
+
+    await expect(executor.executeSmartLimitOrder({
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      amount: 0.1,
+      price: 1,
+    })).rejects.toThrow(/Invalid|无效/);
+  });
+
+  it('应该处理取消订单时的已成交情况', async () => {
+    mockExchange.cancelOrder.mockRejectedValue(new Error('Order already filled'));
+
+    executor.activeOrders.set('test123', {
+      clientOrderId: 'test123',
+      exchangeOrderId: 'ex123',
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+    });
+
+    // 不应该抛出错误
+    await executor._cancelOrder(
+      executor.activeOrders.get('test123'),
+      mockExchange
+    );
+  });
+
+  it('应该处理取消订单时的未找到情况', async () => {
+    mockExchange.cancelOrder.mockRejectedValue(new Error('Order not found'));
+
+    executor.activeOrders.set('test123', {
+      clientOrderId: 'test123',
+      exchangeOrderId: 'ex123',
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+    });
+
+    // 不应该抛出错误
+    await executor._cancelOrder(
+      executor.activeOrders.get('test123'),
+      mockExchange
+    );
+  });
+
+  it('应该处理没有 exchangeOrderId 的取消请求', async () => {
+    const orderInfo = {
+      clientOrderId: 'test123',
+      exchangeOrderId: null,
+      exchangeId: 'binance',
+      symbol: 'BTC/USDT',
+    };
+
+    // 不应该调用 cancelOrder
+    await executor._cancelOrder(orderInfo, mockExchange);
+    expect(mockExchange.cancelOrder).not.toHaveBeenCalled();
+  });
+});
+
+describe('SmartOrderExecutor 价格获取', () => {
+  let executor;
+  let mockExchange;
+
+  beforeEach(() => {
+    mockExchange = createExchangeMock();
+    mockExchange.fetchTicker.mockResolvedValue({
+      symbol: 'BTC/USDT',
+      bid: 49990,
+      ask: 50010,
+    });
+
+    executor = new SmartOrderExecutor({
+      priceSlippage: 0.001,
+      makerPriceOffset: 0.0001,
+      autoMakerPrice: true,
+      verbose: false,
+    });
+    executor.exchanges.set('binance', mockExchange);
+    executor.running = true;
+  });
+
+  afterEach(() => {
+    executor.stop();
+    vi.clearAllMocks();
+  });
+
+  it('应该为买单获取卖一价', async () => {
+    const orderInfo = {
+      symbol: 'BTC/USDT',
+      side: SIDE.BUY,
+      postOnly: false,
+      currentPrice: 50000,
+    };
+
+    const newPrice = await executor._getNewPrice(orderInfo, mockExchange);
+    expect(newPrice).toBe(50010); // ask price
+  });
+
+  it('应该为卖单获取买一价', async () => {
+    const orderInfo = {
+      symbol: 'BTC/USDT',
+      side: SIDE.SELL,
+      postOnly: false,
+      currentPrice: 50000,
+    };
+
+    const newPrice = await executor._getNewPrice(orderInfo, mockExchange);
+    expect(newPrice).toBe(49990); // bid price
+  });
+
+  it('应该为 post-only 买单调整价格', async () => {
+    const orderInfo = {
+      symbol: 'BTC/USDT',
+      side: SIDE.BUY,
+      postOnly: true,
+      currentPrice: 50000,
+    };
+
+    const newPrice = await executor._getNewPrice(orderInfo, mockExchange);
+    // 应该使用 bid * (1 + offset) 来确保是 maker
+    expect(newPrice).toBeCloseTo(49990 * 1.0001, 0);
+  });
+
+  it('应该为 post-only 卖单调整价格', async () => {
+    const orderInfo = {
+      symbol: 'BTC/USDT',
+      side: SIDE.SELL,
+      postOnly: true,
+      currentPrice: 50000,
+    };
+
+    const newPrice = await executor._getNewPrice(orderInfo, mockExchange);
+    // 应该使用 ask * (1 - offset) 来确保是 maker
+    expect(newPrice).toBeCloseTo(50010 * 0.9999, 0);
+  });
+
+  it('应该在获取行情失败时使用滑点调整', async () => {
+    mockExchange.fetchTicker.mockRejectedValue(new Error('Network error'));
+
+    const orderInfo = {
+      symbol: 'BTC/USDT',
+      side: SIDE.BUY,
+      postOnly: false,
+      currentPrice: 50000,
+    };
+
+    const newPrice = await executor._getNewPrice(orderInfo, mockExchange);
+    // 应该使用 currentPrice * (1 + slippage)
+    expect(newPrice).toBe(50000 * 1.001);
+  });
+});

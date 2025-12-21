@@ -75,7 +75,9 @@
       "Bash(npm rebuild:*)",
       "Bash(npm run test:coverage:*)",
       "Bash(test:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(timeout 60 npx vitest:*)",
+      "Bash(timeout 30 npx vitest:*)"
     ]
   }
 }
