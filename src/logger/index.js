@@ -48,6 +48,13 @@ import {
   DEFAULT_CONFIG as METRICS_DEFAULT_CONFIG,  // 指标导出器默认配置 / Metrics exporter default config
 } from './MetricsExporter.js';
 
+// 导入审计日志记录器 / Import Audit Logger
+import {
+  AuditLogger,        // 审计日志记录器类 / Audit Logger class
+  AuditEventType,     // 审计事件类型常量 / Audit event type constants
+  AuditLevel,         // 审计级别常量 / Audit level constants
+} from './AuditLogger.js';
+
 // ============================================
 // 日志模块工厂函数 / Logger Module Factory Function
 // ============================================
@@ -245,6 +252,9 @@ export {
 
   // 指标导出器 / Metrics Exporter
   MetricsExporter,
+
+  // 审计日志记录器 / Audit Logger
+  AuditLogger,
 };
 
 // 导出 PnL 日志相关常量 / Export PnL logging constants
@@ -272,6 +282,12 @@ export {
 export {
   METRIC_TYPE,         // 指标类型 / Metric types
   PREDEFINED_METRICS,  // 预定义指标 / Predefined metrics
+};
+
+// 导出审计日志相关常量 / Export Audit Logger constants
+export {
+  AuditEventType,      // 审计事件类型 / Audit event types
+  AuditLevel,          // 审计级别 / Audit levels
 };
 
 // 导出默认配置 / Export default configurations

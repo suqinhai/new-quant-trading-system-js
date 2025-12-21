@@ -4,7 +4,261 @@
  *
  * 提供数据验证和模式匹配功能
  * Provides data validation and pattern matching functionality
+ *
+ * 支持 Zod 运行时类型验证
+ * Supports Zod runtime type validation
  */
+
+import { z } from 'zod';
+
+// ============================================
+// Zod Schema 定义
+// ============================================
+
+/**
+ * 基础类型 Schema
+ */
+export const ZodSchemas = {
+  // 数字类型
+  positiveNumber: z.number().positive(),
+  nonNegativeNumber: z.number().nonnegative(),
+  percentage: z.number().min(0).max(1),
+  percentage100: z.number().min(0).max(100),
+
+  // 交易对 Schema
+  symbol: z.string().min(1).regex(/^[A-Z0-9]+\/[A-Z0-9]+$/i, {
+    message: 'Symbol must be in format BASE/QUOTE (e.g., BTC/USDT)',
+  }),
+
+  // 交易所名称
+  exchangeName: z.enum(['binance', 'okx', 'bybit', 'huobi', 'kucoin']),
+
+  // 订单方向
+  orderSide: z.enum(['buy', 'sell']),
+
+  // 订单类型
+  orderType: z.enum(['market', 'limit', 'stop_limit', 'stop_market']),
+
+  // 时间周期
+  timeframe: z.enum([
+    '1m', '3m', '5m', '15m', '30m',
+    '1h', '2h', '4h', '6h', '12h',
+    '1d', '1w', '1M',
+  ]),
+};
+
+/**
+ * 订单配置 Schema
+ */
+export const OrderConfigSchema = z.object({
+  symbol: ZodSchemas.symbol,
+  side: ZodSchemas.orderSide,
+  type: ZodSchemas.orderType.optional().default('limit'),
+  amount: ZodSchemas.positiveNumber,
+  price: ZodSchemas.positiveNumber.optional(),
+  stopPrice: ZodSchemas.positiveNumber.optional(),
+  reduceOnly: z.boolean().optional().default(false),
+  postOnly: z.boolean().optional().default(false),
+  timeInForce: z.enum(['GTC', 'IOC', 'FOK']).optional().default('GTC'),
+  leverage: z.number().min(1).max(125).optional(),
+  clientOrderId: z.string().optional(),
+}).refine(
+  (data) => data.type === 'market' || data.price !== undefined,
+  { message: 'Price is required for limit orders' }
+).refine(
+  (data) => !data.type?.startsWith('stop') || data.stopPrice !== undefined,
+  { message: 'Stop price is required for stop orders' }
+);
+
+/**
+ * 策略配置 Schemas
+ */
+export const StrategySchemas = {
+  sma: z.object({
+    shortPeriod: z.number().int().min(1).max(500).default(10),
+    longPeriod: z.number().int().min(1).max(500).default(20),
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    tradeAmount: ZodSchemas.positiveNumber.optional(),
+    tradePercent: ZodSchemas.percentage.optional(),
+  }).refine(
+    (data) => data.shortPeriod < data.longPeriod,
+    { message: 'Short period must be less than long period' }
+  ),
+
+  rsi: z.object({
+    period: z.number().int().min(2).max(100).default(14),
+    overbought: z.number().min(50).max(100).default(70),
+    oversold: z.number().min(0).max(50).default(30),
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    tradeAmount: ZodSchemas.positiveNumber.optional(),
+    tradePercent: ZodSchemas.percentage.optional(),
+  }).refine(
+    (data) => data.oversold < data.overbought,
+    { message: 'Oversold level must be less than overbought level' }
+  ),
+
+  macd: z.object({
+    fastPeriod: z.number().int().min(1).max(100).default(12),
+    slowPeriod: z.number().int().min(1).max(100).default(26),
+    signalPeriod: z.number().int().min(1).max(100).default(9),
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    tradeAmount: ZodSchemas.positiveNumber.optional(),
+    tradePercent: ZodSchemas.percentage.optional(),
+  }).refine(
+    (data) => data.fastPeriod < data.slowPeriod,
+    { message: 'Fast period must be less than slow period' }
+  ),
+
+  bollinger: z.object({
+    period: z.number().int().min(2).max(200).default(20),
+    stdDev: z.number().min(0.1).max(5).default(2),
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    tradeAmount: ZodSchemas.positiveNumber.optional(),
+    tradePercent: ZodSchemas.percentage.optional(),
+  }),
+
+  grid: z.object({
+    symbol: ZodSchemas.symbol,
+    upperPrice: ZodSchemas.positiveNumber,
+    lowerPrice: ZodSchemas.positiveNumber,
+    gridCount: z.number().int().min(2).max(500).default(10),
+    totalAmount: ZodSchemas.positiveNumber,
+    side: z.enum(['long', 'short', 'neutral']).default('neutral'),
+  }).refine(
+    (data) => data.lowerPrice < data.upperPrice,
+    { message: 'Lower price must be less than upper price' }
+  ),
+};
+
+/**
+ * 风控配置 Schema
+ */
+export const RiskConfigSchema = z.object({
+  maxPositions: z.number().int().min(1).max(100).default(10),
+  maxPositionSize: ZodSchemas.percentage.default(0.1),
+  maxLeverage: z.number().min(1).max(125).default(10),
+  maxDailyLoss: ZodSchemas.percentage.default(0.05),
+  maxDrawdown: ZodSchemas.percentage.default(0.2),
+  maxConsecutiveLosses: z.number().int().min(1).max(50).default(5),
+  defaultStopLoss: ZodSchemas.percentage.default(0.02),
+  defaultTakeProfit: ZodSchemas.percentage.optional(),
+  enableTrailingStop: z.boolean().default(false),
+  trailingStopDistance: ZodSchemas.percentage.optional(),
+  riskPerTrade: ZodSchemas.percentage.default(0.01),
+  cooldownPeriod: z.number().int().min(0).default(3600000),
+});
+
+/**
+ * 交易所配置 Schema
+ */
+export const ExchangeConfigSchema = z.object({
+  exchange: ZodSchemas.exchangeName,
+  apiKey: z.string().min(1),
+  secret: z.string().min(1),
+  password: z.string().optional(),
+  testnet: z.boolean().default(false),
+  options: z.record(z.unknown()).optional(),
+});
+
+/**
+ * K线数据 Schema
+ */
+export const CandleSchema = z.object({
+  timestamp: z.number().int().positive(),
+  open: ZodSchemas.positiveNumber,
+  high: ZodSchemas.positiveNumber,
+  low: ZodSchemas.positiveNumber,
+  close: ZodSchemas.positiveNumber,
+  volume: ZodSchemas.nonNegativeNumber,
+}).refine(
+  (data) => data.low <= data.open && data.low <= data.close,
+  { message: 'Low must be <= open and close' }
+).refine(
+  (data) => data.high >= data.open && data.high >= data.close,
+  { message: 'High must be >= open and close' }
+);
+
+// ============================================
+// Zod 验证辅助函数
+// ============================================
+
+/**
+ * 使用 Zod schema 验证数据
+ * @param {z.ZodSchema} schema - Zod schema
+ * @param {any} data - 要验证的数据
+ * @returns {{ success: boolean, data?: any, error?: string, errors?: any[] }}
+ */
+export function zodValidate(schema, data) {
+  const result = schema.safeParse(data);
+
+  if (result.success) {
+    return { success: true, data: result.data };
+  }
+
+  // Zod 使用 issues 而不是 errors
+  const issues = result.error.issues || [];
+  const errors = issues.map(e => {
+    const path = e.path.join('.');
+    return path ? `${path}: ${e.message}` : e.message;
+  });
+
+  return {
+    success: false,
+    error: errors.join('; '),
+    errors: issues,
+  };
+}
+
+/**
+ * 验证并抛出异常
+ * @param {z.ZodSchema} schema - Zod schema
+ * @param {any} data - 要验证的数据
+ * @returns {any} 验证后的数据
+ * @throws {Error} ValidationError
+ */
+export function zodValidateOrThrow(schema, data) {
+  const result = zodValidate(schema, data);
+
+  if (!result.success) {
+    const error = new Error(result.error);
+    error.name = 'ValidationError';
+    error.errors = result.errors;
+    throw error;
+  }
+
+  return result.data;
+}
+
+/**
+ * 创建 Express 验证中间件
+ * @param {z.ZodSchema} schema - Zod schema
+ * @param {string} source - 数据来源 ('body', 'query', 'params')
+ */
+export function createZodMiddleware(schema, source = 'body') {
+  return (req, res, next) => {
+    const data = req[source];
+    const result = zodValidate(schema, data);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: result.error,
+        errors: result.errors,
+      });
+    }
+
+    req[`validated${source.charAt(0).toUpperCase() + source.slice(1)}`] = result.data;
+    next();
+  };
+}
+
+// 导出 Zod 实例供自定义扩展
+export { z };
 
 // ============================================
 // 交易参数验证 / Trading Parameter Validation

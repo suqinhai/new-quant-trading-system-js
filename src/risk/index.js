@@ -87,5 +87,20 @@ export {
   SYSTEM_STATUS,
 } from './RiskSystem.js';
 
+// ============================================
+// 熔断器导出
+// Circuit Breaker Exports
+// ============================================
+
+export {
+  CircuitBreaker,
+  CircuitBreakerError,
+  CircuitBreakerManager,
+  CircuitState,
+  withCircuitBreaker,
+  wrapWithCircuitBreaker,
+  defaultManager as defaultCircuitBreakerManager,
+} from './CircuitBreaker.js';
+
 // 默认导出风险管理器 / Default export risk manager
 export { RiskManager as default } from './RiskManager.js';
