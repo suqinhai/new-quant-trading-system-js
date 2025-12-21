@@ -1,120 +1,93 @@
-<!-- 行情喂策略，策略喂执行，风控卡在最前面，回测只用来练手 -->
-
-<!-- “先活下来，再活得好，最后活得久。”
-→ 对应模块就是：
-RiskManager + ExchangeAdapter + OrderExecutor > MarketData > Strategy >>> Backtest
-把前三板斧练到极致，你已经秒杀了市面上90%的量化团队。 -->
-
-# 量化交易系统 (Quant Trading System)
-
-一个功能完整的 JavaScript/Node.js 量化交易系统，支持多交易所实时行情、智能订单执行、风险管理、策略回测等功能。
-
----
+# 量化交易系统开发与使用教程
 
 ## 目录
 
-- [项目概览](#项目概览)
-- [系统架构](#系统架构)
-- [快速开始](#快速开始)
-- [环境配置](#环境配置)
-  - [API 密钥加密存储](#api-密钥加密存储-推荐)
-- [运行模式](#运行模式)
-- [核心模块](#核心模块)
-- [策略开发](#策略开发)
-- [ClickHouse 数据库](#clickhouse-数据库)
-- [CI/CD 自动化测试](#cicd-自动化测试)
-- [部署指南](#部署指南)
-- [API 参考](#api-参考)
-- [常见问题](#常见问题)
+1. [项目概述](#1-项目概述)
+2. [快速开始](#2-快速开始)
+3. [系统架构](#3-系统架构)
+4. [配置说明](#4-配置说明)
+5. [策略开发](#5-策略开发)
+6. [API参考](#6-api参考)
+7. [运维部署](#7-运维部署)
+8. [常见问题](#8-常见问题)
 
 ---
 
-## 项目概览
+## 1. 项目概述
 
-### 主要特性
+### 1.1 简介
 
-- **多交易所支持**: 同时连接 Binance、Bybit、OKX 三大交易所
-- **实时行情引擎**: WebSocket 订阅 ticker、depth、trade、fundingRate 数据
-- **智能订单执行**: 支持 post-only、reduce-only，500ms 未成交自动撤单重下
-- **风险管理**: 仓位限制、止损止盈、敞口控制
-- **回测引擎**: 支持历史数据回测，包含滑点和手续费模拟
-- **三种运行模式**: 实盘交易 (live)、影子模式 (shadow)、回测 (backtest)
-- **PM2 部署**: 生产级进程管理，支持零停机重载
+这是一个**工业级加密货币量化交易系统**，使用 Node.js 开发，具备以下核心特性：
 
-### 技术栈
+- **多交易所支持**：Binance、OKX、Bybit
+- **多策略并行**：SMA、RSI、MACD、布林带、网格、资金费率套利
+- **完整风控体系**：仓位控制、止损止盈、日亏损限制、黑天鹅保护
+- **智能订单执行**：500ms未成交自动撤单重下、限频处理、故障转移
+- **实时监控告警**：Telegram、邮件、钉钉、Prometheus/Grafana
+- **专业回测引擎**：历史数据回测、策略优化、性能评估
 
-| 组件 | 技术 |
-|------|------|
-| 运行时 | Node.js 18+ (ES Modules) |
-| 交易所 API | CCXT |
-| 实时数据 | WebSocket (ws) |
-| 数据存储 | Redis (ioredis) |
+### 1.2 技术栈
+
+| 类别 | 技术 |
+|-----|------|
+| 运行时 | Node.js >= 20.0.0 |
+| 交易所API | CCXT |
+| 实时通信 | WebSocket (ws) |
+| 数据库 | SQLite / Redis |
+| 日志 | Winston / Pino |
+| 监控 | Prometheus + Grafana |
 | 进程管理 | PM2 |
-| 配置管理 | dotenv + config |
-| 日志 | Winston |
 
----
-
-## 系统架构
+### 1.3 项目结构
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         主程序 (main.js)                         │
-│                    命令行解析 + 模式选择                          │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-        ┌───────────────────────┼───────────────────────┐
-        ▼                       ▼                       ▼
-┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-│   Live Mode   │       │  Shadow Mode  │       │ Backtest Mode │
-│   实盘交易     │       │   影子模式     │       │    回测模式    │
-└───────────────┘       └───────────────┘       └───────────────┘
-        │                       │                       │
-        └───────────────────────┼───────────────────────┘
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       核心模块层                                  │
-├─────────────┬─────────────┬─────────────┬─────────────┬─────────┤
-│ MarketData  │  Strategy   │    Risk     │  Executor   │ Backtest│
-│   行情引擎   │   策略引擎   │   风控模块   │  订单执行器  │ 回测引擎 │
-└─────────────┴─────────────┴─────────────┴─────────────┴─────────┘
-                                │
-┌─────────────────────────────────────────────────────────────────┐
-│                       基础设施层                                  │
-├─────────────────────────┬───────────────────────────────────────┤
-│    Exchange Adapters    │              Redis                    │
-│  (Binance/Bybit/OKX)   │     (数据缓存/Stream/Pub-Sub)          │
-└─────────────────────────┴───────────────────────────────────────┘
-```
-
-### 目录结构
-
-```
-quant-trading-system-js/
+quant-trading-system/
 ├── src/
-│   ├── main.js              # 主入口，命令行解析
-│   ├── index.js             # 模块导出
-│   ├── exchange/            # 交易所适配器
-│   │   ├── BaseExchange.js  # 基础交易所类
-│   │   ├── BinanceAdapter.js
-│   │   ├── BybitAdapter.js
-│   │   └── OKXAdapter.js
-│   ├── marketdata/          # 行情数据模块
-│   │   └── MarketDataEngine.js
-│   ├── strategies/          # 交易策略
-│   │   ├── BaseStrategy.js  # 策略基类
-│   │   ├── index.js         # 策略注册
+│   ├── main.js              # CLI 入口
+│   ├── index.js             # TradingEngine 主类
+│   ├── exchange/            # 交易所模块
+│   │   ├── BaseExchange.js
+│   │   ├── BinanceExchange.js
+│   │   ├── OKXExchange.js
+│   │   ├── BybitExchange.js
+│   │   └── ExchangeFactory.js
+│   ├── strategies/          # 策略模块
+│   │   ├── BaseStrategy.js
+│   │   ├── SMAStrategy.js
+│   │   ├── RSIStrategy.js
+│   │   ├── MACDStrategy.js
+│   │   ├── BollingerBandsStrategy.js
+│   │   ├── GridStrategy.js
 │   │   └── FundingArbStrategy.js
-│   ├── risk/                # 风险管理
-│   │   └── RiskManager.js
 │   ├── executor/            # 订单执行
-│   │   └── orderExecutor.js
-│   └── backtest/            # 回测引擎
-│       └── BacktestEngine.js
+│   │   ├── orderExecutor.js
+│   │   └── ExchangeFailover.js
+│   ├── risk/                # 风控系统
+│   │   ├── RiskManager.js
+│   │   ├── PortfolioRiskManager.js
+│   │   └── PositionCalculator.js
+│   ├── marketdata/          # 行情引擎
+│   │   └── MarketDataEngine.js
+│   ├── backtest/            # 回测引擎
+│   │   ├── BacktestEngine.js
+│   │   └── BacktestRunner.js
+│   ├── logger/              # 日志告警
+│   │   ├── TelegramNotifier.js
+│   │   └── AlertManager.js
+│   ├── monitor/             # 系统监控
+│   │   └── SystemMonitor.js
+│   └── utils/               # 工具函数
+│       ├── helpers.js
+│       ├── indicators.js
+│       └── crypto.js
 ├── config/
+│   ├── index.js             # 配置加载器
 │   └── default.js           # 默认配置
-├── logs/                    # 日志目录
+├── examples/                # 示例代码
+├── scripts/                 # 脚本工具
 ├── data/                    # 数据目录
+├── logs/                    # 日志目录
+├── tests/                   # 测试用例
 ├── .env.example             # 环境变量模板
 ├── ecosystem.config.cjs     # PM2 配置
 └── package.json
@@ -122,1556 +95,1039 @@ quant-trading-system-js/
 
 ---
 
-## 快速开始
+## 2. 快速开始
 
-### 1. 安装依赖
+### 2.1 环境要求
+
+- Node.js >= 20.0.0
+- pnpm (推荐) 或 npm
+- Redis (可选，用于实时数据缓存)
+
+### 2.2 安装步骤
 
 ```bash
-# 克隆项目
+# 1. 克隆项目
 git clone <repository-url>
-cd quant-trading-system-js
+cd quant-trading-system
 
-# 安装依赖
-npm install
-```
+# 2. 安装依赖
+pnpm install
 
-### 2. 配置环境变量
-
-```bash
-# 复制环境变量模板
+# 3. 复制环境变量文件
 cp .env.example .env
 
-# 编辑配置文件，填入 API 密钥
+# 4. 编辑配置文件
+# 修改 .env 文件，填入你的交易所 API 密钥
 ```
 
-### 3. 启动 Redis
+### 2.3 配置 API 密钥
+
+编辑 `.env` 文件：
 
 ```bash
-# Docker 方式
-docker run -d --name redis -p 6379:6379 redis:alpine
+# Binance 配置 (推荐先使用测试网)
+BINANCE_API_KEY=your_api_key
+BINANCE_API_SECRET=your_api_secret
+BINANCE_TESTNET=true
 
-# 或本地安装后启动
-redis-server
+# OKX 配置
+OKX_API_KEY=your_api_key
+OKX_API_SECRET=your_api_secret
+OKX_PASSPHRASE=your_passphrase
+OKX_SANDBOX=true
+
+# Bybit 配置
+BYBIT_API_KEY=your_api_key
+BYBIT_API_SECRET=your_api_secret
+BYBIT_TESTNET=true
 ```
 
-### 4. 运行系统
+### 2.4 加密 API 密钥（推荐）
 
 ```bash
-# 影子模式 (推荐首次使用)
-npm run shadow
+# 设置主密码
+export MASTER_KEY="your_secure_master_password"
 
-# 实盘模式
-npm run live
+# 加密密钥
+npm run keys:encrypt
 
-# 回测模式
-npm run backtest
+# 验证加密
+npm run keys:verify
 ```
 
----
+### 2.5 运行系统
 
-## 环境配置
-
-### .env 文件配置
+系统支持三种运行模式：
 
 ```bash
-# ============================================
-# 运行环境 / Runtime Environment
-# ============================================
-NODE_ENV=production
-
-# ============================================
-# 交易所 API 配置 / Exchange API Configuration
-# ============================================
-
-# Binance
-BINANCE_API_KEY=your_binance_api_key
-BINANCE_SECRET=your_binance_secret
-BINANCE_SANDBOX=false
-
-# Bybit
-BYBIT_API_KEY=your_bybit_api_key
-BYBIT_SECRET=your_bybit_secret
-BYBIT_SANDBOX=false
-
-# OKX
-OKX_API_KEY=your_okx_api_key
-OKX_SECRET=your_okx_secret
-OKX_PASSPHRASE=your_okx_passphrase
-OKX_SANDBOX=false
-
-# ============================================
-# Redis 配置 / Redis Configuration
-# ============================================
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_DB=0
-
-# ============================================
-# 日志配置 / Logging Configuration
-# ============================================
-LOG_LEVEL=info
-LOG_FILE=./logs/app.log
-
-# ============================================
-# 策略配置 / Strategy Configuration
-# ============================================
-DEFAULT_STRATEGY=FundingArb
-TRADING_SYMBOLS=BTC/USDT:USDT,ETH/USDT:USDT
-
-# ============================================
-# 风控配置 / Risk Configuration
-# ============================================
-MAX_POSITION_SIZE=10000
-MAX_DRAWDOWN=0.1
-STOP_LOSS_PERCENT=0.02
-```
-
-### API 密钥加密存储 (推荐)
-
-为了保护敏感的 API 密钥，系统提供了加密存储功能，使用 **AES-256-GCM** 加密算法。
-
-#### 快速设置
-
-```bash
-# 1. 生成安全的主密码
-pnpm keys:generate
-
-# 2. 加密 API 密钥 (可从 .env 自动读取或手动输入)
-pnpm keys:encrypt
-
-# 3. 设置主密码环境变量
-export MASTER_KEY="你生成的主密码"    # Linux/Mac
-$env:MASTER_KEY="你生成的主密码"      # Windows PowerShell
-
-# 4. 启动系统 (自动解密)
-pnpm start
-```
-
-#### 密钥管理命令
-
-| 命令 | 说明 |
-|------|------|
-| `pnpm keys:encrypt` | 加密 API 密钥并保存到 `.keys.enc` |
-| `pnpm keys:decrypt` | 解密并显示存储的密钥 |
-| `pnpm keys:verify` | 验证加密文件完整性 |
-| `pnpm keys:generate` | 生成安全的随机主密码 |
-| `pnpm keys:rotate` | 轮换主密码 |
-
-#### 两种加密方式
-
-**方式一：加密文件存储 (推荐)**
-
-密钥加密后存储在 `.keys.enc` 文件中，启动时自动解密：
-
-```bash
-pnpm keys:encrypt  # 交互式加密
-```
-
-**方式二：环境变量内加密**
-
-在 `.env` 中使用 `ENC(...)` 格式存储加密值：
-
-```bash
-BINANCE_API_KEY=ENC(base64加密后的值)
-BINANCE_SECRET=ENC(base64加密后的值)
-```
-
-#### 加载优先级
-
-```
-加密文件 (.keys.enc) > 加密环境变量 ENC(...) > 明文环境变量
-```
-
-#### 安全特性
-
-- **AES-256-GCM** 认证加密算法
-- **PBKDF2** 密钥派生 (100,000 次迭代)
-- 密码强度验证 (最少12位，包含大小写、数字、特殊字符)
-- 加密文件权限设置为 600 (仅所有者可读写)
-- 支持主密码定期轮换
-
-#### 注意事项
-
-- 主密码丢失后无法恢复加密的密钥，请妥善保管
-- `.keys.enc` 文件已添加到 `.gitignore`，不会被提交
-- 生产环境建议通过环境变量传入 `MASTER_KEY`，而非写入文件
-
-### config/default.js 配置说明
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `exchanges` | 启用的交易所列表 | `['binance', 'bybit', 'okx']` |
-| `tradingType` | 交易类型 (spot/futures) | `futures` |
-| `redis.host` | Redis 主机 | `localhost` |
-| `redis.port` | Redis 端口 | `6379` |
-| `strategy.default` | 默认策略 | `FundingArb` |
-| `risk.maxPositionSize` | 最大仓位 | `10000` |
-| `risk.maxDrawdown` | 最大回撤 | `0.1` |
-
----
-
-## 运行模式
-
-### 1. 实盘模式 (Live)
-
-真实下单交易，使用真实资金。
-
-```bash
-# 使用 npm 脚本
-npm run live
-
-# 或直接运行
-node src/main.js live --strategy FundingArb --symbols BTC/USDT:USDT
-
-# 使用 PM2
-pm2 start ecosystem.config.cjs --only quant-live
-```
-
-**命令行参数:**
-
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `--strategy` | 策略名称 | `FundingArb` |
-| `--symbols` | 交易对 | `BTC/USDT:USDT,ETH/USDT:USDT` |
-| `--exchanges` | 交易所 | `binance,bybit` |
-| `--verbose` | 详细日志 | - |
-
-### 2. 影子模式 (Shadow)
-
-模拟交易，使用真实行情但不实际下单，用于策略验证。
-
-```bash
-# 使用 npm 脚本
-npm run shadow
-
-# 或直接运行
-node src/main.js shadow --strategy FundingArb --symbols BTC/USDT:USDT --verbose
-
-# 使用 PM2
-pm2 start ecosystem.config.cjs --only quant-shadow
-```
-
-### 3. 回测模式 (Backtest)
-
-使用历史数据进行策略回测。
-
-```bash
-# 使用 npm 脚本
+# 1. 回测模式 - 使用历史数据测试策略
 npm run backtest
 
-# 或直接运行
-node src/main.js backtest \
-  --strategy FundingArb \
-  --start 2024-01-01 \
-  --end 2024-06-01 \
-  --initial-capital 10000
+# 2. 影子模式 - 真实行情，模拟下单（推荐用于开发测试）
+npm run shadow
 
-# 使用 PM2
-pm2 start ecosystem.config.cjs --only quant-backtest
+# 3. 实盘模式 - 真实交易
+npm run live
+
+# 开发模式（自动重载）
+npm run dev
 ```
 
-**回测参数:**
+### 2.6 运行示例
 
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `--start` | 开始日期 | `2024-01-01` |
-| `--end` | 结束日期 | `2024-06-01` |
-| `--initial-capital` | 初始资金 | `10000` |
-| `--slippage` | 滑点 | `0.001` |
-| `--commission` | 手续费率 | `0.0004` |
+```bash
+# 运行 SMA 策略示例
+node examples/runSMAStrategy.js
+
+# 运行回测示例
+node examples/runBacktest.js
+```
 
 ---
 
-## 核心模块
+## 3. 系统架构
 
-### 1. 行情数据引擎 (MarketDataEngine)
+### 3.1 核心架构图
 
-实时获取多交易所行情数据。
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     TradingEngine (主引擎)                    │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+   ┌─────────┐  ┌─────────────┐  ┌──────────┐
+   │ Exchange│  │ MarketData  │  │   Risk   │
+   │ (交易所) │  │ (行情引擎)  │  │ (风控)   │
+   └────┬────┘  └──────┬──────┘  └────┬─────┘
+        │              │              │
+        └──────────────┼──────────────┘
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+   ┌─────────┐  ┌──────────┐  ┌─────────────┐
+   │Strategy │  │ Executor │  │   Monitor   │
+   │ (策略)  │  │(订单执行) │  │ (监控告警)  │
+   └─────────┘  └──────────┘  └─────────────┘
+```
+
+### 3.2 数据流
+
+```
+行情数据 (WebSocket)
+    ↓
+MarketDataEngine (标准化处理)
+    ↓
+Strategy (策略计算 → 生成信号)
+    ↓
+RiskManager (风控检查)
+    ↓
+OrderExecutor (智能执行)
+    ↓
+Exchange (提交订单)
+    ↓
+Monitor (记录 & 告警)
+```
+
+### 3.3 模块职责
+
+| 模块 | 职责 |
+|-----|------|
+| TradingEngine | 系统入口，协调各模块 |
+| Exchange | 交易所API封装，统一接口 |
+| MarketDataEngine | WebSocket行情订阅，数据聚合 |
+| Strategy | 策略逻辑，信号生成 |
+| RiskManager | 风险检查，仓位控制 |
+| OrderExecutor | 智能下单，重试机制 |
+| BacktestEngine | 历史回测，性能评估 |
+| Monitor | 系统监控，告警通知 |
+
+---
+
+## 4. 配置说明
+
+### 4.1 配置加载顺序
+
+```
+config/default.js (默认配置)
+    ↓
+.env (环境变量覆盖)
+    ↓
+.keys.enc (加密密钥)
+    ↓
+自定义配置 (代码传入)
+```
+
+### 4.2 交易所配置
 
 ```javascript
-import { MarketDataEngine, DATA_TYPES } from './marketdata/MarketDataEngine.js';
+// config/default.js
+exchange: {
+  default: 'binance',
 
-// 创建引擎实例
-const engine = new MarketDataEngine({
-  exchanges: ['binance', 'bybit', 'okx'],
-  tradingType: 'futures',
-  redis: {
-    host: 'localhost',
-    port: 6379,
+  binance: {
+    enabled: true,
+    sandbox: false,        // 是否使用测试网
+    timeout: 30000,        // API 超时 (ms)
+    enableRateLimit: true, // 启用限速
+    defaultType: 'spot',   // 默认交易类型: spot/future/swap
   },
-});
 
-// 启动引擎
-await engine.start();
-
-// 订阅行情数据
-await engine.subscribe('BTC/USDT', [
-  DATA_TYPES.TICKER,      // 行情快照
-  DATA_TYPES.DEPTH,       // 深度数据
-  DATA_TYPES.TRADE,       // 成交数据
-  DATA_TYPES.FUNDING_RATE // 资金费率
-]);
-
-// 监听数据事件
-engine.on('ticker', (ticker) => {
-  console.log(`${ticker.exchange} ${ticker.symbol}: ${ticker.last}`);
-});
-
-engine.on('depth', (depth) => {
-  console.log(`最佳买价: ${depth.bids[0][0]}, 最佳卖价: ${depth.asks[0][0]}`);
-});
-
-engine.on('trade', (trade) => {
-  console.log(`成交: ${trade.price} x ${trade.amount} (${trade.side})`);
-});
-
-// 获取缓存数据
-const ticker = engine.getTicker('BTC/USDT', 'binance');
-const depth = engine.getDepth('BTC/USDT', 'binance');
-
-// 停止引擎
-await engine.stop();
-```
-
-**数据格式:**
-
-```javascript
-// Ticker 行情数据
-{
-  exchange: 'binance',
-  symbol: 'BTC/USDT',
-  last: 65000.50,           // 最新价
-  bid: 65000.00,            // 最佳买价
-  bidSize: 1.5,             // 最佳买量
-  ask: 65001.00,            // 最佳卖价
-  askSize: 2.0,             // 最佳卖量
-  open: 64000.00,           // 开盘价
-  high: 66000.00,           // 最高价
-  low: 63500.00,            // 最低价
-  volume: 10000,            // 成交量
-  quoteVolume: 650000000,   // 成交额
-  change: 1000.50,          // 涨跌额
-  changePercent: 1.56,      // 涨跌幅 %
-  exchangeTimestamp: 1699999999999,
-  localTimestamp: 1699999999999,
-  unifiedTimestamp: 1699999999999  // 统一时间戳
+  okx: {
+    enabled: true,
+    sandbox: false,
+    timeout: 30000,
+    defaultType: 'spot',
+  },
 }
 ```
 
-### 2. 智能订单执行器 (SmartOrderExecutor)
-
-处理订单执行，包含限频处理、自动撤单重下等功能。
+### 4.3 风控配置
 
 ```javascript
-import { SmartOrderExecutor, SIDE, ORDER_TYPE } from './executor/orderExecutor.js';
+risk: {
+  enabled: true,
 
-// 创建执行器
-const executor = new SmartOrderExecutor({
-  unfillTimeout: 500,           // 500ms 未成交自动撤单
-  maxResubmitAttempts: 5,       // 最大重下次数
-  priceSlippage: 0.001,         // 价格滑点
-  defaultPostOnly: false,       // 默认 post-only
-  autoMakerPrice: true,         // 自动调整为 Maker 价格
-});
+  // 仓位限制
+  maxPositionRatio: 0.3,   // 单个持仓最大占比 30%
+  maxPositions: 5,         // 最多 5 个持仓
+  maxLeverage: 3,          // 最大杠杆 3 倍
 
-// 初始化 (传入交易所实例)
-await executor.init({
-  binance: binanceExchange,
-  bybit: bybitExchange,
-});
+  // 风险限制
+  maxRiskPerTrade: 0.02,   // 单笔风险 2%
+  maxDailyLoss: 1000,      // 日亏损限制 1000 USDT
+  maxDrawdown: 0.2,        // 最大回撤 20%
 
-// 执行限价单
-const result = await executor.executeSmartLimitOrder({
-  exchangeId: 'binance',
-  accountId: 'main',
-  symbol: 'BTC/USDT',
-  side: SIDE.BUY,
-  amount: 0.01,
-  price: 65000,
-  postOnly: true,      // 只做 Maker
-  reduceOnly: false,   // 非只减仓
-});
+  // 止损止盈
+  stopLoss: {
+    enabled: true,
+    defaultRatio: 0.02,    // 止损 2%
+    trailingStop: true,    // 追踪止损
+    trailingRatio: 0.015,  // 追踪回撤 1.5%
+  },
 
-// 执行市价单
-const marketResult = await executor.executeMarketOrder({
-  exchangeId: 'binance',
-  symbol: 'BTC/USDT',
-  side: SIDE.SELL,
-  amount: 0.01,
-  reduceOnly: true,
-});
+  takeProfit: {
+    enabled: true,
+    defaultRatio: 0.04,    // 止盈 4%
+    partialTakeProfit: false,
+    partialRatios: [0.5, 0.3, 0.2],
+  },
 
-// 监听订单事件
-executor.on('orderSubmitted', ({ orderInfo }) => {
-  console.log(`订单已提交: ${orderInfo.clientOrderId}`);
-});
-
-executor.on('orderFilled', ({ orderInfo }) => {
-  console.log(`订单已成交: ${orderInfo.filledAmount} @ ${orderInfo.avgPrice}`);
-});
-
-executor.on('orderResubmitting', ({ orderInfo, newPrice }) => {
-  console.log(`订单重下: 新价格 ${newPrice}`);
-});
-
-// 取消订单
-await executor.cancelOrder(clientOrderId);
-
-// 取消所有订单
-await executor.cancelAllOrders('binance', 'BTC/USDT');
-
-// 获取统计信息
-const stats = executor.getStats();
-console.log(`总订单: ${stats.totalOrders}, 成交: ${stats.filledOrders}`);
+  // 黑/白名单
+  blacklist: [],
+  whitelist: [],
+}
 ```
 
-**执行器特性:**
-
-| 特性 | 说明 |
-|------|------|
-| Post-Only | 确保订单只做 Maker，降低手续费 |
-| 自动撤单重下 | 500ms 未成交自动撤单并以新价格重下 |
-| 429 限频处理 | 指数退避重试，最大等待 30 秒 |
-| Nonce 冲突处理 | 自动调整时间戳偏移 |
-| 多账户并行 | 每账户独立队列，互不干扰 |
-
-### 3. 风险管理器 (RiskManager)
-
-控制交易风险，包括仓位限制、止损止盈等。
+### 4.4 策略配置
 
 ```javascript
-import { RiskManager } from './risk/RiskManager.js';
+strategy: {
+  default: 'sma',
 
-// 创建风险管理器
-const riskManager = new RiskManager({
-  maxPositionSize: 10000,      // 最大仓位 (USDT)
-  maxDrawdown: 0.1,            // 最大回撤 10%
-  stopLossPercent: 0.02,       // 止损 2%
-  takeProfitPercent: 0.05,     // 止盈 5%
-  maxOpenOrders: 10,           // 最大挂单数
-  maxDailyLoss: 500,           // 日最大亏损
-});
+  defaults: {
+    timeframe: '1h',
+    capitalRatio: 0.1,  // 使用 10% 资金
+    stopLoss: 0.02,
+    takeProfit: 0.04,
+  },
 
-// 检查是否可以开仓
-const canOpen = riskManager.canOpenPosition({
-  symbol: 'BTC/USDT',
-  side: 'buy',
-  amount: 0.1,
-  price: 65000,
-});
+  // SMA 策略参数
+  sma: {
+    fastPeriod: 10,
+    slowPeriod: 20,
+  },
 
-if (canOpen.allowed) {
-  // 执行开仓
-} else {
-  console.log(`风控拒绝: ${canOpen.reason}`);
+  // RSI 策略参数
+  rsi: {
+    period: 14,
+    overbought: 70,
+    oversold: 30,
+  },
+
+  // MACD 策略参数
+  macd: {
+    fastPeriod: 12,
+    slowPeriod: 26,
+    signalPeriod: 9,
+  },
+
+  // 布林带策略参数
+  bollingerBands: {
+    period: 20,
+    stdDev: 2,
+  },
+
+  // 网格策略参数
+  grid: {
+    gridCount: 10,
+    gridSpacing: 0.01,
+  },
 }
-
-// 更新仓位
-riskManager.updatePosition('BTC/USDT', {
-  size: 0.1,
-  entryPrice: 65000,
-  side: 'long',
-});
-
-// 检查止损止盈
-const checkResult = riskManager.checkStopLossTakeProfit('BTC/USDT', currentPrice);
-if (checkResult.shouldClose) {
-  console.log(`触发 ${checkResult.type}: ${checkResult.reason}`);
-}
-
-// 获取风控状态
-const status = riskManager.getStatus();
-console.log(`当前回撤: ${status.currentDrawdown}`);
 ```
 
-### 4. 回测引擎 (BacktestEngine)
-
-使用历史数据进行策略回测。
+### 4.5 订单执行配置
 
 ```javascript
-import { BacktestEngine } from './backtest/BacktestEngine.js';
+executor: {
+  maxRetries: 3,         // 最大重试次数
+  retryDelay: 1000,      // 重试间隔 (ms)
+  maxSlippage: 0.5,      // 最大滑点 0.5%
+  orderTimeout: 30000,   // 订单超时 (ms)
+  concurrency: 3,        // 并发订单数
 
-// 创建回测引擎
-const backtest = new BacktestEngine({
-  startDate: '2024-01-01',
-  endDate: '2024-06-01',
-  initialCapital: 10000,
-  slippage: 0.001,           // 0.1% 滑点
-  commission: 0.0004,        // 0.04% 手续费
-  dataSource: 'local',       // 数据源: local/api
-});
+  // TWAP 算法
+  enableTWAP: true,
+  twap: {
+    splitThreshold: 10000,  // 超过 10000 USDT 启用
+    splitCount: 5,          // 拆分 5 份
+    splitInterval: 2000,    // 间隔 2 秒
+  },
+}
+```
 
-// 加载历史数据
-await backtest.loadData(['BTC/USDT', 'ETH/USDT']);
+### 4.6 监控告警配置
 
-// 运行回测
-const results = await backtest.run(MyStrategy);
+```javascript
+// 环境变量配置
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 
-// 输出结果
-console.log('回测结果:');
-console.log(`总收益: ${results.totalReturn}%`);
-console.log(`年化收益: ${results.annualizedReturn}%`);
-console.log(`最大回撤: ${results.maxDrawdown}%`);
-console.log(`夏普比率: ${results.sharpeRatio}`);
-console.log(`胜率: ${results.winRate}%`);
-console.log(`盈亏比: ${results.profitFactor}`);
-
-// 导出交易记录
-await backtest.exportTrades('./results/trades.csv');
-
-// 生成报告
-await backtest.generateReport('./results/report.html');
+SMTP_HOST=smtp.qq.com
+SMTP_PORT=587
+SMTP_USER=your_email
+SMTP_PASS=your_password
+ALERT_EMAIL_TO=recipient@example.com
 ```
 
 ---
 
-## 策略开发
+## 5. 策略开发
 
-### 创建新策略
+### 5.1 策略基类
 
-1. 继承 `BaseStrategy` 基类:
+所有策略继承自 `BaseStrategy`：
 
 ```javascript
-// src/strategies/MyStrategy.js
-import { BaseStrategy } from './BaseStrategy.js';
+import { BaseStrategy } from '../strategies/BaseStrategy.js';
 
-export class MyStrategy extends BaseStrategy {
-  /**
-   * 策略名称
-   */
-  static name = 'MyStrategy';
-
-  /**
-   * 策略描述
-   */
-  static description = '我的自定义策略';
-
-  /**
-   * 策略参数定义
-   */
-  static parameters = {
-    shortPeriod: { type: 'number', default: 10, description: '短周期' },
-    longPeriod: { type: 'number', default: 30, description: '长周期' },
-    threshold: { type: 'number', default: 0.01, description: '阈值' },
-  };
-
-  /**
-   * 构造函数
-   */
-  constructor(params = {}) {
+class MyStrategy extends BaseStrategy {
+  constructor(params) {
     super(params);
-
-    // 合并参数
-    this.params = { ...MyStrategy.parameters, ...params };
-
-    // 初始化状态
-    this.state = {
-      position: 0,
-      lastSignal: null,
-    };
+    this.name = 'MyStrategy';
   }
 
-  /**
-   * 初始化策略
-   * @param {Object} context - 上下文对象
-   */
-  async init(context) {
-    // 获取引用
-    this.marketData = context.marketData;
-    this.executor = context.executor;
-    this.riskManager = context.riskManager;
-
-    // 订阅所需数据
-    await this.marketData.subscribe(this.symbol, ['ticker', 'fundingRate']);
-
-    console.log(`策略 ${MyStrategy.name} 初始化完成`);
+  // 初始化 (必须实现)
+  async onInit() {
+    await super.onInit();
+    // 初始化逻辑
   }
 
-  /**
-   * 处理行情更新
-   * @param {Object} ticker - 行情数据
-   */
-  async onTicker(ticker) {
-    // 计算信号
-    const signal = this.calculateSignal(ticker);
+  // 每根 K 线触发 (必须实现)
+  async onTick(candle, history) {
+    // candle: { timestamp, open, high, low, close, volume }
+    // history: 历史 K 线数组
 
-    // 风控检查
-    if (!this.riskManager.canTrade()) {
+    // 策略逻辑...
+  }
+
+  // K 线更新事件 (可选)
+  async onCandle(data) {
+    await super.onCandle(data);
+  }
+
+  // Ticker 更新事件 (可选)
+  async onTicker(data) {
+    // 处理实时价格
+  }
+
+  // 资金费率更新 (可选)
+  async onFundingRate(data) {
+    // 处理资金费率
+  }
+
+  // 结束 (可选)
+  async onFinish() {
+    await super.onFinish();
+  }
+}
+```
+
+### 5.2 信号方法
+
+```javascript
+// 设置买入信号
+this.setBuySignal('金叉形成');
+
+// 设置卖出信号
+this.setSellSignal('死叉形成');
+
+// 清除信号
+this.clearSignal();
+
+// 获取当前信号
+const signal = this.getSignal();
+// { type: 'buy'|'sell', reason: string, timestamp: number }
+```
+
+### 5.3 交易方法
+
+```javascript
+// 买入
+this.buy('BTC/USDT', 0.1, { price: 50000 });
+
+// 卖出
+this.sell('BTC/USDT', 0.1, { price: 51000 });
+
+// 按百分比买入 (占可用资金的百分比)
+this.buyPercent('BTC/USDT', 10);  // 用 10% 资金买入
+
+// 平仓
+this.closePosition('BTC/USDT');
+
+// 获取持仓
+const position = this.getPosition('BTC/USDT');
+
+// 获取资金
+const capital = this.getCapital();
+const equity = this.getEquity();
+```
+
+### 5.4 状态和指标
+
+```javascript
+// 设置/获取自定义状态
+this.setState('lastCross', Date.now());
+const lastCross = this.getState('lastCross');
+
+// 设置/获取指标值
+this.setIndicator('sma10', 50000);
+const sma10 = this.getIndicator('sma10');
+```
+
+### 5.5 完整策略示例
+
+```javascript
+import { BaseStrategy } from '../strategies/BaseStrategy.js';
+import { SMA, RSI } from 'technicalindicators';
+
+export class MyCustomStrategy extends BaseStrategy {
+  constructor(params) {
+    super(params);
+    this.name = 'MyCustomStrategy';
+
+    // 策略参数
+    this.smaPeriod = params.smaPeriod || 20;
+    this.rsiPeriod = params.rsiPeriod || 14;
+    this.rsiOverbought = params.rsiOverbought || 70;
+    this.rsiOversold = params.rsiOversold || 30;
+  }
+
+  async onInit() {
+    await super.onInit();
+    this.log(`初始化: SMA=${this.smaPeriod}, RSI=${this.rsiPeriod}`);
+  }
+
+  async onTick(candle, history) {
+    // 需要足够的历史数据
+    if (history.length < Math.max(this.smaPeriod, this.rsiPeriod)) {
       return;
     }
 
-    // 执行交易
-    if (signal === 'buy' && this.state.position <= 0) {
-      await this.openLong(ticker.last);
-    } else if (signal === 'sell' && this.state.position >= 0) {
-      await this.openShort(ticker.last);
-    }
-  }
+    // 提取收盘价
+    const closes = history.map(h => h.close);
 
-  /**
-   * 计算交易信号
-   * @param {Object} ticker - 行情数据
-   * @returns {string|null} 信号: 'buy', 'sell', null
-   */
-  calculateSignal(ticker) {
-    // 实现你的信号逻辑
-    // ...
-    return null;
-  }
-
-  /**
-   * 开多仓
-   */
-  async openLong(price) {
-    const result = await this.executor.executeSmartLimitOrder({
-      exchangeId: this.exchangeId,
-      symbol: this.symbol,
-      side: 'buy',
-      amount: this.calculateSize(price),
-      price: price,
-      postOnly: true,
+    // 计算 SMA
+    const smaResult = SMA.calculate({
+      period: this.smaPeriod,
+      values: closes,
     });
+    const sma = smaResult[smaResult.length - 1];
 
-    if (result.success) {
-      this.state.position = result.orderInfo.filledAmount;
-      this.emit('positionOpened', { side: 'long', ...result });
+    // 计算 RSI
+    const rsiResult = RSI.calculate({
+      period: this.rsiPeriod,
+      values: closes,
+    });
+    const rsi = rsiResult[rsiResult.length - 1];
+
+    // 保存指标
+    this.setIndicator('sma', sma);
+    this.setIndicator('rsi', rsi);
+
+    // 获取当前持仓
+    const position = this.getPosition(candle.symbol);
+    const hasPosition = position && position.amount > 0;
+
+    // 策略逻辑
+    if (!hasPosition) {
+      // 买入条件: 价格在 SMA 上方 + RSI 超卖
+      if (candle.close > sma && rsi < this.rsiOversold) {
+        this.setBuySignal(`价格 ${candle.close} > SMA ${sma.toFixed(2)}, RSI ${rsi.toFixed(2)} < ${this.rsiOversold}`);
+        this.buyPercent(candle.symbol, 10);  // 用 10% 资金买入
+      }
+    } else {
+      // 卖出条件: 价格跌破 SMA 或 RSI 超买
+      if (candle.close < sma || rsi > this.rsiOverbought) {
+        this.setSellSignal(`价格 ${candle.close} < SMA ${sma.toFixed(2)} 或 RSI ${rsi.toFixed(2)} > ${this.rsiOverbought}`);
+        this.closePosition(candle.symbol);
+      }
     }
   }
-
-  /**
-   * 清理资源
-   */
-  async cleanup() {
-    // 取消所有挂单
-    await this.executor.cancelAllOrders(this.exchangeId, this.symbol);
-
-    console.log(`策略 ${MyStrategy.name} 已清理`);
-  }
 }
 
-export default MyStrategy;
+export default MyCustomStrategy;
 ```
 
-2. 注册策略:
+### 5.6 注册策略
+
+将策略添加到 `src/strategies/index.js`：
 
 ```javascript
-// src/strategies/index.js
-import { BaseStrategy } from './BaseStrategy.js';
-import { FundingArbStrategy } from './FundingArbStrategy.js';
-import { MyStrategy } from './MyStrategy.js';  // 添加你的策略
+import { MyCustomStrategy } from './MyCustomStrategy.js';
 
-// 策略注册表
-export const strategies = {
-  FundingArb: FundingArbStrategy,
-  MyStrategy: MyStrategy,  // 注册
-};
+// 添加到导出
+export { MyCustomStrategy };
 
-// 获取策略类
-export function getStrategy(name) {
-  const Strategy = strategies[name];
-  if (!Strategy) {
-    throw new Error(`策略不存在: ${name}`);
-  }
-  return Strategy;
-}
+// 添加到注册表
+StrategyRegistry.register('mycustom', MyCustomStrategy);
 ```
 
-3. 运行新策略:
-
-```bash
-node src/main.js shadow --strategy MyStrategy --symbols BTC/USDT:USDT
-```
-
-### 策略生命周期
-
-```
-┌─────────────┐
-│ constructor │  初始化参数和状态
-└──────┬──────┘
-       ▼
-┌─────────────┐
-│    init     │  获取上下文，订阅数据
-└──────┬──────┘
-       ▼
-┌─────────────┐
-│  onTicker   │◄─── 循环处理行情
-│  onDepth    │
-│  onTrade    │
-└──────┬──────┘
-       ▼
-┌─────────────┐
-│   cleanup   │  取消挂单，清理资源
-└─────────────┘
-```
-
-### 策略事件
-
-| 事件 | 说明 | 参数 |
-|------|------|------|
-| `onTicker` | 行情更新 | `ticker` |
-| `onDepth` | 深度更新 | `depth` |
-| `onTrade` | 成交更新 | `trade` |
-| `onFundingRate` | 资金费率更新 | `fundingRate` |
-| `onOrderFilled` | 订单成交 | `order` |
-| `onPositionChange` | 仓位变化 | `position` |
-
----
-
-## CI/CD 自动化测试
-
-### 概述
-
-项目已配置 GitHub Actions 实现自动化测试和代码质量检查，每次推送和 PR 都会触发以下流程：
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│    Lint     │────▶│    Test     │────▶│    Build    │
-│  代码检查    │     │   单元测试   │     │   构建验证   │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │
-       ▼                   ▼                   ▼
-   ESLint 检查        Node 20/22          语法检查
-   代码规范           测试覆盖率           CLI 验证
-```
-
-### 本地测试命令
-
-```bash
-# 运行所有测试
-pnpm test
-
-# 仅运行单元测试
-pnpm test:unit
-
-# 仅运行集成测试
-pnpm test:integration
-
-# 监视模式 (文件变化自动重跑)
-pnpm test:watch
-
-# 测试覆盖率
-pnpm test:coverage
-
-# 代码检查
-pnpm lint
-
-# 自动修复代码风格
-pnpm lint:fix
-
-# CI 完整流程 (lint + test)
-pnpm ci
-```
-
-### 测试目录结构
-
-```
-tests/
-├── unit/                    # 单元测试
-│   ├── crypto.test.js      # 加密模块测试
-│   ├── helpers.test.js     # 辅助函数测试
-│   └── validators.test.js  # 验证器测试
-└── integration/            # 集成测试
-    └── config.test.js      # 配置加载测试
-```
-
-### GitHub Actions 工作流
-
-| 工作流 | 文件 | 触发条件 | 功能 |
-|--------|------|----------|------|
-| CI | `.github/workflows/ci.yml` | push/PR | 完整测试流程 |
-| PR Check | `.github/workflows/pr.yml` | PR | 快速检查 + 自动标签 |
-
-### CI 流程详解
-
-1. **Lint (代码检查)**
-   - ESLint 静态分析
-   - 代码风格检查
-
-2. **Test (测试)**
-   - Node.js 20/22 双版本测试
-   - 单元测试 + 集成测试
-
-3. **Security (安全审计)**
-   - 依赖漏洞扫描
-   - `pnpm audit`
-
-4. **Build (构建验证)**
-   - 模块导入验证
-   - CLI 可执行性检查
-
-### 编写测试
-
-使用 Node.js 内置测试框架：
+### 5.7 运行策略
 
 ```javascript
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { createEngine } from './src/index.js';
 
-describe('MyModule', () => {
-  it('should work correctly', () => {
-    const result = myFunction();
-    assert.strictEqual(result, expected);
-  });
+const engine = createEngine({
+  exchange: { default: 'binance', binance: { sandbox: true } },
+  risk: { maxPositionRatio: 0.1 },
+});
+
+await engine.start();
+
+// 运行自定义策略
+await engine.runStrategy('mycustom', {
+  symbols: ['BTC/USDT', 'ETH/USDT'],
+  timeframe: '1h',
+  smaPeriod: 20,
+  rsiPeriod: 14,
+  rsiOverbought: 70,
+  rsiOversold: 30,
 });
 ```
 
-### PR 合并要求
+---
 
-- [ ] 所有测试通过
-- [ ] ESLint 检查通过
-- [ ] 无高危依赖漏洞
+## 6. API参考
+
+### 6.1 TradingEngine
+
+```javascript
+import { createEngine, TradingEngine } from './src/index.js';
+
+// 创建引擎
+const engine = createEngine(config);
+// 或
+const engine = new TradingEngine(config);
+
+// 生命周期
+await engine.initialize();  // 初始化
+await engine.start();       // 启动
+await engine.stop();        // 停止
+
+// 策略管理
+await engine.runStrategy(name, config);   // 运行策略
+await engine.stopStrategy(name);          // 停止策略
+
+// 状态查询
+engine.getStatus();         // 获取引擎状态
+engine.getAccountInfo();    // 获取账户信息
+
+// 事件监听
+engine.on('initialized', callback);
+engine.on('started', callback);
+engine.on('stopped', callback);
+engine.on('strategyStarted', ({ name, config }) => {});
+engine.on('strategyStopped', ({ name }) => {});
+engine.on('signalGenerated', ({ signal }) => {});
+engine.on('signalRejected', ({ signal, reason }) => {});
+engine.on('orderExecuted', ({ signal, result }) => {});
+engine.on('error', (error) => {});
+```
+
+### 6.2 Exchange
+
+```javascript
+import { ExchangeFactory } from './src/exchange/ExchangeFactory.js';
+
+// 创建交易所实例
+const exchange = ExchangeFactory.create('binance', config);
+
+// 连接
+await exchange.connect();
+await exchange.loadMarkets();
+
+// 账户
+await exchange.fetchBalance();
+await exchange.fetchPositions();
+
+// 行情
+await exchange.fetchTicker('BTC/USDT');
+await exchange.fetchOrderBook('BTC/USDT');
+await exchange.fetchTrades('BTC/USDT');
+await exchange.fetchOHLCV('BTC/USDT', '1h');
+
+// 交易
+await exchange.createOrder(symbol, type, side, amount, price);
+await exchange.cancelOrder(symbol, orderId);
+await exchange.fetchOrder(symbol, orderId);
+await exchange.fetchOpenOrders(symbol);
+await exchange.fetchClosedOrders(symbol);
+
+// 合约
+await exchange.setLeverage(leverage, symbol);
+await exchange.fetchFundingRate(symbol);
+
+// 精度
+exchange.getPrecision(symbol);  // { amount, price }
+```
+
+### 6.3 MarketDataEngine
+
+```javascript
+import { MarketDataEngine } from './src/marketdata/MarketDataEngine.js';
+
+const marketData = new MarketDataEngine(exchange, config);
+
+// 订阅
+marketData.subscribe('BTC/USDT', ['ticker', 'depth', 'trade', 'kline']);
+marketData.unsubscribe('BTC/USDT');
+
+// 控制
+marketData.start();
+marketData.stop();
+
+// 事件
+marketData.on('ticker', (data) => {});
+marketData.on('depth', (data) => {});
+marketData.on('trade', (data) => {});
+marketData.on('candle', (data) => {});
+marketData.on('fundingRate', (data) => {});
+marketData.on('error', (error) => {});
+```
+
+### 6.4 RiskManager
+
+```javascript
+import { RiskManager } from './src/risk/RiskManager.js';
+
+const riskManager = new RiskManager(config);
+
+// 检查订单
+const check = riskManager.checkOrder({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  amount: 0.1,
+  price: 50000,
+});
+// { allowed: boolean, reason: string }
+
+// 记录交易
+riskManager.recordTrade({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  amount: 0.1,
+  price: 50000,
+  pnl: 100,
+});
+
+// 获取状态
+riskManager.getState();
+// { dailyPnL, openPositions, totalRisk, ... }
+```
+
+### 6.5 OrderExecutor
+
+```javascript
+import { OrderExecutor } from './src/executor/orderExecutor.js';
+
+const executor = new OrderExecutor(config);
+
+// 执行订单
+const result = await executor.executeOrder({
+  exchangeId: 'binance',
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  amount: 0.1,
+  price: 50000,
+  type: 'limit',
+});
+
+// 限价单
+await executor.executeLimitOrder({ symbol, side, amount, price });
+
+// 市价单
+await executor.executeMarketOrder({ symbol, side, amount });
+
+// 撤单
+await executor.cancelOrder({ exchangeId, symbol, orderId });
+```
+
+### 6.6 BacktestEngine
+
+```javascript
+import { BacktestEngine } from './src/backtest/index.js';
+import { SMAStrategy } from './src/strategies/index.js';
+
+const backtest = new BacktestEngine({
+  initialCapital: 10000,
+  commission: 0.001,
+  slippage: 0.0005,
+});
+
+// 设置策略
+const strategy = new SMAStrategy({ fastPeriod: 10, slowPeriod: 20 });
+backtest.setStrategy(strategy);
+
+// 加载数据
+backtest.loadData('BTC/USDT', candleData);
+
+// 运行回测
+const results = await backtest.run();
+
+// 结果结构
+{
+  initialCapital: 10000,
+  finalCapital: 12500,
+  totalReturn: 2500,
+  returnRate: 0.25,
+  totalTrades: 100,
+  winningTrades: 55,
+  losingTrades: 45,
+  winRate: 0.55,
+  maxDrawdown: 0.15,
+  sharpeRatio: 1.5,
+  profitFactor: 1.8,
+  avgWin: 150,
+  avgLoss: 80,
+  trades: [...],
+}
+```
 
 ---
 
-## 部署指南
+## 7. 运维部署
 
-### PM2 部署
+### 7.1 PM2 部署
 
 ```bash
 # 安装 PM2
 npm install -g pm2
 
-# 启动所有应用
-pm2 start ecosystem.config.cjs
+# 启动所有服务
+npm run pm2:start
 
-# 仅启动实盘
-pm2 start ecosystem.config.cjs --only quant-live
+# 启动影子模式策略
+npm run pm2:shadow
 
-# 仅启动影子模式
-pm2 start ecosystem.config.cjs --only quant-shadow
+# 启动实盘策略
+npm run pm2:live
 
 # 查看状态
-pm2 status
+npm run pm2:status
 
 # 查看日志
-pm2 logs
+npm run pm2:logs
 
-# 监控面板
-pm2 monit
+# 停止
+npm run pm2:stop
 
-# 零停机重载
-pm2 reload ecosystem.config.cjs
-
-# 停止所有
-pm2 stop ecosystem.config.cjs
-
-# 删除所有
-pm2 delete ecosystem.config.cjs
-
-# 保存进程列表 (开机自启)
-pm2 save
-pm2 startup
+# 重启
+npm run pm2:restart
 ```
 
-### PM2 配置说明
+### 7.2 ecosystem.config.cjs 配置
 
 ```javascript
-// ecosystem.config.cjs
 module.exports = {
   apps: [
+    // 影子模式 - SMA 策略
     {
-      name: 'quant-live',
+      name: 'quant-shadow-sma',
       script: 'src/main.js',
-      args: 'live --strategy FundingArb --symbols BTC/USDT:USDT',
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      max_memory_restart: '1G',
+      args: 'shadow --strategy sma --symbols BTC/USDT,ETH/USDT',
+      env: {
+        NODE_ENV: 'development',
+      },
+    },
+
+    // 实盘模式 - Grid 策略
+    {
+      name: 'quant-live-grid',
+      script: 'src/main.js',
+      args: 'live --strategy grid --symbols BTC/USDT',
       env: {
         NODE_ENV: 'production',
-        TZ: 'Asia/Shanghai',
       },
-      // 日志配置
-      out_file: './logs/pm2/live-out.log',
-      error_file: './logs/pm2/live-error.log',
-      merge_logs: true,
-      time: true,
-      // 重启策略
-      min_uptime: '60s',
-      max_restarts: 10,
-      restart_delay: 5000,
-      // 优雅关闭
-      wait_ready: true,
-      listen_timeout: 30000,
-      kill_timeout: 10000,
     },
   ],
 };
 ```
 
-### Docker 部署 (可选)
+### 7.3 监控配置
 
-```dockerfile
-# Dockerfile
-FROM node:18-alpine
+#### Prometheus 指标
 
-WORKDIR /app
+系统自动在 `:9090/metrics` 端口导出以下指标：
 
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-
-ENV NODE_ENV=production
-ENV TZ=Asia/Shanghai
-
-CMD ["node", "src/main.js", "live"]
 ```
+# 交易指标
+trading_orders_total
+trading_orders_filled
+trading_pnl
+trading_position_count
+trading_daily_loss
+
+# 系统指标
+system_memory_usage
+system_cpu_usage
+system_uptime
+```
+
+#### Grafana 仪表盘
+
+1. 添加 Prometheus 数据源
+2. 导入仪表盘配置
+3. 监控内容：
+   - 实时 PnL 曲线
+   - 交易统计
+   - 风险指标
+   - 系统健康状态
+
+### 7.4 日志管理
 
 ```bash
-# 构建镜像
-docker build -t quant-trading-system .
-
-# 运行容器
-docker run -d \
-  --name quant-live \
-  --restart unless-stopped \
-  -v $(pwd)/.env:/app/.env \
-  -v $(pwd)/logs:/app/logs \
-  quant-trading-system
+# 日志目录结构
+logs/
+├── trading.log         # 交易日志
+├── strategy.log        # 策略日志
+├── risk.log            # 风控日志
+├── error.log           # 错误日志
+└── combined.log        # 综合日志
 ```
 
----
-
-## API 参考
-
-### MarketDataEngine
-
-| 方法 | 说明 |
-|------|------|
-| `start()` | 启动引擎 |
-| `stop()` | 停止引擎 |
-| `subscribe(symbol, dataTypes, exchanges)` | 订阅行情 |
-| `unsubscribe(symbol, dataTypes, exchanges)` | 取消订阅 |
-| `batchSubscribe(symbols, dataTypes)` | 批量订阅 |
-| `getTicker(symbol, exchange)` | 获取缓存行情 |
-| `getDepth(symbol, exchange)` | 获取缓存深度 |
-| `getFundingRate(symbol, exchange)` | 获取资金费率 |
-| `getConnectionStatus()` | 获取连接状态 |
-| `getStats()` | 获取统计信息 |
-
-### SmartOrderExecutor
-
-| 方法 | 说明 |
-|------|------|
-| `init(exchanges)` | 初始化执行器 |
-| `stop()` | 停止执行器 |
-| `executeSmartLimitOrder(params)` | 执行智能限价单 |
-| `executeMarketOrder(params)` | 执行市价单 |
-| `cancelOrder(clientOrderId)` | 取消订单 |
-| `cancelAllOrders(exchangeId, symbol)` | 取消所有订单 |
-| `getOrderStatus(clientOrderId)` | 获取订单状态 |
-| `getActiveOrders()` | 获取活跃订单 |
-| `getStats()` | 获取统计信息 |
-
-### RiskManager
-
-| 方法 | 说明 |
-|------|------|
-| `canOpenPosition(params)` | 检查是否可开仓 |
-| `updatePosition(symbol, position)` | 更新仓位 |
-| `checkStopLossTakeProfit(symbol, price)` | 检查止损止盈 |
-| `getStatus()` | 获取风控状态 |
-| `reset()` | 重置状态 |
-
----
-
-## 常见问题
-
-### Q: 如何添加新的交易所？
-
-继承 `BaseExchange` 并实现必要方法:
+日志配置：
 
 ```javascript
-import { BaseExchange } from './BaseExchange.js';
-
-export class NewExchange extends BaseExchange {
-  constructor(config) {
-    super(config);
-    // 初始化 CCXT 实例
-  }
-
-  async fetchTicker(symbol) {
-    // 实现获取行情
-  }
-
-  async createOrder(symbol, type, side, amount, price, params) {
-    // 实现下单
-  }
-
-  // ... 其他方法
+logging: {
+  level: 'info',        // error, warn, info, debug
+  dir: 'logs',
+  console: true,
+  file: true,
+  maxSize: 10 * 1024 * 1024,  // 10MB
+  maxFiles: 5,
 }
 ```
 
-### Q: 如何处理 429 限频错误？
+### 7.5 备份策略
 
-系统内置了指数退避重试机制:
+```bash
+# 备份数据库
+cp data/trading.db data/backup/trading_$(date +%Y%m%d).db
 
-- 初始等待: 1 秒
-- 最大等待: 30 秒
-- 退避乘数: 2
-- 最大重试: 5 次
+# 备份配置
+cp .env .env.backup
+cp .keys.enc .keys.enc.backup
 
-可在配置中调整:
-
-```javascript
-{
-  rateLimitInitialWait: 1000,
-  rateLimitMaxWait: 30000,
-  rateLimitBackoffMultiplier: 2,
-  rateLimitMaxRetries: 5,
-}
+# 备份日志
+tar -czf logs_$(date +%Y%m%d).tar.gz logs/
 ```
 
-### Q: 如何确保订单成为 Maker？
+### 7.6 安全建议
 
-使用 `postOnly: true` 参数:
-
-```javascript
-await executor.executeSmartLimitOrder({
-  // ...
-  postOnly: true,
-});
-```
-
-系统会自动将价格调整到买一/卖一内侧。
-
-### Q: 回测数据从哪里获取？
-
-1. **ClickHouse 数据库**: 使用历史数据下载脚本存储到 ClickHouse (推荐)
-2. **本地文件**: 将 CSV 数据放入 `data/` 目录
-3. **API 获取**: 配置交易所 API 自动下载
-
-```javascript
-const backtest = new BacktestEngine({
-  dataSource: 'api',  // 或 'local'
-  // ...
-});
-```
+1. **API 密钥加密**：使用 `npm run keys:encrypt` 加密存储
+2. **环境隔离**：测试网和主网使用不同账户
+3. **权限最小化**：API 密钥只开启必要权限
+4. **定期轮换**：定期更换 API 密钥
+5. **监控告警**：配置异常告警及时响应
 
 ---
 
-## ClickHouse 数据库
+## 8. 常见问题
 
-项目使用 **ClickHouse** 作为历史数据存储引擎，提供高性能的时序数据查询能力。
+### 8.1 安装问题
 
-### 安装 ClickHouse
-
-```bash
-# Docker 方式 (推荐)
-docker run -d \
-  --name clickhouse \
-  -p 8123:8123 \
-  -p 9000:9000 \
-  -v clickhouse-data:/var/lib/clickhouse \
-  clickhouse/clickhouse-server
-
-# 验证安装
-curl http://localhost:8123/ping
-```
-
-### 数据表结构
-
-系统自动创建以下表结构 (每个交易所一套):
-
-| 表名 | 用途 | 字段说明 |
-|------|------|----------|
-| `ohlcv_{exchange}` | K线数据 | symbol, timestamp, open, high, low, close, volume |
-| `funding_rate_{exchange}` | 资金费率 | symbol, timestamp, funding_rate, mark_price, index_price |
-| `open_interest_{exchange}` | 持仓量 | symbol, timestamp, open_interest, open_interest_value |
-| `mark_price_{exchange}` | 标记价格 | symbol, timestamp, mark_price, index_price |
-
-**表引擎**: `ReplacingMergeTree` (自动去重)
-**分区方式**: 按月分区 (`toYYYYMM(timestamp)`)
-**排序键**: `(symbol, timestamp)`
-
-### 历史数据下载
-
-使用 `scripts/download-history.js` 下载历史数据:
+**Q: better-sqlite3 安装失败？**
 
 ```bash
-# 基本用法
-node scripts/download-history.js [options]
+# Windows
+npm install --global windows-build-tools
 
-# 选项说明
--e, --exchange <name>    交易所 (binance, bybit, okx, all)
--s, --symbol <symbol>    交易对 (BTC/USDT:USDT)
--t, --type <type>        数据类型 (ohlcv, funding_rate, open_interest, mark_price, all)
---start <date>           起始日期 (YYYY-MM-DD)
---end <date>             结束日期 (YYYY-MM-DD)
---ch-host <url>          ClickHouse 主机 (默认: http://localhost:8123)
---ch-database <name>     数据库名 (默认: quant)
+# macOS
+xcode-select --install
+
+# Linux
+sudo apt-get install build-essential python3
 ```
 
-**使用示例:**
+**Q: Node.js 版本不对？**
 
 ```bash
-# 下载所有交易所的 BTC/ETH 全部数据类型
-node scripts/download-history.js -s BTC/USDT:USDT,ETH/USDT:USDT
-
-# 只下载 Binance 的 K线数据
-node scripts/download-history.js -e binance -t ohlcv -s BTC/USDT:USDT
-
-# 指定时间范围下载
-node scripts/download-history.js --start 2023-01-01 --end 2023-12-31 -s BTC/USDT:USDT
-
-# 下载资金费率数据 (用于套利策略)
-node scripts/download-history.js -t funding_rate -s BTC/USDT:USDT,ETH/USDT:USDT
-
-# 连接远程 ClickHouse
-node scripts/download-history.js --ch-host http://192.168.1.100:8123 --ch-database trading
+# 使用 nvm 管理版本
+nvm install 20
+nvm use 20
 ```
 
-### ClickHouse 配置
+### 8.2 连接问题
 
-默认配置 (可在脚本中修改):
+**Q: 交易所连接超时？**
 
-```javascript
-const DEFAULT_CONFIG = {
-  clickhouse: {
-    host: 'http://localhost:8123',  // ClickHouse HTTP 接口
-    database: 'quant',               // 数据库名
-    username: 'default',             // 用户名
-    password: '',                    // 密码
-  },
-  download: {
-    startDate: '2020-01-01',         // 默认起始日期
-    endDate: null,                   // null = 今天
-    batchSize: 1000,                 // 批量插入大小
-    rateLimit: 100,                  // 请求间隔 (ms)
-    maxRetries: 3,                   // 最大重试次数
-  },
-};
-```
+- 检查网络是否需要代理
+- 确认 API 密钥正确
+- 检查交易所是否在维护
 
-### 数据查询示例
+**Q: WebSocket 频繁断开？**
 
-```sql
--- 查询 BTC 最近 24 小时 K线
-SELECT *
-FROM quant.ohlcv_binance
-WHERE symbol = 'BTC/USDT:USDT'
-  AND timestamp >= now() - INTERVAL 24 HOUR
-ORDER BY timestamp DESC
-LIMIT 100;
+- 增加 `pingInterval` 和 `pongTimeout`
+- 检查服务器网络稳定性
 
--- 查询资金费率历史
-SELECT
-  timestamp,
-  funding_rate,
-  funding_rate * 3 * 365 as annualized_rate
-FROM quant.funding_rate_binance
-WHERE symbol = 'BTC/USDT:USDT'
-ORDER BY timestamp DESC
-LIMIT 50;
+### 8.3 交易问题
 
--- 对比不同交易所的资金费率
-SELECT
-  b.timestamp,
-  b.funding_rate as binance_rate,
-  y.funding_rate as bybit_rate,
-  o.funding_rate as okx_rate,
-  (b.funding_rate - y.funding_rate) * 3 * 365 as spread_annualized
-FROM quant.funding_rate_binance b
-JOIN quant.funding_rate_bybit y ON b.timestamp = y.timestamp AND b.symbol = y.symbol
-JOIN quant.funding_rate_okx o ON b.timestamp = o.timestamp AND b.symbol = o.symbol
-WHERE b.symbol = 'BTC/USDT:USDT'
-ORDER BY b.timestamp DESC
-LIMIT 20;
+**Q: 订单一直未成交？**
 
--- 查询持仓量变化
-SELECT
-  timestamp,
-  open_interest,
-  open_interest - lagInFrame(open_interest) OVER (ORDER BY timestamp) as oi_change
-FROM quant.open_interest_binance
-WHERE symbol = 'BTC/USDT:USDT'
-ORDER BY timestamp DESC
-LIMIT 100;
-```
+- 检查价格是否合理
+- 确认账户余额充足
+- 查看交易所订单状态
 
-### 数据下载特性
+**Q: 风控拒绝订单？**
 
-| 特性 | 说明 |
-|------|------|
-| **增量更新** | 自动检测已有数据，只下载新数据 |
-| **断点续传** | 中断后可继续下载 |
-| **多交易所** | 支持 Binance、Bybit、OKX |
-| **速率限制** | 自动处理 API 限频 |
-| **批量插入** | 高效批量写入 ClickHouse |
-| **自动建表** | 首次运行自动创建数据库和表 |
+- 检查是否超过日亏损限制
+- 确认持仓数量未超限
+- 查看具体拒绝原因
 
-### 定时同步
+### 8.4 策略问题
 
-使用 cron 定时同步最新数据:
+**Q: 策略不产生信号？**
 
-```bash
-# 编辑 crontab
-crontab -e
+- 确认历史数据足够
+- 检查策略参数是否合理
+- 增加日志调试
 
-# 每小时同步一次 K线数据
-0 * * * * cd /path/to/project && node scripts/download-history.js -t ohlcv -s BTC/USDT:USDT,ETH/USDT:USDT >> /var/log/quant-sync.log 2>&1
+**Q: 回测结果和实盘差异大？**
 
-# 每 8 小时同步资金费率 (资金费率每 8 小时结算一次)
-0 */8 * * * cd /path/to/project && node scripts/download-history.js -t funding_rate -s BTC/USDT:USDT,ETH/USDT:USDT >> /var/log/quant-sync.log 2>&1
-```
+- 考虑滑点和手续费
+- 实盘流动性可能不足
+- 策略可能存在过拟合
 
-### Q: 如何监控系统运行状态？
+### 8.5 性能问题
 
-```bash
-# PM2 监控
-pm2 monit
+**Q: 内存占用过高？**
 
-# 查看日志
-pm2 logs quant-live --lines 100
+- 减少历史数据缓存
+- 清理过期订阅
+- 检查内存泄漏
 
-# 查看统计
-pm2 show quant-live
-```
+**Q: CPU 使用率高？**
+
+- 减少策略计算频率
+- 优化指标计算
+- 使用更高效的数据结构
 
 ---
 
-## 许可证
+## 附录 A: 命令速查
 
-MIT License
+```bash
+# 运行模式
+npm run backtest           # 回测
+npm run shadow             # 影子模式
+npm run live               # 实盘
+npm run dev                # 开发模式
+
+# 密钥管理
+npm run keys:encrypt       # 加密密钥
+npm run keys:decrypt       # 解密密钥
+npm run keys:verify        # 验证密钥
+npm run keys:rotate        # 轮换密钥
+
+# PM2 管理
+npm run pm2:start          # 启动
+npm run pm2:stop           # 停止
+npm run pm2:restart        # 重启
+npm run pm2:logs           # 日志
+npm run pm2:status         # 状态
+
+# 测试
+npm test                   # 运行测试
+npm run test:unit          # 单元测试
+npm run test:integration   # 集成测试
+npm run bench              # 性能测试
+
+# 代码质量
+npm run lint               # 检查代码
+npm run lint:fix           # 修复代码
+```
+
+## 附录 B: 环境变量清单
+
+| 变量 | 说明 | 默认值 |
+|-----|------|--------|
+| NODE_ENV | 运行环境 | development |
+| MASTER_KEY | 加密主密码 | - |
+| BINANCE_API_KEY | Binance API Key | - |
+| BINANCE_API_SECRET | Binance Secret | - |
+| BINANCE_TESTNET | 使用测试网 | true |
+| OKX_API_KEY | OKX API Key | - |
+| OKX_API_SECRET | OKX Secret | - |
+| OKX_PASSPHRASE | OKX 密码 | - |
+| OKX_SANDBOX | 使用沙盒 | true |
+| BYBIT_API_KEY | Bybit API Key | - |
+| BYBIT_API_SECRET | Bybit Secret | - |
+| BYBIT_TESTNET | 使用测试网 | true |
+| REDIS_HOST | Redis 主机 | 127.0.0.1 |
+| REDIS_PORT | Redis 端口 | 6379 |
+| TELEGRAM_BOT_TOKEN | Telegram Token | - |
+| TELEGRAM_CHAT_ID | Telegram Chat | - |
+| LOG_LEVEL | 日志级别 | info |
+| DASHBOARD_PORT | 仪表盘端口 | 3000 |
+
+## 附录 C: 内置策略参数
+
+### SMA 策略
+| 参数 | 说明 | 默认值 |
+|-----|------|--------|
+| fastPeriod | 快线周期 | 10 |
+| slowPeriod | 慢线周期 | 20 |
+
+### RSI 策略
+| 参数 | 说明 | 默认值 |
+|-----|------|--------|
+| period | RSI 周期 | 14 |
+| overbought | 超买阈值 | 70 |
+| oversold | 超卖阈值 | 30 |
+
+### MACD 策略
+| 参数 | 说明 | 默认值 |
+|-----|------|--------|
+| fastPeriod | 快线周期 | 12 |
+| slowPeriod | 慢线周期 | 26 |
+| signalPeriod | 信号线周期 | 9 |
+
+### 布林带策略
+| 参数 | 说明 | 默认值 |
+|-----|------|--------|
+| period | 周期 | 20 |
+| stdDev | 标准差倍数 | 2 |
+
+### 网格策略
+| 参数 | 说明 | 默认值 |
+|-----|------|--------|
+| gridCount | 网格数量 | 10 |
+| gridSpacing | 网格间距 | 0.01 |
 
 ---
 
-## 更新日志
-
-### v1.0.0
-- 初始版本
-- 支持 Binance/Bybit/OKX 三大交易所
-- 实现智能订单执行器
-- 实现实时行情引擎
-- 实现风险管理模块
-- 实现回测引擎
-- PM2 部署支持
-
----
-
-## 附录
-
-### A. 内置策略详解
-
-#### 1. SMA 双均线策略 (SMAStrategy)
-
-**原理**: 利用快慢两条移动平均线的交叉产生交易信号。
-
-```javascript
-import { SMAStrategy } from './src/strategies/index.js';
-
-const strategy = new SMAStrategy({
-  fastPeriod: 10,   // 快线周期
-  slowPeriod: 20,   // 慢线周期
-  symbols: ['BTC/USDT'],
-  timeframe: '1h',
-});
-```
-
-**信号逻辑**:
-- 金叉 (快线上穿慢线): 买入信号
-- 死叉 (快线下穿慢线): 卖出信号
-
-#### 2. RSI 策略 (RSIStrategy)
-
-**原理**: 利用相对强弱指标判断超买超卖。
-
-```javascript
-import { RSIStrategy } from './src/strategies/index.js';
-
-const strategy = new RSIStrategy({
-  period: 14,        // RSI 周期
-  overbought: 70,    // 超买阈值
-  oversold: 30,      // 超卖阈值
-  symbols: ['BTC/USDT'],
-});
-```
-
-**信号逻辑**:
-- RSI < 30: 超卖，买入信号
-- RSI > 70: 超买，卖出信号
-
-#### 3. MACD 策略 (MACDStrategy)
-
-**原理**: 利用 MACD 指标的金叉死叉和柱状图变化。
-
-```javascript
-import { MACDStrategy } from './src/strategies/index.js';
-
-const strategy = new MACDStrategy({
-  fastPeriod: 12,    // 快线周期
-  slowPeriod: 26,    // 慢线周期
-  signalPeriod: 9,   // 信号线周期
-  symbols: ['BTC/USDT'],
-});
-```
-
-#### 4. 布林带策略 (BollingerBandsStrategy)
-
-**原理**: 利用价格突破布林带产生交易信号。
-
-```javascript
-import { BollingerBandsStrategy } from './src/strategies/index.js';
-
-const strategy = new BollingerBandsStrategy({
-  period: 20,        // 周期
-  stdDev: 2,         // 标准差倍数
-  symbols: ['BTC/USDT'],
-});
-```
-
-**信号逻辑**:
-- 价格触及下轨: 买入信号
-- 价格触及上轨: 卖出信号
-
-#### 5. 网格策略 (GridStrategy)
-
-**原理**: 在价格区间内设置多个买卖点，低买高卖赚取差价。
-
-```javascript
-import { GridStrategy } from './src/strategies/index.js';
-
-const strategy = new GridStrategy({
-  gridCount: 10,       // 网格数量
-  gridSpacing: 0.01,   // 网格间距 (1%)
-  upperPrice: 70000,   // 上限价格
-  lowerPrice: 50000,   // 下限价格
-  symbols: ['BTC/USDT'],
-});
-```
-
-#### 6. 资金费率套利策略 (FundingArbStrategy)
-
-**原理**: 利用不同交易所之间的资金费率差异进行对冲套利。
-
-```javascript
-import { FundingArbStrategy } from './src/strategies/index.js';
-
-const strategy = new FundingArbStrategy({
-  symbols: ['BTC/USDT:USDT', 'ETH/USDT:USDT'],
-  minAnnualizedSpread: 0.15,   // 最小年化利差 15%
-  closeSpreadThreshold: 0.05,  // 平仓阈值 5%
-  maxPositionSize: 10000,      // 最大仓位
-  leverage: 5,                 // 杠杆倍数
-});
-```
-
-**策略流程**:
-1. 监控多交易所资金费率
-2. 计算年化利差
-3. 当利差 > 15%: 做空高费率交易所，做多低费率交易所
-4. 当利差 < 5%: 平仓获利
-
-### B. 技术指标完整列表
-
-| 指标 | 函数 | 参数 | 用途 |
-|------|------|------|------|
-| **移动平均** |
-| SMA | `SMA(data, period)` | 数据, 周期 | 简单移动平均 |
-| EMA | `EMA(data, period)` | 数据, 周期 | 指数移动平均 |
-| WMA | `WMA(data, period)` | 数据, 周期 | 加权移动平均 |
-| VWMA | `VWMA(closes, volumes, period)` | 收盘价, 成交量, 周期 | 成交量加权移动平均 |
-| **震荡指标** |
-| RSI | `RSI(data, period)` | 数据, 周期 | 相对强弱指数 |
-| Stochastic | `Stochastic(h, l, c, k, d, dma)` | 高, 低, 收, K周期, D周期, D平滑 | 随机指标 |
-| WilliamsR | `WilliamsR(h, l, c, period)` | 高, 低, 收, 周期 | 威廉指标 |
-| CCI | `CCI(h, l, c, period)` | 高, 低, 收, 周期 | 商品通道指数 |
-| **趋势指标** |
-| MACD | `MACD(data, fast, slow, signal)` | 数据, 快周期, 慢周期, 信号周期 | 移动平均收敛/发散 |
-| ADX | `ADX(h, l, c, period)` | 高, 低, 收, 周期 | 平均趋向指数 |
-| PSAR | `PSAR(h, l, step, max)` | 高, 低, 步进, 最大值 | 抛物线转向 |
-| **波动率指标** |
-| BollingerBands | `BollingerBands(data, period, stdDev)` | 数据, 周期, 标准差倍数 | 布林带 |
-| ATR | `ATR(h, l, c, period)` | 高, 低, 收, 周期 | 真实波幅 |
-| KeltnerChannels | `KeltnerChannels(h, l, c, period, mult)` | 高, 低, 收, 周期, 倍数 | 肯特纳通道 |
-| **成交量指标** |
-| OBV | `OBV(closes, volumes)` | 收盘价, 成交量 | 能量潮 |
-| MFI | `MFI(h, l, c, v, period)` | 高, 低, 收, 量, 周期 | 资金流量指数 |
-| VROC | `VROC(volumes, period)` | 成交量, 周期 | 成交量变化率 |
-| **动量指标** |
-| Momentum | `Momentum(data, period)` | 数据, 周期 | 动量 |
-| ROC | `ROC(data, period)` | 数据, 周期 | 变化率 |
-| **支撑阻力** |
-| PivotPoints | `PivotPoints(h, l, c)` | 高, 低, 收 | 枢轴点 |
-| FibonacciRetracement | `FibonacciRetracement(high, low)` | 高点, 低点 | 斐波那契回撤 |
-
-### C. 配置项完整参考
-
-```javascript
-// config/default.js 完整配置项
-export default {
-  // 交易所配置
-  exchange: {
-    default: 'binance',
-    binance: {
-      enabled: true,
-      sandbox: false,
-      timeout: 30000,
-      enableRateLimit: true,
-      defaultType: 'spot',  // spot | future | swap
-    },
-    okx: { /* ... */ },
-  },
-
-  // 行情配置
-  marketData: {
-    websocket: {
-      pingInterval: 30000,
-      pongTimeout: 10000,
-      reconnectDelay: 5000,
-      maxReconnectAttempts: 10,
-    },
-    aggregator: {
-      aggregateInterval: 1000,
-      arbitrageThreshold: 0.5,
-    },
-    cache: {
-      maxCandles: 1000,
-      tickerExpiry: 5000,
-    },
-  },
-
-  // 策略配置
-  strategy: {
-    default: 'sma',
-    defaults: {
-      timeframe: '1h',
-      capitalRatio: 0.1,
-      stopLoss: 0.02,
-      takeProfit: 0.04,
-    },
-    sma: { fastPeriod: 10, slowPeriod: 20 },
-    rsi: { period: 14, overbought: 70, oversold: 30 },
-    bollingerBands: { period: 20, stdDev: 2 },
-    macd: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-    grid: { gridCount: 10, gridSpacing: 0.01 },
-  },
-
-  // 风控配置
-  risk: {
-    enabled: true,
-    maxPositionRatio: 0.3,
-    maxRiskPerTrade: 0.02,
-    maxDailyLoss: 1000,
-    maxDrawdown: 0.2,
-    maxPositions: 5,
-    maxLeverage: 3,
-    positionSizing: 'risk_based',  // fixed | risk_based | kelly | atr_based
-    stopLoss: {
-      enabled: true,
-      defaultRatio: 0.02,
-      trailingStop: true,
-      trailingRatio: 0.015,
-    },
-    takeProfit: {
-      enabled: true,
-      defaultRatio: 0.04,
-      partialTakeProfit: false,
-      partialRatios: [0.5, 0.3, 0.2],
-    },
-    blacklist: [],
-    whitelist: [],
-  },
-
-  // 执行器配置
-  executor: {
-    maxRetries: 3,
-    retryDelay: 1000,
-    maxSlippage: 0.5,
-    orderTimeout: 30000,
-    enableTWAP: true,
-    twap: {
-      splitThreshold: 10000,
-      splitCount: 5,
-      splitInterval: 2000,
-    },
-    concurrency: 3,
-  },
-
-  // 回测配置
-  backtest: {
-    initialCapital: 10000,
-    commission: 0.001,
-    slippage: 0.0005,
-    dataDir: 'data/historical',
-    outputDir: 'data/backtest_results',
-  },
-
-  // 监控配置
-  monitor: {
-    collectInterval: 10000,
-    healthCheckInterval: 30000,
-    memoryWarningThreshold: 512,
-    cpuWarningThreshold: 80,
-    prometheus: { enabled: true, port: 9090 },
-  },
-
-  // 告警配置
-  alert: {
-    cooldown: 60000,
-    email: { enabled: false },
-    telegram: { enabled: false },
-    dingtalk: { enabled: false },
-    webhook: { enabled: false },
-  },
-
-  // 日志配置
-  logging: {
-    level: 'info',
-    dir: 'logs',
-    console: true,
-    file: true,
-    maxSize: 10485760,
-    maxFiles: 5,
-  },
-
-  // 数据库配置
-  database: {
-    type: 'sqlite',
-    sqlite: { filename: 'data/trading.db' },
-    redis: { enabled: false },
-  },
-
-  // 服务端口配置
-  server: {
-    httpPort: 3000,
-    wsPort: 3001,
-    dashboardPort: 8080,
-  },
-};
-```
-
-### D. 错误代码参考
-
-| 错误代码 | 含义 | 处理方式 |
-|---------|------|---------|
-| `ERR_INSUFFICIENT_BALANCE` | 余额不足 | 检查账户余额 |
-| `ERR_ORDER_REJECTED` | 订单被拒绝 | 检查订单参数 |
-| `ERR_RATE_LIMIT` | 请求频率超限 | 自动退避重试 |
-| `ERR_NETWORK_TIMEOUT` | 网络超时 | 自动重连 |
-| `ERR_INVALID_SYMBOL` | 无效交易对 | 检查交易对格式 |
-| `ERR_POSITION_LIMIT` | 仓位超限 | 检查风控配置 |
-| `ERR_LEVERAGE_LIMIT` | 杠杆超限 | 降低杠杆倍数 |
-| `ERR_DAILY_LOSS_LIMIT` | 日亏损超限 | 等待第二天重置 |
-
-### E. 性能优化建议
-
-1. **数据缓存**: 启用 Redis 缓存行情数据
-2. **批量订阅**: 使用 `batchSubscribe` 批量订阅行情
-3. **连接池**: 复用交易所 HTTP 连接
-4. **日志级别**: 生产环境使用 `info` 级别
-5. **内存管理**: 定期清理历史数据缓存
-
-### F. 安全建议
-
-1. **API 密钥**: 仅授予必要权限，禁止提币权限
-2. **IP 白名单**: 在交易所设置 IP 白名单
-3. **环境变量**: 敏感信息使用环境变量
-4. **日志脱敏**: 日志中不记录完整 API 密钥
-5. **定期轮换**: 定期更换 API 密钥
-
----
-
-*文档版本: 1.0.0 | 最后更新: 2025-01*
+*文档版本: 1.0.0*
+*最后更新: 2025-12*
