@@ -65,7 +65,12 @@
       "Bash(copy \"data\\historical\\BTC_USDT_USDT_1h_2024-01-01_2024-03-01.json\" \"data\\historical\\BTC_USDT_USDT_1h.json\")",
       "Bash(node scripts/keyManager.js:*)",
       "Bash(node --test:*)",
-      "Bash(pnpm test:unit:*)"
+      "Bash(pnpm test:unit:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)"
     ]
   }
 }
