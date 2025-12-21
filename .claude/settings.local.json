@@ -72,7 +72,8 @@
       "Bash(npm install:*)",
       "Bash(npm test:*)",
       "Bash(npx vitest:*)",
-      "Bash(npm rebuild:*)"
+      "Bash(npm rebuild:*)",
+      "Bash(npm run test:coverage:*)"
     ]
   }
 }
