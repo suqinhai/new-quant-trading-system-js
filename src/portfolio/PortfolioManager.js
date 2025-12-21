@@ -22,7 +22,7 @@ import EventEmitter from 'eventemitter3';
 // 导入核心模块 / Import core modules
 import { CorrelationAnalyzer } from '../analytics/CorrelationAnalyzer.js';
 import { CapitalAllocator, ALLOCATION_METHOD } from '../capital/CapitalAllocator.js';
-import { PortfolioRiskManager, PORTFOLIO_RISK_LEVEL } from './PortfolioRiskManager.js';
+import { PortfolioRiskManager, PORTFOLIO_RISK_LEVEL } from '../risk/PortfolioRiskManager.js';
 
 // ============================================
 // 常量定义 / Constants Definition

@@ -494,3 +494,785 @@ describe('Zod 实例', () => {
     expect(result.success).toBe(true);
   });
 });
+
+// ============================================
+// 传统验证函数测试
+// ============================================
+
+import {
+  validateOrder,
+  validateStrategyConfig,
+  validateRiskConfig,
+  validateCandle,
+  validateCandles,
+  isValidNumber,
+  isPositiveNumber,
+  isNonNegativeNumber,
+  isValidPercentage,
+  isValidRatio,
+  isNonEmptyString,
+  isValidDate,
+  isValidEmail,
+  isValidUrl,
+  isInRange,
+  clamp,
+} from '../../src/utils/validators.js';
+
+// ============================================
+// validateOrder 测试
+// ============================================
+
+describe('validateOrder', () => {
+  it('应该验证有效的订单', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors.length).toBe(0);
+  });
+
+  it('应该验证市价单（无需价格）', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'market',
+      side: 'sell',
+      amount: 0.1,
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('空订单对象应该返回错误', () => {
+    const result = validateOrder(null);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errors[0]).toContain('不能为空');
+  });
+
+  it('无效交易对应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTCUSDT', // 缺少 /
+      type: 'limit',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('格式错误'))).toBe(true);
+  });
+
+  it('缺少交易对应该返回错误', () => {
+    const result = validateOrder({
+      type: 'limit',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('symbol') || e.includes('交易对'))).toBe(true);
+  });
+
+  it('无效订单类型应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'invalid',
+      side: 'buy',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('订单类型无效'))).toBe(true);
+  });
+
+  it('无效订单方向应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'long',
+      amount: 0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('订单方向无效'))).toBe(true);
+  });
+
+  it('缺少数量应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('数量'))).toBe(true);
+  });
+
+  it('负数量应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      amount: -0.1,
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('正数'))).toBe(true);
+  });
+
+  it('限价单缺少价格应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      amount: 0.1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('价格'))).toBe(true);
+  });
+
+  it('止损限价单缺少价格应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'stop_limit',
+      side: 'buy',
+      amount: 0.1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('价格'))).toBe(true);
+  });
+
+  it('限价单价格为负数应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      amount: 0.1,
+      price: -50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('价格必须为正数'))).toBe(true);
+  });
+
+  it('数量为非数字应该返回错误', () => {
+    const result = validateOrder({
+      symbol: 'BTC/USDT',
+      type: 'limit',
+      side: 'buy',
+      amount: 'invalid',
+      price: 50000,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('正数'))).toBe(true);
+  });
+});
+
+// ============================================
+// validateStrategyConfig 测试
+// ============================================
+
+describe('validateStrategyConfig', () => {
+  it('应该验证有效的策略配置', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT', 'ETH/USDT'],
+      timeframe: '1h',
+      capitalRatio: 0.1,
+      stopLoss: 0.02,
+      takeProfit: 0.05,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors.length).toBe(0);
+  });
+
+  it('空配置应该返回错误', () => {
+    const result = validateStrategyConfig(null);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('不能为空');
+  });
+
+  it('缺少交易对列表应该返回错误', () => {
+    const result = validateStrategyConfig({
+      timeframe: '1h',
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('交易对'))).toBe(true);
+  });
+
+  it('空交易对列表应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: [],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('至少一个交易对'))).toBe(true);
+  });
+
+  it('无效时间周期应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      timeframe: '2m',
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('时间周期无效'))).toBe(true);
+  });
+
+  it('资金比例超出范围应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      capitalRatio: 1.5,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('资金比例'))).toBe(true);
+  });
+
+  it('资金比例为负数应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      capitalRatio: -0.1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('资金比例'))).toBe(true);
+  });
+
+  it('止损比例无效应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      stopLoss: 1.5, // 超出 0-1 范围
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('止损比例'))).toBe(true);
+  });
+
+  it('止损比例为负数应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      stopLoss: -0.02,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('止损比例'))).toBe(true);
+  });
+
+  it('止盈比例为负数应该返回错误', () => {
+    const result = validateStrategyConfig({
+      symbols: ['BTC/USDT'],
+      takeProfit: -0.05,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('止盈比例'))).toBe(true);
+  });
+});
+
+// ============================================
+// validateRiskConfig 测试
+// ============================================
+
+describe('validateRiskConfig', () => {
+  it('应该验证有效的风控配置', () => {
+    const result = validateRiskConfig({
+      maxPositionRatio: 0.2,
+      riskPerTrade: 0.01,
+      maxDrawdown: 0.2,
+      dailyLossLimit: 1000,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors.length).toBe(0);
+  });
+
+  it('空配置应该返回错误', () => {
+    const result = validateRiskConfig(null);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('不能为空');
+  });
+
+  it('最大持仓比例超出范围应该返回错误', () => {
+    const result = validateRiskConfig({
+      maxPositionRatio: 1.5,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最大持仓比例'))).toBe(true);
+  });
+
+  it('最大持仓比例为负数应该返回错误', () => {
+    const result = validateRiskConfig({
+      maxPositionRatio: -0.2,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最大持仓比例'))).toBe(true);
+  });
+
+  it('单笔风险比例超出范围应该返回错误', () => {
+    const result = validateRiskConfig({
+      riskPerTrade: 0.15, // 超过 10%
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('单笔风险比例'))).toBe(true);
+  });
+
+  it('单笔风险比例为负数应该返回错误', () => {
+    const result = validateRiskConfig({
+      riskPerTrade: -0.01,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('单笔风险比例'))).toBe(true);
+  });
+
+  it('最大回撤超出范围应该返回错误', () => {
+    const result = validateRiskConfig({
+      maxDrawdown: 1.5,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最大回撤'))).toBe(true);
+  });
+
+  it('最大回撤为负数应该返回错误', () => {
+    const result = validateRiskConfig({
+      maxDrawdown: -0.1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最大回撤'))).toBe(true);
+  });
+
+  it('每日亏损限制为负数应该返回错误', () => {
+    const result = validateRiskConfig({
+      dailyLossLimit: -100,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('每日亏损限制'))).toBe(true);
+  });
+});
+
+// ============================================
+// validateCandle 测试
+// ============================================
+
+describe('validateCandle', () => {
+  it('应该验证有效的 K 线数据', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: 50000,
+      high: 51000,
+      low: 49000,
+      close: 50500,
+      volume: 1000,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors.length).toBe(0);
+  });
+
+  it('使用 time 字段也应该有效', () => {
+    const result = validateCandle({
+      time: Date.now(),
+      open: 50000,
+      high: 51000,
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('空数据应该返回错误', () => {
+    const result = validateCandle(null);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('不能为空');
+  });
+
+  it('缺少时间戳应该返回错误', () => {
+    const result = validateCandle({
+      open: 50000,
+      high: 51000,
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('时间戳'))).toBe(true);
+  });
+
+  it('缺少 OHLC 字段应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      high: 51000,
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('open'))).toBe(true);
+  });
+
+  it('负价格应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: -50000,
+      high: 51000,
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('非负数'))).toBe(true);
+  });
+
+  it('最高价低于最低价应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: 50000,
+      high: 48000, // 低于 low
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最高价不能低于最低价'))).toBe(true);
+  });
+
+  it('最高价低于开盘价应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: 51500, // 高于 high
+      high: 51000,
+      low: 49000,
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最高价必须大于等于'))).toBe(true);
+  });
+
+  it('最低价高于收盘价应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: 50000,
+      high: 51000,
+      low: 50600, // 高于 close
+      close: 50500,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('最低价必须小于等于'))).toBe(true);
+  });
+
+  it('负成交量应该返回错误', () => {
+    const result = validateCandle({
+      timestamp: Date.now(),
+      open: 50000,
+      high: 51000,
+      low: 49000,
+      close: 50500,
+      volume: -100,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('成交量'))).toBe(true);
+  });
+});
+
+// ============================================
+// validateCandles 测试
+// ============================================
+
+describe('validateCandles', () => {
+  it('应该验证有效的 K 线数组', () => {
+    const result = validateCandles([
+      { timestamp: 1000, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
+      { timestamp: 2000, open: 105, high: 115, low: 100, close: 110, volume: 1200 },
+    ]);
+
+    expect(result.valid).toBe(true);
+    expect(result.validCandles.length).toBe(2);
+  });
+
+  it('非数组应该返回错误', () => {
+    const result = validateCandles('not an array');
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('必须为数组');
+    expect(result.validCandles.length).toBe(0);
+  });
+
+  it('null 应该返回错误', () => {
+    const result = validateCandles(null);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('必须为数组');
+  });
+
+  it('空数组应该返回错误', () => {
+    const result = validateCandles([]);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain('不能为空');
+  });
+
+  it('应该过滤出有效的 K 线', () => {
+    const result = validateCandles([
+      { timestamp: 1000, open: 100, high: 110, low: 90, close: 105, volume: 1000 },
+      { timestamp: 2000, open: -100, high: 115, low: 100, close: 110, volume: 1200 }, // 无效
+      { timestamp: 3000, open: 110, high: 120, low: 105, close: 115, volume: 1100 },
+    ]);
+
+    expect(result.valid).toBe(false);
+    expect(result.validCandles.length).toBe(2);
+    expect(result.errors.length).toBe(1);
+    expect(result.errors[0]).toContain('第 2 根');
+  });
+});
+
+// ============================================
+// 类型验证函数测试
+// ============================================
+
+describe('isValidNumber', () => {
+  it('应该返回 true 对于有效数字', () => {
+    expect(isValidNumber(42)).toBe(true);
+    expect(isValidNumber(0)).toBe(true);
+    expect(isValidNumber(-10)).toBe(true);
+    expect(isValidNumber(3.14)).toBe(true);
+  });
+
+  it('应该返回 false 对于 NaN', () => {
+    expect(isValidNumber(NaN)).toBe(false);
+  });
+
+  it('应该返回 false 对于 Infinity', () => {
+    expect(isValidNumber(Infinity)).toBe(false);
+    expect(isValidNumber(-Infinity)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isValidNumber('42')).toBe(false);
+    expect(isValidNumber(null)).toBe(false);
+    expect(isValidNumber(undefined)).toBe(false);
+    expect(isValidNumber({})).toBe(false);
+  });
+});
+
+describe('isPositiveNumber', () => {
+  it('应该返回 true 对于正数', () => {
+    expect(isPositiveNumber(1)).toBe(true);
+    expect(isPositiveNumber(0.001)).toBe(true);
+    expect(isPositiveNumber(1000000)).toBe(true);
+  });
+
+  it('应该返回 false 对于零', () => {
+    expect(isPositiveNumber(0)).toBe(false);
+  });
+
+  it('应该返回 false 对于负数', () => {
+    expect(isPositiveNumber(-1)).toBe(false);
+    expect(isPositiveNumber(-0.001)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isPositiveNumber('1')).toBe(false);
+    expect(isPositiveNumber(null)).toBe(false);
+  });
+});
+
+describe('isNonNegativeNumber', () => {
+  it('应该返回 true 对于非负数', () => {
+    expect(isNonNegativeNumber(0)).toBe(true);
+    expect(isNonNegativeNumber(1)).toBe(true);
+    expect(isNonNegativeNumber(0.001)).toBe(true);
+  });
+
+  it('应该返回 false 对于负数', () => {
+    expect(isNonNegativeNumber(-1)).toBe(false);
+    expect(isNonNegativeNumber(-0.001)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isNonNegativeNumber('0')).toBe(false);
+  });
+});
+
+describe('isValidPercentage', () => {
+  it('应该返回 true 对于 0-100 之间的值', () => {
+    expect(isValidPercentage(0)).toBe(true);
+    expect(isValidPercentage(50)).toBe(true);
+    expect(isValidPercentage(100)).toBe(true);
+  });
+
+  it('应该返回 false 对于范围外的值', () => {
+    expect(isValidPercentage(-1)).toBe(false);
+    expect(isValidPercentage(101)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isValidPercentage('50')).toBe(false);
+  });
+});
+
+describe('isValidRatio', () => {
+  it('应该返回 true 对于 0-1 之间的值', () => {
+    expect(isValidRatio(0)).toBe(true);
+    expect(isValidRatio(0.5)).toBe(true);
+    expect(isValidRatio(1)).toBe(true);
+  });
+
+  it('应该返回 false 对于范围外的值', () => {
+    expect(isValidRatio(-0.1)).toBe(false);
+    expect(isValidRatio(1.1)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isValidRatio('0.5')).toBe(false);
+  });
+});
+
+describe('isNonEmptyString', () => {
+  it('应该返回 true 对于非空字符串', () => {
+    expect(isNonEmptyString('hello')).toBe(true);
+    expect(isNonEmptyString('a')).toBe(true);
+    expect(isNonEmptyString('  hello  ')).toBe(true);
+  });
+
+  it('应该返回 false 对于空字符串', () => {
+    expect(isNonEmptyString('')).toBe(false);
+    expect(isNonEmptyString('   ')).toBe(false);
+  });
+
+  it('应该返回 false 对于非字符串类型', () => {
+    expect(isNonEmptyString(123)).toBe(false);
+    expect(isNonEmptyString(null)).toBe(false);
+    expect(isNonEmptyString(undefined)).toBe(false);
+  });
+});
+
+describe('isValidDate', () => {
+  it('应该返回 true 对于有效的 Date 对象', () => {
+    expect(isValidDate(new Date())).toBe(true);
+    expect(isValidDate(new Date('2024-01-01'))).toBe(true);
+  });
+
+  it('应该返回 true 对于有效的日期字符串', () => {
+    expect(isValidDate('2024-01-01')).toBe(true);
+    expect(isValidDate('2024/01/01')).toBe(true);
+  });
+
+  it('应该返回 true 对于时间戳', () => {
+    expect(isValidDate(Date.now())).toBe(true);
+    expect(isValidDate(1704067200000)).toBe(true);
+  });
+
+  it('应该返回 false 对于无效日期', () => {
+    expect(isValidDate(new Date('invalid'))).toBe(false);
+    expect(isValidDate('not a date')).toBe(false);
+  });
+});
+
+describe('isValidEmail', () => {
+  it('应该返回 true 对于有效的邮箱', () => {
+    expect(isValidEmail('test@example.com')).toBe(true);
+    expect(isValidEmail('user.name@domain.co')).toBe(true);
+    expect(isValidEmail('a@b.c')).toBe(true);
+  });
+
+  it('应该返回 false 对于无效的邮箱', () => {
+    expect(isValidEmail('invalid')).toBe(false);
+    expect(isValidEmail('test@')).toBe(false);
+    expect(isValidEmail('@example.com')).toBe(false);
+    expect(isValidEmail('test@example')).toBe(false);
+  });
+
+  it('应该返回 false 对于非字符串类型', () => {
+    expect(isValidEmail(123)).toBe(false);
+    expect(isValidEmail(null)).toBe(false);
+  });
+});
+
+describe('isValidUrl', () => {
+  it('应该返回 true 对于有效的 URL', () => {
+    expect(isValidUrl('https://example.com')).toBe(true);
+    expect(isValidUrl('http://localhost:3000')).toBe(true);
+    expect(isValidUrl('ftp://files.example.com')).toBe(true);
+  });
+
+  it('应该返回 false 对于无效的 URL', () => {
+    expect(isValidUrl('not a url')).toBe(false);
+    expect(isValidUrl('example.com')).toBe(false);
+    expect(isValidUrl('')).toBe(false);
+  });
+});
+
+// ============================================
+// 范围验证函数测试
+// ============================================
+
+describe('isInRange', () => {
+  it('应该返回 true 对于范围内的值', () => {
+    expect(isInRange(5, 0, 10)).toBe(true);
+    expect(isInRange(0, 0, 10)).toBe(true);
+    expect(isInRange(10, 0, 10)).toBe(true);
+  });
+
+  it('应该返回 false 对于范围外的值', () => {
+    expect(isInRange(-1, 0, 10)).toBe(false);
+    expect(isInRange(11, 0, 10)).toBe(false);
+  });
+
+  it('应该返回 false 对于非数字类型', () => {
+    expect(isInRange('5', 0, 10)).toBe(false);
+    expect(isInRange(NaN, 0, 10)).toBe(false);
+  });
+});
+
+describe('clamp', () => {
+  it('应该返回范围内的值不变', () => {
+    expect(clamp(5, 0, 10)).toBe(5);
+    expect(clamp(0, 0, 10)).toBe(0);
+    expect(clamp(10, 0, 10)).toBe(10);
+  });
+
+  it('应该限制到最小值', () => {
+    expect(clamp(-5, 0, 10)).toBe(0);
+    expect(clamp(-100, 0, 10)).toBe(0);
+  });
+
+  it('应该限制到最大值', () => {
+    expect(clamp(15, 0, 10)).toBe(10);
+    expect(clamp(100, 0, 10)).toBe(10);
+  });
+
+  it('无效数字应该返回最小值', () => {
+    expect(clamp(NaN, 0, 10)).toBe(0);
+    expect(clamp('5', 0, 10)).toBe(0);
+    expect(clamp(Infinity, 0, 10)).toBe(0);
+  });
+});
