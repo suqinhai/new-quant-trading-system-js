@@ -21,3 +21,11 @@ export {
   createHealthMiddleware,
   defaultHealthChecker,
 } from './healthCheck.js';
+
+export {
+  AuthManager,
+  createAuthMiddleware,
+  createLoginHandler,
+  createRefreshHandler,
+  createLogoutHandler,
+} from './auth.js';

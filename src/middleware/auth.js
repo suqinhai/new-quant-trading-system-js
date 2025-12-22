@@ -1,0 +1,596 @@
+/**
+ * Dashboard 认证中间件
+ * Dashboard Authentication Middleware
+ *
+ * 提供 JWT 认证、会话管理、密码哈希等安全功能
+ * Provides JWT authentication, session management, password hashing
+ *
+ * @module src/middleware/auth
+ */
+
+import crypto from 'crypto';
+
+// JWT 配置
+const JWT_ALGORITHM = 'HS256';
+const JWT_EXPIRY = 3600000; // 1小时
+const REFRESH_TOKEN_EXPIRY = 604800000; // 7天
+
+/**
+ * Base64URL 编码
+ */
+function base64UrlEncode(data) {
+  const base64 = Buffer.from(data).toString('base64');
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * Base64URL 解码
+ */
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  return Buffer.from(base64, 'base64').toString();
+}
+
+/**
+ * 认证管理器类
+ * Authentication Manager Class
+ */
+class AuthManager {
+  constructor(config = {}) {
+    this.config = {
+      // JWT 密钥 (应从环境变量获取)
+      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'),
+      // JWT 过期时间 (毫秒)
+      jwtExpiry: config.jwtExpiry || JWT_EXPIRY,
+      // 刷新令牌过期时间
+      refreshTokenExpiry: config.refreshTokenExpiry || REFRESH_TOKEN_EXPIRY,
+      // 密码哈希迭代次数
+      hashIterations: config.hashIterations || 100000,
+      // 密码最小长度
+      minPasswordLength: config.minPasswordLength || 8,
+      // 登录失败锁定阈值
+      maxLoginAttempts: config.maxLoginAttempts || 5,
+      // 锁定时间 (毫秒)
+      lockoutDuration: config.lockoutDuration || 900000, // 15分钟
+      // 是否启用 IP 检查
+      enableIpCheck: config.enableIpCheck ?? true,
+      // 会话并发限制
+      maxConcurrentSessions: config.maxConcurrentSessions || 3,
+    };
+
+    // 用户存储 (生产环境应使用数据库)
+    this.users = new Map();
+
+    // 刷新令牌存储
+    this.refreshTokens = new Map();
+
+    // 登录尝试记录
+    this.loginAttempts = new Map();
+
+    // 活跃会话
+    this.activeSessions = new Map();
+
+    // 令牌黑名单 (用于注销)
+    this.tokenBlacklist = new Set();
+
+    // 初始化默认管理员 (生产环境应从配置加载)
+    this._initDefaultUser();
+  }
+
+  /**
+   * 初始化默认用户
+   * @private
+   */
+  _initDefaultUser() {
+    const defaultPassword = process.env.DASHBOARD_PASSWORD || 'admin123';
+
+    // 警告：使用默认密码
+    if (defaultPassword === 'admin123') {
+      console.warn('[Auth] WARNING: Using default password. Please set DASHBOARD_PASSWORD environment variable.');
+    }
+
+    this.createUser('admin', defaultPassword, { role: 'admin' });
+  }
+
+  /**
+   * 创建用户
+   * @param {string} username - 用户名
+   * @param {string} password - 密码
+   * @param {Object} options - 选项
+   */
+  createUser(username, password, options = {}) {
+    // 验证密码强度
+    if (password.length < this.config.minPasswordLength) {
+      throw new Error(`Password must be at least ${this.config.minPasswordLength} characters`);
+    }
+
+    // 生成盐值
+    const salt = crypto.randomBytes(16).toString('hex');
+
+    // 哈希密码
+    const hash = crypto.pbkdf2Sync(
+      password,
+      salt,
+      this.config.hashIterations,
+      64,
+      'sha512'
+    ).toString('hex');
+
+    // 存储用户
+    this.users.set(username, {
+      username,
+      passwordHash: hash,
+      salt,
+      role: options.role || 'user',
+      createdAt: Date.now(),
+      lastLogin: null,
+      failedAttempts: 0,
+      lockedUntil: null,
+    });
+
+    return { username, role: options.role || 'user' };
+  }
+
+  /**
+   * 验证密码
+   * @param {string} username - 用户名
+   * @param {string} password - 密码
+   * @returns {{ valid: boolean, user?: Object, error?: string }}
+   */
+  verifyPassword(username, password) {
+    const user = this.users.get(username);
+
+    if (!user) {
+      return { valid: false, error: 'User not found' };
+    }
+
+    // 检查是否被锁定
+    if (user.lockedUntil && Date.now() < user.lockedUntil) {
+      const remaining = Math.ceil((user.lockedUntil - Date.now()) / 60000);
+      return { valid: false, error: `Account locked. Try again in ${remaining} minutes.` };
+    }
+
+    // 哈希输入密码
+    const hash = crypto.pbkdf2Sync(
+      password,
+      user.salt,
+      this.config.hashIterations,
+      64,
+      'sha512'
+    ).toString('hex');
+
+    // 使用时间安全比较
+    const hashBuffer = Buffer.from(hash, 'hex');
+    const storedBuffer = Buffer.from(user.passwordHash, 'hex');
+
+    if (hashBuffer.length !== storedBuffer.length ||
+        !crypto.timingSafeEqual(hashBuffer, storedBuffer)) {
+      // 记录失败尝试
+      user.failedAttempts++;
+      if (user.failedAttempts >= this.config.maxLoginAttempts) {
+        user.lockedUntil = Date.now() + this.config.lockoutDuration;
+        user.failedAttempts = 0;
+        return { valid: false, error: 'Too many failed attempts. Account locked.' };
+      }
+      return { valid: false, error: 'Invalid password' };
+    }
+
+    // 重置失败计数
+    user.failedAttempts = 0;
+    user.lockedUntil = null;
+    user.lastLogin = Date.now();
+
+    return { valid: true, user: { username: user.username, role: user.role } };
+  }
+
+  /**
+   * 生成 JWT
+   * @param {Object} payload - 载荷
+   * @returns {string} JWT 令牌
+   */
+  generateToken(payload) {
+    const header = {
+      alg: JWT_ALGORITHM,
+      typ: 'JWT',
+    };
+
+    const now = Date.now();
+    const tokenPayload = {
+      ...payload,
+      iat: now,
+      exp: now + this.config.jwtExpiry,
+      jti: crypto.randomBytes(16).toString('hex'),
+    };
+
+    // 编码 header 和 payload
+    const encodedHeader = base64UrlEncode(JSON.stringify(header));
+    const encodedPayload = base64UrlEncode(JSON.stringify(tokenPayload));
+
+    // 生成签名
+    const signature = crypto
+      .createHmac('sha256', this.config.jwtSecret)
+      .update(`${encodedHeader}.${encodedPayload}`)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
+    return `${encodedHeader}.${encodedPayload}.${signature}`;
+  }
+
+  /**
+   * 验证 JWT
+   * @param {string} token - JWT 令牌
+   * @returns {{ valid: boolean, payload?: Object, error?: string }}
+   */
+  verifyToken(token) {
+    try {
+      // 检查黑名单
+      if (this.tokenBlacklist.has(token)) {
+        return { valid: false, error: 'Token revoked' };
+      }
+
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return { valid: false, error: 'Invalid token format' };
+      }
+
+      const [encodedHeader, encodedPayload, signature] = parts;
+
+      // 验证签名
+      const expectedSignature = crypto
+        .createHmac('sha256', this.config.jwtSecret)
+        .update(`${encodedHeader}.${encodedPayload}`)
+        .digest('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSignature);
+
+      if (sigBuffer.length !== expectedBuffer.length ||
+          !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+        return { valid: false, error: 'Invalid signature' };
+      }
+
+      // 解析 payload
+      const payload = JSON.parse(base64UrlDecode(encodedPayload));
+
+      // 检查过期
+      if (payload.exp && Date.now() > payload.exp) {
+        return { valid: false, error: 'Token expired' };
+      }
+
+      return { valid: true, payload };
+    } catch (error) {
+      return { valid: false, error: 'Invalid token' };
+    }
+  }
+
+  /**
+   * 生成刷新令牌
+   * @param {string} username - 用户名
+   * @param {string} clientIp - 客户端 IP
+   * @returns {string} 刷新令牌
+   */
+  generateRefreshToken(username, clientIp) {
+    const refreshToken = crypto.randomBytes(32).toString('hex');
+
+    this.refreshTokens.set(refreshToken, {
+      username,
+      clientIp,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + this.config.refreshTokenExpiry,
+    });
+
+    // 清理该用户的旧刷新令牌 (限制并发会话)
+    this._cleanupUserSessions(username);
+
+    return refreshToken;
+  }
+
+  /**
+   * 使用刷新令牌获取新的访问令牌
+   * @param {string} refreshToken - 刷新令牌
+   * @param {string} clientIp - 客户端 IP
+   * @returns {{ success: boolean, accessToken?: string, error?: string }}
+   */
+  refreshAccessToken(refreshToken, clientIp) {
+    const tokenData = this.refreshTokens.get(refreshToken);
+
+    if (!tokenData) {
+      return { success: false, error: 'Invalid refresh token' };
+    }
+
+    if (Date.now() > tokenData.expiresAt) {
+      this.refreshTokens.delete(refreshToken);
+      return { success: false, error: 'Refresh token expired' };
+    }
+
+    // IP 检查 (可选)
+    if (this.config.enableIpCheck && tokenData.clientIp !== clientIp) {
+      return { success: false, error: 'IP address mismatch' };
+    }
+
+    const user = this.users.get(tokenData.username);
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // 生成新的访问令牌
+    const accessToken = this.generateToken({
+      sub: user.username,
+      role: user.role,
+    });
+
+    return { success: true, accessToken };
+  }
+
+  /**
+   * 撤销令牌 (注销)
+   * @param {string} token - 访问令牌
+   * @param {string} refreshToken - 刷新令牌 (可选)
+   */
+  revokeToken(token, refreshToken = null) {
+    // 将访问令牌加入黑名单
+    this.tokenBlacklist.add(token);
+
+    // 删除刷新令牌
+    if (refreshToken) {
+      this.refreshTokens.delete(refreshToken);
+    }
+
+    // 定期清理黑名单 (过期令牌不需要保留)
+    this._cleanupBlacklist();
+  }
+
+  /**
+   * 清理用户会话
+   * @private
+   */
+  _cleanupUserSessions(username) {
+    const userTokens = [];
+
+    for (const [token, data] of this.refreshTokens) {
+      if (data.username === username) {
+        userTokens.push({ token, createdAt: data.createdAt });
+      }
+    }
+
+    // 按创建时间排序
+    userTokens.sort((a, b) => b.createdAt - a.createdAt);
+
+    // 删除超过限制的旧会话
+    for (let i = this.config.maxConcurrentSessions; i < userTokens.length; i++) {
+      this.refreshTokens.delete(userTokens[i].token);
+    }
+  }
+
+  /**
+   * 清理黑名单
+   * @private
+   */
+  _cleanupBlacklist() {
+    // 简单实现：限制黑名单大小
+    if (this.tokenBlacklist.size > 10000) {
+      // 清空黑名单 (过期令牌无论如何都会失效)
+      this.tokenBlacklist.clear();
+    }
+  }
+
+  /**
+   * 更改密码
+   * @param {string} username - 用户名
+   * @param {string} oldPassword - 旧密码
+   * @param {string} newPassword - 新密码
+   * @returns {{ success: boolean, error?: string }}
+   */
+  changePassword(username, oldPassword, newPassword) {
+    // 验证旧密码
+    const verify = this.verifyPassword(username, oldPassword);
+    if (!verify.valid) {
+      return { success: false, error: verify.error };
+    }
+
+    // 验证新密码强度
+    if (newPassword.length < this.config.minPasswordLength) {
+      return { success: false, error: `Password must be at least ${this.config.minPasswordLength} characters` };
+    }
+
+    const user = this.users.get(username);
+
+    // 生成新盐值和哈希
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(
+      newPassword,
+      salt,
+      this.config.hashIterations,
+      64,
+      'sha512'
+    ).toString('hex');
+
+    // 更新用户
+    user.salt = salt;
+    user.passwordHash = hash;
+
+    // 撤销所有刷新令牌 (强制重新登录)
+    for (const [token, data] of this.refreshTokens) {
+      if (data.username === username) {
+        this.refreshTokens.delete(token);
+      }
+    }
+
+    return { success: true };
+  }
+}
+
+/**
+ * 创建认证中间件
+ * @param {AuthManager} authManager - 认证管理器实例
+ * @param {Object} options - 选项
+ * @returns {Function} Express 中间件
+ */
+function createAuthMiddleware(authManager, options = {}) {
+  const publicPaths = new Set(options.publicPaths || ['/health', '/api/health', '/api/login']);
+
+  return async (req, res, next) => {
+    const path = req.path;
+
+    // 公开路径不需要认证
+    if (publicPaths.has(path)) {
+      return next();
+    }
+
+    // 获取 Authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authorization required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+
+    const token = authHeader.slice(7);
+
+    // 验证令牌
+    const result = authManager.verifyToken(token);
+
+    if (!result.valid) {
+      return res.status(401).json({
+        success: false,
+        error: result.error,
+        code: 'AUTH_INVALID',
+      });
+    }
+
+    // 附加用户信息到请求
+    req.user = result.payload;
+    next();
+  };
+}
+
+/**
+ * 创建登录路由处理器
+ * @param {AuthManager} authManager - 认证管理器实例
+ * @returns {Function} 路由处理器
+ */
+function createLoginHandler(authManager) {
+  return (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username and password required',
+      });
+    }
+
+    // 获取客户端 IP
+    const clientIp =
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      req.connection?.remoteAddress ||
+      'unknown';
+
+    // 验证凭证
+    const result = authManager.verifyPassword(username, password);
+
+    if (!result.valid) {
+      return res.status(401).json({
+        success: false,
+        error: result.error,
+      });
+    }
+
+    // 生成令牌
+    const accessToken = authManager.generateToken({
+      sub: result.user.username,
+      role: result.user.role,
+    });
+
+    const refreshToken = authManager.generateRefreshToken(username, clientIp);
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken,
+      expiresIn: authManager.config.jwtExpiry,
+      user: result.user,
+    });
+  };
+}
+
+/**
+ * 创建刷新令牌路由处理器
+ * @param {AuthManager} authManager - 认证管理器实例
+ * @returns {Function} 路由处理器
+ */
+function createRefreshHandler(authManager) {
+  return (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Refresh token required',
+      });
+    }
+
+    const clientIp =
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      req.connection?.remoteAddress ||
+      'unknown';
+
+    const result = authManager.refreshAccessToken(refreshToken, clientIp);
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        error: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      accessToken: result.accessToken,
+      expiresIn: authManager.config.jwtExpiry,
+    });
+  };
+}
+
+/**
+ * 创建注销路由处理器
+ * @param {AuthManager} authManager - 认证管理器实例
+ * @returns {Function} 路由处理器
+ */
+function createLogoutHandler(authManager) {
+  return (req, res) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { refreshToken } = req.body;
+
+    if (token) {
+      authManager.revokeToken(token, refreshToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  };
+}
+
+export {
+  AuthManager,
+  createAuthMiddleware,
+  createLoginHandler,
+  createRefreshHandler,
+  createLogoutHandler,
+};
+
+export default AuthManager;

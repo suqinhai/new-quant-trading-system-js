@@ -59,6 +59,20 @@ class Logger extends EventEmitter {
       // 敏感字段
       sensitiveFields: config.sensitiveFields || [
         'password', 'secret', 'apiKey', 'token', 'authorization',
+        'apikey', 'api_key', 'api_secret', 'secretKey', 'secret_key',
+        'accessToken', 'access_token', 'refreshToken', 'refresh_token',
+        'privateKey', 'private_key', 'passphrase', 'credential',
+        'botToken', 'bot_token', 'chatId', 'chat_id',
+        'smtpPass', 'smtp_pass', 'emailPassword', 'email_password',
+        'masterKey', 'master_key', 'encryptionKey', 'encryption_key',
+        'sessionId', 'session_id', 'cookie', 'jwt', 'bearer',
+      ],
+      // 敏感值模式 (正则匹配)
+      sensitivePatterns: config.sensitivePatterns || [
+        /^[A-Za-z0-9]{32,}$/,  // 长字符串可能是密钥
+        /^\d{10,}:[A-Za-z0-9_-]{30,}$/,  // Telegram Bot Token 格式
+        /^sk-[A-Za-z0-9]{20,}$/,  // API Key 格式
+        /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,  // JWT 格式
       ],
     };
 
@@ -216,16 +230,24 @@ class Logger extends EventEmitter {
    */
   _sanitizeData(data) {
     if (!data || typeof data !== 'object') {
+      // 检查字符串值是否匹配敏感模式
+      if (typeof data === 'string') {
+        return this._sanitizeValue(data);
+      }
       return data;
     }
 
     const sanitized = Array.isArray(data) ? [] : {};
 
     for (const [key, value] of Object.entries(data)) {
+      // 检查键名是否是敏感字段
       if (this.config.sensitiveFields.some(f =>
         key.toLowerCase().includes(f.toLowerCase())
       )) {
         sanitized[key] = '***REDACTED***';
+      } else if (typeof value === 'string') {
+        // 检查值是否匹配敏感模式
+        sanitized[key] = this._sanitizeValue(value);
       } else if (typeof value === 'object' && value !== null) {
         sanitized[key] = this._sanitizeData(value);
       } else {
@@ -234,6 +256,40 @@ class Logger extends EventEmitter {
     }
 
     return sanitized;
+  }
+
+  /**
+   * 脱敏单个值
+   * @private
+   */
+  _sanitizeValue(value) {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    // 检查是否匹配敏感模式
+    for (const pattern of this.config.sensitivePatterns) {
+      if (pattern.test(value)) {
+        // 保留前4位和后4位，中间用*替换
+        if (value.length > 12) {
+          return value.slice(0, 4) + '****' + value.slice(-4);
+        }
+        return '***REDACTED***';
+      }
+    }
+
+    // 检查是否是邮箱地址 (部分脱敏)
+    const emailMatch = value.match(/^([^@]{1,3})[^@]*@(.+)$/);
+    if (emailMatch) {
+      return `${emailMatch[1]}***@${emailMatch[2]}`;
+    }
+
+    // 检查是否是 IP 地址 (不脱敏，但标记为内部)
+    if (/^(?:192\.168\.|10\.|172\.(?:1[6-9]|2[0-9]|3[01])\.)/.test(value)) {
+      return value; // 内网 IP 可以保留
+    }
+
+    return value;
   }
 
   /**

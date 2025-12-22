@@ -19,6 +19,15 @@ import TelegramBot from 'node-telegram-bot-api';
 // 导入事件发射器 / Import EventEmitter
 import EventEmitter from 'eventemitter3';
 
+// 导入加密工具 / Import crypto utilities
+import {
+  loadEncryptedKeys,
+  getMasterPassword,
+  decryptValue,
+  isEncrypted,
+  hasEncryptedKeys,
+} from '../utils/crypto.js';
+
 // ============================================
 // 常量定义 / Constants Definition
 // ============================================
@@ -262,6 +271,9 @@ export class TelegramNotifier extends EventEmitter {
    * Initialize notifier
    */
   async init() {
+    // 尝试从加密存储获取凭证 / Try to get credentials from encrypted storage
+    await this._loadCredentials();
+
     // 检查必要配置 / Check required configuration
     if (!this.config.botToken) {
       // Bot Token 未配置 / Bot token not configured
@@ -301,6 +313,65 @@ export class TelegramNotifier extends EventEmitter {
 
       // 发出错误事件 / Emit error event
       this.emit('error', { type: 'init', error });
+    }
+  }
+
+  /**
+   * 从加密存储或环境变量加载凭证
+   * Load credentials from encrypted storage or environment variables
+   * @private
+   */
+  async _loadCredentials() {
+    const masterPassword = getMasterPassword();
+
+    // 优先从加密存储加载 / Prefer loading from encrypted storage
+    if (masterPassword && hasEncryptedKeys()) {
+      try {
+        const keys = loadEncryptedKeys(masterPassword);
+
+        if (keys?.telegram) {
+          // 使用加密存储的凭证 / Use encrypted credentials
+          if (keys.telegram.botToken) {
+            this.config.botToken = keys.telegram.botToken;
+          }
+          if (keys.telegram.chatId) {
+            this.config.chatId = keys.telegram.chatId;
+          }
+          this.log('使用加密存储的 Telegram 凭证 / Using encrypted Telegram credentials', 'info');
+          return;
+        }
+      } catch (error) {
+        this.log(`加载加密凭证失败: ${error.message} / Failed to load encrypted credentials`, 'warn');
+      }
+    }
+
+    // 检查环境变量是否是加密值 / Check if env vars are encrypted values
+    if (this.config.botToken && isEncrypted(this.config.botToken)) {
+      if (masterPassword) {
+        try {
+          this.config.botToken = decryptValue(this.config.botToken, masterPassword);
+        } catch (error) {
+          this.log(`解密 Bot Token 失败 / Failed to decrypt bot token`, 'error');
+          this.config.botToken = '';
+        }
+      } else {
+        this.log('Bot Token 已加密但未提供主密码 / Bot token encrypted but no master password', 'warn');
+        this.config.botToken = '';
+      }
+    }
+
+    if (this.config.chatId && isEncrypted(this.config.chatId)) {
+      if (masterPassword) {
+        try {
+          this.config.chatId = decryptValue(this.config.chatId, masterPassword);
+        } catch (error) {
+          this.log(`解密 Chat ID 失败 / Failed to decrypt chat ID`, 'error');
+          this.config.chatId = '';
+        }
+      } else {
+        this.log('Chat ID 已加密但未提供主密码 / Chat ID encrypted but no master password', 'warn');
+        this.config.chatId = '';
+      }
     }
   }
 
