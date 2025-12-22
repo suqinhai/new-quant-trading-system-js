@@ -13,6 +13,7 @@ import {
   ClickHouseClient,
   OrderArchiver,
   AuditLogWriter,
+  TradeWriter,
   ArchiveScheduler,
   LOG_LEVEL,
 } from '../../src/database/clickhouse/index.js';
@@ -260,6 +261,147 @@ describe('OrderArchiver', () => {
 
     expect(result.archived).toBe(0);
     expect(result.errors).toHaveLength(0);
+  });
+});
+
+// ============================================
+// TradeWriter 测试
+// ============================================
+
+describe('TradeWriter', () => {
+  let writer;
+
+  beforeEach(() => {
+    if (!clickhouseAvailable) return;
+    writer = new TradeWriter(clickhouse, {
+      batchSize: 10,
+      flushInterval: 1000,
+      async: true,
+    });
+  });
+
+  afterAll(async () => {
+    if (writer) {
+      await writer.stop();
+    }
+  });
+
+  it.skipIf(!clickhouseAvailable)('should write single trade', async () => {
+    writer.start();
+
+    await writer.write({
+      tradeId: 'trade-writer-001',
+      orderId: 'order-001',
+      symbol: 'BTC/USDT',
+      side: 'buy',
+      type: 'limit',
+      amount: 0.1,
+      price: 50000,
+      cost: 5000,
+      fee: 5,
+      feeCurrency: 'USDT',
+      exchange: 'binance',
+      strategy: 'dca',
+      timestamp: Date.now(),
+    });
+
+    await writer.flush();
+
+    const stats = writer.getStats();
+    expect(stats.totalWritten).toBe(1);
+    expect(stats.totalVolume).toBe(5000);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should write batch of trades', async () => {
+    writer.start();
+
+    const trades = [];
+    for (let i = 0; i < 5; i++) {
+      trades.push({
+        tradeId: `batch-trade-${i}`,
+        orderId: `order-${i}`,
+        symbol: 'ETH/USDT',
+        side: i % 2 === 0 ? 'buy' : 'sell',
+        type: 'market',
+        amount: 1,
+        price: 3000,
+        cost: 3000,
+        fee: 3,
+        exchange: 'binance',
+        strategy: 'grid',
+        timestamp: Date.now() + i,
+      });
+    }
+
+    await writer.writeBatch(trades);
+    await writer.flush();
+
+    const stats = writer.getStats();
+    expect(stats.totalWritten).toBeGreaterThanOrEqual(5);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should query trades', async () => {
+    writer.start();
+
+    // 写入一些交易 / Write some trades
+    await writer.write({
+      tradeId: 'query-test-001',
+      symbol: 'SOL/USDT',
+      side: 'buy',
+      amount: 10,
+      price: 100,
+      cost: 1000,
+      exchange: 'binance',
+      timestamp: Date.now(),
+    });
+    await writer.flush();
+
+    // 查询 / Query
+    const trades = await writer.query({
+      symbol: 'SOL/USDT',
+      limit: 10,
+    });
+
+    expect(trades.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should get trade statistics', async () => {
+    writer.start();
+
+    // 写入带盈亏的交易 / Write trades with PnL
+    await writer.write({
+      tradeId: 'stats-trade-001',
+      symbol: 'DOGE/USDT',
+      side: 'sell',
+      amount: 1000,
+      price: 0.1,
+      cost: 100,
+      realizedPnl: 10,
+      exchange: 'binance',
+      strategy: 'momentum',
+      timestamp: Date.now(),
+    });
+    await writer.flush();
+
+    const stats = await writer.getTradeStats({ symbol: 'DOGE/USDT' });
+
+    expect(stats).toBeDefined();
+    expect(parseFloat(stats.total_trades)).toBeGreaterThanOrEqual(1);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should get daily statistics', async () => {
+    const dailyStats = await writer.getDailyStats({ limit: 7 });
+    expect(Array.isArray(dailyStats)).toBe(true);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should get statistics by symbol', async () => {
+    const symbolStats = await writer.getStatsBySymbol({});
+    expect(Array.isArray(symbolStats)).toBe(true);
+  });
+
+  it.skipIf(!clickhouseAvailable)('should get statistics by strategy', async () => {
+    const strategyStats = await writer.getStatsByStrategy({});
+    expect(Array.isArray(strategyStats)).toBe(true);
   });
 });
 

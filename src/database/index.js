@@ -45,5 +45,6 @@ export {
   ARCHIVABLE_STATUSES,
   AuditLogWriter,
   LOG_LEVEL,
+  TradeWriter,
   ArchiveScheduler,
 } from './clickhouse/index.js';
