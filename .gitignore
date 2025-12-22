@@ -167,3 +167,36 @@ backtest-results/
 
 # 调试文件
 debug/
+
+# --------------------------------------------
+# Docker 数据卷 / Docker Volumes
+# --------------------------------------------
+# Redis 数据
+data/redis/
+# ClickHouse 数据
+data/clickhouse/
+# ClickHouse 日志
+logs/clickhouse/
+
+# --------------------------------------------
+# 备份文件 / Backup Files
+# --------------------------------------------
+# Redis 备份
+backups/redis/rdb/*.rdb
+backups/redis/json/*.json
+backups/redis/json/*.json.gz
+backups/redis/json/*.enc
+backups/redis/aof/
+backups/redis/backup-history.json
+
+# 保留备份目录结构
+!backups/redis/.gitkeep
+!backups/redis/rdb/.gitkeep
+!backups/redis/json/.gitkeep
+!backups/redis/aof/.gitkeep
+
+# SQLite 备份
+backups/*.db
+backups/*.db.gz
+backups/*.enc
+backups/backup-history.json

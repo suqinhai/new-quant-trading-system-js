@@ -10,3 +10,4 @@ export { OrderStore, ORDER_STATUS } from './OrderStore.js';
 export { PositionStore, POSITION_STATUS, POSITION_SIDE } from './PositionStore.js';
 export { StrategyStore, STRATEGY_STATE, SIGNAL_TYPE } from './StrategyStore.js';
 export { ConfigStore } from './ConfigStore.js';
+export { RedisBackupManager, BACKUP_TYPE, BACKUP_STATUS } from './RedisBackupManager.js';

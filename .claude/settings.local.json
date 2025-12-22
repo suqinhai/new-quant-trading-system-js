@@ -79,7 +79,11 @@
       "Bash(timeout 60 npx vitest:*)",
       "Bash(timeout 30 npx vitest:*)",
       "Bash(dir \"C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\")",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pnpm test:*)",
+      "Bash(dir node_modules.binvitest*)",
+      "Bash(pnpm install:*)",
+      "Bash(./node_modules/.bin/vitest:*)"
     ]
   }
 }

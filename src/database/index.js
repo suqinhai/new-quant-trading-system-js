@@ -35,6 +35,9 @@ export {
   STRATEGY_STATE,
   SIGNAL_TYPE,
   ConfigStore,
+  RedisBackupManager,
+  BACKUP_TYPE,
+  BACKUP_STATUS,
 } from './redis/index.js';
 
 // ClickHouse 数据库管理器 / ClickHouse Database Manager
