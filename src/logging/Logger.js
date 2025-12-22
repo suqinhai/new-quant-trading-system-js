@@ -225,6 +225,35 @@ class Logger extends EventEmitter {
   }
 
   /**
+   * 检查键名是否为敏感字段
+   * Check if a key is a sensitive field
+   * @private
+   */
+  _isSensitiveField(key) {
+    const lowerKey = key.toLowerCase();
+
+    for (const field of this.config.sensitiveFields) {
+      const lowerField = field.toLowerCase();
+
+      // 精确匹配 / Exact match
+      if (lowerKey === lowerField) return true;
+
+      // 下划线分隔后缀 (e.g., user_password)
+      if (lowerKey.endsWith('_' + lowerField)) return true;
+
+      // 下划线分隔前缀 (e.g., password_hash)
+      if (lowerKey.startsWith(lowerField + '_')) return true;
+
+      // 驼峰命名边界 (e.g., userPassword)
+      // 检查敏感字段是否以大写字母开头出现在键名中
+      const camelCaseField = field.charAt(0).toUpperCase() + field.slice(1).toLowerCase();
+      if (key.includes(camelCaseField)) return true;
+    }
+
+    return false;
+  }
+
+  /**
    * 脱敏数据
    * @private
    */
@@ -240,10 +269,8 @@ class Logger extends EventEmitter {
     const sanitized = Array.isArray(data) ? [] : {};
 
     for (const [key, value] of Object.entries(data)) {
-      // 检查键名是否是敏感字段
-      if (this.config.sensitiveFields.some(f =>
-        key.toLowerCase().includes(f.toLowerCase())
-      )) {
+      // 检查键名是否是敏感字段（使用单词边界检测）
+      if (this._isSensitiveField(key)) {
         sanitized[key] = '***REDACTED***';
       } else if (typeof value === 'string') {
         // 检查值是否匹配敏感模式
