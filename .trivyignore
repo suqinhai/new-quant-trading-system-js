@@ -1,0 +1,17 @@
+# =============================================================================
+# Trivy Ignore File
+# List of CVEs or findings to ignore
+# Format: CVE-XXXX-XXXX or finding ID
+# =============================================================================
+
+# Example: Ignore specific CVE (add justification comment)
+# CVE-2023-12345  # Accepted risk: not exploitable in our context
+
+# Example: Ignore secret false positive
+# aws-access-key-id:path/to/file.js
+
+# Known issues in Alpine base image that don't affect our application
+# (Add specific CVEs here as needed after review)
+
+# Development dependencies - not in production image
+# (The multi-stage build excludes dev dependencies from production)

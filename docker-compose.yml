@@ -7,6 +7,163 @@ version: '3.8'
 
 services:
   # ===========================================================================
+  # Quant Trading App - Shadow Mode (影子模式)
+  # ===========================================================================
+  quant-shadow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-trading-shadow
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # API
+      - "9091:9091"   # Metrics
+      - "8080:8080"   # WebSocket
+    volumes:
+      # 日志持久化 / Log persistence
+      - ./logs:/app/logs
+      # 数据持久化 / Data persistence
+      - ./data:/app/data
+      # 配置挂载 / Config mount
+      - ./config:/app/config:ro
+      # 环境变量 / Environment file
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=production
+      - RUN_MODE=shadow
+      - LOG_LEVEL=info
+      - REDIS_HOST=redis-master
+      - REDIS_PORT=6379
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - TZ=Asia/Shanghai
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ===========================================================================
+  # Quant Trading App - Live Mode (实盘模式)
+  # ===========================================================================
+  quant-live:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-trading-live
+    restart: unless-stopped
+    ports:
+      - "3001:3000"   # API (different port)
+      - "9092:9091"   # Metrics
+      - "8081:8080"   # WebSocket
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=production
+      - RUN_MODE=live
+      - LOG_LEVEL=info
+      - REDIS_HOST=redis-master
+      - REDIS_PORT=6379
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - TZ=Asia/Shanghai
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - quant-network
+    profiles:
+      - live
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "10"
+
+  # ===========================================================================
+  # Quant Trading App - Development Mode (开发模式)
+  # ===========================================================================
+  quant-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: quant-trading-dev
+    ports:
+      - "3000:3000"
+      - "9091:9091"
+      - "8080:8080"
+    volumes:
+      # 源码热重载 / Source hot reload
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=development
+      - RUN_MODE=shadow
+      - LOG_LEVEL=debug
+      - REDIS_HOST=redis-master
+      - REDIS_PORT=6379
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+      - clickhouse
+    networks:
+      - quant-network
+    profiles:
+      - dev
+
+  # ===========================================================================
   # Redis Master - 内存数据库 (热数据)
   # ===========================================================================
   redis-master:
@@ -253,7 +410,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
-      - redis
+      - redis-master
       - clickhouse
     networks:
       - quant-network
@@ -335,3 +492,17 @@ volumes:
 
   prometheus_data:
     driver: local
+
+  app_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+
+  app_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data

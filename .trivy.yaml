@@ -1,0 +1,64 @@
+# =============================================================================
+# Trivy Security Scanner Configuration
+# https://aquasecurity.github.io/trivy/
+# =============================================================================
+
+# Scan configuration
+scan:
+  # Security checks to run
+  security-checks:
+    - vuln      # Vulnerability scanning
+    - secret    # Secret scanning
+    - config    # Misconfiguration scanning
+
+# Vulnerability settings
+vulnerability:
+  # Vulnerability types to scan
+  type:
+    - os        # OS packages
+    - library   # Language-specific packages
+
+  # Ignore unfixed vulnerabilities
+  ignore-unfixed: false
+
+  # Severity levels to report
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+
+# Secret scanning settings
+secret:
+  config: .trivy-secret.yaml
+
+# Misconfiguration settings
+misconfiguration:
+  # Check Dockerfile best practices
+  include:
+    - dockerfile
+    - kubernetes
+
+# Output settings
+format: table
+output: trivy-report.txt
+
+# Exit code
+exit-code: 1
+
+# Timeout
+timeout: 10m
+
+# Cache
+cache:
+  dir: .trivy-cache
+
+# Ignore file
+ignorefile: .trivyignore
+
+# Skip directories
+skip-dirs:
+  - node_modules
+  - .git
+  - coverage
+  - logs
+  - data
