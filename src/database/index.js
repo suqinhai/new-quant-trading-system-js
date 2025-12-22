@@ -36,3 +36,14 @@ export {
   SIGNAL_TYPE,
   ConfigStore,
 } from './redis/index.js';
+
+// ClickHouse 数据库管理器 / ClickHouse Database Manager
+export {
+  ClickHouseClient,
+  getClickHouseClient,
+  OrderArchiver,
+  ARCHIVABLE_STATUSES,
+  AuditLogWriter,
+  LOG_LEVEL,
+  ArchiveScheduler,
+} from './clickhouse/index.js';
