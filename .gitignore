@@ -135,10 +135,17 @@ temp/
 *.p12
 *.pfx
 secrets/
+.secrets/
 
 # 加密的API密钥文件 / Encrypted API keys file
 .keys.enc
 .keys.enc.backup.*
+
+# 凭证文件 / Credential files
+credentials.json
+service-account*.json
+*.secret
+*_credentials.json
 
 # --------------------------------------------
 # 回测结果 / Backtest Results
