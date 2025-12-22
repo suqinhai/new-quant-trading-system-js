@@ -7,17 +7,17 @@ version: '3.8'
 
 services:
   # ===========================================================================
-  # Redis - 内存数据库 (热数据)
+  # Redis Master - 内存数据库 (热数据)
   # ===========================================================================
-  redis:
+  redis-master:
     image: redis:7-alpine
-    container_name: quant-redis
+    container_name: quant-redis-master
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       # 数据持久化 / Data persistence
-      - redis_data:/data
+      - redis_master_data:/data
       # 自定义配置文件 / Custom config file
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
       # 备份目录 / Backup directory
@@ -39,6 +39,141 @@ services:
           memory: 2G
         reservations:
           memory: 512M
+
+  # ===========================================================================
+  # Redis Replica 1 - 只读副本 (高可用)
+  # ===========================================================================
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: quant-redis-replica-1
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_replica1_data:/data
+    command: redis-server --replicaof redis-master 6379 --appendonly yes
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - quant-network
+    profiles:
+      - ha
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  # ===========================================================================
+  # Redis Replica 2 - 只读副本 (高可用)
+  # ===========================================================================
+  redis-replica-2:
+    image: redis:7-alpine
+    container_name: quant-redis-replica-2
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_replica2_data:/data
+    command: redis-server --replicaof redis-master 6379 --appendonly yes
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - quant-network
+    profiles:
+      - ha
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  # ===========================================================================
+  # Redis Sentinel 1 - 高可用监控
+  # ===========================================================================
+  redis-sentinel-1:
+    image: redis:7-alpine
+    container_name: quant-redis-sentinel-1
+    restart: unless-stopped
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./config/redis-sentinel/sentinel-1.conf:/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    networks:
+      - quant-network
+    profiles:
+      - ha
+
+  # ===========================================================================
+  # Redis Sentinel 2 - 高可用监控
+  # ===========================================================================
+  redis-sentinel-2:
+    image: redis:7-alpine
+    container_name: quant-redis-sentinel-2
+    restart: unless-stopped
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./config/redis-sentinel/sentinel-2.conf:/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    networks:
+      - quant-network
+    profiles:
+      - ha
+
+  # ===========================================================================
+  # Redis Sentinel 3 - 高可用监控
+  # ===========================================================================
+  redis-sentinel-3:
+    image: redis:7-alpine
+    container_name: quant-redis-sentinel-3
+    restart: unless-stopped
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./config/redis-sentinel/sentinel-3.conf:/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+    networks:
+      - quant-network
+    profiles:
+      - ha
 
   # ===========================================================================
   # ClickHouse - 分析型数据库 (冷数据)
@@ -89,13 +224,13 @@ services:
     container_name: quant-redis-commander
     restart: unless-stopped
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOSTS=master:redis-master:6379,replica1:redis-replica-1:6379,replica2:redis-replica-2:6379
       - HTTP_USER=admin
       - HTTP_PASSWORD=admin123
     ports:
       - "8081:8081"
     depends_on:
-      - redis
+      - redis-master
     networks:
       - quant-network
     profiles:
@@ -160,12 +295,26 @@ networks:
 # Volumes / 数据卷
 # =============================================================================
 volumes:
-  redis_data:
+  redis_master_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./data/redis
+      device: ./data/redis-master
+
+  redis_replica1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis-replica1
+
+  redis_replica2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis-replica2
 
   clickhouse_data:
     driver: local

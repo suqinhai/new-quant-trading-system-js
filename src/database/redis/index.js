@@ -11,3 +11,9 @@ export { PositionStore, POSITION_STATUS, POSITION_SIDE } from './PositionStore.j
 export { StrategyStore, STRATEGY_STATE, SIGNAL_TYPE } from './StrategyStore.js';
 export { ConfigStore } from './ConfigStore.js';
 export { RedisBackupManager, BACKUP_TYPE, BACKUP_STATUS } from './RedisBackupManager.js';
+
+// DB-012: 连接池管理 / Connection pool management
+export { RedisConnectionPool, CONNECTION_STATE, DEFAULT_POOL_CONFIG } from './RedisConnectionPool.js';
+
+// DB-013: Sentinel 高可用 / Sentinel high availability
+export { RedisSentinel, SENTINEL_STATE, DEFAULT_SENTINEL_CONFIG } from './RedisSentinel.js';
