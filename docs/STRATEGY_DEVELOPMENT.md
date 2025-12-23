@@ -2,755 +2,1056 @@
 
 ## 目录
 
-1. [概述](#1-概述)
-2. [策略架构](#2-策略架构)
-3. [开发入门](#3-开发入门)
-4. [策略接口详解](#4-策略接口详解)
-5. [技术指标使用](#5-技术指标使用)
-6. [交易操作](#6-交易操作)
-7. [状态管理](#7-状态管理)
-8. [策略优化](#8-策略优化)
-9. [回测验证](#9-回测验证)
-10. [最佳实践](#10-最佳实践)
+1. [策略架构](#策略架构)
+2. [快速开始](#快速开始)
+3. [策略基类详解](#策略基类详解)
+4. [开发自定义策略](#开发自定义策略)
+5. [技术指标使用](#技术指标使用)
+6. [信号生成](#信号生成)
+7. [风控集成](#风控集成)
+8. [回测验证](#回测验证)
+9. [策略优化](#策略优化)
+10. [最佳实践](#最佳实践)
 
 ---
 
-## 1. 概述
+## 策略架构
 
-### 1.1 策略开发流程
-
-```
-需求分析 → 策略设计 → 代码实现 → 单元测试 → 回测验证 → 参数优化 → 影子测试 → 实盘部署
-```
-
-### 1.2 内置策略
-
-| 策略名称 | 类型 | 文件 |
-|----------|------|------|
-| SMAStrategy | 趋势跟踪 | `src/strategies/SMAStrategy.js` |
-| RSIStrategy | 震荡指标 | `src/strategies/RSIStrategy.js` |
-| MACDStrategy | 趋势动量 | `src/strategies/MACDStrategy.js` |
-| BollingerBandsStrategy | 均值回归 | `src/strategies/BollingerBandsStrategy.js` |
-| GridStrategy | 网格交易 | `src/strategies/GridStrategy.js` |
-| FundingArbStrategy | 套利 | `src/strategies/FundingArbStrategy.js` |
-
-### 1.3 目录结构
+### 整体架构
 
 ```
-src/strategies/
-├── BaseStrategy.js         # 策略基类
-├── SMAStrategy.js          # SMA 策略
-├── RSIStrategy.js          # RSI 策略
-├── MACDStrategy.js         # MACD 策略
-├── BollingerBandsStrategy.js
-├── GridStrategy.js         # 网格策略
-├── FundingArbStrategy.js   # 资金费率套利
-├── index.js                # 策略导出
-└── custom/                 # 自定义策略目录
-    └── MyStrategy.js
+┌─────────────────────────────────────────────────────┐
+│                 Strategy Registry                    │
+│    (SMA, RSI, MACD, BollingerBands, Grid, ...)     │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│                  BaseStrategy                        │
+│  - 生命周期管理 (init, start, stop)                  │
+│  - 事件处理 (onTick, onCandle, onTicker)            │
+│  - 信号发送 (emit signal)                            │
+│  - 状态管理 (position, orders)                       │
+└─────────────────────┬───────────────────────────────┘
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+     ┌─────────┐ ┌─────────┐ ┌─────────┐
+     │ 行情引擎 │ │ 风控系统 │ │ 执行器  │
+     └─────────┘ └─────────┘ └─────────┘
+```
+
+### 策略生命周期
+
+```
+创建 → 初始化 → 运行 → 停止 → 销毁
+  │       │        │       │
+  │       │        │       └─ onStop()
+  │       │        └─ onTick()/onCandle()
+  │       └─ onInit()
+  └─ constructor()
 ```
 
 ---
 
-## 2. 策略架构
+## 快速开始
 
-### 2.1 基类结构
-
-所有策略必须继承 `BaseStrategy` 基类：
+### 最简策略示例
 
 ```javascript
-import { BaseStrategy } from './BaseStrategy.js';
+// src/strategies/MyFirstStrategy.js
+const BaseStrategy = require('./BaseStrategy');
 
-class MyStrategy extends BaseStrategy {
-  constructor(params = {}) {
-    super({
-      name: 'MyStrategy',
-      ...params,
-    });
-    // 初始化参数
+class MyFirstStrategy extends BaseStrategy {
+  constructor(config) {
+    super(config);
+    this.name = 'MyFirstStrategy';
   }
 
   async onInit() {
-    // 策略初始化
-    await super.onInit();
+    console.log('策略初始化');
   }
 
-  async onTick(candle, history) {
-    // 每根 K 线触发
+  async onCandle(candle) {
+    // 简单策略：价格上涨买入，下跌卖出
+    if (candle.close > candle.open) {
+      this.emit('signal', {
+        action: 'buy',
+        symbol: this.config.symbol,
+        amount: 0.01
+      });
+    } else {
+      this.emit('signal', {
+        action: 'sell',
+        symbol: this.config.symbol,
+        amount: 0.01
+      });
+    }
+  }
+}
+
+module.exports = MyFirstStrategy;
+```
+
+### 注册策略
+
+```javascript
+// src/strategies/index.js
+const StrategyRegistry = require('./StrategyRegistry');
+const MyFirstStrategy = require('./MyFirstStrategy');
+
+StrategyRegistry.register('MyFirst', MyFirstStrategy);
+```
+
+### 使用策略
+
+```javascript
+// 通过配置使用
+const strategyConfig = {
+  type: 'MyFirst',
+  symbol: 'BTC/USDT',
+  timeframe: '1h'
+};
+```
+
+---
+
+## 策略基类详解
+
+### BaseStrategy 类
+
+```javascript
+const EventEmitter = require('events');
+
+class BaseStrategy extends EventEmitter {
+  constructor(config) {
+    super();
+    this.config = config;
+    this.symbol = config.symbol;
+    this.timeframe = config.timeframe;
+    this.position = null;
+    this.orders = [];
+    this.status = 'stopped';
   }
 
-  async onFinish() {
-    // 策略结束
-    await super.onFinish();
+  // ========== 生命周期方法 ==========
+
+  /**
+   * 策略初始化
+   * 在这里加载历史数据、初始化指标等
+   */
+  async onInit() {}
+
+  /**
+   * 策略启动
+   */
+  async start() {
+    this.status = 'running';
+    await this.onInit();
+  }
+
+  /**
+   * 策略停止
+   */
+  async stop() {
+    this.status = 'stopped';
+  }
+
+  // ========== 数据事件处理 ==========
+
+  /**
+   * K线数据更新（回测模式）
+   * @param {Object} candle - K线数据
+   */
+  async onTick(candle) {}
+
+  /**
+   * K线数据更新（实盘模式）
+   * @param {Object} data - { symbol, timeframe, candle }
+   */
+  async onCandle(data) {}
+
+  /**
+   * Ticker 数据更新
+   * @param {Object} data - { symbol, price, volume, ... }
+   */
+  async onTicker(data) {}
+
+  /**
+   * 订单簿数据更新
+   * @param {Object} data - { symbol, bids, asks }
+   */
+  async onOrderBook(data) {}
+
+  /**
+   * 资金费率更新
+   * @param {Object} data - { symbol, rate, nextFundingTime }
+   */
+  async onFundingRate(data) {}
+
+  // ========== 订单事件处理 ==========
+
+  /**
+   * 订单成交回调
+   * @param {Object} order - 订单信息
+   */
+  async onOrderFilled(order) {}
+
+  /**
+   * 订单取消回调
+   * @param {Object} order - 订单信息
+   */
+  async onOrderCancelled(order) {}
+
+  // ========== 工具方法 ==========
+
+  /**
+   * 发送交易信号
+   * @param {Object} signal - { action, symbol, amount, price, ... }
+   */
+  sendSignal(signal) {
+    this.emit('signal', {
+      ...signal,
+      strategyId: this.id,
+      strategyName: this.name,
+      timestamp: Date.now()
+    });
   }
 }
 ```
 
-### 2.2 生命周期
+### 可用属性
 
-```
-┌─────────────┐
-│ constructor │  实例化，设置参数
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   onInit    │  初始化，准备资源
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   onTick    │  每根 K 线触发 (循环)
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  onFinish   │  结束清理
-└─────────────┘
-```
+| 属性 | 类型 | 描述 |
+|------|------|------|
+| config | Object | 策略配置 |
+| symbol | String | 交易对 |
+| timeframe | String | 时间周期 |
+| position | Object | 当前持仓 |
+| orders | Array | 待处理订单 |
+| status | String | 策略状态 |
 
-### 2.3 事件系统
+### 可用事件
 
-策略继承 `EventEmitter`，支持以下事件：
-
-| 事件名 | 触发时机 | 数据 |
-|--------|----------|------|
-| `initialized` | 初始化完成 | 无 |
-| `signal` | 生成信号 | `{ type, reason, timestamp }` |
-| `orderFilled` | 订单成交 | 订单对象 |
-| `orderCancelled` | 订单取消 | 订单对象 |
-| `error` | 发生错误 | 错误对象 |
-| `finished` | 策略结束 | 无 |
+| 事件 | 数据 | 描述 |
+|------|------|------|
+| signal | Signal 对象 | 发送交易信号 |
+| error | Error 对象 | 报告错误 |
+| log | 日志对象 | 记录日志 |
 
 ---
 
-## 3. 开发入门
+## 开发自定义策略
 
-### 3.1 创建新策略
-
-**步骤 1：创建文件**
-
-```bash
-touch src/strategies/custom/MyMomentumStrategy.js
-```
-
-**步骤 2：编写策略代码**
+### 完整策略模板
 
 ```javascript
-/**
- * 动量策略示例
- * Momentum Strategy Example
- */
-import { BaseStrategy } from '../BaseStrategy.js';
+// src/strategies/CustomStrategy.js
+const BaseStrategy = require('./BaseStrategy');
+const { SMA, RSI, MACD } = require('technicalindicators');
+const Decimal = require('decimal.js');
 
-export class MyMomentumStrategy extends BaseStrategy {
-  constructor(params = {}) {
-    super({
-      name: 'MyMomentumStrategy',
-      ...params,
-    });
+class CustomStrategy extends BaseStrategy {
+  constructor(config) {
+    super(config);
+    this.name = 'CustomStrategy';
 
     // 策略参数
-    this.lookbackPeriod = params.lookbackPeriod || 20;
-    this.threshold = params.threshold || 0.02;  // 2%
-    this.symbol = params.symbol || 'BTC/USDT';
-    this.positionPercent = params.positionPercent || 90;
+    this.params = {
+      smaPeriod: config.params?.smaPeriod || 20,
+      rsiPeriod: config.params?.rsiPeriod || 14,
+      rsiOverbought: config.params?.rsiOverbought || 70,
+      rsiOversold: config.params?.rsiOversold || 30,
+      positionSize: config.params?.positionSize || 0.01
+    };
+
+    // 数据缓存
+    this.candles = [];
+    this.indicators = {
+      sma: [],
+      rsi: []
+    };
   }
 
+  /**
+   * 初始化
+   */
   async onInit() {
-    await super.onInit();
-    this.log(`动量策略初始化: 回看周期=${this.lookbackPeriod}, 阈值=${this.threshold * 100}%`);
+    console.log(`${this.name} 初始化，参数:`, this.params);
+
+    // 可以在这里加载历史数据
+    // const history = await this.fetchHistory();
+    // this.candles = history;
+    // this.calculateIndicators();
   }
 
-  async onTick(candle, history) {
+  /**
+   * 处理 K 线数据
+   */
+  async onCandle(data) {
+    const { candle } = data;
+
+    // 添加新 K 线
+    this.candles.push(candle);
+
+    // 保持数据窗口大小
+    if (this.candles.length > 200) {
+      this.candles.shift();
+    }
+
+    // 计算指标
+    this.calculateIndicators();
+
+    // 生成信号
+    await this.generateSignal();
+  }
+
+  /**
+   * 计算技术指标
+   */
+  calculateIndicators() {
+    const closes = this.candles.map(c => c.close);
+
+    // 计算 SMA
+    if (closes.length >= this.params.smaPeriod) {
+      this.indicators.sma = SMA.calculate({
+        period: this.params.smaPeriod,
+        values: closes
+      });
+    }
+
+    // 计算 RSI
+    if (closes.length >= this.params.rsiPeriod) {
+      this.indicators.rsi = RSI.calculate({
+        period: this.params.rsiPeriod,
+        values: closes
+      });
+    }
+  }
+
+  /**
+   * 生成交易信号
+   */
+  async generateSignal() {
     // 确保有足够数据
-    if (history.length < this.lookbackPeriod) {
+    if (this.indicators.sma.length < 2 || this.indicators.rsi.length < 1) {
       return;
     }
 
-    // 计算动量 (当前价格 vs N 周期前价格)
-    const currentPrice = candle.close;
-    const pastPrice = history[history.length - this.lookbackPeriod].close;
-    const momentum = (currentPrice - pastPrice) / pastPrice;
+    const currentPrice = this.candles[this.candles.length - 1].close;
+    const currentSMA = this.indicators.sma[this.indicators.sma.length - 1];
+    const currentRSI = this.indicators.rsi[this.indicators.rsi.length - 1];
 
-    // 保存指标
-    this.setIndicator('momentum', momentum);
+    // 买入条件：价格在 SMA 上方，RSI 超卖
+    if (currentPrice > currentSMA && currentRSI < this.params.rsiOversold) {
+      if (!this.position || this.position.side !== 'long') {
+        this.sendSignal({
+          action: 'buy',
+          symbol: this.symbol,
+          amount: this.params.positionSize,
+          reason: `价格 ${currentPrice} > SMA ${currentSMA.toFixed(2)}, RSI ${currentRSI.toFixed(2)} 超卖`
+        });
+      }
+    }
 
-    // 获取持仓状态
-    const position = this.getPosition(this.symbol);
-    const hasPosition = position && position.amount > 0;
+    // 卖出条件：价格在 SMA 下方，RSI 超买
+    if (currentPrice < currentSMA && currentRSI > this.params.rsiOverbought) {
+      if (!this.position || this.position.side !== 'short') {
+        this.sendSignal({
+          action: 'sell',
+          symbol: this.symbol,
+          amount: this.params.positionSize,
+          reason: `价格 ${currentPrice} < SMA ${currentSMA.toFixed(2)}, RSI ${currentRSI.toFixed(2)} 超买`
+        });
+      }
+    }
+  }
 
-    // 交易逻辑
-    if (momentum > this.threshold && !hasPosition) {
-      // 动量突破，买入
-      this.log(`动量突破买入信号: ${(momentum * 100).toFixed(2)}%`);
-      this.setBuySignal(`Momentum: ${(momentum * 100).toFixed(2)}%`);
-      this.buyPercent(this.symbol, this.positionPercent);
-    } else if (momentum < -this.threshold && hasPosition) {
-      // 动量下跌，卖出
-      this.log(`动量下跌卖出信号: ${(momentum * 100).toFixed(2)}%`);
-      this.setSellSignal(`Momentum: ${(momentum * 100).toFixed(2)}%`);
-      this.closePosition(this.symbol);
+  /**
+   * 订单成交处理
+   */
+  async onOrderFilled(order) {
+    console.log(`订单成交: ${order.side} ${order.amount} @ ${order.price}`);
+
+    // 更新持仓状态
+    if (order.side === 'buy') {
+      this.position = {
+        side: 'long',
+        size: order.amount,
+        entryPrice: order.price
+      };
+    } else {
+      this.position = null;
     }
   }
 }
 
-export default MyMomentumStrategy;
+module.exports = CustomStrategy;
 ```
 
-**步骤 3：注册策略**
-
-在 `src/strategies/index.js` 中添加导出：
+### 策略配置参数
 
 ```javascript
-export { MyMomentumStrategy } from './custom/MyMomentumStrategy.js';
-```
-
-**步骤 4：测试策略**
-
-```javascript
-// examples/testMyStrategy.js
-import { BacktestEngine } from '../src/backtest/BacktestEngine.js';
-import { MyMomentumStrategy } from '../src/strategies/index.js';
-
-const engine = new BacktestEngine({
-  initialCapital: 10000,
-  commissionRate: 0.001,
-});
-
-// 加载数据...
-const strategy = new MyMomentumStrategy({
-  lookbackPeriod: 20,
-  threshold: 0.02,
+// 使用策略时的配置
+const config = {
+  type: 'Custom',
   symbol: 'BTC/USDT',
-});
-
-engine.setStrategy(strategy);
-const stats = await engine.run();
-console.log(stats);
+  timeframe: '1h',
+  params: {
+    smaPeriod: 20,
+    rsiPeriod: 14,
+    rsiOverbought: 70,
+    rsiOversold: 30,
+    positionSize: 0.01
+  },
+  risk: {
+    maxPositionSize: 0.1,
+    stopLoss: 0.02,
+    takeProfit: 0.05
+  }
+};
 ```
 
 ---
 
-## 4. 策略接口详解
+## 技术指标使用
 
-### 4.1 核心方法
+### 内置指标库
 
-#### `constructor(params)`
+系统使用 `technicalindicators` 库，支持以下指标：
 
-构造函数，初始化策略参数。
-
-```javascript
-constructor(params = {}) {
-  super({
-    name: 'StrategyName',  // 必须设置
-    ...params,
-  });
-
-  // 设置策略参数
-  this.param1 = params.param1 || defaultValue;
-}
-```
-
-#### `onInit()`
-
-初始化方法，在回测/交易开始前调用。
+#### 趋势指标
 
 ```javascript
-async onInit() {
-  await super.onInit();  // 必须调用父类方法
+const { SMA, EMA, WMA, WEMA, MACD } = require('technicalindicators');
 
-  // 执行初始化逻辑
-  // - 加载历史数据
-  // - 初始化指标
-  // - 准备外部资源
-}
-```
+// 简单移动平均
+const sma = SMA.calculate({ period: 20, values: closes });
 
-#### `onTick(candle, history)`
+// 指数移动平均
+const ema = EMA.calculate({ period: 20, values: closes });
 
-核心方法，每根 K 线触发。
-
-```javascript
-async onTick(candle, history) {
-  // candle 结构
-  // {
-  //   symbol: 'BTC/USDT',
-  //   timestamp: 1703318400000,
-  //   open: 42000,
-  //   high: 42500,
-  //   low: 41800,
-  //   close: 42200,
-  //   volume: 1000,
-  // }
-
-  // history: 历史 K 线数组，最新的在最后
-}
-```
-
-#### `onFinish()`
-
-结束方法，在回测/交易结束时调用。
-
-```javascript
-async onFinish() {
-  await super.onFinish();
-
-  // 清理资源
-  // 输出统计信息
-}
-```
-
-### 4.2 事件回调
-
-#### `onCandle(data)`
-
-K 线更新事件（实盘模式）。
-
-```javascript
-async onCandle(data) {
-  // 接收实时 K 线数据
-  // 自动调用 onTick
-}
-```
-
-#### `onTicker(data)`
-
-Ticker 更新事件（高频数据）。
-
-```javascript
-async onTicker(data) {
-  // data: { symbol, last, bid, ask, ... }
-  // 用于获取实时价格
-}
-```
-
-#### `onFundingRate(data)`
-
-资金费率更新事件（套利策略使用）。
-
-```javascript
-async onFundingRate(data) {
-  // data: { symbol, rate, nextFundingTime, ... }
-}
-```
-
-#### `onOrderFilled(order)`
-
-订单成交回调。
-
-```javascript
-onOrderFilled(order) {
-  // 处理订单成交逻辑
-  // 例如：记录成交、调整止损等
-}
-```
-
----
-
-## 5. 技术指标使用
-
-### 5.1 使用 technicalindicators 库
-
-系统已集成 `technicalindicators` 库：
-
-```javascript
-import { SMA, EMA, RSI, MACD, BollingerBands } from 'technicalindicators';
-
-// 计算 SMA
-const smaValues = SMA.calculate({
-  period: 14,
-  values: closePrices,
-});
-
-// 计算 RSI
-const rsiValues = RSI.calculate({
-  period: 14,
-  values: closePrices,
-});
-
-// 计算 MACD
-const macdValues = MACD.calculate({
-  values: closePrices,
+// MACD
+const macd = MACD.calculate({
+  values: closes,
   fastPeriod: 12,
   slowPeriod: 26,
   signalPeriod: 9,
   SimpleMAOscillator: false,
-  SimpleMASignal: false,
+  SimpleMASignal: false
 });
+// 返回: [{ MACD, signal, histogram }, ...]
+```
 
-// 计算布林带
-const bbValues = BollingerBands.calculate({
+#### 震荡指标
+
+```javascript
+const { RSI, Stochastic, CCI, WilliamsR } = require('technicalindicators');
+
+// RSI
+const rsi = RSI.calculate({ period: 14, values: closes });
+
+// 随机指标
+const stoch = Stochastic.calculate({
+  high: highs,
+  low: lows,
+  close: closes,
+  period: 14,
+  signalPeriod: 3
+});
+// 返回: [{ k, d }, ...]
+
+// CCI
+const cci = CCI.calculate({
+  high: highs,
+  low: lows,
+  close: closes,
+  period: 20
+});
+```
+
+#### 波动率指标
+
+```javascript
+const { BollingerBands, ATR } = require('technicalindicators');
+
+// 布林带
+const bb = BollingerBands.calculate({
   period: 20,
-  values: closePrices,
-  stdDev: 2,
+  values: closes,
+  stdDev: 2
+});
+// 返回: [{ upper, middle, lower, pb }, ...]
+
+// ATR
+const atr = ATR.calculate({
+  high: highs,
+  low: lows,
+  close: closes,
+  period: 14
 });
 ```
 
-### 5.2 常用指标
-
-| 指标 | 类名 | 参数 |
-|------|------|------|
-| 简单移动平均 | `SMA` | period, values |
-| 指数移动平均 | `EMA` | period, values |
-| RSI | `RSI` | period, values |
-| MACD | `MACD` | fastPeriod, slowPeriod, signalPeriod, values |
-| 布林带 | `BollingerBands` | period, stdDev, values |
-| ATR | `ATR` | period, high, low, close |
-| ADX | `ADX` | period, high, low, close |
-| Stochastic | `Stochastic` | period, signalPeriod, high, low, close |
-
-### 5.3 指标缓存
-
-使用 `setIndicator` / `getIndicator` 缓存指标值：
+#### 成交量指标
 
 ```javascript
-// 保存指标
-this.setIndicator('rsi', rsiValue);
-this.setIndicator('macd', { macd, signal, histogram });
+const { OBV, VWAP, MFI } = require('technicalindicators');
 
-// 获取指标
-const rsi = this.getIndicator('rsi');
-const { macd, signal } = this.getIndicator('macd');
-```
+// OBV
+const obv = OBV.calculate({
+  close: closes,
+  volume: volumes
+});
 
----
-
-## 6. 交易操作
-
-### 6.1 买入操作
-
-```javascript
-// 固定数量买入
-this.buy(symbol, amount);
-
-// 按百分比买入 (使用可用资金的百分比)
-this.buyPercent(symbol, 90);  // 买入 90% 资金
-
-// 带选项买入
-this.buy(symbol, amount, {
-  price: 42000,      // 限价单价格
-  type: 'limit',     // 订单类型
-  stopLoss: 0.02,    // 止损 2%
-  takeProfit: 0.04,  // 止盈 4%
+// VWAP
+const vwap = VWAP.calculate({
+  high: highs,
+  low: lows,
+  close: closes,
+  volume: volumes
 });
 ```
 
-### 6.2 卖出操作
+### 自定义指标
 
 ```javascript
-// 固定数量卖出
-this.sell(symbol, amount);
+// src/utils/customIndicators.js
 
-// 平仓 (卖出全部持仓)
-this.closePosition(symbol);
-```
-
-### 6.3 查询持仓
-
-```javascript
-const position = this.getPosition(symbol);
-// position 结构:
-// {
-//   symbol: 'BTC/USDT',
-//   amount: 0.5,
-//   avgPrice: 40000,
-//   currentPrice: 42000,
-//   pnl: 1000,
-//   pnlPercent: 5,
-// }
-
-if (position && position.amount > 0) {
-  // 有持仓
+/**
+ * 计算动量
+ */
+function momentum(values, period) {
+  const result = [];
+  for (let i = period; i < values.length; i++) {
+    result.push(values[i] - values[i - period]);
+  }
+  return result;
 }
-```
 
-### 6.4 查询资金
+/**
+ * 计算价格通道
+ */
+function priceChannel(highs, lows, period) {
+  const result = [];
+  for (let i = period - 1; i < highs.length; i++) {
+    const highSlice = highs.slice(i - period + 1, i + 1);
+    const lowSlice = lows.slice(i - period + 1, i + 1);
+    result.push({
+      upper: Math.max(...highSlice),
+      lower: Math.min(...lowSlice),
+      middle: (Math.max(...highSlice) + Math.min(...lowSlice)) / 2
+    });
+  }
+  return result;
+}
 
-```javascript
-// 可用资金
-const capital = this.getCapital();
-
-// 总权益 (资金 + 持仓市值)
-const equity = this.getEquity();
-```
-
----
-
-## 7. 状态管理
-
-### 7.1 策略状态
-
-```javascript
-// 设置状态
-this.setState('lastTradePrice', currentPrice);
-this.setState('consecutiveLosses', 0);
-
-// 获取状态
-const lastPrice = this.getState('lastTradePrice', 0);
-const losses = this.getState('consecutiveLosses', 0);
-```
-
-### 7.2 信号管理
-
-```javascript
-// 设置买入信号
-this.setBuySignal('Golden Cross detected');
-
-// 设置卖出信号
-this.setSellSignal('RSI overbought');
-
-// 获取当前信号
-const signal = this.getSignal();
-// { type: 'buy', reason: 'Golden Cross detected', timestamp: ... }
-
-// 清除信号
-this.clearSignal();
-```
-
-### 7.3 日志输出
-
-```javascript
-// 信息日志
-this.log('策略执行中...');
-
-// 警告日志
-this.log('风险较高', 'warn');
-
-// 错误日志
-this.log('执行失败', 'error');
-
-// 调试日志 (仅开发环境)
-this.log('调试信息', 'debug');
+module.exports = { momentum, priceChannel };
 ```
 
 ---
 
-## 8. 策略优化
+## 信号生成
 
-### 8.1 参数网格搜索
+### 信号格式
 
 ```javascript
-import { GridSearch, OptimizationTarget } from '../src/optimization/index.js';
+// 标准信号格式
+const signal = {
+  // 必填字段
+  action: 'buy',         // 'buy' | 'sell' | 'close'
+  symbol: 'BTC/USDT',    // 交易对
+  amount: 0.01,          // 数量
 
-const gridSearch = new GridSearch({
-  target: OptimizationTarget.SHARPE_RATIO,
-  minTrades: 10,
-});
+  // 可选字段
+  type: 'market',        // 'market' | 'limit'
+  price: 45000,          // 限价单价格
+  stopLoss: 44000,       // 止损价
+  takeProfit: 47000,     // 止盈价
+  reason: '买入原因',     // 信号原因（用于日志）
 
-// 定义参数空间
-const parameterSpace = {
-  shortPeriod: { min: 5, max: 20, step: 5 },   // [5, 10, 15, 20]
-  longPeriod: { min: 20, max: 60, step: 10 },  // [20, 30, 40, 50, 60]
+  // 自动添加
+  strategyId: 1,
+  strategyName: 'MyStrategy',
+  timestamp: 1705312800000
 };
-
-const result = await gridSearch.run({
-  data: historicalData,
-  strategyClass: SMAStrategy,
-  parameterSpace,
-  fixedParams: { symbol: 'BTC/USDT' },
-});
-
-console.log('最优参数:', result.bestParams);
-console.log('最优夏普比率:', result.bestStats.sharpeRatio);
 ```
 
-### 8.2 Walk-Forward 分析
+### 信号发送
 
 ```javascript
-import { WalkForwardAnalysis, WalkForwardType } from '../src/optimization/index.js';
-
-const wfa = new WalkForwardAnalysis({
-  type: WalkForwardType.ROLLING,
-  trainingWindow: 0.6,  // 60% 训练
-  testWindow: 0.2,      // 20% 测试
+// 方法一：使用 sendSignal（推荐）
+this.sendSignal({
+  action: 'buy',
+  symbol: this.symbol,
+  amount: 0.01
 });
 
-const result = await wfa.run({
-  data: historicalData,
-  strategyClass: SMAStrategy,
-  parameterSpace,
+// 方法二：直接 emit
+this.emit('signal', {
+  action: 'buy',
+  symbol: this.symbol,
+  amount: 0.01,
+  strategyId: this.id,
+  timestamp: Date.now()
 });
-
-console.log('稳健性得分:', result.robustnessScore);
-console.log('建议:', result.recommendations);
 ```
 
-### 8.3 蒙特卡洛模拟
+### 信号过滤
 
 ```javascript
-import { MonteCarloSimulation, SimulationType } from '../src/optimization/index.js';
+class MyStrategy extends BaseStrategy {
+  constructor(config) {
+    super(config);
+    this.lastSignalTime = 0;
+    this.minSignalInterval = 60000; // 最小信号间隔 1 分钟
+  }
 
-const mc = new MonteCarloSimulation({
-  numSimulations: 1000,
-  type: SimulationType.TRADE_RESAMPLING,
-  confidenceLevels: [0.95, 0.99],
-});
+  async generateSignal() {
+    // 检查信号间隔
+    if (Date.now() - this.lastSignalTime < this.minSignalInterval) {
+      return;
+    }
 
-const result = await mc.run({
-  trades: backtestTrades,
-});
+    // 检查是否已有持仓
+    if (this.position && this.position.side === 'long') {
+      return; // 已有多仓，不再开仓
+    }
 
-console.log('盈利概率:', result.statistics.profitProbability);
-console.log('95% VaR:', result.riskMetrics.VaR['95%']);
+    // 发送信号
+    this.sendSignal({ ... });
+    this.lastSignalTime = Date.now();
+  }
+}
 ```
 
 ---
 
-## 9. 回测验证
+## 风控集成
 
-### 9.1 基本回测
+### 策略内风控
 
 ```javascript
-import { BacktestEngine } from '../src/backtest/BacktestEngine.js';
+class MyStrategy extends BaseStrategy {
+  constructor(config) {
+    super(config);
 
-const engine = new BacktestEngine({
+    // 风控参数
+    this.riskParams = {
+      maxPositionSize: 0.1,    // 最大仓位比例
+      stopLossPercent: 0.02,   // 止损百分比
+      takeProfitPercent: 0.05, // 止盈百分比
+      maxDailyTrades: 10,      // 日最大交易次数
+      maxConsecutiveLosses: 3  // 最大连续亏损次数
+    };
+
+    this.dailyTradeCount = 0;
+    this.consecutiveLosses = 0;
+  }
+
+  async generateSignal() {
+    // 检查日交易次数
+    if (this.dailyTradeCount >= this.riskParams.maxDailyTrades) {
+      this.emit('log', { level: 'warn', message: '已达日交易上限' });
+      return;
+    }
+
+    // 检查连续亏损
+    if (this.consecutiveLosses >= this.riskParams.maxConsecutiveLosses) {
+      this.emit('log', { level: 'warn', message: '连续亏损，暂停交易' });
+      return;
+    }
+
+    // 计算仓位大小
+    const positionSize = this.calculatePositionSize();
+
+    // 发送带止损止盈的信号
+    const currentPrice = this.candles[this.candles.length - 1].close;
+    this.sendSignal({
+      action: 'buy',
+      symbol: this.symbol,
+      amount: positionSize,
+      stopLoss: currentPrice * (1 - this.riskParams.stopLossPercent),
+      takeProfit: currentPrice * (1 + this.riskParams.takeProfitPercent)
+    });
+
+    this.dailyTradeCount++;
+  }
+
+  calculatePositionSize() {
+    // 固定比例仓位
+    const accountBalance = 10000; // 从账户获取
+    return accountBalance * this.riskParams.maxPositionSize /
+           this.candles[this.candles.length - 1].close;
+  }
+
+  async onOrderFilled(order) {
+    if (order.pnl !== undefined) {
+      if (order.pnl < 0) {
+        this.consecutiveLosses++;
+      } else {
+        this.consecutiveLosses = 0;
+      }
+    }
+  }
+
+  // 每日重置
+  resetDaily() {
+    this.dailyTradeCount = 0;
+  }
+}
+```
+
+### 凯利公式仓位
+
+```javascript
+calculateKellyPosition(winRate, avgWinLossRatio) {
+  // 凯利公式: f = (p * b - q) / b
+  // p = 胜率, q = 1 - p, b = 盈亏比
+  const f = (winRate * avgWinLossRatio - (1 - winRate)) / avgWinLossRatio;
+
+  // 使用半凯利降低风险
+  const halfKelly = Math.max(0, f / 2);
+
+  // 限制最大仓位
+  return Math.min(halfKelly, this.riskParams.maxPositionSize);
+}
+```
+
+---
+
+## 回测验证
+
+### 运行回测
+
+```bash
+# 命令行回测
+npm run backtest
+
+# 指定策略回测
+node src/backtest/runner.js --strategy MyStrategy --symbol BTC/USDT --start 2024-01-01 --end 2024-06-01
+```
+
+### 回测配置
+
+```javascript
+// backtest.config.js
+module.exports = {
+  strategy: 'CustomStrategy',
+  symbol: 'BTC/USDT',
+  timeframe: '1h',
+  startDate: '2024-01-01',
+  endDate: '2024-06-01',
   initialCapital: 10000,
-  commissionRate: 0.001,  // 0.1%
-  slippage: 0.0005,       // 0.05%
-});
-
-// 加载数据
-engine.loadData(historicalData);
-
-// 设置策略
-engine.setStrategy(myStrategy);
-
-// 运行回测
-const stats = await engine.run();
-
-// 查看结果
-console.log('总收益率:', stats.totalReturn, '%');
-console.log('夏普比率:', stats.sharpeRatio);
-console.log('最大回撤:', stats.maxDrawdownPercent, '%');
-console.log('胜率:', stats.winRate, '%');
+  commission: 0.001,    // 手续费 0.1%
+  slippage: 0.0005,     // 滑点 0.05%
+  params: {
+    smaPeriod: 20,
+    rsiPeriod: 14
+  }
+};
 ```
 
-### 9.2 回测指标
-
-| 指标 | 说明 | 理想值 |
-|------|------|--------|
-| totalReturn | 总收益率 | > 0 |
-| annualReturn | 年化收益率 | > 10% |
-| sharpeRatio | 夏普比率 | > 1 |
-| maxDrawdownPercent | 最大回撤 | < 20% |
-| winRate | 胜率 | > 50% |
-| profitFactor | 盈亏比 | > 1.5 |
-| totalTrades | 总交易次数 | 适中 |
-
-### 9.3 回测报告
+### 回测报告
 
 ```javascript
-// 获取详细报告
-const report = engine.getReport();
+// 回测结果示例
+{
+  summary: {
+    totalReturn: 0.25,         // 总收益率 25%
+    totalReturnAbs: 2500,      // 绝对收益
+    annualizedReturn: 0.5,     // 年化收益率
+    maxDrawdown: 0.08,         // 最大回撤 8%
+    sharpeRatio: 1.8,          // 夏普比率
+    sortinoRatio: 2.1,         // 索提诺比率
+    calmarRatio: 3.1,          // 卡玛比率
+    winRate: 0.58,             // 胜率 58%
+    profitFactor: 1.8,         // 盈亏因子
+    avgWin: 150,               // 平均盈利
+    avgLoss: -80,              // 平均亏损
+    tradesCount: 120,          // 交易次数
+    winCount: 70,              // 盈利次数
+    lossCount: 50              // 亏损次数
+  },
+  trades: [...],               // 交易记录
+  equityCurve: [...],          // 权益曲线
+  drawdownCurve: [...]         // 回撤曲线
+}
+```
 
-// 导出为 JSON
-fs.writeFileSync('backtest-report.json', JSON.stringify(report, null, 2));
+### 回测分析
 
-// 获取交易记录
-const trades = engine.getTrades();
+```javascript
+// 分析回测结果
+function analyzeBacktest(result) {
+  const { trades, equityCurve } = result;
+
+  // 按月统计
+  const monthlyStats = groupByMonth(trades);
+
+  // 盈利分布
+  const pnlDistribution = calculateDistribution(trades.map(t => t.pnl));
+
+  // 最长连续盈利/亏损
+  const streaks = calculateStreaks(trades);
+
+  // 风险调整收益
+  const riskMetrics = {
+    sharpe: calculateSharpe(equityCurve),
+    sortino: calculateSortino(equityCurve),
+    maxDrawdown: calculateMaxDrawdown(equityCurve)
+  };
+
+  return { monthlyStats, pnlDistribution, streaks, riskMetrics };
+}
 ```
 
 ---
 
-## 10. 最佳实践
+## 策略优化
 
-### 10.1 代码规范
+### 参数优化
 
 ```javascript
-// 1. 使用有意义的变量名
-const shortPeriod = 10;  // Good
-const sp = 10;           // Bad
+// 网格搜索优化
+async function gridSearchOptimization(strategyClass, paramRanges, backtestConfig) {
+  const results = [];
 
-// 2. 添加注释
-// 计算 RSI 指标
-const rsi = this._calculateRSI(closes, this.period);
+  // 生成参数组合
+  const paramCombinations = generateCombinations(paramRanges);
 
-// 3. 使用常量
-const OVERBOUGHT = 70;
-const OVERSOLD = 30;
+  for (const params of paramCombinations) {
+    const config = { ...backtestConfig, params };
+    const result = await runBacktest(strategyClass, config);
 
-// 4. 错误处理
-try {
-  await this.buy(symbol, amount);
-} catch (error) {
-  this.log(`买入失败: ${error.message}`, 'error');
+    results.push({
+      params,
+      sharpeRatio: result.summary.sharpeRatio,
+      totalReturn: result.summary.totalReturn,
+      maxDrawdown: result.summary.maxDrawdown
+    });
+  }
+
+  // 按夏普比率排序
+  results.sort((a, b) => b.sharpeRatio - a.sharpeRatio);
+
+  return results;
+}
+
+// 参数范围
+const paramRanges = {
+  smaPeriod: [10, 15, 20, 25, 30],
+  rsiPeriod: [7, 14, 21],
+  rsiOverbought: [70, 75, 80],
+  rsiOversold: [20, 25, 30]
+};
+```
+
+### Walk-Forward 分析
+
+```javascript
+async function walkForwardAnalysis(strategy, data, trainRatio = 0.7) {
+  const results = [];
+  const windowSize = Math.floor(data.length * trainRatio);
+  const stepSize = Math.floor(data.length * 0.1);
+
+  for (let i = 0; i + windowSize < data.length; i += stepSize) {
+    // 训练窗口
+    const trainData = data.slice(i, i + windowSize);
+
+    // 测试窗口
+    const testData = data.slice(i + windowSize, i + windowSize + stepSize);
+
+    // 在训练数据上优化参数
+    const optimalParams = await optimizeParams(strategy, trainData);
+
+    // 在测试数据上验证
+    const testResult = await backtest(strategy, testData, optimalParams);
+
+    results.push({
+      trainPeriod: { start: i, end: i + windowSize },
+      testPeriod: { start: i + windowSize, end: i + windowSize + stepSize },
+      params: optimalParams,
+      testReturn: testResult.totalReturn
+    });
+  }
+
+  return results;
 }
 ```
 
-### 10.2 风险管理
+### 蒙特卡洛模拟
 
 ```javascript
-// 1. 仓位控制
-const maxPositionSize = this.getCapital() * 0.2;  // 单仓最大 20%
+function monteCarloSimulation(trades, iterations = 1000) {
+  const results = [];
 
-// 2. 止损设置
-this.buy(symbol, amount, {
-  stopLoss: 0.02,  // 固定止损 2%
+  for (let i = 0; i < iterations; i++) {
+    // 随机打乱交易顺序
+    const shuffledTrades = shuffle([...trades]);
+
+    // 计算权益曲线
+    let equity = 10000;
+    const equityCurve = [equity];
+
+    for (const trade of shuffledTrades) {
+      equity += trade.pnl;
+      equityCurve.push(equity);
+    }
+
+    results.push({
+      finalEquity: equity,
+      maxDrawdown: calculateMaxDrawdown(equityCurve),
+      equityCurve
+    });
+  }
+
+  // 统计分析
+  const finalEquities = results.map(r => r.finalEquity);
+  const maxDrawdowns = results.map(r => r.maxDrawdown);
+
+  return {
+    meanReturn: mean(finalEquities) / 10000 - 1,
+    medianReturn: median(finalEquities) / 10000 - 1,
+    worstCase: Math.min(...finalEquities) / 10000 - 1,
+    bestCase: Math.max(...finalEquities) / 10000 - 1,
+    percentile5: percentile(finalEquities, 5) / 10000 - 1,
+    percentile95: percentile(finalEquities, 95) / 10000 - 1,
+    avgMaxDrawdown: mean(maxDrawdowns),
+    worstDrawdown: Math.max(...maxDrawdowns)
+  };
+}
+```
+
+---
+
+## 最佳实践
+
+### 1. 代码组织
+
+```
+src/strategies/
+├── BaseStrategy.js       # 策略基类
+├── index.js              # 策略注册
+├── indicators/           # 自定义指标
+│   └── customIndicators.js
+├── trend/                # 趋势策略
+│   ├── SMAStrategy.js
+│   └── MACDStrategy.js
+├── oscillator/           # 震荡策略
+│   └── RSIStrategy.js
+└── arbitrage/            # 套利策略
+    └── FundingArbStrategy.js
+```
+
+### 2. 使用高精度计算
+
+```javascript
+const Decimal = require('decimal.js');
+
+// 错误做法
+const profit = price * amount * 0.001;
+
+// 正确做法
+const profit = new Decimal(price)
+  .times(amount)
+  .times(0.001)
+  .toNumber();
+```
+
+### 3. 错误处理
+
+```javascript
+async onCandle(data) {
+  try {
+    // 策略逻辑
+    await this.generateSignal();
+  } catch (error) {
+    this.emit('error', {
+      message: '策略执行错误',
+      error: error.message,
+      stack: error.stack
+    });
+
+    // 不要让错误中断策略
+    // 记录日志并继续运行
+  }
+}
+```
+
+### 4. 日志记录
+
+```javascript
+// 记录关键决策
+this.emit('log', {
+  level: 'info',
+  message: '买入信号',
+  data: {
+    price: currentPrice,
+    sma: currentSMA,
+    rsi: currentRSI,
+    reason: '价格突破 SMA，RSI 超卖'
+  }
 });
+```
 
-// 3. 动态止损
-if (position.pnlPercent > 0.05) {
-  // 盈利 5% 后，设置保本止损
-  this.setTrailingStop(symbol, 0.03);
-}
+### 5. 参数验证
 
-// 4. 日亏损限制
-if (this.dailyLoss > this.maxDailyLoss) {
-  this.log('达到日亏损限制，停止交易', 'warn');
-  return;
+```javascript
+constructor(config) {
+  super(config);
+
+  // 验证必要参数
+  if (!config.symbol) {
+    throw new Error('symbol 参数必须');
+  }
+
+  if (!config.timeframe) {
+    throw new Error('timeframe 参数必须');
+  }
+
+  // 验证参数范围
+  const period = config.params?.period || 14;
+  if (period < 1 || period > 200) {
+    throw new Error('period 必须在 1-200 之间');
+  }
 }
 ```
 
-### 10.3 避免过拟合
+### 6. 策略测试
 
 ```javascript
-// 1. 使用合理的参数数量
-// 参数越少越好，避免过度优化
+// tests/strategies/CustomStrategy.test.js
+const { describe, it, expect } = require('vitest');
+const CustomStrategy = require('../../src/strategies/CustomStrategy');
 
-// 2. 使用样本外测试
-// 将数据分为训练集和测试集
+describe('CustomStrategy', () => {
+  it('应该正确初始化', async () => {
+    const strategy = new CustomStrategy({
+      symbol: 'BTC/USDT',
+      timeframe: '1h'
+    });
 
-// 3. 使用 Walk-Forward 分析
-// 验证策略在不同时期的表现
-
-// 4. 关注稳健性
-// 小幅调整参数，收益不应大幅变化
-```
-
-### 10.4 性能优化
-
-```javascript
-// 1. 避免重复计算
-// 使用 setIndicator 缓存指标值
-
-// 2. 减少不必要的日志
-if (process.env.NODE_ENV === 'development') {
-  this.log('调试信息', 'debug');
-}
-
-// 3. 使用增量计算
-// 对于均线等指标，可以使用增量方式更新
-
-// 4. 限制历史数据长度
-// 只保留必要的历史数据
-```
-
-### 10.5 测试策略
-
-```javascript
-// 单元测试示例
-describe('MyStrategy', () => {
-  it('should generate buy signal on golden cross', async () => {
-    const strategy = new MyStrategy({ shortPeriod: 5, longPeriod: 10 });
-    // ... 模拟数据
-    expect(strategy.getSignal().type).toBe('buy');
+    await strategy.onInit();
+    expect(strategy.status).toBe('stopped');
   });
 
-  it('should not trade with insufficient data', async () => {
-    const strategy = new MyStrategy({ shortPeriod: 5, longPeriod: 10 });
-    await strategy.onTick(candle, shortHistory);  // 数据不足
-    expect(strategy.getSignal()).toBeNull();
+  it('应该在条件满足时生成买入信号', async () => {
+    const strategy = new CustomStrategy({
+      symbol: 'BTC/USDT',
+      timeframe: '1h'
+    });
+
+    const signals = [];
+    strategy.on('signal', (signal) => signals.push(signal));
+
+    // 模拟数据
+    for (let i = 0; i < 50; i++) {
+      await strategy.onCandle({
+        candle: { open: 100, high: 105, low: 95, close: 102 + i * 0.1 }
+      });
+    }
+
+    expect(signals.length).toBeGreaterThan(0);
   });
 });
 ```
@@ -759,103 +1060,19 @@ describe('MyStrategy', () => {
 
 ## 附录
 
-### A. 策略模板
+### 内置策略源码参考
 
-```javascript
-/**
- * 策略模板
- * Strategy Template
- */
-import { BaseStrategy } from '../BaseStrategy.js';
+| 策略 | 文件 |
+|------|------|
+| SMA | src/strategies/SMAStrategy.js |
+| RSI | src/strategies/RSIStrategy.js |
+| MACD | src/strategies/MACDStrategy.js |
+| 布林带 | src/strategies/BollingerBandsStrategy.js |
+| 网格 | src/strategies/GridStrategy.js |
+| 资金费率套利 | src/strategies/FundingArbStrategy.js |
 
-export class TemplateStrategy extends BaseStrategy {
-  constructor(params = {}) {
-    super({
-      name: 'TemplateStrategy',
-      ...params,
-    });
+### 相关文档
 
-    // === 参数定义 ===
-    this.param1 = params.param1 || defaultValue1;
-    this.param2 = params.param2 || defaultValue2;
-    this.symbol = params.symbol || 'BTC/USDT';
-    this.positionPercent = params.positionPercent || 90;
-  }
-
-  async onInit() {
-    await super.onInit();
-    this.log(`策略初始化: param1=${this.param1}, param2=${this.param2}`);
-  }
-
-  async onTick(candle, history) {
-    // === 数据验证 ===
-    if (history.length < this.requiredLength) {
-      return;
-    }
-
-    // === 指标计算 ===
-    const indicator = this._calculateIndicator(history);
-    this.setIndicator('myIndicator', indicator);
-
-    // === 持仓查询 ===
-    const position = this.getPosition(this.symbol);
-    const hasPosition = position && position.amount > 0;
-
-    // === 信号生成 ===
-    const buySignal = this._checkBuySignal(indicator);
-    const sellSignal = this._checkSellSignal(indicator);
-
-    // === 交易执行 ===
-    if (buySignal && !hasPosition) {
-      this.setBuySignal('Buy condition met');
-      this.buyPercent(this.symbol, this.positionPercent);
-    } else if (sellSignal && hasPosition) {
-      this.setSellSignal('Sell condition met');
-      this.closePosition(this.symbol);
-    }
-  }
-
-  _calculateIndicator(history) {
-    // 实现指标计算
-  }
-
-  _checkBuySignal(indicator) {
-    // 实现买入条件
-    return false;
-  }
-
-  _checkSellSignal(indicator) {
-    // 实现卖出条件
-    return false;
-  }
-}
-
-export default TemplateStrategy;
-```
-
-### B. 常见问题
-
-**Q: 策略不生成信号？**
-- 检查历史数据是否足够
-- 检查条件判断逻辑
-- 添加调试日志
-
-**Q: 回测和实盘结果不一致？**
-- 考虑滑点和手续费
-- 检查时间颗粒度
-- 验证数据质量
-
-**Q: 如何处理多交易对？**
-- 为每个交易对维护独立状态
-- 使用 Map 存储各交易对数据
-
-### C. 参考资源
-
-- [technicalindicators 文档](https://github.com/anandanand84/technicalindicators)
-- [ccxt 文档](https://docs.ccxt.com/)
-- [量化交易入门指南](https://www.quantstart.com/)
-
----
-
-*文档版本: 1.0.0*
-*最后更新: 2024-12-23*
+- [代码开发文档](./DEVELOPMENT.md)
+- [API 参考文档](./API_REFERENCE.md)
+- [用户使用手册](./USER_MANUAL.md)

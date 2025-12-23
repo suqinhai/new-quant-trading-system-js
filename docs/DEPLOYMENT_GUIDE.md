@@ -2,299 +2,226 @@
 
 ## 目录
 
-1. [部署架构](#1-部署架构)
-2. [环境准备](#2-环境准备)
-3. [Docker 部署](#3-docker-部署)
-4. [PM2 部署](#4-pm2-部署)
-5. [CI/CD 配置](#5-cicd-配置)
-6. [监控配置](#6-监控配置)
-7. [日志管理](#7-日志管理)
-8. [备份恢复](#8-备份恢复)
-9. [扩容方案](#9-扩容方案)
-10. [安全加固](#10-安全加固)
+1. [环境准备](#环境准备)
+2. [安装部署](#安装部署)
+3. [配置说明](#配置说明)
+4. [PM2 进程管理](#pm2-进程管理)
+5. [Docker 部署](#docker-部署)
+6. [监控配置](#监控配置)
+7. [日志管理](#日志管理)
+8. [备份恢复](#备份恢复)
+9. [性能优化](#性能优化)
+10. [安全加固](#安全加固)
 
 ---
 
-## 1. 部署架构
+## 环境准备
 
-### 1.1 系统架构图
+### 系统要求
 
-```
-                              ┌─────────────────┐
-                              │   Load Balancer │
-                              │    (Nginx)      │
-                              └────────┬────────┘
-                                       │
-              ┌────────────────────────┼────────────────────────┐
-              │                        │                        │
-              ▼                        ▼                        ▼
-    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-    │  Trading App    │    │  Trading App    │    │  Trading App    │
-    │  (Shadow)       │    │  (Live)         │    │  (API Only)     │
-    │  Port: 3000     │    │  Port: 3001     │    │  Port: 3002     │
-    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
-              │                        │                        │
-              └────────────────────────┼────────────────────────┘
-                                       │
-              ┌────────────────────────┼────────────────────────┐
-              │                        │                        │
-              ▼                        ▼                        ▼
-    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-    │  Redis Master   │    │  ClickHouse     │    │  Prometheus     │
-    │  + Sentinel     │    │  (Analytics)    │    │  + Grafana      │
-    │  Port: 6379     │    │  Port: 8123     │    │  Port: 9090     │
-    └─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+| 项目 | 最低配置 | 推荐配置 |
+|------|----------|----------|
+| CPU | 2 核 | 4 核+ |
+| 内存 | 4 GB | 8 GB+ |
+| 磁盘 | 20 GB SSD | 100 GB SSD |
+| 网络 | 10 Mbps | 100 Mbps+ |
+| 操作系统 | Ubuntu 20.04 / CentOS 8 | Ubuntu 22.04 |
 
-### 1.2 服务端口分配
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| Trading App (Shadow) | 3000 | 影子模式 API |
-| Trading App (Live) | 3001 | 实盘模式 API |
-| WebSocket | 8080 | 实时数据推送 |
-| Metrics | 9091 | Prometheus 指标 |
-| Redis Master | 6379 | 缓存服务 |
-| Redis Replica | 6380-6381 | 只读副本 |
-| Redis Sentinel | 26379-26381 | 高可用监控 |
-| ClickHouse | 8123/9000 | 分析数据库 |
-| Prometheus | 9090 | 指标收集 |
-| Grafana | 3000 | 监控面板 |
-
-### 1.3 资源需求
-
-| 环境 | CPU | 内存 | 磁盘 | 网络 |
-|------|-----|------|------|------|
-| 开发 | 2 核 | 4 GB | 20 GB | 10 Mbps |
-| 测试 | 4 核 | 8 GB | 50 GB | 50 Mbps |
-| 生产 | 8 核 | 16 GB | 200 GB SSD | 100 Mbps |
-
----
-
-## 2. 环境准备
-
-### 2.1 系统要求
+### 软件依赖
 
 ```bash
-# 操作系统
-- Ubuntu 22.04 LTS (推荐)
-- CentOS 8+
-- Debian 11+
-
-# 软件依赖
-- Node.js 20.x LTS
-- Docker 24.x+
-- Docker Compose 2.x+
-- Git 2.x+
-```
-
-### 2.2 安装 Node.js
-
-```bash
-# 使用 nvm 安装 (推荐)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-source ~/.bashrc
-nvm install 20
-nvm use 20
-nvm alias default 20
+# Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 # 验证安装
-node -v  # v20.x.x
-npm -v   # 10.x.x
-```
+node --version  # >= 18.0.0
+npm --version   # >= 8.0.0
 
-### 2.3 安装 Docker
-
-```bash
-# Ubuntu/Debian
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-
-# 安装 Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# 验证安装
-docker --version
-docker-compose --version
-```
-
-### 2.4 安装 PM2
-
-```bash
-# 全局安装 PM2
+# PM2 进程管理器
 npm install -g pm2
 
-# 安装日志轮转模块
-pm2 install pm2-logrotate
+# Redis（可选，用于缓存）
+sudo apt-get install redis-server
 
-# 配置日志轮转
-pm2 set pm2-logrotate:max_size 100M
-pm2 set pm2-logrotate:retain 30
-pm2 set pm2-logrotate:compress true
-
-# 设置开机自启
-pm2 startup
+# ClickHouse（可选，用于大数据分析）
+# 参考 ClickHouse 官方文档安装
 ```
 
-### 2.5 创建部署用户
+### 网络配置
 
-```bash
-# 创建专用部署用户
-sudo useradd -m -s /bin/bash deploy
-sudo passwd deploy
+确保服务器可以访问以下域名：
 
-# 添加 sudo 权限（可选）
-sudo usermod -aG sudo deploy
-
-# 添加到 docker 组
-sudo usermod -aG docker deploy
-
-# 切换用户
-su - deploy
-```
+| 服务 | 域名 | 用途 |
+|------|------|------|
+| Binance | api.binance.com | 交易 API |
+| Binance WS | stream.binance.com | WebSocket |
+| Bybit | api.bybit.com | 交易 API |
+| OKX | www.okx.com | 交易 API |
+| Telegram | api.telegram.org | 告警通知 |
 
 ---
 
-## 3. Docker 部署
+## 安装部署
 
-### 3.1 构建镜像
+### 1. 获取代码
 
 ```bash
-# 克隆代码
-git clone <repository-url> /opt/quant-trading
-cd /opt/quant-trading
+# 克隆项目
+git clone <repository-url> /opt/trading-system
+cd /opt/trading-system
 
-# 构建生产镜像
-docker build -t quant-trading-system:latest --target production .
-
-# 构建开发镜像
-docker build -t quant-trading-system:dev --target development .
-
-# 查看镜像
-docker images | grep quant-trading
+# 安装依赖
+npm install --production
 ```
 
-### 3.2 准备配置文件
+### 2. 配置环境变量
 
 ```bash
-# 复制环境配置
+# 复制示例配置
 cp .env.example .env
 
-# 编辑环境变量
+# 编辑配置文件
 nano .env
+```
 
-# 创建必要目录
-mkdir -p data/redis-master data/redis-replica1 data/redis-replica2
-mkdir -p data/clickhouse logs/clickhouse backups/redis
+**.env 配置内容：**
+
+```bash
+# 运行环境
+NODE_ENV=production
+
+# API 服务器
+HTTP_PORT=3000
+METRICS_PORT=9090
+
+# 交易所配置
+BINANCE_API_KEY=your_binance_api_key
+BINANCE_SECRET=your_binance_secret
+
+BYBIT_API_KEY=your_bybit_api_key
+BYBIT_SECRET=your_bybit_secret
+
+OKX_API_KEY=your_okx_api_key
+OKX_SECRET=your_okx_secret
+OKX_PASSPHRASE=your_okx_passphrase
+
+# Redis 配置
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+
+# ClickHouse 配置（可选）
+CLICKHOUSE_HOST=127.0.0.1
+CLICKHOUSE_PORT=8123
+CLICKHOUSE_DATABASE=trading
+
+# Telegram 告警
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
+
+# 日志配置
+LOG_LEVEL=info
+LOG_DIR=/var/log/trading-system
+
+# 安全配置
+JWT_SECRET=your_very_long_random_jwt_secret_key
+API_KEY_ENCRYPTION_KEY=your_32_byte_encryption_key
+```
+
+### 3. 初始化数据库
+
+```bash
+# 创建数据目录
+mkdir -p /var/lib/trading-system/data
+mkdir -p /var/log/trading-system
 
 # 设置权限
-chmod -R 755 data logs backups
+chown -R trading:trading /var/lib/trading-system
+chown -R trading:trading /var/log/trading-system
 ```
 
-### 3.3 启动服务
+### 4. 启动服务
 
 ```bash
-# 启动基础服务（Redis + ClickHouse + 影子模式应用）
-docker-compose up -d
+# 使用 PM2 启动
+npm run pm2:start
 
-# 启动带高可用的服务
-docker-compose --profile ha up -d
-
-# 启动开发环境
-docker-compose --profile dev up -d
-
-# 启动实盘模式
-docker-compose --profile live up -d
-
-# 启动监控服务
-docker-compose --profile monitoring up -d
-
-# 查看运行状态
-docker-compose ps
-```
-
-### 3.4 服务管理
-
-```bash
-# 查看日志
-docker-compose logs -f quant-shadow
-docker-compose logs -f --tail=100 redis-master
-
-# 重启服务
-docker-compose restart quant-shadow
-
-# 停止所有服务
-docker-compose down
-
-# 停止并清理数据卷
-docker-compose down -v
-
-# 更新服务
-docker-compose pull
-docker-compose up -d
-```
-
-### 3.5 健康检查
-
-```bash
-# 检查应用健康状态
-curl http://localhost:3000/health
-
-# 检查 Redis
-docker exec quant-redis-master redis-cli ping
-
-# 检查 ClickHouse
-curl http://localhost:8123/ping
+# 或手动启动
+pm2 start ecosystem.config.js
 ```
 
 ---
 
-## 4. PM2 部署
+## 配置说明
 
-### 4.1 配置文件说明
+### ecosystem.config.js
 
-`ecosystem.config.js` 包含以下服务：
+```javascript
+module.exports = {
+  apps: [
+    {
+      name: 'trading-engine',
+      script: 'src/main.js',
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '1G',
+      env_production: {
+        NODE_ENV: 'production',
+        RUN_MODE: 'live'
+      },
+      env_shadow: {
+        NODE_ENV: 'production',
+        RUN_MODE: 'shadow'
+      }
+    },
+    {
+      name: 'marketdata-service',
+      script: 'src/marketdata/server.js',
+      instances: 1,
+      max_memory_restart: '512M'
+    },
+    {
+      name: 'monitor-service',
+      script: 'src/monitor/server.js',
+      instances: 1,
+      max_memory_restart: '256M'
+    }
+  ]
+};
+```
 
-| 服务名 | 入口文件 | 内存限制 | 说明 |
-|--------|----------|----------|------|
-| trading-engine | src/index.js | 1G | 主交易引擎 |
-| marketdata-service | src/marketdata/server.js | 512M | 行情服务 |
-| monitor-service | src/monitor/server.js | 256M | 监控服务 |
-| web-dashboard | src/monitor/dashboard.js | 256M | Web 面板 |
+### 配置文件优先级
 
-### 4.2 启动服务
+1. 环境变量
+2. `.env` 文件
+3. `config/production.js`
+4. `config/default.js`
+
+---
+
+## PM2 进程管理
+
+### 常用命令
 
 ```bash
-# 安装依赖
-cd /opt/quant-trading
-pnpm install --prod
-
-# 启动所有服务（开发环境）
+# 启动所有服务
 pm2 start ecosystem.config.js
 
-# 启动所有服务（生产环境）
+# 启动特定环境
 pm2 start ecosystem.config.js --env production
-
-# 启动单个服务
-pm2 start ecosystem.config.js --only trading-engine
+pm2 start ecosystem.config.js --env shadow
 
 # 查看状态
 pm2 status
-```
 
-### 4.3 服务管理
-
-```bash
 # 查看日志
-pm2 logs                      # 所有日志
-pm2 logs trading-engine       # 指定服务日志
-pm2 logs --lines 200          # 最近 200 行
+pm2 logs
+pm2 logs trading-engine
 
 # 重启服务
-pm2 restart all               # 重启所有
-pm2 restart trading-engine    # 重启指定服务
-pm2 reload all                # 平滑重启
+pm2 restart all
+pm2 restart trading-engine
 
 # 停止服务
 pm2 stop all
@@ -302,389 +229,437 @@ pm2 stop trading-engine
 
 # 删除服务
 pm2 delete all
-pm2 delete trading-engine
 
 # 监控面板
 pm2 monit
-```
 
-### 4.4 保存进程列表
-
-```bash
-# 保存当前进程列表
+# 保存进程列表
 pm2 save
 
-# 恢复进程列表
-pm2 resurrect
-
 # 设置开机自启
-pm2 startup systemd
-sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u deploy --hp /home/deploy
+pm2 startup
+```
+
+### 进程监控
+
+```bash
+# 查看详细信息
+pm2 show trading-engine
+
+# 查看资源使用
+pm2 monit
+
+# 实时日志
+pm2 logs --lines 100
 ```
 
 ---
 
-## 5. CI/CD 配置
+## Docker 部署
 
-### 5.1 GitHub Actions 工作流
+### Dockerfile
 
-项目包含以下 CI/CD 工作流：
+```dockerfile
+FROM node:18-alpine
 
-| 文件 | 触发条件 | 功能 |
-|------|----------|------|
-| ci.yml | push/PR | 代码检查、测试 |
-| test.yml | push/PR | 运行测试套件 |
-| docker-build.yml | push main | 构建 Docker 镜像 |
-| deploy.yml | workflow_dispatch | 部署到 staging/production |
-| security-scan.yml | schedule | 安全扫描 |
+WORKDIR /app
 
-### 5.2 配置 Secrets
+# 安装依赖
+COPY package*.json ./
+RUN npm ci --only=production
 
-在 GitHub 仓库设置中添加以下 Secrets：
+# 复制代码
+COPY . .
 
-```
-# Docker Registry
-DOCKER_USERNAME
-DOCKER_PASSWORD
+# 创建数据目录
+RUN mkdir -p /app/data /app/logs
 
-# Staging 服务器
-STAGING_HOST
-STAGING_USER
-STAGING_SSH_KEY
+# 暴露端口
+EXPOSE 3000 9090
 
-# Production 服务器
-PRODUCTION_HOST
-PRODUCTION_USER
-PRODUCTION_SSH_KEY
-
-# 通知（可选）
-SLACK_WEBHOOK_URL
-TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID
+# 启动命令
+CMD ["node", "src/main.js"]
 ```
 
-### 5.3 手动触发部署
+### docker-compose.yml
 
-1. 进入 GitHub Actions 页面
-2. 选择 "Deploy" 工作流
-3. 点击 "Run workflow"
-4. 选择参数：
-   - environment: staging/production
-   - deployment_type: rolling/blue-green/canary
-   - image_tag: 指定版本或 latest
+```yaml
+version: '3.8'
 
-### 5.4 部署策略
+services:
+  trading-engine:
+    build: .
+    container_name: trading-engine
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "9090:9090"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=production
+      - RUN_MODE=live
+    depends_on:
+      - redis
+    networks:
+      - trading-net
 
-#### 滚动部署 (Rolling)
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - trading-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: trading-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - trading-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: trading-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - trading-net
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  trading-net:
+    driver: bridge
+```
+
+### Docker 命令
 
 ```bash
-# 默认策略，逐个更新实例
-./scripts/deploy.sh deploy -e shadow
-```
+# 构建镜像
+docker-compose build
 
-#### 蓝绿部署 (Blue-Green)
+# 启动服务
+docker-compose up -d
 
-```bash
-# 准备新版本，验证后切换
-./scripts/blue-green-deploy.sh deploy
-./scripts/blue-green-deploy.sh switch   # 切换流量
-./scripts/blue-green-deploy.sh rollback # 回滚
-```
+# 查看日志
+docker-compose logs -f trading-engine
 
-#### 金丝雀部署 (Canary)
+# 停止服务
+docker-compose down
 
-```bash
-# 先部署少量实例测试
-./scripts/deploy.sh deploy -e live --canary
+# 重启服务
+docker-compose restart trading-engine
 ```
 
 ---
 
-## 6. 监控配置
+## 监控配置
 
-### 6.1 Prometheus 配置
+### Prometheus 配置
 
-`config/prometheus/prometheus.yml`:
+**prometheus.yml:**
 
 ```yaml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
 scrape_configs:
-  - job_name: 'quant-trading'
+  - job_name: 'trading-system'
     static_configs:
-      - targets: ['quant-shadow:9091', 'quant-live:9092']
+      - targets: ['trading-engine:9090']
+    metrics_path: '/metrics'
 
-  - job_name: 'redis'
+  - job_name: 'node-exporter'
     static_configs:
-      - targets: ['redis-master:9121']
-
-  - job_name: 'clickhouse'
-    static_configs:
-      - targets: ['clickhouse:9363']
+      - targets: ['node-exporter:9100']
 ```
 
-### 6.2 Grafana Dashboard
+### Grafana Dashboard
 
-1. 访问 `http://localhost:3000` (默认 admin/admin123)
-2. 添加数据源：
-   - Prometheus: `http://prometheus:9090`
-   - ClickHouse: `http://clickhouse:8123`
-3. 导入 Dashboard:
-   - 使用 `config/grafana/dashboards/` 下的 JSON 文件
+导入以下指标面板：
 
-### 6.3 告警规则
+**交易指标：**
+- `trading_pnl_total` - 总盈亏
+- `trading_orders_total` - 订单总数
+- `trading_positions_count` - 持仓数量
+- `trading_balance_total` - 账户余额
 
-`config/prometheus/alerts/trading_alerts.yml`:
+**系统指标：**
+- `process_cpu_seconds_total` - CPU 使用
+- `process_resident_memory_bytes` - 内存使用
+- `nodejs_eventloop_lag_seconds` - 事件循环延迟
+
+### 告警规则
+
+**alert_rules.yml:**
 
 ```yaml
 groups:
-  - name: trading_alerts
+  - name: trading-alerts
     rules:
-      # 应用健康检查
-      - alert: TradingAppDown
-        expr: up{job="quant-trading"} == 0
+      - alert: HighDrawdown
+        expr: trading_drawdown > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "回撤超过 10%"
+
+      - alert: TradingEngineDown
+        expr: up{job="trading-system"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "Trading application is down"
+          summary: "交易引擎离线"
 
-      # 高内存使用
       - alert: HighMemoryUsage
-        expr: process_resident_memory_bytes > 1073741824
+        expr: process_resident_memory_bytes > 1e9
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Memory usage exceeds 1GB"
-
-      # 交易延迟
-      - alert: HighTradingLatency
-        expr: trading_order_latency_seconds > 1
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Trading latency is high"
-
-      # 订单失败率
-      - alert: HighOrderFailureRate
-        expr: rate(trading_orders_failed_total[5m]) > 0.1
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Order failure rate is high"
+          summary: "内存使用超过 1GB"
 ```
-
-### 6.4 应用内置指标
-
-系统暴露以下 Prometheus 指标：
-
-| 指标名 | 类型 | 说明 |
-|--------|------|------|
-| trading_orders_total | Counter | 总订单数 |
-| trading_orders_failed_total | Counter | 失败订单数 |
-| trading_order_latency_seconds | Histogram | 订单延迟 |
-| trading_pnl_total | Gauge | 总盈亏 |
-| trading_positions_count | Gauge | 持仓数量 |
-| trading_strategies_running | Gauge | 运行中策略数 |
 
 ---
 
-## 7. 日志管理
+## 日志管理
 
-### 7.1 日志目录结构
-
-```
-logs/
-├── pm2/                    # PM2 日志
-│   ├── trading-engine-out.log
-│   ├── trading-engine-error.log
-│   └── ...
-├── app/                    # 应用日志
-│   ├── trading-2024-01-15.log
-│   ├── error-2024-01-15.log
-│   └── audit/              # 审计日志
-│       └── audit-2024-01-15.jsonl
-├── clickhouse/             # ClickHouse 日志
-└── nginx/                  # Nginx 日志
-```
-
-### 7.2 日志级别配置
-
-```bash
-# .env 文件
-LOG_LEVEL=info          # 生产环境
-LOG_LEVEL=debug         # 开发环境
-LOG_FORMAT=json         # JSON 格式（便于 ELK 收集）
-```
-
-日志级别：`error` > `warn` > `info` > `debug` > `trace`
-
-### 7.3 日志轮转配置
-
-PM2 日志轮转已在安装时配置。对于其他日志，使用 logrotate：
-
-`/etc/logrotate.d/quant-trading`:
+### 日志目录结构
 
 ```
-/opt/quant-trading/logs/app/*.log {
+/var/log/trading-system/
+├── trading.log          # 主日志
+├── error.log            # 错误日志
+├── access.log           # API 访问日志
+├── audit.log            # 审计日志
+└── pnl/                 # PnL 日志
+    ├── 2024-01-15.log
+    └── ...
+```
+
+### 日志级别
+
+| 级别 | 描述 |
+|------|------|
+| error | 错误信息 |
+| warn | 警告信息 |
+| info | 一般信息 |
+| debug | 调试信息 |
+
+### 日志轮转配置
+
+**/etc/logrotate.d/trading-system:**
+
+```
+/var/log/trading-system/*.log {
     daily
-    missingok
     rotate 30
     compress
     delaycompress
+    missingok
     notifempty
-    copytruncate
-    dateext
-    dateformat -%Y%m%d
+    create 0644 trading trading
+    postrotate
+        pm2 reloadLogs
+    endscript
 }
 ```
 
-### 7.4 日志查看
+### 查看日志
 
 ```bash
-# 实时查看日志
-tail -f logs/app/trading-$(date +%Y-%m-%d).log
+# 实时查看主日志
+tail -f /var/log/trading-system/trading.log
 
-# 搜索错误
-grep -r "ERROR" logs/app/
+# 查看错误日志
+tail -f /var/log/trading-system/error.log
 
-# 查看审计日志
-cat logs/audit/audit-$(date +%Y-%m-%d).jsonl | jq .
+# 搜索特定内容
+grep "ERROR" /var/log/trading-system/trading.log
 
-# PM2 日志
-pm2 logs trading-engine --lines 500
+# 使用 PM2 查看
+pm2 logs trading-engine --lines 100
 ```
 
 ---
 
-## 8. 备份恢复
+## 备份恢复
 
-### 8.1 数据备份
+### 自动备份脚本
+
+**backup.sh:**
 
 ```bash
-# 创建备份脚本 scripts/backup.sh
-
 #!/bin/bash
-BACKUP_DIR="/opt/quant-trading/backups"
+
+BACKUP_DIR="/var/backups/trading-system"
 DATE=$(date +%Y%m%d_%H%M%S)
+DATA_DIR="/var/lib/trading-system/data"
 
-# 备份 SQLite 数据
-cp data/trading.db "$BACKUP_DIR/sqlite/trading_$DATE.db"
+# 创建备份目录
+mkdir -p $BACKUP_DIR
 
-# 备份 Redis
-docker exec quant-redis-master redis-cli BGSAVE
-docker cp quant-redis-master:/data/dump.rdb "$BACKUP_DIR/redis/dump_$DATE.rdb"
+# 备份 SQLite 数据库
+cp $DATA_DIR/*.db $BACKUP_DIR/db_$DATE/
 
-# 备份配置
-tar -czf "$BACKUP_DIR/config/config_$DATE.tar.gz" config/ .env
+# 备份配置文件
+cp /opt/trading-system/.env $BACKUP_DIR/config_$DATE.env
+
+# 备份 Redis 数据
+redis-cli BGSAVE
+cp /var/lib/redis/dump.rdb $BACKUP_DIR/redis_$DATE.rdb
 
 # 清理 30 天前的备份
-find "$BACKUP_DIR" -type f -mtime +30 -delete
+find $BACKUP_DIR -mtime +30 -delete
 
 echo "Backup completed: $DATE"
 ```
 
-### 8.2 自动备份
+### 定时备份
 
 ```bash
-# 添加 cron 任务
+# 添加 crontab
 crontab -e
 
-# 每天凌晨 3 点备份
-0 3 * * * /opt/quant-trading/scripts/backup.sh >> /var/log/quant-backup.log 2>&1
+# 每天凌晨 2 点执行备份
+0 2 * * * /opt/trading-system/scripts/backup.sh >> /var/log/backup.log 2>&1
 ```
 
-### 8.3 数据恢复
+### 恢复数据
 
 ```bash
-# 恢复 SQLite
-cp backups/sqlite/trading_20240115_030000.db data/trading.db
+# 停止服务
+pm2 stop all
+
+# 恢复数据库
+cp /var/backups/trading-system/db_20240115_020000/* /var/lib/trading-system/data/
 
 # 恢复 Redis
-docker cp backups/redis/dump_20240115_030000.rdb quant-redis-master:/data/dump.rdb
-docker restart quant-redis-master
+cp /var/backups/trading-system/redis_20240115_020000.rdb /var/lib/redis/dump.rdb
+systemctl restart redis
 
-# 恢复配置
-tar -xzf backups/config/config_20240115_030000.tar.gz -C /opt/quant-trading/
-```
-
-### 8.4 远程备份
-
-```bash
-# 同步到远程存储
-rsync -avz --delete backups/ backup-server:/backups/quant-trading/
-
-# 或使用 S3
-aws s3 sync backups/ s3://your-bucket/quant-trading-backups/
+# 启动服务
+pm2 start all
 ```
 
 ---
 
-## 9. 扩容方案
+## 性能优化
 
-### 9.1 垂直扩容
-
-增加单节点资源：
-
-```yaml
-# docker-compose.yml
-services:
-  quant-shadow:
-    deploy:
-      resources:
-        limits:
-          memory: 2G    # 增加内存
-          cpus: '2.0'   # 增加 CPU
-```
-
-### 9.2 水平扩容
-
-增加服务实例：
+### Node.js 优化
 
 ```bash
-# 使用 Docker Compose
-docker-compose up -d --scale quant-shadow=3
+# 增加内存限制
+NODE_OPTIONS="--max-old-space-size=4096" pm2 start ecosystem.config.js
 
-# 配合负载均衡器使用
+# 启用生产模式
+NODE_ENV=production
 ```
 
-### 9.3 Redis 集群
-
-从单节点升级到集群：
+### 系统优化
 
 ```bash
-# 启用高可用配置
-docker-compose --profile ha up -d
+# 增加文件描述符限制
+echo "* soft nofile 65535" >> /etc/security/limits.conf
+echo "* hard nofile 65535" >> /etc/security/limits.conf
 
-# 这将启动：
-# - 1 个 Redis Master
-# - 2 个 Redis Replica
-# - 3 个 Redis Sentinel
+# 网络优化
+cat >> /etc/sysctl.conf << EOF
+net.core.somaxconn = 65535
+net.ipv4.tcp_max_syn_backlog = 65535
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time = 300
+EOF
+sysctl -p
 ```
 
-### 9.4 负载均衡
+### Redis 优化
 
-Nginx 配置示例：
+```bash
+# redis.conf
+maxmemory 256mb
+maxmemory-policy allkeys-lru
+save ""
+appendonly yes
+appendfsync everysec
+```
+
+---
+
+## 安全加固
+
+### 防火墙配置
+
+```bash
+# 仅开放必要端口
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow ssh
+ufw allow 3000/tcp  # API
+ufw allow 9090/tcp  # Metrics（仅内网）
+ufw enable
+```
+
+### API 密钥安全
+
+1. **使用环境变量**：不要在代码中硬编码密钥
+2. **权限最小化**：API 密钥只开放必要权限
+3. **IP 白名单**：在交易所设置 IP 白名单
+4. **定期轮换**：定期更换 API 密钥
+
+### 文件权限
+
+```bash
+# 设置配置文件权限
+chmod 600 /opt/trading-system/.env
+chown trading:trading /opt/trading-system/.env
+
+# 设置数据目录权限
+chmod 700 /var/lib/trading-system
+chown -R trading:trading /var/lib/trading-system
+```
+
+### SSL/TLS 配置
+
+使用 Nginx 反向代理并配置 HTTPS：
 
 ```nginx
-upstream quant_api {
-    least_conn;
-    server 127.0.0.1:3000 weight=5;
-    server 127.0.0.1:3001 weight=5;
-    server 127.0.0.1:3002 backup;
-}
-
 server {
-    listen 80;
-    server_name api.example.com;
+    listen 443 ssl;
+    server_name trading.example.com;
+
+    ssl_certificate /etc/ssl/certs/trading.crt;
+    ssl_certificate_key /etc/ssl/private/trading.key;
 
     location / {
-        proxy_pass http://quant_api;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -696,127 +671,46 @@ server {
 
 ---
 
-## 10. 安全加固
+## 运维检查清单
 
-### 10.1 系统安全
+### 日常检查
 
-```bash
-# 配置防火墙
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
+- [ ] 系统运行状态 (`pm2 status`)
+- [ ] 错误日志检查
+- [ ] 持仓和订单状态
+- [ ] API 连接状态
+- [ ] 磁盘空间使用
 
-# 禁用 root SSH 登录
-sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo systemctl restart sshd
+### 周期检查
 
-# 安装 fail2ban
-sudo apt install fail2ban
-sudo systemctl enable fail2ban
-```
+- [ ] 备份验证
+- [ ] 日志清理
+- [ ] 安全更新
+- [ ] 性能指标分析
+- [ ] API 密钥轮换
 
-### 10.2 应用安全
+### 紧急处理
 
 ```bash
-# API 密钥加密
-export MASTER_KEY="YourSecureMasterPassword123!"
-npm run keys:encrypt
+# 紧急停止所有交易
+curl -X POST http://localhost:3000/api/system/emergency-stop
 
-# 配置 HTTPS（Let's Encrypt）
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d api.example.com
+# 强制停止服务
+pm2 kill
+
+# 检查进程
+ps aux | grep node
+
+# 强制终止
+kill -9 <pid>
 ```
-
-### 10.3 Docker 安全
-
-```bash
-# 使用非 root 用户运行容器（已在 Dockerfile 配置）
-# 限制容器资源
-# 使用只读文件系统
-# 定期更新基础镜像
-
-# 扫描镜像漏洞
-docker scan quant-trading-system:latest
-```
-
-### 10.4 网络安全
-
-```bash
-# 限制 Redis 只允许内部访问
-# 在 docker-compose.yml 中不暴露端口到宿主机
-
-# 配置 IP 白名单
-# 在交易所 API 设置中配置 IP 白名单
-```
-
-### 10.5 安全检查清单
-
-- [ ] API 密钥已加密存储
-- [ ] 使用非 root 用户运行服务
-- [ ] 配置了 HTTPS
-- [ ] 启用了防火墙
-- [ ] Redis 未暴露到公网
-- [ ] 定期备份数据
-- [ ] 定期更新依赖
-- [ ] 配置了日志审计
-- [ ] 设置了资源限制
-- [ ] 交易所 API 配置了 IP 白名单
 
 ---
 
-## 附录
+## 联系支持
 
-### A. 常用运维命令
+如遇到部署问题，请：
 
-```bash
-# 系统状态
-docker-compose ps                  # Docker 服务状态
-pm2 status                         # PM2 进程状态
-curl localhost:3000/health         # 健康检查
-
-# 日志查看
-docker-compose logs -f --tail=100  # Docker 日志
-pm2 logs --lines 200               # PM2 日志
-
-# 服务重启
-docker-compose restart quant-shadow
-pm2 restart trading-engine
-
-# 备份
-./scripts/backup.sh
-
-# 部署
-./scripts/deploy.sh deploy -e shadow -B
-```
-
-### B. 故障恢复流程
-
-1. **服务宕机**
-   ```bash
-   docker-compose up -d    # 重启 Docker 服务
-   pm2 restart all         # 重启 PM2 服务
-   ```
-
-2. **数据损坏**
-   ```bash
-   ./scripts/backup.sh restore --date 20240115
-   ```
-
-3. **紧急回滚**
-   ```bash
-   ./scripts/deploy.sh rollback
-   ```
-
-### C. 联系方式
-
-- 技术支持: support@example.com
-- 紧急联系: +86-xxx-xxxx-xxxx
-- GitHub Issues: https://github.com/xxx/issues
-
----
-
-*文档版本: 1.0.0*
-*最后更新: 2024-12-23*
+1. 查看 [故障排查指南](./TROUBLESHOOTING.md)
+2. 检查系统日志
+3. 提交 Issue 到项目仓库

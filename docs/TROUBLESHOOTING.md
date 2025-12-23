@@ -2,749 +2,731 @@
 
 ## 目录
 
-1. [快速诊断](#1-快速诊断)
-2. [启动问题](#2-启动问题)
-3. [连接问题](#3-连接问题)
-4. [交易问题](#4-交易问题)
-5. [策略问题](#5-策略问题)
-6. [性能问题](#6-性能问题)
-7. [数据问题](#7-数据问题)
-8. [API 问题](#8-api-问题)
-9. [Docker 问题](#9-docker-问题)
-10. [日志分析](#10-日志分析)
+1. [快速诊断](#快速诊断)
+2. [启动问题](#启动问题)
+3. [连接问题](#连接问题)
+4. [交易问题](#交易问题)
+5. [性能问题](#性能问题)
+6. [数据问题](#数据问题)
+7. [告警问题](#告警问题)
+8. [常见错误码](#常见错误码)
+9. [日志分析](#日志分析)
+10. [紧急处理](#紧急处理)
 
 ---
 
-## 1. 快速诊断
+## 快速诊断
 
-### 1.1 健康检查命令
+### 系统状态检查
 
 ```bash
-# 检查系统状态
-curl http://localhost:3000/api/health
-
-# 检查系统详细状态
-curl http://localhost:3000/api/system/status
-
-# 检查 PM2 进程
+# 检查服务状态
 pm2 status
 
-# 检查 Docker 容器
-docker-compose ps
-
-# 检查端口占用
-netstat -tlnp | grep -E '3000|6379|8123'
-```
-
-### 1.2 常见状态码
-
-| 状态码 | 含义 | 处理方法 |
-|--------|------|----------|
-| 200 | 正常 | 无需处理 |
-| 401 | 未授权 | 检查 Token 是否有效 |
-| 403 | 权限不足 | 检查用户角色权限 |
-| 404 | 资源不存在 | 检查 URL 是否正确 |
-| 429 | 请求过多 | 等待限流窗口重置 |
-| 500 | 服务器错误 | 查看错误日志 |
-| 502 | 网关错误 | 检查后端服务是否运行 |
-| 503 | 服务不可用 | 检查服务健康状态 |
-
-### 1.3 快速恢复命令
-
-```bash
-# 重启所有服务
-docker-compose restart
-# 或
-pm2 restart all
-
-# 清理并重启
-docker-compose down && docker-compose up -d
-
-# 强制重建
-docker-compose up -d --force-recreate
-```
-
----
-
-## 2. 启动问题
-
-### 2.1 服务无法启动
-
-**症状：** 执行启动命令后服务立即退出
-
-**诊断步骤：**
-
-```bash
-# 查看错误日志
-pm2 logs trading-engine --err --lines 50
-# 或
-docker-compose logs quant-shadow --tail=50
-```
-
-**常见原因及解决方案：**
-
-| 原因 | 解决方案 |
-|------|----------|
-| 端口被占用 | `lsof -i :3000` 找到占用进程并终止 |
-| 配置文件错误 | 检查 `.env` 文件格式 |
-| 依赖未安装 | 运行 `pnpm install` |
-| Node 版本不对 | 使用 `nvm use 20` 切换版本 |
-| 权限问题 | 检查文件权限 `chmod -R 755 .` |
-
-**端口占用解决：**
-
-```bash
-# 查找占用端口的进程
-lsof -i :3000
-
-# 终止进程
-kill -9 <PID>
-
-# 或者修改应用端口
-export PORT=3001
-```
-
-### 2.2 依赖安装失败
-
-**症状：** `pnpm install` 报错
-
-**解决方案：**
-
-```bash
-# 清理缓存
-pnpm store prune
-
-# 删除 node_modules 重装
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
-
-# 如果是 native 模块问题
-npm rebuild better-sqlite3
-```
-
-### 2.3 配置文件错误
-
-**症状：** `Error: Cannot find module` 或 `SyntaxError`
-
-**检查配置：**
-
-```bash
-# 验证 JSON 配置格式
-cat config/default.json | jq .
-
-# 检查环境变量
-grep -v '^#' .env | grep -v '^$'
-
-# 检查必要的环境变量
-node -e "require('dotenv').config(); console.log(process.env.NODE_ENV)"
-```
-
----
-
-## 3. 连接问题
-
-### 3.1 交易所连接失败
-
-**症状：** `Exchange connection failed` 或 `ETIMEDOUT`
-
-**诊断步骤：**
-
-```bash
-# 测试网络连通性
-ping api.binance.com
-curl -I https://api.binance.com/api/v3/ping
-
-# 检查 DNS 解析
-nslookup api.binance.com
-
-# 测试 API 连接
-curl http://localhost:3000/api/exchanges/binance/test
-```
-
-**常见原因及解决方案：**
-
-| 原因 | 解决方案 |
-|------|----------|
-| 网络问题 | 检查网络连接，尝试使用代理 |
-| API 密钥错误 | 验证 API Key 和 Secret |
-| IP 未白名单 | 在交易所添加服务器 IP |
-| 时间同步问题 | 同步系统时间 `ntpdate pool.ntp.org` |
-| 被封禁 | 联系交易所或更换 IP |
-
-**时间同步：**
-
-```bash
-# 检查时间偏差
-date
-curl -s "https://api.binance.com/api/v3/time" | jq '.serverTime'
-
-# 同步时间
-sudo timedatectl set-ntp true
-# 或
-sudo ntpdate pool.ntp.org
-```
-
-### 3.2 Redis 连接失败
-
-**症状：** `Redis connection refused` 或 `ECONNREFUSED`
-
-**诊断步骤：**
-
-```bash
-# 检查 Redis 是否运行
-docker ps | grep redis
-redis-cli ping
-
-# 检查连接配置
-echo $REDIS_HOST $REDIS_PORT
-
-# 测试连接
-redis-cli -h 127.0.0.1 -p 6379 ping
-```
-
-**解决方案：**
-
-```bash
-# 启动 Redis
-docker-compose up -d redis-master
-
-# 检查 Redis 日志
-docker logs quant-redis-master
-
-# 检查配置文件
-cat config/redis.conf | grep -E 'bind|port|requirepass'
-```
-
-### 3.3 数据库连接失败
-
-**症状：** `Database connection error` 或 `SQLITE_CANTOPEN`
-
-**解决方案：**
-
-```bash
-# 检查数据库文件
-ls -la data/trading.db
-
-# 检查目录权限
-chmod 755 data/
-chmod 644 data/trading.db
-
-# 检查磁盘空间
-df -h
-
-# 修复损坏的数据库
-sqlite3 data/trading.db "PRAGMA integrity_check;"
-```
-
----
-
-## 4. 交易问题
-
-### 4.1 订单执行失败
-
-**症状：** 订单提交后返回错误
-
-**诊断步骤：**
-
-```bash
-# 查看交易日志
-grep "order" logs/app/trading-$(date +%Y-%m-%d).log | tail -20
-
-# 检查风控状态
-curl http://localhost:3000/api/risk/config
-```
-
-**常见错误及解决方案：**
-
-| 错误信息 | 原因 | 解决方案 |
-|----------|------|----------|
-| `Insufficient balance` | 余额不足 | 检查账户余额，调整订单大小 |
-| `Invalid quantity` | 数量不符合规则 | 检查交易对最小交易量 |
-| `Price not valid` | 价格异常 | 检查价格精度要求 |
-| `Order would trigger immediately` | 条件单价格问题 | 调整触发价格 |
-| `Max position exceeded` | 超过持仓限制 | 调整风控配置或减少持仓 |
-| `Daily loss limit reached` | 触发日亏损限制 | 等待次日或调整限制 |
-
-### 4.2 订单延迟
-
-**症状：** 订单执行时间过长
-
-**诊断步骤：**
-
-```bash
-# 检查延迟指标
-curl http://localhost:3000/api/system/metrics | jq '.latency'
-
-# 检查网络延迟
-ping -c 10 api.binance.com
-
-# 检查系统负载
-top -bn1 | head -5
-```
-
-**优化建议：**
-
-1. 使用地理位置更近的服务器
-2. 优化网络路由（使用专线）
-3. 减少订单处理逻辑
-4. 使用 WebSocket 代替 REST API
-
-### 4.3 滑点过大
-
-**症状：** 实际成交价与预期价格偏差大
-
-**解决方案：**
-
-```bash
-# 调整滑点容忍度
-# 在策略配置中设置
-{
-  "slippage": 0.001  # 0.1%
-}
-
-# 使用限价单代替市价单
-# 分批下单减少市场冲击
-```
-
----
-
-## 5. 策略问题
-
-### 5.1 策略不生成信号
-
-**症状：** 策略运行但无交易信号
-
-**诊断步骤：**
-
-```bash
-# 查看策略日志
-grep "strategy" logs/app/trading-$(date +%Y-%m-%d).log
-
-# 检查策略状态
-curl http://localhost:3000/api/strategies | jq '.data[] | select(.state=="running")'
-
-# 检查行情数据
-curl http://localhost:3000/api/exchanges/binance/ticker/BTC%2FUSDT
-```
-
-**常见原因：**
-
-| 原因 | 解决方案 |
-|------|----------|
-| 参数设置不合理 | 回测验证参数有效性 |
-| 行情数据未更新 | 检查 WebSocket 连接 |
-| 策略逻辑问题 | 添加调试日志 |
-| 市场条件不满足 | 正常现象，等待信号 |
-
-### 5.2 策略频繁交易
-
-**症状：** 交易次数异常多，手续费过高
-
-**解决方案：**
-
-```bash
-# 添加冷却期
-{
-  "cooldownPeriod": 60000  # 60秒
-}
-
-# 增加信号确认条件
-# 调整进出场阈值
-```
-
-### 5.3 回测结果与实盘不符
-
-**症状：** 回测盈利但实盘亏损
-
-**可能原因及解决方案：**
-
-| 原因 | 解决方案 |
-|------|----------|
-| 过拟合 | 使用 Walk-Forward 分析 |
-| 未考虑滑点 | 回测时设置合理滑点 |
-| 未考虑手续费 | 回测时包含手续费 |
-| 行情数据质量 | 使用高质量历史数据 |
-| 时间颗粒度 | 使用更细粒度的数据 |
-
----
-
-## 6. 性能问题
-
-### 6.1 内存泄漏
-
-**症状：** 内存使用持续增长
-
-**诊断步骤：**
-
-```bash
-# 查看内存使用
+# 检查系统资源
 pm2 monit
-# 或
-docker stats
 
-# 生成内存快照
-node --expose-gc -e "gc(); require('./src/index.js')"
+# 检查端口监听
+netstat -tlnp | grep -E "3000|9090"
+
+# 检查进程
+ps aux | grep node
 ```
 
-**解决方案：**
+### 健康检查 API
 
 ```bash
-# 设置内存限制自动重启
-# ecosystem.config.js
+# 系统健康状态
+curl http://localhost:3000/api/system/health
+
+# 预期响应
 {
-  max_memory_restart: '1G'
-}
-
-# 检查可能的泄漏点
-# 1. 未清理的定时器
-# 2. 未关闭的事件监听器
-# 3. 缓存未设置上限
-```
-
-### 6.2 CPU 使用率高
-
-**症状：** CPU 占用持续 100%
-
-**诊断步骤：**
-
-```bash
-# 查看 CPU 使用
-top -p $(pgrep -f "node.*trading")
-
-# 生成 CPU Profile
-node --prof src/index.js
-node --prof-process isolate-*.log > profile.txt
-```
-
-**常见原因：**
-
-1. 无限循环
-2. 密集计算未异步化
-3. 频繁的 JSON 序列化
-4. 过多的日志输出
-
-### 6.3 响应延迟高
-
-**症状：** API 响应时间超过 1 秒
-
-**诊断步骤：**
-
-```bash
-# 测试 API 延迟
-time curl http://localhost:3000/api/health
-
-# 检查数据库查询
-sqlite3 data/trading.db "EXPLAIN QUERY PLAN SELECT * FROM trades LIMIT 100;"
-```
-
-**优化建议：**
-
-1. 添加数据库索引
-2. 使用 Redis 缓存热点数据
-3. 实现分页查询
-4. 异步处理耗时操作
-
----
-
-## 7. 数据问题
-
-### 7.1 数据丢失
-
-**症状：** 历史交易或持仓数据消失
-
-**诊断步骤：**
-
-```bash
-# 检查数据库文件
-ls -la data/
-sqlite3 data/trading.db "SELECT COUNT(*) FROM trades;"
-
-# 检查 Redis 数据
-redis-cli KEYS "*"
-redis-cli INFO keyspace
-```
-
-**恢复步骤：**
-
-```bash
-# 从备份恢复
-./scripts/backup.sh restore --date 20240115
-
-# 重建索引
-sqlite3 data/trading.db "REINDEX;"
-
-# 验证数据完整性
-sqlite3 data/trading.db "PRAGMA integrity_check;"
-```
-
-### 7.2 数据不同步
-
-**症状：** 显示数据与交易所不一致
-
-**解决方案：**
-
-```bash
-# 强制同步持仓
-curl -X POST http://localhost:3000/api/positions/sync
-
-# 强制同步余额
-curl http://localhost:3000/api/exchanges/binance/balance?force=true
-
-# 重新订阅行情
-# 重启 WebSocket 连接
-```
-
-### 7.3 行情数据延迟
-
-**症状：** 价格更新不及时
-
-**诊断步骤：**
-
-```bash
-# 检查 WebSocket 连接状态
-curl http://localhost:3000/api/system/status | jq '.engine'
-
-# 对比实时价格
-curl http://localhost:3000/api/exchanges/binance/ticker/BTC%2FUSDT
-# vs
-curl https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT
-```
-
----
-
-## 8. API 问题
-
-### 8.1 认证失败
-
-**症状：** 401 Unauthorized
-
-**解决方案：**
-
-```bash
-# 检查 Token 是否过期
-# Token 有效期为 24 小时
-
-# 重新登录获取新 Token
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-
-# 刷新 Token
-curl -X POST http://localhost:3000/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"xxx"}'
-```
-
-### 8.2 请求被限流
-
-**症状：** 429 Too Many Requests
-
-**限流规则：**
-
-| 接口类型 | 限制 | 窗口 |
-|---------|------|------|
-| 登录 | 5 次 | 15 分钟 |
-| 普通查询 | 60 次 | 1 分钟 |
-| 交易操作 | 20 次 | 1 分钟 |
-| 导出 | 10 次 | 1 小时 |
-
-**解决方案：**
-
-```bash
-# 等待限流窗口重置
-# 响应头中包含重试时间
-# Retry-After: 60
-
-# 或调整限流配置（需管理员权限）
-```
-
-### 8.3 CORS 错误
-
-**症状：** 浏览器报 CORS 错误
-
-**解决方案：**
-
-```javascript
-// 检查后端 CORS 配置
-// src/api/server.js
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://your-domain.com'],
-  credentials: true
-}));
-```
-
----
-
-## 9. Docker 问题
-
-### 9.1 容器无法启动
-
-**症状：** 容器状态为 Exited 或 Restarting
-
-**诊断步骤：**
-
-```bash
-# 查看容器日志
-docker logs quant-trading-shadow
-
-# 查看退出原因
-docker inspect quant-trading-shadow | jq '.[0].State'
-
-# 进入容器调试
-docker run -it --entrypoint /bin/sh quant-trading-system:latest
-```
-
-**常见问题：**
-
-| 问题 | 解决方案 |
-|------|----------|
-| 健康检查失败 | 增加 `start_period` 时间 |
-| 内存不足 | 增加内存限制 |
-| 卷挂载失败 | 检查目录权限 |
-| 网络问题 | 重建网络 `docker network prune` |
-
-### 9.2 镜像构建失败
-
-**症状：** `docker build` 报错
-
-**解决方案：**
-
-```bash
-# 清理构建缓存
-docker builder prune
-
-# 无缓存重新构建
-docker build --no-cache -t quant-trading-system:latest .
-
-# 检查 Dockerfile 语法
-docker build --check .
-```
-
-### 9.3 数据卷问题
-
-**症状：** 数据未持久化或权限错误
-
-**解决方案：**
-
-```bash
-# 检查卷挂载
-docker inspect quant-trading-shadow | jq '.[0].Mounts'
-
-# 修复权限
-sudo chown -R 1001:1001 data/ logs/
-
-# 重新创建卷
-docker-compose down -v
-docker-compose up -d
-```
-
----
-
-## 10. 日志分析
-
-### 10.1 日志位置
-
-| 日志类型 | 位置 | 说明 |
-|----------|------|------|
-| 应用日志 | `logs/app/trading-*.log` | 交易相关日志 |
-| 错误日志 | `logs/app/error-*.log` | 错误信息 |
-| 审计日志 | `logs/audit/audit-*.jsonl` | 操作记录 |
-| PM2 日志 | `logs/pm2/*.log` | 进程日志 |
-| Docker 日志 | `docker logs <container>` | 容器日志 |
-
-### 10.2 日志级别
-
-```
-ERROR  > WARN  > INFO  > DEBUG  > TRACE
-严重错误  警告    信息    调试     跟踪
-```
-
-### 10.3 常用日志搜索
-
-```bash
-# 搜索错误
-grep -r "ERROR" logs/app/ | tail -20
-
-# 搜索特定时间段
-grep "2024-01-15 10:" logs/app/trading-2024-01-15.log
-
-# 搜索特定交易对
-grep "BTC/USDT" logs/app/trading-*.log
-
-# 搜索订单相关
-grep -E "order|trade|execute" logs/app/trading-*.log
-
-# 统计错误类型
-grep "ERROR" logs/app/error-*.log | cut -d']' -f3 | sort | uniq -c | sort -rn
-
-# 分析审计日志
-cat logs/audit/audit-$(date +%Y-%m-%d).jsonl | jq 'select(.action=="ORDER_PLACED")'
-```
-
-### 10.4 日志格式示例
-
-```json
-{
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "level": "INFO",
-  "module": "TradingEngine",
-  "message": "Order executed",
+  "success": true,
   "data": {
-    "orderId": "order_123",
-    "symbol": "BTC/USDT",
-    "side": "buy",
-    "price": 42000,
-    "amount": 0.1
+    "status": "healthy",
+    "components": {
+      "database": "healthy",
+      "redis": "healthy",
+      "exchanges": "healthy"
+    }
   }
 }
 ```
 
+### 快速诊断流程图
+
+```
+系统异常
+    │
+    ├─→ 服务是否运行？ ─→ 否 ─→ 查看启动问题
+    │        │
+    │        ↓ 是
+    │
+    ├─→ API 是否响应？ ─→ 否 ─→ 查看连接问题
+    │        │
+    │        ↓ 是
+    │
+    ├─→ 交易所是否连接？ ─→ 否 ─→ 查看交易所连接
+    │        │
+    │        ↓ 是
+    │
+    ├─→ 策略是否运行？ ─→ 否 ─→ 查看策略问题
+    │        │
+    │        ↓ 是
+    │
+    └─→ 查看详细日志排查
+```
+
 ---
 
-## 附录
+## 启动问题
 
-### A. 错误码速查表
+### 问题：服务无法启动
 
-| 错误码 | 含义 | 处理建议 |
+**症状：**
+```bash
+pm2 status
+# 显示 status: errored 或 stopped
+```
+
+**排查步骤：**
+
+1. **查看启动日志**
+```bash
+pm2 logs trading-engine --lines 50
+```
+
+2. **检查环境变量**
+```bash
+# 确认 .env 文件存在
+cat .env
+
+# 检查必要变量
+echo $NODE_ENV
+echo $HTTP_PORT
+```
+
+3. **检查依赖**
+```bash
+npm ls
+```
+
+**常见原因和解决方案：**
+
+| 原因 | 解决方案 |
+|------|----------|
+| 依赖缺失 | `npm install` |
+| 端口被占用 | `kill $(lsof -t -i:3000)` |
+| 配置文件错误 | 检查 `.env` 和 `config/` |
+| 权限不足 | `chmod +x src/main.js` |
+| Node.js 版本不兼容 | 升级到 Node.js 18+ |
+
+### 问题：端口被占用
+
+**症状：**
+```
+Error: listen EADDRINUSE: address already in use :::3000
+```
+
+**解决方案：**
+```bash
+# 查找占用端口的进程
+lsof -i :3000
+netstat -tlnp | grep 3000
+
+# 终止进程
+kill -9 <PID>
+
+# 或更改配置端口
+HTTP_PORT=3001 npm run start
+```
+
+### 问题：内存不足
+
+**症状：**
+```
+FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+```
+
+**解决方案：**
+```bash
+# 增加 Node.js 内存限制
+NODE_OPTIONS="--max-old-space-size=4096" pm2 start ecosystem.config.js
+
+# 或在 ecosystem.config.js 中配置
+{
+  max_memory_restart: '2G',
+  node_args: '--max-old-space-size=4096'
+}
+```
+
+---
+
+## 连接问题
+
+### 问题：交易所 API 连接失败
+
+**症状：**
+```
+Error: Exchange connection failed: ETIMEDOUT
+```
+
+**排查步骤：**
+
+1. **检查网络连通性**
+```bash
+# 测试 Binance API
+curl -v https://api.binance.com/api/v3/ping
+
+# 测试 Bybit API
+curl -v https://api.bybit.com/v3/public/time
+
+# 测试 DNS 解析
+nslookup api.binance.com
+```
+
+2. **检查 API 密钥**
+```bash
+# 验证密钥格式
+echo $BINANCE_API_KEY | wc -c  # 应该是 64 字符
+```
+
+3. **检查 IP 白名单**
+- 登录交易所后台
+- 确认服务器 IP 在白名单中
+
+**常见原因和解决方案：**
+
+| 原因 | 解决方案 |
+|------|----------|
+| 网络不通 | 检查防火墙、代理设置 |
+| API 密钥错误 | 重新生成 API 密钥 |
+| IP 未加白名单 | 在交易所添加服务器 IP |
+| 交易所维护 | 等待维护结束 |
+| 请求频率过高 | 降低请求频率 |
+
+### 问题：WebSocket 断开
+
+**症状：**
+```
+WebSocket connection closed unexpectedly
+```
+
+**解决方案：**
+
+1. **检查心跳机制**
+```javascript
+// 系统会自动重连，检查日志确认
+pm2 logs trading-engine | grep -i "websocket\|reconnect"
+```
+
+2. **检查网络稳定性**
+```bash
+# 持续 ping 测试
+ping -c 100 stream.binance.com
+```
+
+3. **调整重连配置**
+```javascript
+// config/default.js
+websocket: {
+  reconnectInterval: 5000,
+  maxReconnectAttempts: 10
+}
+```
+
+### 问题：Redis 连接失败
+
+**症状：**
+```
+Error: Redis connection failed: ECONNREFUSED
+```
+
+**解决方案：**
+
+1. **检查 Redis 服务**
+```bash
+systemctl status redis
+redis-cli ping  # 应返回 PONG
+```
+
+2. **检查配置**
+```bash
+# 确认连接参数
+echo $REDIS_HOST
+echo $REDIS_PORT
+```
+
+3. **重启 Redis**
+```bash
+systemctl restart redis
+```
+
+---
+
+## 交易问题
+
+### 问题：订单执行失败
+
+**症状：**
+```
+Order execution failed: Insufficient balance
+```
+
+**排查步骤：**
+
+1. **检查账户余额**
+```bash
+curl http://localhost:3000/api/exchanges/binance/balance
+```
+
+2. **检查订单参数**
+```bash
+# 查看交易日志
+grep "order" /var/log/trading-system/trading.log | tail -20
+```
+
+3. **检查交易对状态**
+```bash
+# 确认交易对可交易
+curl "https://api.binance.com/api/v3/exchangeInfo?symbol=BTCUSDT"
+```
+
+**常见原因和解决方案：**
+
+| 错误 | 原因 | 解决方案 |
+|------|------|----------|
+| Insufficient balance | 余额不足 | 充值或减小订单量 |
+| Invalid quantity | 数量不合规 | 检查最小交易量 |
+| Price precision | 价格精度错误 | 调整价格精度 |
+| Market closed | 市场关闭 | 等待开市 |
+| Rate limit | 频率限制 | 降低下单频率 |
+
+### 问题：策略信号未执行
+
+**症状：**
+策略产生信号但没有实际下单
+
+**排查步骤：**
+
+1. **检查运行模式**
+```bash
+# 确认不是回测或影子模式
+echo $RUN_MODE  # 应该是 'live'
+```
+
+2. **检查风控状态**
+```bash
+curl http://localhost:3000/api/risk/status
+```
+
+3. **检查策略状态**
+```bash
+curl http://localhost:3000/api/strategies
+```
+
+4. **查看信号日志**
+```bash
+grep "signal" /var/log/trading-system/trading.log | tail -20
+```
+
+### 问题：止损/止盈未触发
+
+**排查步骤：**
+
+1. **检查订单状态**
+```bash
+curl http://localhost:3000/api/positions
+```
+
+2. **检查触发条件**
+- 确认止损/止盈价格设置正确
+- 确认行情数据正常更新
+
+3. **检查执行日志**
+```bash
+grep -E "stop_loss|take_profit" /var/log/trading-system/trading.log
+```
+
+---
+
+## 性能问题
+
+### 问题：系统响应缓慢
+
+**症状：**
+API 响应时间 > 1秒
+
+**排查步骤：**
+
+1. **检查系统资源**
+```bash
+# CPU 和内存使用
+top -p $(pgrep -f "trading-engine")
+
+# 磁盘 IO
+iostat -x 1 5
+```
+
+2. **检查事件循环延迟**
+```bash
+curl http://localhost:9090/metrics | grep eventloop
+```
+
+3. **检查数据库性能**
+```bash
+# SQLite
+sqlite3 /var/lib/trading-system/data/trading.db "PRAGMA integrity_check;"
+
+# Redis
+redis-cli info stats
+```
+
+**解决方案：**
+
+| 问题 | 解决方案 |
+|------|----------|
+| CPU 高 | 减少并发策略数量 |
+| 内存高 | 增加内存或优化代码 |
+| 磁盘 IO 高 | 使用 SSD，优化日志 |
+| 事件循环阻塞 | 检查同步操作 |
+
+### 问题：内存泄漏
+
+**症状：**
+内存持续增长不释放
+
+**排查步骤：**
+
+1. **监控内存趋势**
+```bash
+# 持续监控
+while true; do
+  ps -o rss= -p $(pgrep -f "trading-engine")
+  sleep 60
+done
+```
+
+2. **生成堆快照**
+```bash
+# 发送 SIGUSR2 信号生成堆快照
+kill -USR2 $(pgrep -f "trading-engine")
+```
+
+3. **使用诊断工具**
+```bash
+node --inspect src/main.js
+# 在 Chrome DevTools 中分析
+```
+
+---
+
+## 数据问题
+
+### 问题：行情数据异常
+
+**症状：**
+价格数据明显错误或长时间不更新
+
+**排查步骤：**
+
+1. **检查数据源**
+```bash
+# 直接查询交易所
+curl "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+```
+
+2. **检查 WebSocket 状态**
+```bash
+pm2 logs marketdata-service | tail -50
+```
+
+3. **检查缓存数据**
+```bash
+redis-cli GET "ticker:BTC/USDT"
+```
+
+**解决方案：**
+```bash
+# 重启行情服务
+pm2 restart marketdata-service
+
+# 清除缓存
+redis-cli FLUSHDB
+```
+
+### 问题：数据库损坏
+
+**症状：**
+```
+Error: SQLITE_CORRUPT: database disk image is malformed
+```
+
+**解决方案：**
+
+1. **尝试修复**
+```bash
+sqlite3 trading.db "PRAGMA integrity_check;"
+sqlite3 trading.db ".recover" | sqlite3 recovered.db
+```
+
+2. **从备份恢复**
+```bash
+pm2 stop all
+cp /var/backups/trading-system/db_latest/* /var/lib/trading-system/data/
+pm2 start all
+```
+
+### 问题：交易记录丢失
+
+**排查步骤：**
+
+1. **检查数据库**
+```bash
+sqlite3 /var/lib/trading-system/data/trading.db "SELECT COUNT(*) FROM trades;"
+```
+
+2. **检查 ClickHouse 归档**
+```bash
+clickhouse-client --query "SELECT COUNT(*) FROM trading.trades"
+```
+
+3. **检查日志文件**
+```bash
+grep "trade" /var/log/trading-system/pnl/*.log
+```
+
+---
+
+## 告警问题
+
+### 问题：Telegram 告警不发送
+
+**排查步骤：**
+
+1. **检查配置**
+```bash
+echo $TELEGRAM_BOT_TOKEN
+echo $TELEGRAM_CHAT_ID
+```
+
+2. **测试 Bot**
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getMe"
+```
+
+3. **手动发送测试消息**
+```bash
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+  -d "chat_id=$TELEGRAM_CHAT_ID" \
+  -d "text=Test message"
+```
+
+**常见原因：**
+
+| 原因 | 解决方案 |
+|------|----------|
+| Token 无效 | 重新创建 Bot |
+| Chat ID 错误 | 使用 @userinfobot 获取 |
+| Bot 未启动 | 向 Bot 发送 /start |
+| 网络问题 | 检查网络连通性 |
+
+### 问题：Prometheus 指标缺失
+
+**排查步骤：**
+
+1. **检查指标端点**
+```bash
+curl http://localhost:9090/metrics
+```
+
+2. **检查 Prometheus 配置**
+```bash
+# prometheus.yml
+scrape_configs:
+  - job_name: 'trading-system'
+    static_configs:
+      - targets: ['localhost:9090']
+```
+
+3. **检查 Prometheus 目标状态**
+```
+访问 http://prometheus:9091/targets
+```
+
+---
+
+## 常见错误码
+
+### 系统错误码
+
+| 错误码 | 描述 | 解决方案 |
 |--------|------|----------|
-| `UNAUTHORIZED` | 未认证 | 重新登录 |
-| `FORBIDDEN` | 权限不足 | 联系管理员 |
-| `VALIDATION_ERROR` | 参数错误 | 检查请求参数 |
-| `RATE_LIMIT_EXCEEDED` | 限流 | 等待后重试 |
-| `EXCHANGE_ERROR` | 交易所错误 | 检查 API 配置 |
-| `INSUFFICIENT_BALANCE` | 余额不足 | 充值或减少数量 |
-| `STRATEGY_RUNNING` | 策略运行中 | 先停止策略 |
-| `RISK_LIMIT_EXCEEDED` | 触发风控 | 调整风控配置 |
-| `DATABASE_ERROR` | 数据库错误 | 检查数据库状态 |
-| `INTERNAL_ERROR` | 内部错误 | 查看错误日志 |
+| SYS_001 | 配置加载失败 | 检查配置文件格式 |
+| SYS_002 | 数据库连接失败 | 检查数据库服务 |
+| SYS_003 | 内存不足 | 增加内存或优化 |
+| SYS_004 | 文件权限错误 | 检查文件权限 |
 
-### B. 紧急联系人
+### 交易错误码
 
-| 角色 | 联系方式 | 响应时间 |
-|------|----------|----------|
-| 系统管理员 | admin@example.com | 30 分钟 |
-| 技术支持 | support@example.com | 2 小时 |
-| 紧急热线 | +86-xxx-xxxx-xxxx | 即时 |
+| 错误码 | 描述 | 解决方案 |
+|--------|------|----------|
+| TRD_001 | 余额不足 | 充值或减小订单 |
+| TRD_002 | 订单数量无效 | 检查最小交易量 |
+| TRD_003 | 价格超出限制 | 检查价格范围 |
+| TRD_004 | 交易对不存在 | 检查交易对配置 |
+| TRD_005 | 风控拒绝 | 检查风控设置 |
 
-### C. 故障升级流程
+### 交易所错误码
 
-1. **P0 - 紧急** (系统完全不可用)
-   - 立即通知所有相关人员
-   - 启动紧急响应流程
-   - 考虑回滚到上一稳定版本
-
-2. **P1 - 严重** (核心功能受影响)
-   - 30 分钟内响应
-   - 同步通知技术负责人
-
-3. **P2 - 中等** (非核心功能问题)
-   - 2 小时内响应
-   - 正常工单处理
-
-4. **P3 - 轻微** (UI/文档问题)
-   - 下一工作日处理
+| 交易所 | 错误码 | 描述 |
+|--------|--------|------|
+| Binance | -1000 | 未知错误 |
+| Binance | -1021 | 时间戳超出范围 |
+| Binance | -2010 | 余额不足 |
+| Bybit | 10001 | 参数错误 |
+| Bybit | 10002 | API 认证失败 |
 
 ---
 
-*文档版本: 1.0.0*
-*最后更新: 2024-12-23*
+## 日志分析
+
+### 日志位置
+
+```
+/var/log/trading-system/
+├── trading.log      # 主日志
+├── error.log        # 错误日志
+├── access.log       # API 访问日志
+└── pnl/             # PnL 日志
+```
+
+### 常用日志分析命令
+
+```bash
+# 查看最近错误
+grep -i "error\|fail" /var/log/trading-system/trading.log | tail -50
+
+# 统计错误类型
+grep -i "error" /var/log/trading-system/trading.log | \
+  sed 's/.*error: //' | sort | uniq -c | sort -rn
+
+# 查看特定时间段
+awk '/2024-01-15T10:00/,/2024-01-15T11:00/' /var/log/trading-system/trading.log
+
+# 查看订单执行
+grep -E "order|trade|position" /var/log/trading-system/trading.log | tail -100
+
+# 查看连接状态
+grep -E "connect|disconnect|websocket" /var/log/trading-system/trading.log | tail -50
+```
+
+### 日志级别说明
+
+```
+[ERROR] 系统错误，需要立即处理
+[WARN]  警告信息，可能需要关注
+[INFO]  一般运行信息
+[DEBUG] 详细调试信息
+```
+
+---
+
+## 紧急处理
+
+### 紧急停止交易
+
+**方法一：API 停止**
+```bash
+curl -X POST http://localhost:3000/api/system/emergency-stop \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**方法二：强制停止**
+```bash
+pm2 stop all
+```
+
+**方法三：终止进程**
+```bash
+pkill -f "trading-engine"
+```
+
+### 紧急平仓
+
+```bash
+# 平掉所有持仓
+curl -X POST http://localhost:3000/api/positions/close-all \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 应急恢复流程
+
+1. **停止服务**
+```bash
+pm2 stop all
+```
+
+2. **备份当前状态**
+```bash
+cp -r /var/lib/trading-system/data /var/backups/emergency_$(date +%Y%m%d_%H%M%S)
+```
+
+3. **检查并修复问题**
+```bash
+# 检查日志找出问题原因
+tail -500 /var/log/trading-system/error.log
+```
+
+4. **恢复服务**
+```bash
+pm2 start all
+pm2 logs
+```
+
+5. **验证系统状态**
+```bash
+curl http://localhost:3000/api/system/health
+```
+
+### 联系支持
+
+紧急情况下：
+1. 保存系统日志
+2. 记录问题现象
+3. 截图错误信息
+4. 提交 Issue 到项目仓库
+
+---
+
+## 问题报告模板
+
+```markdown
+## 问题描述
+[简要描述问题]
+
+## 环境信息
+- 操作系统：
+- Node.js 版本：
+- 项目版本：
+
+## 复现步骤
+1.
+2.
+3.
+
+## 预期行为
+[描述预期的正常行为]
+
+## 实际行为
+[描述实际发生的情况]
+
+## 日志信息
+```
+[粘贴相关日志]
+```
+
+## 已尝试的解决方案
+1.
+2.
+```

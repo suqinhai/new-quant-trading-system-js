@@ -2,1177 +2,1080 @@
 
 ## 目录
 
-1. [概述](#1-概述)
-2. [认证授权](#2-认证授权)
-3. [通用说明](#3-通用说明)
-4. [仪表板 API](#4-仪表板-api)
-5. [策略管理 API](#5-策略管理-api)
-6. [交易记录 API](#6-交易记录-api)
-7. [持仓管理 API](#7-持仓管理-api)
-8. [风控配置 API](#8-风控配置-api)
-9. [交易所管理 API](#9-交易所管理-api)
-10. [系统管理 API](#10-系统管理-api)
-11. [用户管理 API](#11-用户管理-api)
-12. [WebSocket API](#12-websocket-api)
-13. [错误码参考](#13-错误码参考)
+1. [概述](#概述)
+2. [认证](#认证)
+3. [通用规范](#通用规范)
+4. [API 端点](#api-端点)
+   - [仪表板 API](#仪表板-api)
+   - [策略 API](#策略-api)
+   - [交易 API](#交易-api)
+   - [持仓 API](#持仓-api)
+   - [风控 API](#风控-api)
+   - [交易所 API](#交易所-api)
+   - [系统 API](#系统-api)
+   - [用户 API](#用户-api)
+5. [WebSocket API](#websocket-api)
+6. [错误处理](#错误处理)
+7. [限流说明](#限流说明)
 
 ---
 
-## 1. 概述
+## 概述
 
-### 1.1 基础信息
+### 基本信息
 
-| 项目 | 说明 |
-|------|------|
+| 项目 | 值 |
+|------|-----|
 | 基础 URL | `http://localhost:3000/api` |
 | 协议 | HTTP/HTTPS |
 | 数据格式 | JSON |
 | 字符编码 | UTF-8 |
-| 时间格式 | ISO 8601 / Unix 时间戳 (ms) |
 
-### 1.2 请求格式
+### 服务端口
 
-```http
-POST /api/strategies HTTP/1.1
-Host: localhost:3000
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "name": "My Strategy",
-  "type": "sma"
-}
-```
-
-### 1.3 响应格式
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Operation successful"
-}
-```
-
-**分页响应：**
-
-```json
-{
-  "success": true,
-  "data": [ ... ],
-  "total": 100,
-  "page": 1,
-  "pageSize": 20
-}
-```
-
-**错误响应：**
-
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE",
-  "requestId": "req_xxx"
-}
-```
+| 服务 | 端口 | 用途 |
+|------|------|------|
+| HTTP API | 3000 | REST API 服务 |
+| WebSocket | 3000 | 实时数据推送 |
+| Metrics | 9090 | Prometheus 指标 |
 
 ---
 
-## 2. 认证授权
+## 认证
 
-### 2.1 登录
+### JWT 认证
 
-**POST** `/api/auth/login`
+系统使用 JWT (JSON Web Token) 进行身份验证。
 
-**请求参数：**
+#### 获取 Token
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| username | string | 是 | 用户名 |
-| password | string | 是 | 密码 |
+```http
+POST /api/user/login
+Content-Type: application/json
 
-**请求示例：**
-
-```json
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "your_password"
 }
 ```
 
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 86400,
     "user": {
-      "id": "user_1",
+      "id": 1,
       "username": "admin",
-      "role": "admin",
-      "email": "admin@example.com"
+      "role": "admin"
     }
   }
 }
 ```
 
-### 2.2 登出
+#### 使用 Token
 
-**POST** `/api/auth/logout`
+在请求头中添加 Authorization：
 
-**请求头：**
-
-```
+```http
 Authorization: Bearer <token>
 ```
 
-**响应示例：**
+### 用户角色
 
-```json
-{
-  "success": true,
-  "message": "Logged out successfully"
-}
-```
-
-### 2.3 刷新 Token
-
-**POST** `/api/auth/refresh`
-
-**请求参数：**
-
-```json
-{
-  "refreshToken": "refresh_token_here"
-}
-```
-
-### 2.4 Token 使用
-
-所有需要认证的接口需在请求头中携带 Token：
-
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-Token 有效期：24 小时
+| 角色 | 权限 |
+|------|------|
+| admin | 完全访问权限 |
+| trader | 交易和查看权限 |
+| viewer | 只读权限 |
 
 ---
 
-## 3. 通用说明
+## 通用规范
 
-### 3.1 分页参数
+### 请求格式
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| page | number | 1 | 页码 |
-| pageSize | number | 20 | 每页数量（最大 100） |
+```http
+GET /api/resource
+POST /api/resource
+PUT /api/resource/:id
+DELETE /api/resource/:id
+```
 
-### 3.2 排序参数
+### 响应格式
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| sortBy | string | - | 排序字段 |
-| sortOrder | string | desc | 排序方向：asc/desc |
+**成功响应：**
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "操作成功"
+}
+```
 
-### 3.3 限流规则
-
-| 接口类型 | 限制 | 窗口 |
-|---------|------|------|
-| 登录 | 5 次 | 15 分钟 |
-| 普通查询 | 60 次 | 1 分钟 |
-| 交易操作 | 20 次 | 1 分钟 |
-| 导出 | 10 次 | 1 小时 |
-
-超限响应：
-
+**错误响应：**
 ```json
 {
   "success": false,
-  "error": "Too many requests",
-  "code": "RATE_LIMIT_EXCEEDED",
-  "retryAfter": 60
-}
-```
-
-### 3.4 权限角色
-
-| 角色 | 说明 | 权限 |
-|------|------|------|
-| admin | 管理员 | 所有权限 |
-| trader | 交易员 | 策略/交易/持仓操作 |
-| analyst | 分析师 | 只读 + 回测 |
-| viewer | 访客 | 只读 |
-
----
-
-## 4. 仪表板 API
-
-### 4.1 获取仪表板摘要
-
-**GET** `/api/dashboard/summary`
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "data": {
-    "totalAssets": 100000,
-    "availableBalance": 50000,
-    "positionValue": 50000,
-    "todayPnL": 1500,
-    "todayPnLPercent": 1.5,
-    "totalPnL": 15000,
-    "totalPnLPercent": 15,
-    "runningStrategies": 3,
-    "totalStrategies": 5,
-    "openPositions": 4,
-    "todayTrades": 12
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "错误描述"
   }
 }
 ```
 
-### 4.2 获取盈亏曲线
+### 分页参数
 
-**GET** `/api/dashboard/pnl`
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| period | string | 7d | 时间周期：1d/7d/30d/90d |
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "data": {
-    "dates": ["2024-01-01", "2024-01-02", ...],
-    "values": [100, 250, -50, ...],
-    "cumulative": [100, 350, 300, ...]
-  }
-}
-```
-
-### 4.3 获取最近交易
-
-**GET** `/api/dashboard/recent-trades`
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| limit | number | 10 | 返回数量 |
-
-### 4.4 获取告警
-
-**GET** `/api/dashboard/alerts`
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| limit | number | 5 | 返回数量 |
-
-### 4.5 获取系统指标
-
-**GET** `/api/dashboard/system-metrics`
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "data": {
-    "cpu": { "usage": 25.5 },
-    "memory": {
-      "used": 512000000,
-      "total": 1024000000,
-      "percent": 50
-    },
-    "uptime": 86400,
-    "latency": 35,
-    "timestamp": 1703318400000
-  }
-}
-```
-
----
-
-## 5. 策略管理 API
-
-### 5.1 获取策略列表
-
-**GET** `/api/strategies`
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
+| 参数 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
 | page | number | 1 | 页码 |
-| pageSize | number | 20 | 每页数量 |
-| status | string | - | 状态筛选：running/stopped |
-| keyword | string | - | 关键词搜索 |
+| limit | number | 20 | 每页条数 |
+| sort | string | -createdAt | 排序字段 |
 
-**响应示例：**
+**分页响应：**
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "totalPages": 5
+  }
+}
+```
 
+---
+
+## API 端点
+
+### 仪表板 API
+
+#### 获取仪表板数据
+
+```http
+GET /api/dashboard
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalBalance": 10500.50,
+      "totalPnL": 500.50,
+      "totalPnLPercent": 5.0,
+      "dailyPnL": 100.25,
+      "dailyPnLPercent": 0.96
+    },
+    "positions": [
+      {
+        "symbol": "BTC/USDT",
+        "side": "long",
+        "size": 0.1,
+        "entryPrice": 45000,
+        "currentPrice": 46000,
+        "unrealizedPnL": 100
+      }
+    ],
+    "recentTrades": [...],
+    "systemStatus": {
+      "status": "running",
+      "uptime": 86400,
+      "activeStrategies": 3
+    }
+  }
+}
+```
+
+#### 获取权益曲线
+
+```http
+GET /api/dashboard/equity-curve?period=30d
+```
+
+**参数：**
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| period | string | 时间范围：1d, 7d, 30d, 90d |
+
+---
+
+### 策略 API
+
+#### 获取策略列表
+
+```http
+GET /api/strategies
+```
+
+**响应：**
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "strategy_1",
+      "id": 1,
       "name": "BTC SMA Strategy",
-      "type": "sma",
+      "type": "SMA",
+      "status": "running",
       "symbol": "BTC/USDT",
-      "exchange": "binance",
-      "state": "running",
-      "initialCapital": 10000,
-      "params": { "fastPeriod": 10, "slowPeriod": 20 },
-      "totalReturn": 15.5,
-      "todayReturn": 1.2,
-      "trades": 45,
-      "winRate": 55.5,
-      "createdAt": 1703232000000,
-      "updatedAt": 1703318400000
+      "params": {
+        "shortPeriod": 10,
+        "longPeriod": 30
+      },
+      "performance": {
+        "totalPnL": 1500.00,
+        "winRate": 0.65,
+        "tradesCount": 50
+      },
+      "createdAt": "2024-01-01T00:00:00Z"
     }
-  ],
-  "total": 5,
-  "page": 1,
-  "pageSize": 20
+  ]
 }
 ```
 
-### 5.2 获取策略类型
+#### 获取可用策略类型
 
-**GET** `/api/strategies/types`
+```http
+GET /api/strategies/types
+```
 
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
-  "data": ["SMA", "RSI", "BollingerBands", "MACD", "Grid", "FundingArb"]
+  "data": [
+    {
+      "type": "SMA",
+      "name": "简单移动平均",
+      "description": "双均线交叉策略",
+      "params": [
+        { "name": "shortPeriod", "type": "number", "default": 10 },
+        { "name": "longPeriod", "type": "number", "default": 30 }
+      ]
+    },
+    {
+      "type": "RSI",
+      "name": "相对强度指标",
+      "description": "RSI 超买超卖策略",
+      "params": [
+        { "name": "period", "type": "number", "default": 14 },
+        { "name": "overbought", "type": "number", "default": 70 },
+        { "name": "oversold", "type": "number", "default": 30 }
+      ]
+    }
+  ]
 }
 ```
 
-### 5.3 获取策略详情
+#### 获取单个策略
 
-**GET** `/api/strategies/:id`
+```http
+GET /api/strategies/:id
+```
 
-### 5.4 创建策略
+#### 创建策略
 
-**POST** `/api/strategies`
+```http
+POST /api/strategies
+Content-Type: application/json
 
-**请求参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| name | string | 是 | 策略名称 |
-| type | string | 是 | 策略类型 |
-| symbol | string | 是 | 交易对 |
-| exchange | string | 否 | 交易所（默认 binance） |
-| initialCapital | number | 否 | 初始资金（默认 10000） |
-| params | object | 否 | 策略参数 |
-
-**请求示例：**
-
-```json
 {
-  "name": "My BTC Strategy",
-  "type": "sma",
+  "name": "My SMA Strategy",
+  "type": "SMA",
   "symbol": "BTC/USDT",
-  "exchange": "binance",
-  "initialCapital": 10000,
+  "timeframe": "1h",
   "params": {
-    "fastPeriod": 10,
-    "slowPeriod": 20,
+    "shortPeriod": 10,
+    "longPeriod": 30
+  },
+  "risk": {
+    "maxPositionSize": 0.1,
     "stopLoss": 0.02,
-    "takeProfit": 0.04
+    "takeProfit": 0.05
   }
 }
 ```
 
-### 5.5 更新策略
-
-**PUT** `/api/strategies/:id`
-
-**注意：** 运行中的策略无法更新，需先停止。
-
-### 5.6 删除策略
-
-**DELETE** `/api/strategies/:id`
-
-**注意：** 运行中的策略无法删除，需先停止。
-
-### 5.7 启动策略
-
-**POST** `/api/strategies/:id/start`
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "message": "Strategy started"
-}
-```
-
-### 5.8 停止策略
-
-**POST** `/api/strategies/:id/stop`
-
-### 5.9 获取策略统计
-
-**GET** `/api/strategies/:id/stats`
-
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "totalReturn": 15.5,
-    "todayReturn": 1.2,
-    "trades": 45,
-    "winRate": 55.5,
-    "maxDrawdown": 8.5,
-    "sharpeRatio": 1.85,
-    "profitFactor": 1.65
+    "id": 2,
+    "name": "My SMA Strategy",
+    "type": "SMA",
+    "status": "stopped",
+    "createdAt": "2024-01-15T10:30:00Z"
+  },
+  "message": "策略创建成功"
+}
+```
+
+#### 更新策略
+
+```http
+PUT /api/strategies/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Strategy Name",
+  "params": {
+    "shortPeriod": 15
   }
 }
 ```
 
-### 5.10 执行回测
+#### 删除策略
 
-**POST** `/api/strategies/:id/backtest`
-
-**请求参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| startDate | string | 是 | 开始日期 |
-| endDate | string | 是 | 结束日期 |
-| initialCapital | number | 否 | 初始资金 |
-
-**请求示例：**
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-06-30",
-  "initialCapital": 10000
-}
+```http
+DELETE /api/strategies/:id
 ```
 
-**响应示例：**
+#### 启动策略
 
+```http
+POST /api/strategies/:id/start
+```
+
+#### 停止策略
+
+```http
+POST /api/strategies/:id/stop
+```
+
+#### 获取策略性能
+
+```http
+GET /api/strategies/:id/performance
+```
+
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "strategyId": "strategy_1",
-    "startDate": "2024-01-01",
-    "endDate": "2024-06-30",
-    "initialCapital": 10000,
-    "finalCapital": 12500,
-    "totalReturn": 25,
-    "maxDrawdown": 12.5,
-    "sharpeRatio": 1.65,
-    "trades": 78,
-    "winRate": 52.5,
-    "profitFactor": 1.45,
-    "completedAt": 1703318400000
+    "totalPnL": 1500.00,
+    "totalPnLPercent": 15.0,
+    "winRate": 0.65,
+    "tradesCount": 50,
+    "winCount": 32,
+    "lossCount": 18,
+    "avgWin": 100.50,
+    "avgLoss": -50.25,
+    "profitFactor": 2.0,
+    "maxDrawdown": 0.08,
+    "sharpeRatio": 1.8
   }
 }
 ```
 
 ---
 
-## 6. 交易记录 API
+### 交易 API
 
-### 6.1 获取交易列表
+#### 获取交易记录
 
-**GET** `/api/trades`
+```http
+GET /api/trades?page=1&limit=20&symbol=BTC/USDT
+```
 
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| page | number | 1 | 页码 |
-| pageSize | number | 20 | 每页数量 |
-| symbol | string | - | 交易对筛选 |
-| side | string | - | 方向筛选：buy/sell |
-| strategy | string | - | 策略筛选 |
-| startDate | string | - | 开始日期 |
-| endDate | string | - | 结束日期 |
-| sortBy | string | timestamp | 排序字段 |
-| sortOrder | string | desc | 排序方向 |
-
-### 6.2 获取交易统计
-
-**GET** `/api/trades/stats`
-
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
+**参数：**
+| 参数 | 类型 | 描述 |
 |------|------|------|
+| page | number | 页码 |
+| limit | number | 每页条数 |
+| symbol | string | 交易对过滤 |
+| strategyId | number | 策略 ID 过滤 |
 | startDate | string | 开始日期 |
 | endDate | string | 结束日期 |
-| symbol | string | 交易对 |
-| strategy | string | 策略 |
+| side | string | buy/sell |
 
-**响应示例：**
+**响应：**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "orderId": "ord_123456",
+      "symbol": "BTC/USDT",
+      "side": "buy",
+      "type": "market",
+      "price": 45000,
+      "amount": 0.1,
+      "cost": 4500,
+      "fee": 4.5,
+      "pnl": null,
+      "strategyId": 1,
+      "strategyName": "BTC SMA Strategy",
+      "executedAt": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 100
+  }
+}
+```
 
+#### 获取交易统计
+
+```http
+GET /api/trades/statistics?period=30d
+```
+
+**响应：**
 ```json
 {
   "success": true,
   "data": {
     "totalTrades": 150,
-    "buyCount": 80,
-    "sellCount": 70,
+    "buyTrades": 75,
+    "sellTrades": 75,
     "totalVolume": 500000,
     "totalFees": 500,
-    "totalPnL": 15000,
-    "winCount": 85,
-    "lossCount": 65,
-    "winRate": 56.67,
-    "avgPnL": 100,
-    "avgWin": 350,
-    "avgLoss": -200
+    "totalPnL": 2500,
+    "winRate": 0.62,
+    "avgTradeSize": 3333.33,
+    "tradesBySymbol": {
+      "BTC/USDT": 100,
+      "ETH/USDT": 50
+    }
   }
 }
 ```
 
-### 6.3 获取交易详情
-
-**GET** `/api/trades/:id`
-
-### 6.4 导出交易数据
-
-**GET** `/api/trades/export`
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| format | string | csv | 导出格式：csv/json |
-| startDate | string | - | 开始日期 |
-| endDate | string | - | 结束日期 |
-| symbol | string | - | 交易对 |
-| strategy | string | - | 策略 |
-
-**响应：**
-
-- `format=csv`: 返回 CSV 文件下载
-- `format=json`: 返回 JSON 数据
-
-### 6.5 获取订单列表
-
-**GET** `/api/trades/orders`
-
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| status | string | 状态筛选 |
-| symbol | string | 交易对 |
-
-### 6.6 获取未完成订单
-
-**GET** `/api/trades/orders/open`
-
 ---
 
-## 7. 持仓管理 API
+### 持仓 API
 
-### 7.1 获取持仓列表
+#### 获取当前持仓
 
-**GET** `/api/positions`
+```http
+GET /api/positions
+```
 
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| symbol | string | 交易对筛选 |
-| exchange | string | 交易所筛选 |
-| minValue | number | 最小市值筛选 |
-
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "pos_1",
+      "id": 1,
       "symbol": "BTC/USDT",
       "exchange": "binance",
       "side": "long",
-      "amount": 0.5,
-      "avgPrice": 40000,
-      "currentPrice": 42000,
-      "currentValue": 21000,
-      "unrealizedPnL": 1000,
-      "unrealizedPnLPercent": 5,
+      "size": 0.1,
+      "entryPrice": 45000,
+      "currentPrice": 46000,
+      "markPrice": 45990,
+      "liquidationPrice": 40000,
       "leverage": 1,
-      "strategyId": "strategy_1"
+      "margin": 4500,
+      "unrealizedPnL": 100,
+      "unrealizedPnLPercent": 2.22,
+      "strategyId": 1,
+      "openedAt": "2024-01-15T10:30:00Z"
     }
   ]
 }
 ```
 
-### 7.2 获取持仓详情
+#### 获取单个持仓
 
-**GET** `/api/positions/:id`
+```http
+GET /api/positions/:id
+```
 
-### 7.3 平仓
+#### 平仓
 
-**POST** `/api/positions/:id/close`
+```http
+POST /api/positions/:id/close
+Content-Type: application/json
 
-**权限要求：** trader 或 admin
-
-**请求参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| percentage | number | 100 | 平仓比例（1-100） |
-
-**请求示例：**
-
-```json
 {
-  "percentage": 50
+  "type": "market",
+  "amount": 0.1  // 可选，默认全部平仓
 }
 ```
 
-### 7.4 全部平仓
+#### 调整持仓
 
-**POST** `/api/positions/close-all`
+```http
+PUT /api/positions/:id
+Content-Type: application/json
 
-**权限要求：** admin
+{
+  "stopLoss": 44000,
+  "takeProfit": 50000
+}
+```
 
-**请求参数：**
+#### 获取持仓历史
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| exchange | string | 交易所筛选（可选） |
-| symbol | string | 交易对筛选（可选） |
+```http
+GET /api/positions/history?page=1&limit=20
+```
 
-### 7.5 获取持仓汇总
+---
 
-**GET** `/api/positions/summary`
+### 风控 API
 
-**响应示例：**
+#### 获取风控状态
 
+```http
+GET /api/risk/status
+```
+
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "totalPositions": 5,
-    "totalValue": 100000,
-    "totalUnrealizedPnL": 5000,
-    "byExchange": {
-      "binance": { "count": 3, "value": 60000, "pnl": 3000 },
-      "okx": { "count": 2, "value": 40000, "pnl": 2000 }
+    "status": "normal",
+    "level": "green",
+    "metrics": {
+      "totalExposure": 0.3,
+      "totalExposureLimit": 0.5,
+      "positionCount": 2,
+      "positionCountLimit": 5,
+      "dailyPnL": -200,
+      "dailyPnLPercent": -2,
+      "dailyLossLimit": -500,
+      "drawdown": 0.05,
+      "maxDrawdown": 0.15,
+      "leverage": 1.5,
+      "maxLeverage": 3
     },
-    "bySymbol": {
-      "BTC/USDT": { "count": 2, "value": 50000, "pnl": 2500 }
-    }
+    "circuitBreaker": {
+      "enabled": true,
+      "triggered": false,
+      "lastTriggered": null,
+      "cooldownEnd": null
+    },
+    "alerts": []
   }
 }
 ```
 
----
+#### 获取风控告警
 
-## 8. 风控配置 API
-
-### 8.1 获取风控配置
-
-**GET** `/api/risk/config`
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "data": {
-    "maxLossPerTrade": 0.02,
-    "maxDailyLoss": 0.05,
-    "maxPositions": 10,
-    "maxPositionSize": 0.2,
-    "maxLeverage": 3,
-    "defaultStopLoss": 0.05,
-    "defaultTakeProfit": 0.1,
-    "enableTrailingStop": false,
-    "trailingStopDistance": 0.03,
-    "cooldownPeriod": 60000,
-    "state": {
-      "tradingAllowed": true,
-      "dailyPnL": -500,
-      "dailyTradeCount": 15,
-      "currentPositions": 3,
-      "consecutiveLosses": 2,
-      "lastTradeTime": 1703318400000,
-      "triggerCount": 0
-    }
-  }
-}
+```http
+GET /api/risk/alerts?status=active
 ```
 
-### 8.2 更新风控配置
-
-**PUT** `/api/risk/config`
-
-**权限要求：** admin
-
-**请求参数：**
-
-| 参数 | 类型 | 范围 | 说明 |
-|------|------|------|------|
-| maxLossPerTrade | number | 0.001-0.5 | 单笔最大亏损 |
-| maxDailyLoss | number | 0.01-1 | 单日最大亏损 |
-| maxPositions | number | 1-100 | 最大持仓数 |
-| maxPositionSize | number | 0.01-1 | 单仓位最大占比 |
-| maxLeverage | number | 1-125 | 最大杠杆 |
-| defaultStopLoss | number | 0.001-0.5 | 默认止损 |
-| defaultTakeProfit | number | 0.001-1 | 默认止盈 |
-| enableTrailingStop | boolean | - | 启用追踪止损 |
-| trailingStopDistance | number | 0.001-0.5 | 追踪止损距离 |
-| cooldownPeriod | number | 0-3600000 | 冷却期（ms） |
-
-### 8.3 获取风控限制
-
-**GET** `/api/risk/limits`
-
-**响应示例：**
-
-```json
-{
-  "success": true,
-  "data": {
-    "maxDailyTrades": 100,
-    "maxConsecutiveLosses": 5,
-    "maxOrderAmount": 10000,
-    "blacklistedSymbols": ["LUNA/USDT"]
-  }
-}
-```
-
-### 8.4 更新风控限制
-
-**PUT** `/api/risk/limits`
-
-**权限要求：** admin
-
-### 8.5 获取告警列表
-
-**GET** `/api/risk/alerts`
-
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| page | number | 页码 |
-| pageSize | number | 每页数量 |
-| level | string | 告警级别：info/warning/critical |
-| dismissed | boolean | 是否已消除 |
-
-### 8.6 消除告警
-
-**POST** `/api/risk/alerts/:id/dismiss`
-
-### 8.7 启用交易
-
-**POST** `/api/risk/trading/enable`
-
-**权限要求：** admin
-
-### 8.8 禁用交易
-
-**POST** `/api/risk/trading/disable`
-
-**权限要求：** admin
-
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| reason | string | 禁用原因（可选） |
-
----
-
-## 9. 交易所管理 API
-
-### 9.1 获取交易所列表
-
-**GET** `/api/exchanges`
-
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "binance",
-      "name": "Binance",
-      "status": "connected",
-      "apiKey": "abc12345******"
-    },
-    {
-      "id": "okx",
-      "name": "OKX",
-      "status": "disconnected",
-      "apiKey": null
+      "id": 1,
+      "level": "warning",
+      "type": "daily_loss",
+      "message": "日亏损接近限制: -4.5%",
+      "threshold": -5,
+      "current": -4.5,
+      "createdAt": "2024-01-15T14:30:00Z",
+      "acknowledgedAt": null
     }
   ]
 }
 ```
 
-### 9.2 获取交易所详情
+#### 确认告警
 
-**GET** `/api/exchanges/:id`
+```http
+POST /api/risk/alerts/:id/acknowledge
+```
 
-### 9.3 更新交易所配置
+#### 获取风控配置
 
-**PUT** `/api/exchanges/:id`
+```http
+GET /api/risk/config
+```
 
-**权限要求：** admin
+#### 更新风控配置
 
-**请求参数：**
+```http
+PUT /api/risk/config
+Content-Type: application/json
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| apiKey | string | API Key |
-| secret | string | API Secret |
-| passphrase | string | 密码（OKX） |
-| testnet | boolean | 使用测试网 |
-
-### 9.4 测试交易所连接
-
-**POST** `/api/exchanges/:id/test`
-
-**响应示例：**
-
-```json
 {
-  "success": true,
-  "data": {
-    "success": true,
-    "latency": 125,
-    "serverTime": "2024-01-15T10:30:00Z"
+  "maxDailyLoss": 0.05,
+  "maxDrawdown": 0.15,
+  "maxPositionCount": 5,
+  "maxLeverage": 3,
+  "circuitBreaker": {
+    "enabled": true,
+    "triggerLoss": 0.1,
+    "cooldownMinutes": 60
   }
 }
 ```
 
-### 9.5 获取交易所余额
+#### 重置熔断器
 
-**GET** `/api/exchanges/:id/balance`
+```http
+POST /api/risk/circuit-breaker/reset
+```
 
-**响应示例：**
+---
 
+### 交易所 API
+
+#### 获取交易所连接状态
+
+```http
+GET /api/exchanges
+```
+
+**响应：**
 ```json
 {
   "success": true,
-  "data": {
-    "total": {
-      "USDT": 10000,
-      "BTC": 0.5,
-      "ETH": 5
+  "data": [
+    {
+      "name": "binance",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 50,
+      "features": ["spot", "futures", "margin"]
     },
-    "free": {
-      "USDT": 8000,
-      "BTC": 0.3,
-      "ETH": 3
-    },
-    "used": {
-      "USDT": 2000,
-      "BTC": 0.2,
-      "ETH": 2
+    {
+      "name": "bybit",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 80
     }
+  ]
+}
+```
+
+#### 获取账户余额
+
+```http
+GET /api/exchanges/:name/balance
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "exchange": "binance",
+    "balances": {
+      "USDT": {
+        "free": 5000,
+        "used": 2000,
+        "total": 7000
+      },
+      "BTC": {
+        "free": 0.1,
+        "used": 0.05,
+        "total": 0.15
+      }
+    },
+    "totalInUSD": 12500.50,
+    "updatedAt": "2024-01-15T14:30:00Z"
   }
 }
 ```
 
-### 9.6 获取市场列表
+#### 获取交易对信息
 
-**GET** `/api/exchanges/:id/markets`
+```http
+GET /api/exchanges/:name/markets
+```
 
-**请求参数：**
+#### 获取行情数据
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| quote | string | 报价货币筛选 |
-| type | string | 类型筛选：spot/swap/future |
+```http
+GET /api/exchanges/:name/ticker/:symbol
+```
 
-### 9.7 获取行情数据
-
-**GET** `/api/exchanges/:id/ticker/:symbol`
-
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": {
     "symbol": "BTC/USDT",
-    "last": 42150.5,
-    "bid": 42140,
-    "ask": 42160,
-    "high": 43000,
-    "low": 41500,
-    "volume": 15000,
+    "bid": 45000,
+    "ask": 45010,
+    "last": 45005,
+    "high": 46000,
+    "low": 44000,
+    "volume": 10000,
     "change": 2.5,
-    "timestamp": 1703318400000
+    "changePercent": 0.5,
+    "timestamp": "2024-01-15T14:30:00Z"
   }
 }
 ```
 
 ---
 
-## 10. 系统管理 API
+### 系统 API
 
-### 10.1 获取系统状态
+#### 健康检查
 
-**GET** `/api/system/status`
+```http
+GET /api/system/health
+```
 
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "version": "1.0.0",
-    "nodeVersion": "v20.10.0",
+    "status": "healthy",
     "uptime": 86400,
-    "memoryUsage": {
-      "heapUsed": 150000000,
-      "heapTotal": 300000000,
-      "rss": 400000000
-    },
-    "cpuUsage": { "user": 500000, "system": 100000 },
-    "timestamp": "2024-01-15T10:30:00Z",
-    "mode": "shadow",
-    "pid": 12345,
-    "engine": {
-      "running": true,
-      "strategies": 3
+    "version": "1.0.0",
+    "components": {
+      "database": "healthy",
+      "redis": "healthy",
+      "exchanges": "healthy"
     }
   }
 }
 ```
 
-### 10.2 获取系统配置
+#### 获取系统统计
 
-**GET** `/api/system/config`
-
-### 10.3 更新系统配置
-
-**PUT** `/api/system/config`
-
-**权限要求：** admin
-
-### 10.4 获取系统指标
-
-**GET** `/api/system/metrics`
-
-### 10.5 健康检查
-
-**GET** `/api/health`
-
-**响应示例：**
-
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "uptime": 86400
-}
+```http
+GET /api/system/stats
 ```
 
----
-
-## 11. 用户管理 API
-
-### 11.1 获取用户信息
-
-**GET** `/api/user/profile`
-
-**响应示例：**
-
+**响应：**
 ```json
 {
   "success": true,
   "data": {
-    "id": "user_1",
-    "username": "admin",
-    "role": "admin",
-    "email": "admin@example.com",
-    "createdAt": 1703232000000
+    "cpu": {
+      "usage": 25.5,
+      "cores": 4
+    },
+    "memory": {
+      "used": 512,
+      "total": 2048,
+      "usagePercent": 25
+    },
+    "process": {
+      "uptime": 86400,
+      "pid": 12345
+    },
+    "trading": {
+      "activeStrategies": 3,
+      "openPositions": 2,
+      "todayTrades": 15
+    }
   }
 }
 ```
 
-### 11.2 更新用户信息
+#### 获取系统配置
 
-**PUT** `/api/user/profile`
-
-**请求参数：**
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| email | string | 邮箱 |
-| nickname | string | 昵称 |
-| avatar | string | 头像 URL |
-
-### 11.3 修改密码
-
-**POST** `/api/user/change-password`
-
-**请求参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| oldPassword | string | 是 | 旧密码 |
-| newPassword | string | 是 | 新密码（至少 8 位） |
-
-### 11.4 获取用户列表（管理员）
-
-**GET** `/api/users`
-
-**权限要求：** admin
-
-### 11.5 创建用户（管理员）
-
-**POST** `/api/users`
-
-**权限要求：** admin
-
-**请求参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| username | string | 是 | 用户名 |
-| password | string | 是 | 密码 |
-| email | string | 否 | 邮箱 |
-| role | string | 否 | 角色（默认 viewer） |
-
-### 11.6 删除用户（管理员）
-
-**DELETE** `/api/users/:id`
-
-**权限要求：** admin
-
----
-
-## 12. WebSocket API
-
-### 12.1 连接
-
-```javascript
-const ws = new WebSocket('ws://localhost:3001');
-
-ws.onopen = () => {
-  // 认证
-  ws.send(JSON.stringify({
-    type: 'auth',
-    token: 'your_jwt_token'
-  }));
-};
+```http
+GET /api/system/config
 ```
 
-### 12.2 订阅消息
+#### 更新系统配置
 
-```javascript
-// 订阅行情
-ws.send(JSON.stringify({
-  type: 'subscribe',
-  channel: 'ticker',
-  symbol: 'BTC/USDT'
-}));
+```http
+PUT /api/system/config
+Content-Type: application/json
 
-// 订阅策略信号
-ws.send(JSON.stringify({
-  type: 'subscribe',
-  channel: 'signals'
-}));
-
-// 订阅持仓更新
-ws.send(JSON.stringify({
-  type: 'subscribe',
-  channel: 'positions'
-}));
-```
-
-### 12.3 消息类型
-
-**行情更新：**
-
-```json
 {
-  "type": "ticker",
-  "data": {
-    "symbol": "BTC/USDT",
-    "price": 42150.5,
-    "change": 2.5,
-    "timestamp": 1703318400000
+  "logging": {
+    "level": "info"
+  },
+  "notifications": {
+    "telegram": true,
+    "email": false
   }
 }
 ```
 
-**策略信号：**
+#### 紧急停止
 
-```json
-{
-  "type": "signal",
-  "data": {
-    "strategyId": "strategy_1",
-    "signal": "buy",
-    "symbol": "BTC/USDT",
-    "reason": "Golden cross",
-    "timestamp": 1703318400000
-  }
-}
+```http
+POST /api/system/emergency-stop
 ```
 
-**持仓更新：**
-
+**响应：**
 ```json
 {
-  "type": "position",
+  "success": true,
+  "message": "紧急停止已执行",
   "data": {
-    "id": "pos_1",
-    "symbol": "BTC/USDT",
-    "pnl": 1500,
-    "pnlPercent": 3.5
+    "closedPositions": 2,
+    "cancelledOrders": 5,
+    "stoppedStrategies": 3
   }
 }
 ```
 
 ---
 
-## 13. 错误码参考
+### 用户 API
 
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|------------|------|
-| UNAUTHORIZED | 401 | 未认证或 Token 无效 |
+#### 用户登录
+
+```http
+POST /api/user/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+```
+
+#### 用户登出
+
+```http
+POST /api/user/logout
+```
+
+#### 获取当前用户信息
+
+```http
+GET /api/user/profile
+```
+
+#### 更新用户信息
+
+```http
+PUT /api/user/profile
+Content-Type: application/json
+
+{
+  "email": "new@email.com",
+  "notifications": {
+    "telegram": true,
+    "email": true
+  }
+}
+```
+
+#### 修改密码
+
+```http
+PUT /api/user/password
+Content-Type: application/json
+
+{
+  "currentPassword": "old_password",
+  "newPassword": "new_password"
+}
+```
+
+---
+
+## WebSocket API
+
+### 连接
+
+```javascript
+const socket = io('http://localhost:3000', {
+  auth: {
+    token: 'YOUR_JWT_TOKEN'
+  }
+});
+```
+
+### 订阅频道
+
+#### 行情数据
+
+```javascript
+// 订阅 ticker
+socket.emit('subscribe', { channel: 'ticker', symbol: 'BTC/USDT' });
+
+// 接收 ticker 数据
+socket.on('ticker', (data) => {
+  console.log(data);
+  // { symbol: 'BTC/USDT', price: 45000, ... }
+});
+```
+
+#### 订单更新
+
+```javascript
+socket.emit('subscribe', { channel: 'orders' });
+
+socket.on('order', (data) => {
+  console.log(data);
+  // { orderId: '...', status: 'filled', ... }
+});
+```
+
+#### 持仓更新
+
+```javascript
+socket.emit('subscribe', { channel: 'positions' });
+
+socket.on('position', (data) => {
+  console.log(data);
+  // { symbol: 'BTC/USDT', unrealizedPnL: 100, ... }
+});
+```
+
+#### 系统告警
+
+```javascript
+socket.emit('subscribe', { channel: 'alerts' });
+
+socket.on('alert', (data) => {
+  console.log(data);
+  // { level: 'warning', message: '...', ... }
+});
+```
+
+### 取消订阅
+
+```javascript
+socket.emit('unsubscribe', { channel: 'ticker', symbol: 'BTC/USDT' });
+```
+
+---
+
+## 错误处理
+
+### 错误码
+
+| 错误码 | HTTP 状态 | 描述 |
+|--------|-----------|------|
+| AUTH_REQUIRED | 401 | 需要认证 |
+| AUTH_INVALID | 401 | 认证无效 |
+| AUTH_EXPIRED | 401 | Token 过期 |
 | FORBIDDEN | 403 | 权限不足 |
 | NOT_FOUND | 404 | 资源不存在 |
 | VALIDATION_ERROR | 400 | 参数验证失败 |
-| RATE_LIMIT_EXCEEDED | 429 | 请求过于频繁 |
-| STRATEGY_RUNNING | 400 | 策略运行中，无法操作 |
-| NOT_RUNNING | 400 | 策略未运行 |
-| ALREADY_RUNNING | 400 | 策略已在运行 |
+| RATE_LIMITED | 429 | 请求过于频繁 |
 | INTERNAL_ERROR | 500 | 服务器内部错误 |
+| EXCHANGE_ERROR | 502 | 交易所错误 |
+| SERVICE_UNAVAILABLE | 503 | 服务不可用 |
+
+### 错误响应示例
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "参数验证失败",
+    "details": [
+      {
+        "field": "symbol",
+        "message": "symbol 是必填字段"
+      }
+    ]
+  }
+}
+```
 
 ---
 
-*文档版本: 1.0.0*
-*最后更新: 2024-12-23*
+## 限流说明
+
+### 限流规则
+
+| 端点类别 | 限制 | 窗口 |
+|----------|------|------|
+| 公开 API | 100 次 | 1 分钟 |
+| 认证 API | 300 次 | 1 分钟 |
+| 交易 API | 60 次 | 1 分钟 |
+| WebSocket | 100 消息 | 1 分钟 |
+
+### 限流响应头
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1705324800
+```
+
+### 超限响应
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "请求过于频繁，请稍后重试",
+    "retryAfter": 60
+  }
+}
+```
+
+---
+
+## SDK 示例
+
+### Node.js
+
+```javascript
+const axios = require('axios');
+
+class TradingClient {
+  constructor(baseUrl, token) {
+    this.client = axios.create({
+      baseURL: baseUrl,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  async getStrategies() {
+    const response = await this.client.get('/api/strategies');
+    return response.data;
+  }
+
+  async createStrategy(strategy) {
+    const response = await this.client.post('/api/strategies', strategy);
+    return response.data;
+  }
+
+  async startStrategy(id) {
+    const response = await this.client.post(`/api/strategies/${id}/start`);
+    return response.data;
+  }
+}
+
+// 使用示例
+const client = new TradingClient('http://localhost:3000', 'YOUR_TOKEN');
+const strategies = await client.getStrategies();
+```
+
+### cURL 示例
+
+```bash
+# 获取策略列表
+curl -X GET http://localhost:3000/api/strategies \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# 创建策略
+curl -X POST http://localhost:3000/api/strategies \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Strategy",
+    "type": "SMA",
+    "symbol": "BTC/USDT",
+    "params": {"shortPeriod": 10, "longPeriod": 30}
+  }'
+
+# 启动策略
+curl -X POST http://localhost:3000/api/strategies/1/start \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```

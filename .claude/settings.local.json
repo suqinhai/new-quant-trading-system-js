@@ -83,7 +83,9 @@
       "Bash(pnpm test:*)",
       "Bash(dir node_modules.binvitest*)",
       "Bash(pnpm install:*)",
-      "Bash(./node_modules/.bin/vitest:*)"
+      "Bash(./node_modules/.bin/vitest:*)",
+      "Bash(xargs:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }

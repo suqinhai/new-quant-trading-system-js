@@ -2,326 +2,245 @@
 
 ## 目录
 
-1. [概述](#1-概述)
-2. [安装配置](#2-安装配置)
-3. [运行模式](#3-运行模式)
-4. [Web 界面使用](#4-web-界面使用)
-5. [策略管理](#5-策略管理)
-6. [风控配置](#6-风控配置)
-7. [监控告警](#7-监控告警)
-8. [数据导出](#8-数据导出)
-9. [最佳实践](#9-最佳实践)
+1. [系统简介](#系统简介)
+2. [快速开始](#快速开始)
+3. [系统配置](#系统配置)
+4. [运行模式](#运行模式)
+5. [策略管理](#策略管理)
+6. [交易操作](#交易操作)
+7. [风控设置](#风控设置)
+8. [监控告警](#监控告警)
+9. [Web 界面](#web-界面)
+10. [常见问题](#常见问题)
 
 ---
 
-## 1. 概述
+## 系统简介
 
-### 1.1 系统简介
+本量化交易系统是一款专业级的自动化交易平台，支持主流加密货币交易所，提供完整的策略开发、回测、模拟和实盘交易功能。
 
-本系统是一套工业级加密货币量化交易平台，提供：
+### 核心功能
 
-- **多交易所支持**：Binance、OKX、Bybit
-- **6 种内置策略**：SMA、RSI、MACD、布林带、网格、资金费率套利
-- **完整风控体系**：8 大风控模块，全方位保护资金安全
-- **专业回测引擎**：参数优化、Walk-Forward 分析、蒙特卡洛模拟
-- **实时监控告警**：Telegram、邮件、钉钉通知
+| 功能 | 描述 |
+|------|------|
+| 多交易所支持 | Binance、Bybit、OKX |
+| 多策略运行 | 同时运行多个交易策略 |
+| 专业回测 | 基于历史数据的策略验证 |
+| 影子交易 | 实时行情下的模拟交易 |
+| 实盘交易 | 真实资金自动化交易 |
+| 风险管理 | 多层风控、止损保护 |
+| 实时监控 | Telegram 告警、Web 仪表板 |
 
-### 1.2 系统要求
+### 系统要求
 
-| 组件 | 最低要求 | 推荐配置 |
-|------|---------|---------|
-| CPU | 2 核 | 4 核+ |
-| 内存 | 2 GB | 4 GB+ |
-| 磁盘 | 10 GB | 50 GB+ SSD |
-| Node.js | 20.0.0 | 20.x LTS |
-| 操作系统 | Linux/macOS/Windows | Ubuntu 22.04 LTS |
-
-### 1.3 功能架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Web 管理界面                            │
-├─────────────────────────────────────────────────────────────┤
-│  仪表板  │  策略管理  │  交易记录  │  风控配置  │  系统设置  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      RESTful API                            │
-├─────────────────────────────────────────────────────────────┤
-│  认证授权  │  限流控制  │  RBAC权限  │  审计日志             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      交易引擎核心                            │
-├───────────┬───────────┬───────────┬───────────┬─────────────┤
-│  策略模块  │  风控模块  │  执行模块  │  行情模块  │  数据模块  │
-└───────────┴───────────┴───────────┴───────────┴─────────────┘
-```
+- **操作系统**: Windows 10+、Linux、macOS
+- **Node.js**: 18.0.0 或更高版本
+- **内存**: 建议 4GB 以上
+- **网络**: 稳定的互联网连接
 
 ---
 
-## 2. 安装配置
+## 快速开始
 
-### 2.1 快速安装
+### 1. 安装系统
 
 ```bash
-# 1. 克隆项目
-git clone <repository-url>
-cd quant-trading-system
-
-# 2. 安装依赖
-pnpm install
-
-# 3. 复制配置文件
-cp .env.example .env
-
-# 4. 编辑配置
-nano .env
+# 安装依赖
+npm install
 ```
 
-### 2.2 交易所 API 配置
+### 2. 配置交易所 API
 
-#### Binance 配置
-
-1. 登录 [Binance](https://www.binance.com)
-2. 进入 API 管理页面
-3. 创建新的 API Key（勾选"启用现货交易"）
-4. 记录 API Key 和 Secret
+创建 `.env` 文件，填入您的交易所 API 密钥：
 
 ```bash
-# .env 文件
-BINANCE_API_KEY=your_api_key_here
-BINANCE_API_SECRET=your_api_secret_here
-BINANCE_TESTNET=true  # 建议先用测试网
+# Binance
+BINANCE_API_KEY=您的API密钥
+BINANCE_SECRET=您的密钥
+
+# Bybit
+BYBIT_API_KEY=您的API密钥
+BYBIT_SECRET=您的密钥
+
+# OKX
+OKX_API_KEY=您的API密钥
+OKX_SECRET=您的密钥
+OKX_PASSPHRASE=您的密码
 ```
 
-#### OKX 配置
-
-1. 登录 [OKX](https://www.okx.com)
-2. 进入 API 管理
-3. 创建 API Key（设置交易权限和 IP 白名单）
-4. 记录 API Key、Secret 和 Passphrase
+### 3. 运行回测（推荐首次使用）
 
 ```bash
-OKX_API_KEY=your_api_key
-OKX_API_SECRET=your_api_secret
-OKX_PASSPHRASE=your_passphrase
-OKX_SANDBOX=true
-```
-
-#### Bybit 配置
-
-```bash
-BYBIT_API_KEY=your_api_key
-BYBIT_API_SECRET=your_api_secret
-BYBIT_TESTNET=true
-```
-
-### 2.3 密钥加密（强烈推荐）
-
-为保护 API 密钥安全，请使用加密存储：
-
-```bash
-# 1. 设置主密码（16位以上）
-export MASTER_KEY="YourSecureMasterPassword123!"
-
-# 2. 加密密钥
-npm run keys:encrypt
-
-# 3. 验证加密
-npm run keys:verify
-
-# 4. 删除明文密钥（从 .env 中移除）
-```
-
-### 2.4 数据库配置
-
-#### SQLite（默认，无需配置）
-
-系统默认使用 SQLite，数据存储在 `data/` 目录。
-
-#### Redis（可选，用于实时缓存）
-
-```bash
-# 安装 Redis
-sudo apt install redis-server
-
-# 配置
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=your_password  # 可选
-```
-
----
-
-## 3. 运行模式
-
-### 3.1 模式说明
-
-| 模式 | 命令 | 说明 | 适用场景 |
-|------|------|------|---------|
-| 回测模式 | `npm run backtest` | 使用历史数据测试策略 | 策略开发、参数优化 |
-| 影子模式 | `npm run shadow` | 真实行情，模拟下单 | 策略验证、系统测试 |
-| 实盘模式 | `npm run live` | 真实交易 | 正式运营 |
-
-### 3.2 回测模式
-
-```bash
-# 运行回测
 npm run backtest
-
-# 指定策略和参数
-node examples/runBacktest.js --strategy=sma --symbol=BTC/USDT
 ```
 
-**回测配置示例：**
-
-```javascript
-const config = {
-  strategy: 'sma',
-  symbol: 'BTC/USDT',
-  timeframe: '1h',
-  startDate: '2024-01-01',
-  endDate: '2024-06-30',
-  initialCapital: 10000,
-  params: {
-    fastPeriod: 10,
-    slowPeriod: 20,
-  },
-};
-```
-
-### 3.3 影子模式（推荐先使用）
-
-影子模式使用真实行情数据，但不会实际下单：
+### 4. 运行影子交易（模拟）
 
 ```bash
 npm run shadow
 ```
 
-影子模式会：
-- 订阅真实行情数据
-- 执行策略逻辑
-- 记录虚拟交易
-- 计算模拟盈亏
-
-### 3.4 实盘模式
-
-**警告：实盘模式会使用真实资金交易！**
+### 5. 运行实盘交易
 
 ```bash
-# 确认配置正确后启动
+# 警告：实盘交易涉及真实资金，请谨慎操作
 npm run live
 ```
 
-实盘前检查清单：
-
-- [ ] API 密钥已加密
-- [ ] 风控参数已设置
-- [ ] 影子模式验证通过
-- [ ] 资金量符合预期
-- [ ] 告警通知已配置
-
 ---
 
-## 4. Web 界面使用
+## 系统配置
 
-### 4.1 启动 Web 服务
+### 配置文件位置
 
-```bash
-# 启动后端 API
-npm run api
-
-# 启动前端界面
-cd web && npm run dev
+```
+config/
+├── default.js      # 默认配置
+├── production.js   # 生产环境配置
+└── development.js  # 开发环境配置
 ```
 
-访问 `http://localhost:5173` 进入管理界面。
+### 主要配置项
 
-### 4.2 登录
+#### 交易所配置
 
-默认账户：
-- 用户名：`admin`
-- 密码：`admin123`
+```javascript
+exchanges: {
+  binance: {
+    enabled: true,
+    apiKey: process.env.BINANCE_API_KEY,
+    secret: process.env.BINANCE_SECRET,
+    sandbox: false,  // true 使用测试网
+    options: {
+      defaultType: 'spot',  // 'spot' | 'future'
+      adjustForTimeDifference: true
+    }
+  }
+}
+```
 
-**首次登录后请立即修改密码！**
+#### 策略配置
 
-### 4.3 仪表板
+```javascript
+strategies: {
+  default: {
+    symbol: 'BTC/USDT',
+    timeframe: '1h',
+    initialCapital: 10000,
+    maxPositionSize: 0.1,  // 最大仓位 10%
+    stopLoss: 0.02,        // 止损 2%
+    takeProfit: 0.05       // 止盈 5%
+  }
+}
+```
 
-仪表板展示：
+#### 风控配置
 
-- **资金概览**：总资产、可用余额、持仓市值、今日盈亏
-- **收益曲线**：支持 7天/30天/90天 切换
-- **持仓列表**：当前持仓详情及浮动盈亏
-- **最近交易**：最近 10 笔交易记录
-- **系统状态**：CPU、内存、延迟等指标
-- **风控告警**：未处理的告警列表
-
-### 4.4 策略管理
-
-#### 创建策略
-
-1. 点击「新建策略」
-2. 填写策略信息：
-   - 策略名称
-   - 策略类型（SMA/RSI/MACD 等）
-   - 交易对
-   - 初始资金
-   - 策略参数
-3. 点击「保存」
-
-#### 启动/停止策略
-
-- 点击策略卡片上的「启动」按钮开始运行
-- 点击「停止」按钮暂停策略
-- 运行中的策略无法编辑参数
-
-#### 回测策略
-
-1. 点击策略卡片上的「回测」按钮
-2. 设置回测时间范围和初始资金
-3. 查看回测结果（收益率、夏普比率、最大回撤等）
-
-### 4.5 交易记录
-
-- 支持按时间、交易对、方向筛选
-- 查看交易详情
-- 导出 CSV 文件
-
-### 4.6 系统设置
-
-- **基础设置**：运行模式、日志级别
-- **交易所配置**：API 密钥（脱敏显示）、连接测试
-- **通知设置**：Telegram、邮件配置
-- **用户管理**：修改密码、管理用户
+```javascript
+risk: {
+  maxDailyLoss: 0.05,       // 日最大亏损 5%
+  maxDrawdown: 0.15,        // 最大回撤 15%
+  maxPositionCount: 5,      // 最大持仓数
+  maxLeverage: 3,           // 最大杠杆
+  enableCircuitBreaker: true // 启用熔断
+}
+```
 
 ---
 
-## 5. 策略管理
+## 运行模式
 
-### 5.1 内置策略
+### 回测模式 (Backtest)
 
-| 策略 | 类型 | 说明 |
-|------|------|------|
-| SMA | 趋势跟踪 | 双均线交叉策略，金叉买入，死叉卖出 |
-| RSI | 震荡指标 | RSI 超卖买入，超买卖出 |
-| MACD | 趋势动量 | MACD 金叉/死叉 + 柱状图确认 |
-| BollingerBands | 均值回归 | 价格触及下轨买入，上轨卖出 |
-| Grid | 网格交易 | 固定价格区间内高抛低吸 |
-| FundingArb | 套利 | 现货/合约资金费率套利 |
+使用历史数据验证策略表现。
 
-### 5.2 策略参数说明
+```bash
+npm run backtest
+```
+
+**配置参数：**
+```javascript
+backtest: {
+  startDate: '2024-01-01',
+  endDate: '2024-12-01',
+  initialCapital: 10000,
+  symbol: 'BTC/USDT',
+  timeframe: '1h',
+  commission: 0.001,  // 手续费 0.1%
+  slippage: 0.0005    // 滑点 0.05%
+}
+```
+
+**输出报告：**
+- 总收益率
+- 最大回撤
+- 夏普比率
+- 胜率
+- 盈亏比
+- 交易次数
+
+### 影子交易模式 (Shadow)
+
+使用实时行情，但不执行真实交易。
+
+```bash
+npm run shadow
+```
+
+**特点：**
+- 实时行情数据
+- 模拟订单执行
+- 不消耗真实资金
+- 完整的交易日志
+
+**用途：**
+- 策略实时验证
+- 上线前测试
+- 风险评估
+
+### 实盘交易模式 (Live)
+
+执行真实交易。
+
+```bash
+npm run live
+```
+
+**安全建议：**
+1. 首次使用小资金测试
+2. 设置合理的止损
+3. 启用所有风控功能
+4. 配置 Telegram 告警
+5. 定期检查系统状态
+
+---
+
+## 策略管理
+
+### 内置策略
+
+| 策略名称 | 类型 | 描述 |
+|----------|------|------|
+| SMA | 趋势跟踪 | 双均线交叉策略 |
+| RSI | 震荡 | 相对强度指标策略 |
+| MACD | 趋势 | MACD 指标策略 |
+| BollingerBands | 震荡 | 布林带策略 |
+| Grid | 网格 | 网格交易策略 |
+| FundingArb | 套利 | 资金费率套利策略 |
+
+### 策略配置示例
 
 #### SMA 策略
 
 ```javascript
 {
-  fastPeriod: 10,    // 快线周期（5-20）
-  slowPeriod: 20,    // 慢线周期（20-60）
-  stopLoss: 0.02,    // 止损比例 2%
-  takeProfit: 0.04,  // 止盈比例 4%
+  type: 'SMA',
+  params: {
+    shortPeriod: 10,   // 短期均线周期
+    longPeriod: 30,    // 长期均线周期
+    symbol: 'BTC/USDT',
+    timeframe: '1h'
+  }
 }
 ```
 
@@ -329,228 +248,333 @@ cd web && npm run dev
 
 ```javascript
 {
-  period: 14,        // RSI 周期（7-21）
-  overbought: 70,    // 超买阈值（65-80）
-  oversold: 30,      // 超卖阈值（20-35）
+  type: 'RSI',
+  params: {
+    period: 14,
+    overbought: 70,    // 超买阈值
+    oversold: 30,      // 超卖阈值
+    symbol: 'ETH/USDT',
+    timeframe: '4h'
+  }
 }
 ```
 
-#### MACD 策略
+#### 网格策略
 
 ```javascript
 {
-  fastPeriod: 12,    // 快线周期
-  slowPeriod: 26,    // 慢线周期
-  signalPeriod: 9,   // 信号线周期
+  type: 'Grid',
+  params: {
+    upperPrice: 50000,  // 网格上限
+    lowerPrice: 40000,  // 网格下限
+    gridCount: 10,      // 网格数量
+    totalAmount: 1000,  // 总投入金额
+    symbol: 'BTC/USDT'
+  }
 }
 ```
 
-### 5.3 策略优化
-
-使用参数网格搜索优化策略：
+### 通过 API 管理策略
 
 ```bash
-node examples/runGridSearch.js --strategy=sma
-```
+# 获取策略列表
+curl http://localhost:3000/api/strategies
 
-优化结果包括：
-- 最优参数组合
-- 参数敏感度分析
-- 热力图数据
+# 启动策略
+curl -X POST http://localhost:3000/api/strategies/1/start
+
+# 停止策略
+curl -X POST http://localhost:3000/api/strategies/1/stop
+
+# 创建新策略
+curl -X POST http://localhost:3000/api/strategies \
+  -H "Content-Type: application/json" \
+  -d '{"type": "SMA", "params": {...}}'
+```
 
 ---
 
-## 6. 风控配置
+## 交易操作
 
-### 6.1 风控参数
+### 订单类型
 
-| 参数 | 说明 | 建议值 |
-|------|------|--------|
-| maxPositionRatio | 单仓位最大占比 | 20-30% |
-| maxPositions | 最大持仓数量 | 3-5 |
-| maxLeverage | 最大杠杆 | 1-3 |
-| maxRiskPerTrade | 单笔风险 | 1-2% |
-| maxDailyLoss | 日亏损上限 | 5-10% |
-| maxDrawdown | 最大回撤 | 15-20% |
+| 类型 | 说明 |
+|------|------|
+| MARKET | 市价单，立即成交 |
+| LIMIT | 限价单，指定价格成交 |
+| STOP_LOSS | 止损单 |
 
-### 6.2 止损止盈设置
+### 查看持仓
 
-```javascript
+```bash
+curl http://localhost:3000/api/positions
+```
+
+**返回示例：**
+```json
 {
-  stopLoss: {
-    enabled: true,
-    defaultRatio: 0.02,     // 止损 2%
-    trailingStop: true,     // 启用追踪止损
-    trailingRatio: 0.015,   // 回撤 1.5% 触发
-  },
-  takeProfit: {
-    enabled: true,
-    defaultRatio: 0.04,     // 止盈 4%
-    partialTake: true,      // 分批止盈
-    partialRatios: [0.5, 0.3, 0.2],  // 50%/30%/20%
-  },
+  "positions": [
+    {
+      "symbol": "BTC/USDT",
+      "side": "long",
+      "size": 0.1,
+      "entryPrice": 45000,
+      "currentPrice": 46000,
+      "unrealizedPnL": 100,
+      "unrealizedPnLPercent": 2.22
+    }
+  ]
 }
 ```
 
-### 6.3 熔断机制
+### 查看交易记录
 
-当触发以下条件时，系统自动停止交易：
+```bash
+curl http://localhost:3000/api/trades
+```
 
-- 连续 5 次订单失败
-- 日亏损超过设定限额
-- 最大回撤超过阈值
-- 检测到价格异常波动（黑天鹅）
+### 手动平仓
 
-恢复交易：
-
-1. Web 界面：风控配置 → 点击「启用交易」
-2. API：`POST /api/risk/trading/enable`
+```bash
+curl -X POST http://localhost:3000/api/positions/close \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "BTC/USDT"}'
+```
 
 ---
 
-## 7. 监控告警
+## 风控设置
 
-### 7.1 Telegram 通知
+### 风控层级
 
-1. 创建 Telegram Bot（@BotFather）
-2. 获取 Bot Token 和 Chat ID
+```
+┌─────────────────────────────────────┐
+│         熔断器 (Circuit Breaker)    │ ← 系统级保护
+├─────────────────────────────────────┤
+│      黑天鹅保护 (Black Swan)        │ ← 极端行情保护
+├─────────────────────────────────────┤
+│      组合风控 (Portfolio Risk)      │ ← 账户级风控
+├─────────────────────────────────────┤
+│      单笔风控 (Order Risk)          │ ← 订单级风控
+└─────────────────────────────────────┘
+```
+
+### 风控规则配置
+
+```javascript
+risk: {
+  // 单笔订单限制
+  order: {
+    maxSizePercent: 0.1,     // 单笔最大仓位 10%
+    maxSlippage: 0.01        // 最大滑点 1%
+  },
+
+  // 账户级限制
+  account: {
+    maxPositionCount: 5,     // 最大持仓数
+    maxTotalExposure: 0.5,   // 最大总敞口 50%
+    maxDailyLoss: 0.05       // 日最大亏损 5%
+  },
+
+  // 熔断条件
+  circuitBreaker: {
+    enabled: true,
+    triggerLoss: 0.1,        // 触发亏损 10%
+    cooldownMinutes: 60      // 冷却时间 60 分钟
+  }
+}
+```
+
+### 查看风控状态
+
+```bash
+curl http://localhost:3000/api/risk/status
+```
+
+**返回示例：**
+```json
+{
+  "status": "normal",
+  "metrics": {
+    "dailyPnL": -200,
+    "dailyPnLPercent": -2,
+    "totalExposure": 0.3,
+    "positionCount": 2,
+    "drawdown": 0.05
+  },
+  "alerts": [],
+  "circuitBreaker": {
+    "triggered": false,
+    "lastTriggered": null
+  }
+}
+```
+
+---
+
+## 监控告警
+
+### Telegram 告警配置
+
+1. 创建 Telegram Bot（通过 @BotFather）
+2. 获取 Chat ID
 3. 配置环境变量：
 
 ```bash
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_CHAT_ID=987654321
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 ```
 
-4. 告警类型：
-   - 订单成交
-   - 策略信号
-   - 风控触发
-   - 系统异常
+### 告警类型
 
-### 7.2 邮件通知
+| 类型 | 级别 | 触发条件 |
+|------|------|----------|
+| 订单成交 | INFO | 订单执行完成 |
+| 仓位变动 | INFO | 开仓/平仓 |
+| 风控警告 | WARNING | 接近风控阈值 |
+| 熔断触发 | ERROR | 触发熔断条件 |
+| 系统错误 | ERROR | 系统异常 |
 
-```bash
-SMTP_HOST=smtp.qq.com
-SMTP_PORT=587
-SMTP_USER=your_email@qq.com
-SMTP_PASS=your_smtp_password
-ALERT_EMAIL_TO=recipient@example.com
-```
+### Prometheus 监控
 
-### 7.3 Prometheus + Grafana
+访问 `http://localhost:9090/metrics` 获取系统指标。
 
-1. 配置 Prometheus：
-
-```yaml
-# prometheus.yml
-scrape_configs:
-  - job_name: 'quant-trading'
-    static_configs:
-      - targets: ['localhost:9090']
-```
-
-2. 导入 Grafana Dashboard（见 `docs/grafana-dashboard.json`）
+**主要指标：**
+- `trading_pnl_total` - 总盈亏
+- `trading_orders_total` - 订单总数
+- `trading_positions_count` - 当前持仓数
+- `system_cpu_usage` - CPU 使用率
+- `system_memory_usage` - 内存使用率
 
 ---
 
-## 8. 数据导出
+## Web 界面
 
-### 8.1 交易记录导出
+### 访问仪表板
 
-Web 界面：交易记录 → 导出 → 选择格式（CSV/Excel）
+启动系统后访问：`http://localhost:3000`
 
-API 方式：
+### 功能模块
 
-```bash
-curl -H "Authorization: Bearer <token>" \
-  "http://localhost:3000/api/trades/export?format=csv&startDate=2024-01-01"
-```
+| 模块 | 功能 |
+|------|------|
+| 仪表板 | 系统概览、实时数据 |
+| 策略管理 | 策略配置、启停控制 |
+| 交易记录 | 历史交易查询 |
+| 持仓管理 | 当前持仓、手动操作 |
+| 风控配置 | 风控参数设置 |
+| 系统设置 | 系统配置管理 |
 
-### 8.2 回测报告导出
+### API 认证
 
-回测完成后自动生成报告：
-
-- `reports/backtest_<timestamp>.json` - 完整数据
-- `reports/backtest_<timestamp>.html` - 可视化报告
-
-### 8.3 审计日志
-
-审计日志存储在 `logs/audit/` 目录：
+系统使用 JWT 认证：
 
 ```bash
-# 查看审计日志
-cat logs/audit/audit-2024-01-15.jsonl | jq .
+# 登录获取 Token
+curl -X POST http://localhost:3000/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password"}'
+
+# 使用 Token 访问 API
+curl http://localhost:3000/api/strategies \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ---
 
-## 9. 最佳实践
+## 常见问题
 
-### 9.1 资金管理建议
+### Q: 如何更换交易对？
 
-- **起步资金**：建议使用不超过总资金 10% 的金额测试
-- **单策略资金**：每个策略分配 10-20% 资金
-- **预留资金**：保持 30% 以上资金作为备用
-
-### 9.2 策略使用建议
-
-1. **先回测**：任何策略上线前必须回测
-2. **影子验证**：回测通过后，用影子模式验证 1-2 周
-3. **小资金实盘**：先用小资金实盘测试
-4. **逐步加仓**：确认稳定后再增加资金
-
-### 9.3 风控建议
-
-- 日亏损限制设为账户的 3-5%
-- 单笔止损不超过 2%
-- 最大回撤控制在 15% 以内
-- 启用追踪止损保护利润
-
-### 9.4 运维建议
-
-- 使用 PM2 管理进程
-- 配置自动重启
-- 设置日志轮转
-- 定期备份数据
-- 监控系统资源
-
-### 9.5 安全建议
-
-- API 密钥加密存储
-- 设置 IP 白名单
-- 定期轮换密钥
-- 启用双因素认证（如交易所支持）
-- 定期检查审计日志
-
----
-
-## 附录
-
-### A. 常用命令
-
-```bash
-# 系统运行
-npm run backtest      # 回测模式
-npm run shadow        # 影子模式
-npm run live          # 实盘模式
-
-# 密钥管理
-npm run keys:encrypt  # 加密密钥
-npm run keys:verify   # 验证密钥
-
-# PM2 管理
-npm run pm2:start     # 启动
-npm run pm2:stop      # 停止
-npm run pm2:logs      # 日志
-npm run pm2:status    # 状态
+修改策略配置中的 `symbol` 参数：
+```javascript
+{
+  symbol: 'ETH/USDT'  // 改为目标交易对
+}
 ```
 
-### B. 联系支持
+### Q: 回测结果和实盘差距大？
 
-- GitHub Issues: [提交问题](https://github.com/xxx/issues)
-- 技术文档: [在线文档](https://docs.xxx.com)
+可能原因：
+1. **滑点**：回测滑点设置过低
+2. **流动性**：实际市场流动性不足
+3. **延迟**：网络延迟影响执行价格
+4. **手续费**：未正确计入手续费
+
+建议：
+- 增加回测滑点参数
+- 使用影子模式验证
+- 减小单笔交易量
+
+### Q: 如何处理交易所连接失败？
+
+1. 检查 API 密钥是否正确
+2. 检查网络连接
+3. 查看系统日志：`logs/` 目录
+4. 联系交易所确认 API 状态
+
+### Q: 如何紧急停止所有交易？
+
+**方法一：通过 API**
+```bash
+curl -X POST http://localhost:3000/api/system/emergency-stop
+```
+
+**方法二：终止进程**
+```bash
+npm run pm2:stop
+```
+
+### Q: 系统崩溃后数据会丢失吗？
+
+不会。系统使用多层数据持久化：
+- SQLite：交易记录、订单历史
+- Redis：实时状态、缓存数据
+- ClickHouse：大数据归档
+
+重启后系统会自动恢复状态。
+
+### Q: 如何查看详细日志？
+
+```bash
+# 查看实时日志
+tail -f logs/trading.log
+
+# 查看错误日志
+tail -f logs/error.log
+
+# 查看 PnL 日志
+tail -f logs/pnl/
+```
 
 ---
 
-*文档版本: 1.0.0*
-*最后更新: 2024-12-23*
+## 安全建议
+
+1. **API 密钥安全**
+   - 使用只读密钥进行测试
+   - 限制 API 权限（只开放必要权限）
+   - 设置 IP 白名单
+
+2. **资金安全**
+   - 小资金起步
+   - 设置合理止损
+   - 定期提取利润
+
+3. **系统安全**
+   - 定期更新系统
+   - 启用防火墙
+   - 使用 HTTPS
+
+4. **操作安全**
+   - 保管好配置文件
+   - 定期备份数据
+   - 记录操作日志
+
+---
+
+## 技术支持
+
+- **文档**：查看 `docs/` 目录下的其他文档
+- **日志**：检查 `logs/` 目录下的日志文件
+- **问题反馈**：提交 Issue 到项目仓库
