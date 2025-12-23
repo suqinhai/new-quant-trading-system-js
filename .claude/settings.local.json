@@ -88,7 +88,11 @@
       "Bash(mkdir:*)",
       "Bash(npm run pm2:shadow:*)",
       "Bash(pm2 kill:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(ls:*)",
+      "Bash(dir \"C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\\\\ecosystem.config*\")",
+      "Bash(tasklist:*)",
+      "Bash(wmic process:*)"
     ]
   }
 }
