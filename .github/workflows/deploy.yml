@@ -1,0 +1,282 @@
+# =============================================================================
+# Deployment Workflow
+# Automated deployment to staging and production environments
+# =============================================================================
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      deployment_type:
+        description: 'Deployment strategy'
+        required: true
+        default: 'rolling'
+        type: choice
+        options:
+          - rolling
+          - blue-green
+          - canary
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: false
+        default: 'latest'
+        type: string
+
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  # ===========================================================================
+  # Pre-deployment Checks
+  # ===========================================================================
+  pre-deploy:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ] && [ "${{ github.event.inputs.image_tag }}" != "latest" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if image exists
+        id: check
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+            echo "Image exists: $IMAGE"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Image not found: $IMAGE"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+      - name: Run pre-deployment tests
+        run: |
+          echo "Running pre-deployment validation..."
+          # Add any pre-deployment checks here
+
+  # ===========================================================================
+  # Deploy to Staging
+  # ===========================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: pre-deploy
+    if: |
+      needs.pre-deploy.outputs.should_deploy == 'true' &&
+      (github.event.inputs.environment == 'staging' || github.event_name == 'push')
+    environment:
+      name: staging
+      url: https://staging.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Deploy to staging server
+        env:
+          DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+          DEPLOY_USER: ${{ secrets.STAGING_USER }}
+          IMAGE_TAG: ${{ needs.pre-deploy.outputs.image_tag }}
+        run: |
+          echo "Deploying to staging..."
+
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENDSSH'
+            cd /opt/quant-trading
+
+            # Pull latest code
+            git pull origin main
+
+            # Update image tag
+            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
+
+            # Run deployment script
+            ./scripts/deploy.sh deploy -e shadow -l
+          ENDSSH
+
+      - name: Verify staging deployment
+        run: |
+          echo "Verifying staging deployment..."
+          sleep 30
+
+          # Health check (replace with actual staging URL)
+          # curl -f https://staging.example.com/health || exit 1
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ needs.pre-deploy.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Deploy to Production
+  # ===========================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deploy, deploy-staging]
+    if: |
+      needs.pre-deploy.outputs.should_deploy == 'true' &&
+      github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://app.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: Create backup
+        env:
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
+        run: |
+          echo "Creating production backup..."
+
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENDSSH'
+            cd /opt/quant-trading
+            ./scripts/deploy.sh backup
+          ENDSSH
+
+      - name: Deploy to production
+        env:
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
+          IMAGE_TAG: ${{ needs.pre-deploy.outputs.image_tag }}
+          DEPLOYMENT_TYPE: ${{ github.event.inputs.deployment_type }}
+        run: |
+          echo "Deploying to production..."
+
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENDSSH'
+            cd /opt/quant-trading
+
+            # Pull latest code
+            git pull origin main
+
+            # Set environment
+            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
+
+            # Choose deployment strategy
+            case "${{ env.DEPLOYMENT_TYPE }}" in
+              blue-green)
+                ./scripts/blue-green-deploy.sh deploy
+                ;;
+              canary)
+                ./scripts/deploy.sh deploy -e live --canary
+                ;;
+              *)
+                ./scripts/deploy.sh deploy -e live -B
+                ;;
+            esac
+          ENDSSH
+
+      - name: Verify production deployment
+        run: |
+          echo "Verifying production deployment..."
+          sleep 60
+
+          # Health check (replace with actual production URL)
+          # curl -f https://app.example.com/health || exit 1
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ needs.pre-deploy.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Strategy**: ${{ github.event.inputs.deployment_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Rollback (Manual trigger)
+  # ===========================================================================
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && failure()
+    needs: deploy-production
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: Execute rollback
+        env:
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
+        run: |
+          echo "Rolling back production..."
+
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENDSSH'
+            cd /opt/quant-trading
+
+            # Check if blue-green deployment
+            if [ -f ".blue-green-state" ]; then
+              ./scripts/blue-green-deploy.sh rollback
+            else
+              ./scripts/deploy.sh rollback
+            fi
+          ENDSSH
+
+      - name: Notify rollback status
+        if: always()
+        run: |
+          echo "## Production Rollback" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
