@@ -1,0 +1,363 @@
+# =============================================================================
+# Prometheus Alert Rules
+# Alert definitions for Quant Trading System
+# =============================================================================
+
+groups:
+  # ===========================================================================
+  # Trading Alerts - Critical for trading operations
+  # ===========================================================================
+  - name: trading_alerts
+    rules:
+      # Order execution failures
+      - alert: HighOrderFailureRate
+        expr: |
+          sum(rate(trading_orders_total{status="failed"}[5m])) by (exchange)
+          /
+          sum(rate(trading_orders_total[5m])) by (exchange) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          category: trading
+        annotations:
+          summary: "High order failure rate on {{ $labels.exchange }}"
+          description: "Order failure rate is {{ $value | humanizePercentage }} on {{ $labels.exchange }} (threshold: 10%)"
+          runbook_url: "https://docs.example.com/runbooks/high-order-failure"
+
+      # Order latency too high
+      - alert: HighOrderLatency
+        expr: trading:order_latency:p99 > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: trading
+        annotations:
+          summary: "High order latency on {{ $labels.exchange }}"
+          description: "P99 order latency is {{ $value | humanizeDuration }} on {{ $labels.exchange }}"
+
+      # Exchange connection issues
+      - alert: ExchangeConnectionDown
+        expr: trading_exchange_connected == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: trading
+        annotations:
+          summary: "Exchange connection lost: {{ $labels.exchange }}"
+          description: "Connection to {{ $labels.exchange }} has been down for more than 1 minute"
+
+      # Large position alert
+      - alert: LargePositionSize
+        expr: abs(trading_position_value) > 100000
+        for: 1m
+        labels:
+          severity: warning
+          category: risk
+        annotations:
+          summary: "Large position detected"
+          description: "Position value of {{ $value | humanize }} USD on {{ $labels.symbol }}"
+
+      # Negative PnL threshold
+      - alert: SignificantLoss
+        expr: trading_pnl_total < -5000
+        for: 5m
+        labels:
+          severity: warning
+          category: risk
+        annotations:
+          summary: "Significant loss detected"
+          description: "PnL is {{ $value | humanize }} USD for strategy {{ $labels.strategy }}"
+
+      # Daily loss limit
+      - alert: DailyLossLimitApproaching
+        expr: |
+          trading_daily_pnl / trading_daily_loss_limit < -0.8
+        for: 1m
+        labels:
+          severity: critical
+          category: risk
+        annotations:
+          summary: "Approaching daily loss limit"
+          description: "Daily loss is at {{ $value | humanizePercentage }} of limit"
+
+      # No trading activity
+      - alert: NoTradingActivity
+        expr: |
+          sum(increase(trading_orders_total[30m])) == 0
+          and on() hour() >= 0 and hour() < 24
+        for: 30m
+        labels:
+          severity: warning
+          category: trading
+        annotations:
+          summary: "No trading activity detected"
+          description: "No orders have been placed in the last 30 minutes during trading hours"
+
+  # ===========================================================================
+  # Application Alerts
+  # ===========================================================================
+  - name: application_alerts
+    rules:
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job=~"quant-trading.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: application
+        annotations:
+          summary: "Application instance down"
+          description: "{{ $labels.job }} instance {{ $labels.instance }} is down"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: api:error_rate:5m > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }}"
+
+      # High API latency
+      - alert: HighAPILatency
+        expr: api:latency:p95 > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High API latency"
+          description: "P95 API latency is {{ $value | humanizeDuration }} for {{ $labels.path }}"
+
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes / 1024 / 1024 / 1024) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High memory usage"
+          description: "Application memory usage is {{ $value | humanize }}GB"
+
+      # Event loop lag
+      - alert: HighEventLoopLag
+        expr: nodejs_eventloop_lag_seconds > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High Node.js event loop lag"
+          description: "Event loop lag is {{ $value | humanizeDuration }}"
+
+  # ===========================================================================
+  # Infrastructure Alerts
+  # ===========================================================================
+  - name: infrastructure_alerts
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: system:cpu:usage > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}%"
+
+      - alert: CriticalCPUUsage
+        expr: system:cpu:usage > 95
+        for: 5m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}%"
+
+      # Memory usage
+      - alert: HighMemoryUsage
+        expr: system:memory:usage_pct > 85
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanize }}%"
+
+      - alert: CriticalMemoryUsage
+        expr: system:memory:usage_pct > 95
+        for: 5m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanize }}%"
+
+      # Disk usage
+      - alert: HighDiskUsage
+        expr: system:disk:usage_pct > 80
+        for: 30m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanize }}%"
+
+      - alert: CriticalDiskUsage
+        expr: system:disk:usage_pct > 90
+        for: 10m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical disk usage on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanize }}%"
+
+  # ===========================================================================
+  # Redis Alerts
+  # ===========================================================================
+  - name: redis_alerts
+    rules:
+      # Redis down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} is not responding"
+
+      # High memory usage
+      - alert: RedisHighMemory
+        expr: redis:memory:usage_pct > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value | humanize }}%"
+
+      # Too many connections
+      - alert: RedisTooManyConnections
+        expr: redis:clients:connected > 1000
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Redis has too many connections"
+          description: "{{ $value }} clients connected to Redis"
+
+      # Low hit rate
+      - alert: RedisLowHitRate
+        expr: redis:hit_rate < 0.9
+        for: 15m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Redis low cache hit rate"
+          description: "Redis hit rate is {{ $value | humanizePercentage }}"
+
+      # Replication lag
+      - alert: RedisReplicationLag
+        expr: redis_connected_slaves < 2
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Redis replication issue"
+          description: "Only {{ $value }} slaves connected to Redis master"
+
+  # ===========================================================================
+  # ClickHouse Alerts
+  # ===========================================================================
+  - name: clickhouse_alerts
+    rules:
+      # ClickHouse down
+      - alert: ClickHouseDown
+        expr: up{job="clickhouse"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "ClickHouse is down"
+          description: "ClickHouse instance is not responding"
+
+      # High query count
+      - alert: ClickHouseHighQueryRate
+        expr: clickhouse:queries:rate > 100
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High ClickHouse query rate"
+          description: "Query rate is {{ $value | humanize }}/s"
+
+      # Slow queries
+      - alert: ClickHouseSlowQueries
+        expr: |
+          rate(ClickHouseProfileEvents_SlowRead[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "ClickHouse slow queries detected"
+          description: "{{ $value | humanize }} slow reads per second"
+
+  # ===========================================================================
+  # Container Alerts
+  # ===========================================================================
+  - name: container_alerts
+    rules:
+      # Container restart
+      - alert: ContainerRestarting
+        expr: |
+          increase(container_restart_count[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container restarting frequently"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last hour"
+
+      # Container OOM
+      - alert: ContainerOOMKilled
+        expr: |
+          increase(container_oom_events_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "Container OOM killed"
+          description: "Container {{ $labels.name }} was OOM killed"
+
+      # Container CPU throttled
+      - alert: ContainerCPUThrottled
+        expr: |
+          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container CPU throttled"
+          description: "Container {{ $labels.name }} is being CPU throttled"

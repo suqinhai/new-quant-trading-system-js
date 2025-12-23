@@ -1,0 +1,140 @@
+# =============================================================================
+# Prometheus Recording Rules
+# Pre-computed metrics for faster queries
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # Trading Metrics Recording Rules
+  # ---------------------------------------------------------------------------
+  - name: trading_recording_rules
+    interval: 30s
+    rules:
+      # Order rate per minute
+      - record: trading:orders:rate1m
+        expr: sum(rate(trading_orders_total[1m])) by (exchange, symbol, side)
+
+      # Order rate per 5 minutes
+      - record: trading:orders:rate5m
+        expr: sum(rate(trading_orders_total[5m])) by (exchange, symbol, side)
+
+      # Average order latency
+      - record: trading:order_latency:avg
+        expr: |
+          sum(rate(trading_order_latency_seconds_sum[5m])) by (exchange)
+          /
+          sum(rate(trading_order_latency_seconds_count[5m])) by (exchange)
+
+      # P99 order latency
+      - record: trading:order_latency:p99
+        expr: histogram_quantile(0.99, sum(rate(trading_order_latency_seconds_bucket[5m])) by (le, exchange))
+
+      # Total PnL
+      - record: trading:pnl:total
+        expr: sum(trading_pnl_total) by (strategy, exchange)
+
+      # Win rate
+      - record: trading:win_rate
+        expr: |
+          sum(trading_trades_total{result="win"}) by (strategy)
+          /
+          sum(trading_trades_total) by (strategy)
+
+      # Position value
+      - record: trading:position:value_total
+        expr: sum(trading_position_value) by (exchange, symbol)
+
+  # ---------------------------------------------------------------------------
+  # API Metrics Recording Rules
+  # ---------------------------------------------------------------------------
+  - name: api_recording_rules
+    interval: 30s
+    rules:
+      # Request rate per endpoint
+      - record: api:requests:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (method, path, status)
+
+      # Error rate
+      - record: api:error_rate:5m
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m]))
+
+      # Average response time
+      - record: api:latency:avg
+        expr: |
+          sum(rate(http_request_duration_seconds_sum[5m])) by (path)
+          /
+          sum(rate(http_request_duration_seconds_count[5m])) by (path)
+
+      # P95 latency
+      - record: api:latency:p95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, path))
+
+  # ---------------------------------------------------------------------------
+  # System Metrics Recording Rules
+  # ---------------------------------------------------------------------------
+  - name: system_recording_rules
+    interval: 30s
+    rules:
+      # CPU usage
+      - record: system:cpu:usage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      # Memory usage percentage
+      - record: system:memory:usage_pct
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+      # Disk usage percentage
+      - record: system:disk:usage_pct
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100
+
+  # ---------------------------------------------------------------------------
+  # Redis Recording Rules
+  # ---------------------------------------------------------------------------
+  - name: redis_recording_rules
+    interval: 30s
+    rules:
+      # Memory usage
+      - record: redis:memory:usage_bytes
+        expr: redis_memory_used_bytes
+
+      # Memory usage percentage
+      - record: redis:memory:usage_pct
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100
+
+      # Commands per second
+      - record: redis:commands:rate
+        expr: rate(redis_commands_processed_total[1m])
+
+      # Hit rate
+      - record: redis:hit_rate
+        expr: |
+          rate(redis_keyspace_hits_total[5m])
+          /
+          (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
+
+      # Connected clients
+      - record: redis:clients:connected
+        expr: redis_connected_clients
+
+  # ---------------------------------------------------------------------------
+  # ClickHouse Recording Rules
+  # ---------------------------------------------------------------------------
+  - name: clickhouse_recording_rules
+    interval: 60s
+    rules:
+      # Query rate
+      - record: clickhouse:queries:rate
+        expr: rate(ClickHouseProfileEvents_Query[5m])
+
+      # Insert rate
+      - record: clickhouse:inserts:rate
+        expr: rate(ClickHouseProfileEvents_InsertedRows[5m])
+
+      # Memory usage
+      - record: clickhouse:memory:usage
+        expr: ClickHouseMetrics_MemoryTracking

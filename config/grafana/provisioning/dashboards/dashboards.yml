@@ -1,0 +1,19 @@
+# =============================================================================
+# Grafana Dashboard Provisioning
+# Auto-load dashboards on startup
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'Quant Trading Dashboards'
+    orgId: 1
+    folder: 'Quant Trading'
+    folderUid: 'quant-trading'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: true

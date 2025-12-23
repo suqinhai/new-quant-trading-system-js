@@ -1,0 +1,125 @@
+# =============================================================================
+# Prometheus Configuration
+# Metrics collection for Quant Trading System
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'quant-trading'
+    env: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+      scheme: http
+      timeout: 10s
+      api_version: v2
+
+# Rule files
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# =============================================================================
+# Scrape Configurations
+# =============================================================================
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ---------------------------------------------------------------------------
+  # Quant Trading Application
+  # ---------------------------------------------------------------------------
+  - job_name: 'quant-trading-shadow'
+    static_configs:
+      - targets: ['quant-shadow:9091']
+        labels:
+          app: 'quant-trading'
+          mode: 'shadow'
+          instance_type: 'application'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'quant-trading-live'
+    static_configs:
+      - targets: ['quant-live:9091']
+        labels:
+          app: 'quant-trading'
+          mode: 'live'
+          instance_type: 'application'
+    metrics_path: /metrics
+    scrape_interval: 5s
+    scrape_timeout: 3s
+
+  # ---------------------------------------------------------------------------
+  # Redis Metrics (using redis_exporter)
+  # ---------------------------------------------------------------------------
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          app: 'redis'
+          role: 'master'
+    scrape_interval: 15s
+
+  # ---------------------------------------------------------------------------
+  # ClickHouse Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:8123']
+        labels:
+          app: 'clickhouse'
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter (Host Metrics)
+  # ---------------------------------------------------------------------------
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance_type: 'host'
+    scrape_interval: 30s
+
+  # ---------------------------------------------------------------------------
+  # Docker Container Metrics (cAdvisor)
+  # ---------------------------------------------------------------------------
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          instance_type: 'container'
+    scrape_interval: 15s
+
+  # ---------------------------------------------------------------------------
+  # Traefik Metrics (if using blue-green)
+  # ---------------------------------------------------------------------------
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8082']
+        labels:
+          app: 'traefik'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+# =============================================================================
+# Remote Write (optional - for long-term storage)
+# =============================================================================
+# remote_write:
+#   - url: "https://prometheus-remote-write.example.com/api/v1/write"
+#     basic_auth:
+#       username: prometheus
+#       password_file: /etc/prometheus/remote_write_password

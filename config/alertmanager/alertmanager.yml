@@ -1,0 +1,268 @@
+# =============================================================================
+# Alertmanager Configuration
+# Alert routing, grouping, and notification
+# =============================================================================
+
+global:
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@example.com'
+  smtp_auth_username: 'alertmanager@example.com'
+  smtp_auth_password_file: '/etc/alertmanager/smtp_password'
+  smtp_require_tls: true
+
+  # Slack configuration
+  slack_api_url_file: '/etc/alertmanager/slack_webhook_url'
+
+  # Default resolve timeout
+  resolve_timeout: 5m
+
+# =============================================================================
+# Templates
+# =============================================================================
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# =============================================================================
+# Inhibition Rules
+# Prevent less severe alerts when more severe ones are firing
+# =============================================================================
+inhibit_rules:
+  # If critical alert fires, suppress warnings for same alertname
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal:
+      - alertname
+      - instance
+
+  # If application is down, suppress all other application alerts
+  - source_matchers:
+      - alertname="ApplicationDown"
+    target_matchers:
+      - category="application"
+    equal:
+      - job
+
+  # If exchange is disconnected, suppress trading alerts for that exchange
+  - source_matchers:
+      - alertname="ExchangeConnectionDown"
+    target_matchers:
+      - category="trading"
+    equal:
+      - exchange
+
+  # If Redis is down, suppress Redis-related alerts
+  - source_matchers:
+      - alertname="RedisDown"
+    target_matchers:
+      - category="database"
+    equal:
+      - instance
+
+# =============================================================================
+# Routing Tree
+# =============================================================================
+route:
+  # Default receiver
+  receiver: 'default-receiver'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'category', 'severity']
+
+  # Wait before sending first notification
+  group_wait: 30s
+
+  # Wait before sending updated notification
+  group_interval: 5m
+
+  # Wait before re-sending notification
+  repeat_interval: 4h
+
+  # Child routes
+  routes:
+    # -------------------------------------------------------------------------
+    # Critical Trading Alerts - Immediate notification
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="trading"
+        - severity="critical"
+      receiver: 'trading-critical'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 15m
+      continue: true
+
+    # -------------------------------------------------------------------------
+    # Risk Alerts - Immediate notification
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="risk"
+      receiver: 'risk-team'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 30m
+      continue: true
+
+    # -------------------------------------------------------------------------
+    # Trading Warnings
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="trading"
+        - severity="warning"
+      receiver: 'trading-warning'
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 1h
+
+    # -------------------------------------------------------------------------
+    # Infrastructure Critical
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="infrastructure"
+        - severity="critical"
+      receiver: 'infra-critical'
+      group_wait: 30s
+      group_interval: 2m
+      repeat_interval: 30m
+
+    # -------------------------------------------------------------------------
+    # Database Alerts
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="database"
+      receiver: 'database-team'
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 1h
+
+    # -------------------------------------------------------------------------
+    # Application Alerts
+    # -------------------------------------------------------------------------
+    - matchers:
+        - category="application"
+      receiver: 'application-team'
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 2h
+
+# =============================================================================
+# Receivers
+# =============================================================================
+receivers:
+  # ---------------------------------------------------------------------------
+  # Default Receiver
+  # ---------------------------------------------------------------------------
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'ops-team@example.com'
+        send_resolved: true
+        headers:
+          subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#alerts'
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # ---------------------------------------------------------------------------
+  # Trading Critical - Phone + Slack + Email
+  # ---------------------------------------------------------------------------
+  - name: 'trading-critical'
+    email_configs:
+      - to: 'trading-team@example.com,oncall@example.com'
+        send_resolved: true
+        headers:
+          subject: '🚨 CRITICAL TRADING ALERT: {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#trading-alerts'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          *Status:* {{ .Status | toUpper }}
+          *Severity:* {{ .CommonLabels.severity }}
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'http://grafana:3000/d/quant-trading-main'
+          - type: button
+            text: 'Runbook'
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+    # PagerDuty integration
+    pagerduty_configs:
+      - service_key_file: '/etc/alertmanager/pagerduty_key'
+        severity: 'critical'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+
+  # ---------------------------------------------------------------------------
+  # Risk Team
+  # ---------------------------------------------------------------------------
+  - name: 'risk-team'
+    email_configs:
+      - to: 'risk-team@example.com'
+        send_resolved: true
+        headers:
+          subject: '⚠️ RISK ALERT: {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#risk-alerts'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '⚠️ Risk Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # ---------------------------------------------------------------------------
+  # Trading Warning
+  # ---------------------------------------------------------------------------
+  - name: 'trading-warning'
+    slack_configs:
+      - channel: '#trading-alerts'
+        send_resolved: true
+        color: 'warning'
+        title: '⚠️ {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure Critical
+  # ---------------------------------------------------------------------------
+  - name: 'infra-critical'
+    email_configs:
+      - to: 'infra-team@example.com'
+        send_resolved: true
+        headers:
+          subject: '🔴 INFRA CRITICAL: {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#infra-alerts'
+        send_resolved: true
+        color: 'danger'
+        title: '🔴 {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # ---------------------------------------------------------------------------
+  # Database Team
+  # ---------------------------------------------------------------------------
+  - name: 'database-team'
+    email_configs:
+      - to: 'dba@example.com'
+        send_resolved: true
+    slack_configs:
+      - channel: '#database-alerts'
+        send_resolved: true
+        title: '🗄️ {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # ---------------------------------------------------------------------------
+  # Application Team
+  # ---------------------------------------------------------------------------
+  - name: 'application-team'
+    slack_configs:
+      - channel: '#app-alerts'
+        send_resolved: true
+        title: '📱 {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'

@@ -1,0 +1,77 @@
+# =============================================================================
+# Grafana Datasources Provisioning
+# Auto-configure data sources on startup
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # ---------------------------------------------------------------------------
+  # Prometheus - Primary metrics source
+  # ---------------------------------------------------------------------------
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.47.0"
+
+  # ---------------------------------------------------------------------------
+  # Loki - Log aggregation
+  # ---------------------------------------------------------------------------
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: "traceId=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+
+  # ---------------------------------------------------------------------------
+  # ClickHouse - Analytics database
+  # ---------------------------------------------------------------------------
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    editable: false
+    jsonData:
+      defaultDatabase: quant_trading
+      port: 9000
+      server: clickhouse
+      username: default
+      tlsSkipVerify: true
+
+  # ---------------------------------------------------------------------------
+  # Redis - For real-time data
+  # ---------------------------------------------------------------------------
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: redis://redis-master:6379
+    editable: false
+    jsonData:
+      client: standalone
+      poolSize: 5
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager
+  # ---------------------------------------------------------------------------
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: false
+    jsonData:
+      implementation: prometheus
