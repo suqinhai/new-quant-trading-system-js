@@ -85,7 +85,10 @@
       "Bash(pnpm install:*)",
       "Bash(./node_modules/.bin/vitest:*)",
       "Bash(xargs:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm run pm2:shadow:*)",
+      "Bash(pm2 kill:*)",
+      "Bash(npm install)"
     ]
   }
 }
