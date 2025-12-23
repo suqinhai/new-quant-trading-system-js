@@ -29,3 +29,20 @@ export {
   createRefreshHandler,
   createLogoutHandler,
 } from './auth.js';
+
+// 请求追踪中间件
+export {
+  RequestContext,
+  Span,
+  RequestTracingManager,
+  createContextLogger,
+  createTracingMiddleware,
+  getContext,
+  getRequestId,
+  setUserId,
+  addAttribute,
+  addEvent,
+  createSpan,
+  traceAsync,
+  defaultTracingManager,
+} from './requestTracing.js';

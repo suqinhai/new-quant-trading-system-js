@@ -24,6 +24,12 @@ import {
 
 import { RateLimiter } from './rateLimit.js';
 import { RBACManager } from './rbac.js';
+import { RequestTracingManager, getContext } from '../middleware/requestTracing.js';
+import { setContextGetter } from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
+
+// 初始化日志上下文获取器
+setContextGetter(getContext);
 
 /**
  * API 服务器类
@@ -45,6 +51,43 @@ export class ApiServer {
     // 初始化中间件
     this.rateLimiter = new RateLimiter(config.rateLimit);
     this.rbacManager = new RBACManager();
+
+    // 初始化请求追踪管理器
+    this.tracingManager = new RequestTracingManager({
+      enabled: config.enableTracing !== false,
+      slowRequestThreshold: config.slowRequestThreshold || 1000,
+      excludePaths: ['/api/health', '/favicon.ico'],
+    });
+
+    // 监听追踪事件
+    this._setupTracingEvents();
+  }
+
+  /**
+   * 设置追踪事件监听
+   */
+  _setupTracingEvents() {
+    // 记录慢请求
+    this.tracingManager.on('slowRequest', (data) => {
+      logger.warn('Slow request detected', {
+        method: data.method,
+        path: data.path,
+        duration: data.duration,
+        statusCode: data.statusCode,
+      });
+    });
+
+    // 记录请求完成（debug 级别）
+    this.tracingManager.on('requestEnd', (data) => {
+      if (process.env.LOG_LEVEL === 'debug') {
+        logger.debug('Request completed', {
+          method: data.method,
+          path: data.path,
+          statusCode: data.statusCode,
+          duration: data.duration,
+        });
+      }
+    });
   }
 
   /**
@@ -61,7 +104,7 @@ export class ApiServer {
       origin: this.config.corsOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Timestamp', 'X-Signature'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Trace-ID', 'X-Timestamp', 'X-Signature'],
     }));
 
     // 压缩
@@ -71,22 +114,8 @@ export class ApiServer {
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-    // 请求日志
-    this.app.use((req, res, next) => {
-      const start = Date.now();
-      const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      req.requestId = requestId;
-      res.setHeader('X-Request-ID', requestId);
-
-      res.on('finish', () => {
-        const duration = Date.now() - start;
-        if (process.env.LOG_LEVEL === 'debug') {
-          console.log(`[API] ${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
-        }
-      });
-
-      next();
-    });
+    // 请求追踪中间件（替代原有的请求日志）
+    this.app.use(this.tracingManager.middleware());
 
     // 全局限流
     this.app.use(this.rateLimiter.middleware());
