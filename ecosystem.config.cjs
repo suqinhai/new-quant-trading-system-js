@@ -29,6 +29,7 @@
  * │ quant-live-atr      │ 3060       │ 3061    │ 8086         │ 9096        │
  * │ quant-live-bbwidth  │ 3070       │ 3071    │ 8087         │ 9097        │
  * │ quant-live-regime   │ 3080       │ 3081    │ 8088         │ 9098        │
+ * │ quant-live-orderflow│ 3090       │ 3091    │ 8089         │ 9099        │
  * │ quant-shadow-*      │ 31xx       │ 31xx    │ 81xx         │ 91xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -204,6 +205,13 @@ const STRATEGIES = [
     name: 'VolatilityRegime',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '波动率 Regime / Volatility Regime Switch',
+  },
+  // 订单流策略 / Order Flow Strategy
+  {
+    id: 'orderflow',
+    name: 'OrderFlow',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '订单流/成交行为策略 / Order Flow / Trade Behavior Strategy',
   },
 ];
 

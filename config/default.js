@@ -190,6 +190,48 @@ export default {
     },
 
     // ============================================
+    // 订单流策略默认参数 / Order Flow Strategy Defaults
+    // ============================================
+
+    // 订单流/成交行为策略默认参数 / Order Flow strategy defaults
+    orderFlow: {
+      // 成交量突增参数 / Volume spike parameters
+      volumeMAPeriod: 20,           // 成交量均线周期
+      volumeSpikeMultiplier: 2.0,   // 成交量突增倍数阈值
+
+      // VWAP 参数 / VWAP parameters
+      vwapPeriod: 20,               // VWAP 计算周期
+      vwapDeviationThreshold: 1.0,  // VWAP 偏离阈值 (%)
+
+      // 大单参数 / Large order parameters
+      largeOrderMultiplier: 3.0,    // 大单判定阈值
+      largeOrderRatioThreshold: 0.6, // 大单比例阈值
+
+      // Taker 参数 / Taker parameters
+      takerWindow: 10,              // Taker 计算窗口
+      takerBuyThreshold: 0.6,       // 看涨阈值
+      takerSellThreshold: 0.4,      // 看跌阈值
+
+      // 信号参数 / Signal parameters
+      minSignalsForEntry: 2,        // 入场所需最少信号数
+
+      // 启用开关 / Enable flags
+      useVolumeSpike: true,         // 是否启用成交量突增
+      useVWAPDeviation: true,       // 是否启用 VWAP 偏离
+      useLargeOrderRatio: true,     // 是否启用大单比例
+      useTakerBuyRatio: true,       // 是否启用 Taker Buy Ratio
+
+      // 风控参数 / Risk parameters
+      stopLossPercent: 1.5,         // 止损百分比
+      takeProfitPercent: 3.0,       // 止盈百分比
+      useTrailingStop: true,        // 是否启用跟踪止损
+      trailingStopPercent: 1.0,     // 跟踪止损百分比
+
+      // 仓位参数 / Position parameters
+      positionPercent: 95,          // 仓位百分比
+    },
+
+    // ============================================
     // 市场状态切换策略默认参数 / Regime Switching Strategy Defaults
     // ============================================
 
@@ -272,6 +314,12 @@ export default {
           atrPeriod: 14,
           atrMultiplier: 2.0,
         },
+        OrderFlow: {
+          volumeSpikeMultiplier: 2.0,
+          vwapDeviationThreshold: 1.0,
+          takerBuyThreshold: 0.6,
+          minSignalsForEntry: 2,
+        },
       },
 
       // Regime 策略映射 / Regime strategy mapping
@@ -290,8 +338,8 @@ export default {
           weights: { RSI: 0.4, BollingerBands: 0.4, Grid: 0.2 },
         },
         high_volatility: {
-          strategies: ['ATRBreakout'],
-          weights: { ATRBreakout: 1.0 },
+          strategies: ['ATRBreakout', 'OrderFlow'],
+          weights: { ATRBreakout: 0.6, OrderFlow: 0.4 },
         },
         extreme: {
           strategies: [],
