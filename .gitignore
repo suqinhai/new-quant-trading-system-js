@@ -7,7 +7,7 @@
 # 环境和配置文件 / Environment and Config Files
 # --------------------------------------------
 # 环境变量文件 (包含 API 密钥等敏感信息)
-#.env
+.env
 .env.local
 .env.*.local
 
