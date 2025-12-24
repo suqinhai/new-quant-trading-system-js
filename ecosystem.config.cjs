@@ -7,6 +7,9 @@
  * - pm2 start ecosystem.config.cjs --only quant-live-funding    # 仅启动 FundingArb 实盘
  * - pm2 start ecosystem.config.cjs --only quant-live-grid       # 仅启动 Grid 实盘
  * - pm2 start ecosystem.config.cjs --only quant-shadow-funding  # 仅启动 FundingArb 影子
+ * - pm2 start ecosystem.config.cjs --only quant-live-atr        # 仅启动 ATR突破 实盘
+ * - pm2 start ecosystem.config.cjs --only quant-live-bbwidth    # 仅启动 布林宽度 实盘
+ * - pm2 start ecosystem.config.cjs --only quant-live-regime     # 仅启动 波动Regime 实盘
  * - pm2 reload ecosystem.config.cjs                             # 零停机重载 / Zero-downtime reload
  * - pm2 stop ecosystem.config.cjs                               # 停止所有 / Stop all
  * - pm2 delete ecosystem.config.cjs                             # 删除所有 / Delete all
@@ -23,6 +26,9 @@
  * │ quant-live-rsi      │ 3030       │ 3031    │ 8083         │ 9093        │
  * │ quant-live-macd     │ 3040       │ 3041    │ 8084         │ 9094        │
  * │ quant-live-bb       │ 3050       │ 3051    │ 8085         │ 9095        │
+ * │ quant-live-atr      │ 3060       │ 3061    │ 8086         │ 9096        │
+ * │ quant-live-bbwidth  │ 3070       │ 3071    │ 8087         │ 9097        │
+ * │ quant-live-regime   │ 3080       │ 3081    │ 8088         │ 9098        │
  * │ quant-shadow-*      │ 31xx       │ 31xx    │ 81xx         │ 91xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -179,6 +185,25 @@ const STRATEGIES = [
     name: 'BollingerBands',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '布林带策略 / Bollinger Bands Strategy',
+  },
+  // 波动率策略 / Volatility Strategies
+  {
+    id: 'atr',
+    name: 'ATRBreakout',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: 'ATR 波动突破 / ATR Volatility Breakout',
+  },
+  {
+    id: 'bbwidth',
+    name: 'BollingerWidth',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '布林宽度挤压 / Bollinger Width Squeeze',
+  },
+  {
+    id: 'regime',
+    name: 'VolatilityRegime',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '波动率 Regime / Volatility Regime Switch',
   },
 ];
 

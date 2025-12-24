@@ -22,7 +22,9 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │                 Strategy Registry                    │
-│    (SMA, RSI, MACD, BollingerBands, Grid, ...)     │
+│  趋势: SMA, MACD  震荡: RSI, BollingerBands        │
+│  波动率: ATRBreakout, BollingerWidth, VolRegime    │
+│  套利: Grid, FundingArb                             │
 └─────────────────────┬───────────────────────────────┘
                       │
                       ▼
@@ -1062,14 +1064,54 @@ describe('CustomStrategy', () => {
 
 ### 内置策略源码参考
 
-| 策略 | 文件 |
-|------|------|
-| SMA | src/strategies/SMAStrategy.js |
-| RSI | src/strategies/RSIStrategy.js |
-| MACD | src/strategies/MACDStrategy.js |
-| 布林带 | src/strategies/BollingerBandsStrategy.js |
-| 网格 | src/strategies/GridStrategy.js |
-| 资金费率套利 | src/strategies/FundingArbStrategy.js |
+| 策略 | 文件 | 类型 |
+|------|------|------|
+| SMA | src/strategies/SMAStrategy.js | 趋势 |
+| RSI | src/strategies/RSIStrategy.js | 震荡 |
+| MACD | src/strategies/MACDStrategy.js | 趋势 |
+| 布林带 | src/strategies/BollingerBandsStrategy.js | 震荡 |
+| ATR突破 | src/strategies/ATRBreakoutStrategy.js | 波动率 |
+| 布林宽度 | src/strategies/BollingerWidthStrategy.js | 波动率 |
+| 波动Regime | src/strategies/VolatilityRegimeStrategy.js | 波动率 |
+| 网格 | src/strategies/GridStrategy.js | 套利 |
+| 资金费率套利 | src/strategies/FundingArbStrategy.js | 套利 |
+
+### 波动率策略说明
+
+波动率策略与趋势/震荡类策略相关性低，适合捕捉大行情：
+
+#### ATRBreakoutStrategy
+基于 ATR 动态通道的突破策略，价格突破通道且波动率扩张时入场。
+```javascript
+const strategy = new ATRBreakoutStrategy({
+  symbol: 'BTC/USDT',
+  atrPeriod: 14,
+  atrMultiplier: 2.0,
+  useTrailingStop: true
+});
+```
+
+#### BollingerWidthStrategy
+布林带宽度挤压突破策略，检测 BB 收敛进入 Keltner 通道（Squeeze），释放时入场。
+```javascript
+const strategy = new BollingerWidthStrategy({
+  symbol: 'BTC/USDT',
+  bbPeriod: 20,
+  kcPeriod: 20,
+  squeezeThreshold: 20
+});
+```
+
+#### VolatilityRegimeStrategy
+波动率 Regime 切换策略，识别 LOW/NORMAL/HIGH/EXTREME 四种状态，动态调整仓位。
+```javascript
+const strategy = new VolatilityRegimeStrategy({
+  symbol: 'BTC/USDT',
+  lowVolThreshold: 25,
+  highVolThreshold: 75,
+  disableInExtreme: true
+});
+```
 
 ### 相关文档
 

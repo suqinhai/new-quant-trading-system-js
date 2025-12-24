@@ -17,6 +17,11 @@ export { MACDStrategy } from './MACDStrategy.js';
 export { GridStrategy } from './GridStrategy.js';
 export { FundingArbStrategy } from './FundingArbStrategy.js';
 
+// 波动率策略 / Volatility strategies
+export { ATRBreakoutStrategy } from './ATRBreakoutStrategy.js';
+export { BollingerWidthStrategy } from './BollingerWidthStrategy.js';
+export { VolatilityRegimeStrategy } from './VolatilityRegimeStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -35,6 +40,11 @@ export const StrategyRegistry = {
   MACD: () => import('./MACDStrategy.js').then(m => m.MACDStrategy),
   Grid: () => import('./GridStrategy.js').then(m => m.GridStrategy),
   FundingArb: () => import('./FundingArbStrategy.js').then(m => m.FundingArbStrategy),
+
+  // 波动率策略 / Volatility strategies
+  ATRBreakout: () => import('./ATRBreakoutStrategy.js').then(m => m.ATRBreakoutStrategy),
+  BollingerWidth: () => import('./BollingerWidthStrategy.js').then(m => m.BollingerWidthStrategy),
+  VolatilityRegime: () => import('./VolatilityRegimeStrategy.js').then(m => m.VolatilityRegimeStrategy),
 
   /**
    * 获取策略类

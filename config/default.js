@@ -151,6 +151,43 @@ export default {
       gridCount: 10,
       gridSpacing: 0.01,
     },
+
+    // ============================================
+    // 波动率策略默认参数 / Volatility Strategy Defaults
+    // ============================================
+
+    // ATR 突破策略默认参数 / ATR Breakout strategy defaults
+    atrBreakout: {
+      atrPeriod: 14,
+      atrMultiplier: 2.0,
+      baselinePeriod: 20,
+      useTrailingStop: true,
+      stopLossMultiplier: 1.5,
+      positionPercent: 95,
+    },
+
+    // 布林宽度策略默认参数 / Bollinger Width strategy defaults
+    bollingerWidth: {
+      bbPeriod: 20,
+      bbStdDev: 2.0,
+      kcPeriod: 20,
+      kcMultiplier: 1.5,
+      squeezeThreshold: 20,
+      useMomentumConfirm: true,
+      positionPercent: 95,
+    },
+
+    // 波动率 Regime 策略默认参数 / Volatility Regime strategy defaults
+    volatilityRegime: {
+      atrPeriod: 14,
+      volatilityLookback: 100,
+      lowVolThreshold: 25,
+      highVolThreshold: 75,
+      extremeVolThreshold: 95,
+      adxThreshold: 25,
+      disableInExtreme: true,
+      positionPercent: 95,
+    },
   },
 
   // ============================================

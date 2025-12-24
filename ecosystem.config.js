@@ -50,6 +50,84 @@ module.exports = {
       exp_backoff_restart_delay: 1000,  // 初始重启延迟 (毫秒)
     },
 
+    // --------------------------------------------
+    // 波动率策略 - ATR 突破 / Volatility - ATR Breakout
+    // --------------------------------------------
+    {
+      name: 'strategy-atr-breakout',
+      script: 'examples/runVolatilityStrategies.js',
+      args: 'ATRBreakout',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+
+      env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+      },
+
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: './logs/pm2/atr-breakout-error.log',
+      out_file: './logs/pm2/atr-breakout-out.log',
+      merge_logs: true,
+      exp_backoff_restart_delay: 1000,
+    },
+
+    // --------------------------------------------
+    // 波动率策略 - 布林宽度挤压 / Volatility - Bollinger Width
+    // --------------------------------------------
+    {
+      name: 'strategy-bollinger-width',
+      script: 'examples/runVolatilityStrategies.js',
+      args: 'BollingerWidth',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+
+      env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+      },
+
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: './logs/pm2/bollinger-width-error.log',
+      out_file: './logs/pm2/bollinger-width-out.log',
+      merge_logs: true,
+      exp_backoff_restart_delay: 1000,
+    },
+
+    // --------------------------------------------
+    // 波动率策略 - Regime 切换 / Volatility - Regime
+    // --------------------------------------------
+    {
+      name: 'strategy-volatility-regime',
+      script: 'examples/runVolatilityStrategies.js',
+      args: 'VolatilityRegime',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+
+      env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+      },
+
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: './logs/pm2/volatility-regime-error.log',
+      out_file: './logs/pm2/volatility-regime-out.log',
+      merge_logs: true,
+      exp_backoff_restart_delay: 1000,
+    },
+
     {
       // --------------------------------------------
       // 行情数据服务 / Market Data Service

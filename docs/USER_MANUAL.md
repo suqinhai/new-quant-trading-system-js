@@ -225,6 +225,9 @@ npm run live
 | RSI | 震荡 | 相对强度指标策略 |
 | MACD | 趋势 | MACD 指标策略 |
 | BollingerBands | 震荡 | 布林带策略 |
+| ATRBreakout | 波动率 | ATR 动态通道突破策略 |
+| BollingerWidth | 波动率 | 布林带宽度挤压突破策略 |
+| VolatilityRegime | 波动率 | 波动率 Regime 切换策略 |
 | Grid | 网格 | 网格交易策略 |
 | FundingArb | 套利 | 资金费率套利策略 |
 
@@ -270,6 +273,53 @@ npm run live
     gridCount: 10,      // 网格数量
     totalAmount: 1000,  // 总投入金额
     symbol: 'BTC/USDT'
+  }
+}
+```
+
+#### ATR 突破策略 (波动率)
+
+```javascript
+{
+  type: 'ATRBreakout',
+  params: {
+    atrPeriod: 14,          // ATR 周期
+    atrMultiplier: 2.0,     // ATR 通道倍数
+    baselinePeriod: 20,     // 基准线 EMA 周期
+    useTrailingStop: true,  // 启用跟踪止损
+    symbol: 'BTC/USDT',
+    timeframe: '1h'
+  }
+}
+```
+
+#### 布林宽度挤压策略 (波动率)
+
+```javascript
+{
+  type: 'BollingerWidth',
+  params: {
+    bbPeriod: 20,           // 布林带周期
+    kcPeriod: 20,           // Keltner 通道周期
+    squeezeThreshold: 20,   // 挤压阈值 (百分位)
+    useMomentumConfirm: true,
+    symbol: 'BTC/USDT',
+    timeframe: '4h'
+  }
+}
+```
+
+#### 波动率 Regime 策略
+
+```javascript
+{
+  type: 'VolatilityRegime',
+  params: {
+    lowVolThreshold: 25,    // 低波动阈值
+    highVolThreshold: 75,   // 高波动阈值
+    disableInExtreme: true, // 极端波动禁止交易
+    symbol: 'BTC/USDT',
+    timeframe: '1h'
   }
 }
 ```
