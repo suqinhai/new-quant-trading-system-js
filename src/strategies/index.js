@@ -25,6 +25,9 @@ export { VolatilityRegimeStrategy } from './VolatilityRegimeStrategy.js';
 // Regime 切换策略 / Regime switching strategy
 export { RegimeSwitchingStrategy, MarketRegime, RegimeEvent } from './RegimeSwitchingStrategy.js';
 
+// 订单流策略 / Order flow strategy
+export { OrderFlowStrategy } from './OrderFlowStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -51,6 +54,9 @@ export const StrategyRegistry = {
 
   // Regime 切换策略 / Regime switching strategy
   RegimeSwitching: () => import('./RegimeSwitchingStrategy.js').then(m => m.RegimeSwitchingStrategy),
+
+  // 订单流策略 / Order flow strategy
+  OrderFlow: () => import('./OrderFlowStrategy.js').then(m => m.OrderFlowStrategy),
 
   /**
    * 获取策略类
