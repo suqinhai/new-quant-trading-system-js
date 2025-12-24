@@ -1159,13 +1159,13 @@ class TradingSystemRunner extends EventEmitter {
       this.riskManager.start();
     }
 
-    // 3. 订阅行情 / Subscribe to market data
-    await this._subscribeMarketData();
-
-    // 4. 启动行情引擎 / Start market data engine
+    // 3. 启动行情引擎 / Start market data engine (必须先启动才能订阅)
     if (this.marketDataEngine) {
-      this.marketDataEngine.start();
+      await this.marketDataEngine.start();
     }
+
+    // 4. 订阅行情 / Subscribe to market data
+    await this._subscribeMarketData();
 
     // 5. 启动策略 (如果策略有 start 方法) / Start strategy (if strategy has start method)
     if (this.strategy && typeof this.strategy.start === 'function') {
