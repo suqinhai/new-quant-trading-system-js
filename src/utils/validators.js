@@ -132,6 +132,79 @@ export const StrategySchemas = {
     (data) => data.lowerPrice < data.upperPrice,
     { message: 'Lower price must be less than upper price' }
   ),
+
+  // 波动率策略 / Volatility strategies
+  atrBreakout: z.object({
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    atrPeriod: z.number().int().min(1).max(100).default(14),
+    atrMultiplier: z.number().min(0.1).max(10).default(2.0),
+    baselinePeriod: z.number().int().min(1).max(200).default(20),
+    useTrailingStop: z.boolean().default(true),
+    stopLossMultiplier: z.number().min(0.1).max(10).default(1.5),
+    positionPercent: z.number().min(1).max(100).default(95),
+  }),
+
+  bollingerWidth: z.object({
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    bbPeriod: z.number().int().min(2).max(200).default(20),
+    bbStdDev: z.number().min(0.1).max(5).default(2.0),
+    kcPeriod: z.number().int().min(2).max(200).default(20),
+    kcMultiplier: z.number().min(0.1).max(5).default(1.5),
+    squeezeThreshold: z.number().min(1).max(100).default(20),
+    useMomentumConfirm: z.boolean().default(true),
+    positionPercent: z.number().min(1).max(100).default(95),
+  }),
+
+  volatilityRegime: z.object({
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    atrPeriod: z.number().int().min(1).max(100).default(14),
+    volatilityLookback: z.number().int().min(10).max(500).default(100),
+    lowVolThreshold: z.number().min(1).max(50).default(25),
+    highVolThreshold: z.number().min(50).max(99).default(75),
+    extremeVolThreshold: z.number().min(80).max(100).default(95),
+    adxThreshold: z.number().min(10).max(50).default(25),
+    disableInExtreme: z.boolean().default(true),
+    positionPercent: z.number().min(1).max(100).default(95),
+  }),
+
+  // 订单流策略 / Order flow strategy
+  orderFlow: z.object({
+    symbol: ZodSchemas.symbol,
+    timeframe: ZodSchemas.timeframe.default('1h'),
+    // 成交量突增参数 / Volume spike parameters
+    volumeMAPeriod: z.number().int().min(5).max(100).default(20),
+    volumeSpikeMultiplier: z.number().min(1.1).max(10).default(2.0),
+    // VWAP 参数 / VWAP parameters
+    vwapPeriod: z.number().int().min(5).max(100).default(20),
+    vwapDeviationThreshold: z.number().min(0.1).max(10).default(1.0),
+    // 大单参数 / Large order parameters
+    largeOrderMultiplier: z.number().min(1.5).max(20).default(3.0),
+    largeOrderRatioThreshold: z.number().min(0.5).max(0.95).default(0.6),
+    // Taker 参数 / Taker parameters
+    takerWindow: z.number().int().min(3).max(50).default(10),
+    takerBuyThreshold: z.number().min(0.5).max(0.9).default(0.6),
+    takerSellThreshold: z.number().min(0.1).max(0.5).default(0.4),
+    // 信号参数 / Signal parameters
+    minSignalsForEntry: z.number().int().min(1).max(4).default(2),
+    // 启用开关 / Enable flags
+    useVolumeSpike: z.boolean().default(true),
+    useVWAPDeviation: z.boolean().default(true),
+    useLargeOrderRatio: z.boolean().default(true),
+    useTakerBuyRatio: z.boolean().default(true),
+    // 风控参数 / Risk parameters
+    stopLossPercent: z.number().min(0.1).max(10).default(1.5),
+    takeProfitPercent: z.number().min(0.5).max(20).default(3.0),
+    useTrailingStop: z.boolean().default(true),
+    trailingStopPercent: z.number().min(0.1).max(10).default(1.0),
+    // 仓位参数 / Position parameters
+    positionPercent: z.number().min(1).max(100).default(95),
+  }).refine(
+    (data) => data.takerSellThreshold < data.takerBuyThreshold,
+    { message: 'Taker sell threshold must be less than taker buy threshold' }
+  ),
 };
 
 /**

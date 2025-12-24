@@ -66,7 +66,8 @@ export function createStrategyRoutes(deps = {}) {
   router.get('/types', async (req, res) => {
     try {
       const types = strategyRegistry?.getAvailableStrategies?.() || [
-        'SMA', 'RSI', 'BollingerBands', 'MACD', 'Grid', 'FundingArb'
+        'SMA', 'RSI', 'BollingerBands', 'MACD', 'Grid', 'FundingArb',
+        'ATRBreakout', 'BollingerWidth', 'VolatilityRegime', 'RegimeSwitching', 'OrderFlow'
       ];
 
       res.json({ success: true, data: types });

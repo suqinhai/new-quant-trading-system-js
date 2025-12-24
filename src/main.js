@@ -261,8 +261,12 @@ function showHelp() {
 
 选项 / Options:
   --strategy, -s <name>     策略名称 / Strategy name
-                            可选: SMA, RSI, MACD, Grid, FundingArb
-                            Available: SMA, RSI, MACD, Grid, FundingArb
+                            可选: SMA, RSI, MACD, BollingerBands, Grid, FundingArb,
+                                  ATRBreakout, BollingerWidth, VolatilityRegime,
+                                  RegimeSwitching, OrderFlow
+                            Available: SMA, RSI, MACD, BollingerBands, Grid, FundingArb,
+                                       ATRBreakout, BollingerWidth, VolatilityRegime,
+                                       RegimeSwitching, OrderFlow
 
   --symbol, --symbols <s>   交易对 (逗号分隔) / Symbols (comma separated)
                             例如 / Example: BTC/USDT:USDT,ETH/USDT:USDT
