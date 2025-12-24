@@ -482,6 +482,170 @@ export function FibonacciRetracement(high, low) {
 }
 
 // ============================================
+// Regime 检测指标 / Regime Detection Indicators
+// ============================================
+
+/**
+ * 计算 Hurst 指数 (R/S 分析法)
+ * Calculate Hurst Exponent using R/S Analysis
+ *
+ * Hurst 指数用于判断时间序列的特性:
+ * - H > 0.5: 趋势性 (Trending) - 适合趋势跟踪策略
+ * - H = 0.5: 随机游走 (Random Walk)
+ * - H < 0.5: 均值回归 (Mean Reverting) - 适合震荡策略
+ *
+ * @param {number[]} values - 价格数据 / Price data
+ * @param {number} minPeriod - 最小分组大小 / Minimum group size
+ * @returns {number} Hurst 指数 (0-1) / Hurst exponent
+ */
+export function HurstExponent(values, minPeriod = 10) {
+  const prices = values.map(toNumber);
+
+  if (prices.length < 20) return 0.5;
+
+  try {
+    // 计算对数收益率 / Calculate log returns
+    const logReturns = [];
+    for (let i = 1; i < prices.length; i++) {
+      if (prices[i] > 0 && prices[i - 1] > 0) {
+        logReturns.push(Math.log(prices[i] / prices[i - 1]));
+      }
+    }
+
+    if (logReturns.length < minPeriod) return 0.5;
+
+    // 计算不同分组大小下的 R/S / Calculate R/S for different group sizes
+    const sizes = [];
+    const rsValues = [];
+
+    for (let size = minPeriod; size <= Math.floor(logReturns.length / 2); size += 5) {
+      const numGroups = Math.floor(logReturns.length / size);
+      if (numGroups < 2) continue;
+
+      let rsSum = 0;
+      let validGroups = 0;
+
+      for (let g = 0; g < numGroups; g++) {
+        const group = logReturns.slice(g * size, (g + 1) * size);
+        const rs = _calculateRescaledRange(group);
+        if (rs > 0) {
+          rsSum += rs;
+          validGroups++;
+        }
+      }
+
+      if (validGroups > 0) {
+        const avgRS = rsSum / validGroups;
+        sizes.push(Math.log(size));
+        rsValues.push(Math.log(avgRS));
+      }
+    }
+
+    if (sizes.length < 3) return 0.5;
+
+    // 线性回归计算斜率 (即 Hurst 指数) / Linear regression for slope
+    const hurst = _linearRegressionSlope(sizes, rsValues);
+
+    // 限制在合理范围 [0, 1] / Clamp to valid range
+    return Math.max(0, Math.min(1, hurst));
+
+  } catch (e) {
+    return 0.5;
+  }
+}
+
+/**
+ * 计算重标极差 (R/S)
+ * Calculate Rescaled Range
+ * @private
+ */
+function _calculateRescaledRange(series) {
+  const n = series.length;
+  if (n < 2) return 0;
+
+  // 均值 / Mean
+  const mean = series.reduce((a, b) => a + b, 0) / n;
+
+  // 累积偏差 / Cumulative deviation
+  const cumDev = [];
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    sum += series[i] - mean;
+    cumDev.push(sum);
+  }
+
+  // 极差 R / Range
+  const R = Math.max(...cumDev) - Math.min(...cumDev);
+
+  // 标准差 S / Standard deviation
+  const variance = series.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
+  const S = Math.sqrt(variance);
+
+  if (S === 0) return 0;
+  return R / S;
+}
+
+/**
+ * 线性回归斜率
+ * Linear regression slope
+ * @private
+ */
+function _linearRegressionSlope(x, y) {
+  const n = x.length;
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
+  const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
+
+  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+}
+
+/**
+ * 计算布林带宽度
+ * Calculate Bollinger Band Width
+ *
+ * 用于衡量波动率，宽度 = (上轨 - 下轨) / 中轨
+ * - 宽度缩小: 波动率降低，可能酝酿突破
+ * - 宽度扩大: 波动率增加，趋势可能正在进行
+ *
+ * @param {number[]} values - 价格数据 / Price data
+ * @param {number} period - 周期 / Period
+ * @param {number} stdDev - 标准差倍数 / Standard deviation multiplier
+ * @returns {number[]} 布林带宽度数组 / Bollinger Band Width array
+ */
+export function BollingerBandWidth(values, period = 20, stdDev = 2) {
+  const bbValues = BollingerBands(values, period, stdDev);
+
+  return bbValues.map(bb => {
+    if (!bb || !bb.middle || bb.middle === 0) return 0;
+    return ((bb.upper - bb.lower) / bb.middle) * 100;
+  });
+}
+
+/**
+ * 计算波动率百分位
+ * Calculate Volatility Percentile
+ *
+ * 计算当前波动率在历史中的百分位排名
+ *
+ * @param {number} currentValue - 当前值 / Current value
+ * @param {number[]} history - 历史数据 / Historical data
+ * @returns {number} 百分位 (0-100) / Percentile
+ */
+export function VolatilityPercentile(currentValue, history) {
+  if (!history || history.length < 10) return 50;
+
+  const sorted = [...history].sort((a, b) => a - b);
+  let rank = 0;
+
+  for (let i = 0; i < sorted.length; i++) {
+    if (sorted[i] <= currentValue) rank++;
+  }
+
+  return (rank / sorted.length) * 100;
+}
+
+// ============================================
 // 辅助函数 / Helper Functions
 // ============================================
 
@@ -565,6 +729,11 @@ export default {
   // 支撑阻力 / Support and resistance
   PivotPoints,
   FibonacciRetracement,
+
+  // Regime 检测指标 / Regime detection indicators
+  HurstExponent,
+  BollingerBandWidth,
+  VolatilityPercentile,
 
   // 辅助函数 / Helper functions
   getLatest,

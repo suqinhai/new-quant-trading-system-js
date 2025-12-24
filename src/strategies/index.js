@@ -22,6 +22,9 @@ export { ATRBreakoutStrategy } from './ATRBreakoutStrategy.js';
 export { BollingerWidthStrategy } from './BollingerWidthStrategy.js';
 export { VolatilityRegimeStrategy } from './VolatilityRegimeStrategy.js';
 
+// Regime 切换策略 / Regime switching strategy
+export { RegimeSwitchingStrategy, MarketRegime, RegimeEvent } from './RegimeSwitchingStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -45,6 +48,9 @@ export const StrategyRegistry = {
   ATRBreakout: () => import('./ATRBreakoutStrategy.js').then(m => m.ATRBreakoutStrategy),
   BollingerWidth: () => import('./BollingerWidthStrategy.js').then(m => m.BollingerWidthStrategy),
   VolatilityRegime: () => import('./VolatilityRegimeStrategy.js').then(m => m.VolatilityRegimeStrategy),
+
+  // Regime 切换策略 / Regime switching strategy
+  RegimeSwitching: () => import('./RegimeSwitchingStrategy.js').then(m => m.RegimeSwitchingStrategy),
 
   /**
    * 获取策略类
