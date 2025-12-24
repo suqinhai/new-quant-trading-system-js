@@ -91,7 +91,9 @@
       "Bash(npm install)",
       "Bash(ls:*)",
       "Bash(dir \"C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\\\\ecosystem.config*\")",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(echo $MASTER_KEY)",
+      "Bash(node -e:*)"
     ]
   }
 }
