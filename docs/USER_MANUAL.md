@@ -228,6 +228,8 @@ npm run live
 | ATRBreakout | 波动率 | ATR 动态通道突破策略 |
 | BollingerWidth | 波动率 | 布林带宽度挤压突破策略 |
 | VolatilityRegime | 波动率 | 波动率 Regime 切换策略 |
+| MultiTimeframe | 多周期 | 多周期共振策略 (1H+15M+5M) |
+| OrderFlow | 订单流 | 订单流/成交行为策略 |
 | RegimeSwitching | 元策略 | 市场状态自动切换策略组合 |
 | Grid | 网格 | 网格交易策略 |
 | FundingArb | 套利 | 资金费率套利策略 |
@@ -323,6 +325,70 @@ npm run live
     timeframe: '1h'
   }
 }
+```
+
+#### 多周期共振策略 (MultiTimeframe)
+
+通过 1H 趋势 + 15M 回调 + 5M 入场的三周期共振提高信号可靠性。
+
+**核心逻辑：**
+```
+1H 判趋势 → 15M 等回调 → 5M 择时入场
+```
+
+**优点：**
+- 减少假信号，过滤震荡市噪音
+- 顺大势交易，提高胜率
+- 自动趋势反转出场
+
+**基础配置：**
+```javascript
+{
+  type: 'MultiTimeframe',
+  params: {
+    symbol: 'BTC/USDT',
+    positionPercent: 95,
+
+    // 1H 趋势参数
+    h1ShortPeriod: 10,
+    h1LongPeriod: 30,
+
+    // 15M 回调参数
+    m15RsiPeriod: 14,
+    m15RsiPullbackLong: 40,   // 多头回调 RSI 阈值
+    m15RsiPullbackShort: 60,  // 空头回调 RSI 阈值
+    m15PullbackPercent: 1.5,  // 价格回撤阈值
+
+    // 5M 入场参数
+    m5RsiPeriod: 14,
+    m5RsiOversold: 30,
+    m5RsiOverbought: 70,
+    m5ShortPeriod: 5,
+    m5LongPeriod: 15,
+
+    // 出场参数
+    takeProfitPercent: 3.0,   // 止盈 3%
+    stopLossPercent: 1.5,     // 止损 1.5%
+    useTrendExit: true        // 趋势反转出场
+  }
+}
+```
+
+**入场条件说明：**
+
+| 周期 | 多头条件 | 空头条件 |
+|------|---------|---------|
+| 1H | SMA(10) > SMA(30) | SMA(10) < SMA(30) |
+| 15M | RSI < 40 或回撤 > 1.5% | RSI > 60 或反弹 > 1.5% |
+| 5M | RSI 回升或金叉 | RSI 回落或死叉 |
+
+**PM2 运行：**
+```bash
+# 影子模式
+pm2 start ecosystem.config.cjs --only quant-shadow-mtf
+
+# 实盘模式
+pm2 start ecosystem.config.cjs --only quant-live-mtf
 ```
 
 #### 市场状态切换策略 (RegimeSwitching)

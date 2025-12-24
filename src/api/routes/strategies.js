@@ -67,7 +67,8 @@ export function createStrategyRoutes(deps = {}) {
     try {
       const types = strategyRegistry?.getAvailableStrategies?.() || [
         'SMA', 'RSI', 'BollingerBands', 'MACD', 'Grid', 'FundingArb',
-        'ATRBreakout', 'BollingerWidth', 'VolatilityRegime', 'RegimeSwitching', 'OrderFlow'
+        'ATRBreakout', 'BollingerWidth', 'VolatilityRegime', 'RegimeSwitching',
+        'OrderFlow', 'MultiTimeframe'
       ];
 
       res.json({ success: true, data: types });

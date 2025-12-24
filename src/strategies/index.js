@@ -28,6 +28,9 @@ export { RegimeSwitchingStrategy, MarketRegime, RegimeEvent } from './RegimeSwit
 // 订单流策略 / Order flow strategy
 export { OrderFlowStrategy } from './OrderFlowStrategy.js';
 
+// 多周期共振策略 / Multi-timeframe resonance strategy
+export { MultiTimeframeStrategy } from './MultiTimeframeStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -57,6 +60,10 @@ export const StrategyRegistry = {
 
   // 订单流策略 / Order flow strategy
   OrderFlow: () => import('./OrderFlowStrategy.js').then(m => m.OrderFlowStrategy),
+
+  // 多周期共振策略 / Multi-timeframe resonance strategy
+  MultiTimeframe: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),
+  MTF: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),  // 别名
 
   /**
    * 获取策略类

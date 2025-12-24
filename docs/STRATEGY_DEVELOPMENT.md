@@ -24,6 +24,7 @@
 │                 Strategy Registry                    │
 │  趋势: SMA, MACD  震荡: RSI, BollingerBands        │
 │  波动率: ATRBreakout, BollingerWidth, VolRegime    │
+│  多周期: MultiTimeframe (1H+15M+5M 共振)           │
 │  套利: Grid, FundingArb                             │
 └─────────────────────┬───────────────────────────────┘
                       │
@@ -1073,7 +1074,9 @@ describe('CustomStrategy', () => {
 | ATR突破 | src/strategies/ATRBreakoutStrategy.js | 波动率 |
 | 布林宽度 | src/strategies/BollingerWidthStrategy.js | 波动率 |
 | 波动Regime | src/strategies/VolatilityRegimeStrategy.js | 波动率 |
+| 多周期共振 | src/strategies/MultiTimeframeStrategy.js | 多周期 |
 | Regime切换 | src/strategies/RegimeSwitchingStrategy.js | 元策略 |
+| 订单流 | src/strategies/OrderFlowStrategy.js | 订单流 |
 | 网格 | src/strategies/GridStrategy.js | 套利 |
 | 资金费率套利 | src/strategies/FundingArbStrategy.js | 套利 |
 
@@ -1112,6 +1115,177 @@ const strategy = new VolatilityRegimeStrategy({
   highVolThreshold: 75,
   disableInExtreme: true
 });
+```
+
+### 多周期共振策略 (MultiTimeframe)
+
+#### 概述
+
+MultiTimeframeStrategy 是一个多周期共振策略，通过三个时间周期的协同分析来提高交易信号的可靠性：
+
+| 周期 | 作用 | 指标 | 说明 |
+|------|------|------|------|
+| 1H (大周期) | 趋势判断 | SMA 均线 | 短期 > 长期 = 多头，反之空头 |
+| 15M (中周期) | 回调识别 | RSI + 价格回撤 | RSI 超卖或价格回撤到位 |
+| 5M (小周期) | 入场触发 | RSI + 金叉 | RSI 回升或均线金叉 |
+
+#### 核心逻辑
+
+```
+1H 趋势向上 (bullish)
+        ↓
+15M 出现回调 (RSI < 40 或回撤 > 1.5%)
+        ↓
+5M 触发入场 (RSI 从超卖回升 或 金叉)
+        ↓
+      做多
+```
+
+#### 优点
+
+- **减少假信号**: 多周期确认，过滤震荡市噪音
+- **提高胜率**: 顺大势、等回调、择时入场
+- **风险可控**: 趋势反转自动出场
+
+#### 基础用法
+
+```javascript
+const { MultiTimeframeStrategy } = require('./strategies');
+
+const strategy = new MultiTimeframeStrategy({
+  symbol: 'BTC/USDT',
+  positionPercent: 95,
+
+  // 1H 趋势参数
+  h1ShortPeriod: 10,      // 短期均线
+  h1LongPeriod: 30,       // 长期均线
+
+  // 15M 回调参数
+  m15RsiPeriod: 14,
+  m15RsiPullbackLong: 40,   // 多头回调 RSI 阈值
+  m15RsiPullbackShort: 60,  // 空头回调 RSI 阈值
+  m15PullbackPercent: 1.5,  // 价格回撤阈值
+
+  // 5M 入场参数
+  m5RsiPeriod: 14,
+  m5RsiOversold: 30,
+  m5RsiOverbought: 70,
+  m5ShortPeriod: 5,
+  m5LongPeriod: 15,
+
+  // 出场参数
+  takeProfitPercent: 3.0,
+  stopLossPercent: 1.5,
+  useTrendExit: true,  // 趋势反转出场
+});
+
+// 监听信号
+strategy.on('signal', (signal) => {
+  console.log(`信号: ${signal.type} @ ${signal.price}`);
+  console.log(`触发条件: ${signal.reason}`);
+});
+```
+
+#### 入场条件详解
+
+**多头入场 (Long Entry):**
+1. 1H: SMA(10) > SMA(30) → 趋势向上
+2. 15M: RSI < 40 或 价格从高点回撤 > 1.5%
+3. 5M: RSI 从 < 30 回升到 > 30 **或** SMA(5) 上穿 SMA(15)
+
+**空头入场 (Short Entry):**
+1. 1H: SMA(10) < SMA(30) → 趋势向下
+2. 15M: RSI > 60 或 价格从低点反弹 > 1.5%
+3. 5M: RSI 从 > 70 回落到 < 70 **或** SMA(5) 下穿 SMA(15)
+
+#### 出场条件
+
+| 条件 | 触发 | 说明 |
+|------|------|------|
+| 止盈 | 盈利 ≥ 3% | 固定比例止盈 |
+| 止损 | 亏损 ≥ 1.5% | 固定比例止损 |
+| 趋势反转 | 1H 趋势方向改变 | 可通过 useTrendExit 控制 |
+
+#### K线聚合机制
+
+策略内部自动将 5M K线聚合为 15M 和 1H K线：
+
+```javascript
+// 聚合规则
+3 根 5M K线 → 1 根 15M K线
+12 根 5M K线 → 1 根 1H K线
+
+// OHLCV 聚合逻辑
+aggregatedCandle = {
+  open: firstCandle.open,
+  high: Math.max(...candles.map(c => c.high)),
+  low: Math.min(...candles.map(c => c.low)),
+  close: lastCandle.close,
+  volume: sum(candles.map(c => c.volume))
+}
+```
+
+#### 配置参数
+
+```javascript
+const config = {
+  // 基础配置
+  symbol: 'BTC/USDT',
+  positionPercent: 95,
+
+  // 1H 大周期参数
+  h1ShortPeriod: 10,        // 默认 10
+  h1LongPeriod: 30,         // 默认 30
+
+  // 15M 中周期参数
+  m15RsiPeriod: 14,         // 默认 14
+  m15RsiPullbackLong: 40,   // 默认 40 (多头回调)
+  m15RsiPullbackShort: 60,  // 默认 60 (空头回调)
+  m15PullbackPercent: 1.5,  // 默认 1.5%
+
+  // 5M 小周期参数
+  m5RsiPeriod: 14,          // 默认 14
+  m5RsiOversold: 30,        // 默认 30
+  m5RsiOverbought: 70,      // 默认 70
+  m5ShortPeriod: 5,         // 默认 5
+  m5LongPeriod: 15,         // 默认 15
+
+  // 出场参数
+  takeProfitPercent: 3.0,   // 默认 3%
+  stopLossPercent: 1.5,     // 默认 1.5%
+  useTrendExit: true,       // 默认 true
+};
+```
+
+#### PM2 运行
+
+```bash
+# 影子模式运行
+pm2 start ecosystem.config.cjs --only quant-shadow-mtf
+
+# 实盘模式运行
+pm2 start ecosystem.config.cjs --only quant-live-mtf
+
+# 端口分配
+# HTTP: 3100 (shadow: 3200)
+# WS: 3101 (shadow: 3201)
+# Dashboard: 8090 (shadow: 8190)
+# Metrics: 9100 (shadow: 9200)
+```
+
+#### 与其他策略配合
+
+多周期共振策略可以与 RegimeSwitching 元策略配合使用：
+
+```javascript
+// 在趋势市中激活 MultiTimeframe 策略
+regimeMap: {
+  trending_up: {
+    strategies: ['SMA', 'MACD', 'MultiTimeframe'],
+    weights: { SMA: 0.3, MACD: 0.3, MultiTimeframe: 0.4 },
+  },
+  // ...
+}
 ```
 
 ### 市场状态切换策略 (Regime Switching)

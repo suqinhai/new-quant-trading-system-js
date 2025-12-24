@@ -232,6 +232,48 @@ export default {
     },
 
     // ============================================
+    // 多周期共振策略默认参数 / Multi-Timeframe Resonance Strategy Defaults
+    // ============================================
+
+    // 多周期共振策略默认参数 / Multi-Timeframe strategy defaults
+    multiTimeframe: {
+      // ============================================
+      // 1H 大周期参数 (趋势判断) / 1H Major Timeframe Parameters
+      // ============================================
+      h1ShortPeriod: 10,            // 1H 短期均线周期
+      h1LongPeriod: 30,             // 1H 长期均线周期
+
+      // ============================================
+      // 15M 中周期参数 (回调判断) / 15M Medium Timeframe Parameters
+      // ============================================
+      m15RsiPeriod: 14,             // 15M RSI 周期
+      m15RsiPullbackLong: 40,       // 多头回调 RSI 阈值 (低于此值认为回调到位)
+      m15RsiPullbackShort: 60,      // 空头回调 RSI 阈值 (高于此值认为回调到位)
+      m15PullbackPercent: 1.5,      // 价格回撤百分比阈值
+
+      // ============================================
+      // 5M 小周期参数 (进场触发) / 5M Minor Timeframe Parameters
+      // ============================================
+      m5RsiPeriod: 14,              // 5M RSI 周期
+      m5RsiOversold: 30,            // 5M RSI 超卖阈值
+      m5RsiOverbought: 70,          // 5M RSI 超买阈值
+      m5ShortPeriod: 5,             // 5M 短期均线周期
+      m5LongPeriod: 15,             // 5M 长期均线周期
+
+      // ============================================
+      // 出场参数 / Exit Parameters
+      // ============================================
+      takeProfitPercent: 3.0,       // 止盈百分比
+      stopLossPercent: 1.5,         // 止损百分比
+      useTrendExit: true,           // 是否使用趋势反转出场
+
+      // ============================================
+      // 仓位参数 / Position Parameters
+      // ============================================
+      positionPercent: 95,          // 仓位百分比
+    },
+
+    // ============================================
     // 市场状态切换策略默认参数 / Regime Switching Strategy Defaults
     // ============================================
 
@@ -320,14 +362,22 @@ export default {
           takerBuyThreshold: 0.6,
           minSignalsForEntry: 2,
         },
+        MultiTimeframe: {
+          h1ShortPeriod: 10,
+          h1LongPeriod: 30,
+          m15RsiPullbackLong: 40,
+          m5RsiOversold: 30,
+          takeProfitPercent: 3.0,
+          stopLossPercent: 1.5,
+        },
       },
 
       // Regime 策略映射 / Regime strategy mapping
       // 可自定义覆盖 / Can be customized
       regimeMap: {
         trending_up: {
-          strategies: ['SMA', 'MACD'],
-          weights: { SMA: 0.6, MACD: 0.4 },
+          strategies: ['SMA', 'MACD', 'MultiTimeframe'],
+          weights: { SMA: 0.4, MACD: 0.3, MultiTimeframe: 0.3 },
         },
         trending_down: {
           strategies: ['SMA', 'MACD'],

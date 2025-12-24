@@ -30,7 +30,8 @@
  * │ quant-live-bbwidth  │ 3070       │ 3071    │ 8087         │ 9097        │
  * │ quant-live-regime   │ 3080       │ 3081    │ 8088         │ 9098        │
  * │ quant-live-orderflow│ 3090       │ 3091    │ 8089         │ 9099        │
- * │ quant-shadow-*      │ 31xx       │ 31xx    │ 81xx         │ 91xx        │
+ * │ quant-live-mtf      │ 3100       │ 3101    │ 8090         │ 9100        │
+ * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
 
@@ -212,6 +213,13 @@ const STRATEGIES = [
     name: 'OrderFlow',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '订单流/成交行为策略 / Order Flow / Trade Behavior Strategy',
+  },
+  // 多周期共振策略 / Multi-Timeframe Resonance Strategy
+  {
+    id: 'mtf',
+    name: 'MultiTimeframe',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '多周期共振策略 (1H趋势+15M回调+5M入场) / Multi-Timeframe Resonance Strategy',
   },
 ];
 
