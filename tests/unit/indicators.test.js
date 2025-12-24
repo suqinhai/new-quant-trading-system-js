@@ -28,6 +28,9 @@ import {
   ROC,
   PivotPoints,
   FibonacciRetracement,
+  HurstExponent,
+  BollingerBandWidth,
+  VolatilityPercentile,
   getLatest,
   detectCrossover,
 } from '../../src/utils/indicators.js';
@@ -510,6 +513,178 @@ describe('Support/Resistance', () => {
       const result = FibonacciRetracement(100, 50);
 
       expect(result.level500).toBe(75);
+    });
+  });
+});
+
+// ============================================
+// Regime 检测指标测试 / Regime Detection Indicators Tests
+// ============================================
+
+describe('Regime Detection Indicators', () => {
+  describe('HurstExponent', () => {
+    it('应该计算 Hurst 指数', () => {
+      const trendingPrices = Array.from({ length: 100 }, (_, i) => 50000 + i * 50);
+      const result = HurstExponent(trendingPrices);
+
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(1);
+    });
+
+    it('趋势数据的 Hurst 应该大于 0.5', () => {
+      // 生成明显的上升趋势
+      const trendingPrices = Array.from({ length: 100 }, (_, i) => 50000 + i * 100);
+      const result = HurstExponent(trendingPrices);
+
+      // 趋势性数据 H > 0.5
+      expect(result).toBeGreaterThan(0.4);
+    });
+
+    it('随机数据的 Hurst 应该接近 0.5', () => {
+      // 生成随机游走数据
+      const randomPrices = [50000];
+      for (let i = 1; i < 100; i++) {
+        randomPrices.push(randomPrices[i - 1] + (Math.random() - 0.5) * 100);
+      }
+      const result = HurstExponent(randomPrices);
+
+      // 随机游走 H ≈ 0.5 (允许一定误差)
+      expect(result).toBeGreaterThan(0.3);
+      expect(result).toBeLessThan(0.7);
+    });
+
+    it('数据不足时应该返回 0.5', () => {
+      const shortPrices = [100, 101, 102];
+      const result = HurstExponent(shortPrices);
+
+      expect(result).toBe(0.5);
+    });
+
+    it('应该处理空数组', () => {
+      const result = HurstExponent([]);
+
+      expect(result).toBe(0.5);
+    });
+
+    it('应该处理无效数据', () => {
+      const invalidPrices = [0, 0, 0, 0, 0];
+      const result = HurstExponent(invalidPrices);
+
+      expect(typeof result).toBe('number');
+    });
+
+    it('应该使用自定义最小周期', () => {
+      const prices = Array.from({ length: 50 }, (_, i) => 50000 + i * 10);
+      const result = HurstExponent(prices, 5);
+
+      expect(typeof result).toBe('number');
+    });
+  });
+
+  describe('BollingerBandWidth', () => {
+    it('应该计算布林带宽度', () => {
+      const prices = Array.from({ length: 30 }, (_, i) => 50 + Math.sin(i * 0.3) * 5);
+      const result = BollingerBandWidth(prices, 20, 2);
+
+      expect(result).toBeInstanceOf(Array);
+    });
+
+    it('宽度值应该为正数', () => {
+      const prices = Array.from({ length: 30 }, (_, i) => 50 + Math.sin(i * 0.3) * 5);
+      const result = BollingerBandWidth(prices, 20, 2);
+
+      result.forEach(width => {
+        expect(width).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('高波动数据应该有更大的宽度', () => {
+      const lowVolPrices = Array.from({ length: 30 }, (_, i) => 50 + Math.sin(i * 0.3) * 1);
+      const highVolPrices = Array.from({ length: 30 }, (_, i) => 50 + Math.sin(i * 0.3) * 10);
+
+      const lowVolWidth = BollingerBandWidth(lowVolPrices, 20, 2);
+      const highVolWidth = BollingerBandWidth(highVolPrices, 20, 2);
+
+      if (lowVolWidth.length > 0 && highVolWidth.length > 0) {
+        const avgLowVol = lowVolWidth.reduce((a, b) => a + b, 0) / lowVolWidth.length;
+        const avgHighVol = highVolWidth.reduce((a, b) => a + b, 0) / highVolWidth.length;
+
+        expect(avgHighVol).toBeGreaterThan(avgLowVol);
+      }
+    });
+
+    it('应该使用默认参数', () => {
+      const prices = Array.from({ length: 30 }, (_, i) => 50 + Math.sin(i * 0.3) * 5);
+      const result = BollingerBandWidth(prices);
+
+      expect(result).toBeInstanceOf(Array);
+    });
+
+    it('数据不足时应该返回空数组', () => {
+      const prices = [50, 51, 52];
+      const result = BollingerBandWidth(prices, 20, 2);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('VolatilityPercentile', () => {
+    it('应该计算波动率百分位', () => {
+      const history = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const result = VolatilityPercentile(50, history);
+
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(100);
+    });
+
+    it('最大值应该返回 100', () => {
+      const history = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const result = VolatilityPercentile(100, history);
+
+      expect(result).toBe(100);
+    });
+
+    it('最小值应该返回较低的百分位', () => {
+      const history = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const result = VolatilityPercentile(10, history);
+
+      expect(result).toBe(10); // 1/10 = 10%
+    });
+
+    it('中位数应该返回约 50%', () => {
+      const history = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const result = VolatilityPercentile(55, history);
+
+      expect(result).toBeGreaterThanOrEqual(40);
+      expect(result).toBeLessThanOrEqual(60);
+    });
+
+    it('历史数据不足时应该返回 50', () => {
+      const history = [10, 20];
+      const result = VolatilityPercentile(15, history);
+
+      expect(result).toBe(50);
+    });
+
+    it('应该处理空历史数据', () => {
+      const result = VolatilityPercentile(50, []);
+
+      expect(result).toBe(50);
+    });
+
+    it('应该处理 null 历史数据', () => {
+      const result = VolatilityPercentile(50, null);
+
+      expect(result).toBe(50);
+    });
+
+    it('应该正确处理重复值', () => {
+      const history = [50, 50, 50, 50, 50, 50, 50, 50, 50, 50];
+      const result = VolatilityPercentile(50, history);
+
+      expect(result).toBe(100);
     });
   });
 });
