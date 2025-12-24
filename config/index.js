@@ -247,7 +247,7 @@ function buildEnvConfig() {
         to: getEnv('ALERT_EMAIL_TO'),
       },
       telegram: {
-        enabled: !!getEnv('TELEGRAM_BOT_TOKEN'),
+        enabled: getEnvBool('TELEGRAM_ENABLED', false),
         botToken: getEnvDecrypted('TELEGRAM_BOT_TOKEN'),
         chatId: getEnvDecrypted('TELEGRAM_CHAT_ID'),
       },

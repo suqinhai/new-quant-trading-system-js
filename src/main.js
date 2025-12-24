@@ -455,7 +455,7 @@ class TradingSystemRunner extends EventEmitter {
       telegram: {
         botToken: process.env.TELEGRAM_BOT_TOKEN,   // Bot Token
         chatId: process.env.TELEGRAM_CHAT_ID,       // Chat ID
-        enabled: this.mode === RUN_MODE.LIVE,       // 仅实盘启用 / Only enable in live mode
+        enabled: process.env.TELEGRAM_ENABLED === 'true',  // 通过环境变量控制 / Controlled by env variable
       },
 
       // PnL 日志配置 / PnL logger configuration
