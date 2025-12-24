@@ -228,6 +228,7 @@ npm run live
 | ATRBreakout | 波动率 | ATR 动态通道突破策略 |
 | BollingerWidth | 波动率 | 布林带宽度挤压突破策略 |
 | VolatilityRegime | 波动率 | 波动率 Regime 切换策略 |
+| RegimeSwitching | 元策略 | 市场状态自动切换策略组合 |
 | Grid | 网格 | 网格交易策略 |
 | FundingArb | 套利 | 资金费率套利策略 |
 
@@ -322,6 +323,88 @@ npm run live
     timeframe: '1h'
   }
 }
+```
+
+#### 市场状态切换策略 (RegimeSwitching)
+
+自动根据市场状态切换策略组合的元策略。
+
+**市场状态类型：**
+| 状态 | 说明 | 推荐策略 | 仓位比例 |
+|------|------|---------|---------|
+| trending_up | 上涨趋势 | SMA, MACD | 100% |
+| trending_down | 下跌趋势 | SMA, MACD | 80% |
+| ranging | 震荡盘整 | RSI, 布林带, 网格 | 70% |
+| high_volatility | 高波动 | ATR 突破 | 50% |
+| extreme | 极端情况 | 停止交易 | 0% |
+
+**基础配置：**
+```javascript
+{
+  type: 'RegimeSwitching',
+  params: {
+    symbol: 'BTC/USDT',
+    timeframe: '1h',
+    positionPercent: 95,
+    signalAggregation: 'weighted',  // 'weighted' | 'majority' | 'any'
+    weightedThreshold: 0.5,
+    closeOnRegimeChange: true,      // 状态切换时平仓
+    forceCloseOnExtreme: true       // 极端情况强制平仓
+  }
+}
+```
+
+**信号聚合模式：**
+- `weighted`: 加权聚合，根据策略权重计算总信号
+- `majority`: 多数决，超过半数策略同意才生成信号
+- `any`: 任意策略发出信号即生效，卖出优先
+
+**完整配置示例：**
+```javascript
+{
+  type: 'RegimeSwitching',
+  params: {
+    symbol: 'BTC/USDT',
+    timeframe: '1h',
+    positionPercent: 95,
+    signalAggregation: 'weighted',
+    weightedThreshold: 0.5,
+    closeOnRegimeChange: true,
+    forceCloseOnExtreme: true,
+
+    // Regime 检测参数
+    regimeParams: {
+      adxPeriod: 14,
+      adxTrendThreshold: 25,
+      bbPeriod: 20,
+      atrPeriod: 14,
+      minRegimeDuration: 3  // 状态确认需要的 K 线数
+    },
+
+    // 自定义子策略参数
+    strategyParams: {
+      SMA: { shortPeriod: 10, longPeriod: 30 },
+      MACD: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+      RSI: { period: 14, overbought: 70, oversold: 30 }
+    }
+  }
+}
+```
+
+**WebSocket 实时状态订阅：**
+```javascript
+// 订阅市场状态更新
+socket.emit('subscribe', { channel: 'regime' });
+
+socket.on('regime', (data) => {
+  console.log(`当前状态: ${data.regime}`);
+  console.log(`活跃策略: ${data.activeStrategies}`);
+  console.log(`置信度: ${data.confidence}%`);
+});
+
+socket.on('regime_change', (data) => {
+  console.log(`状态切换: ${data.from} → ${data.to}`);
+});
 ```
 
 ### 通过 API 管理策略

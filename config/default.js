@@ -188,6 +188,117 @@ export default {
       disableInExtreme: true,
       positionPercent: 95,
     },
+
+    // ============================================
+    // 市场状态切换策略默认参数 / Regime Switching Strategy Defaults
+    // ============================================
+
+    // Regime 切换元策略默认参数 / Regime Switching meta strategy defaults
+    regimeSwitching: {
+      // 信号聚合方式: 'weighted' | 'majority' | 'any'
+      // Signal aggregation mode
+      signalAggregation: 'weighted',
+
+      // 加权信号阈值 / Weighted signal threshold
+      weightedThreshold: 0.5,
+
+      // 状态切换时是否平仓 / Close position on regime change
+      closeOnRegimeChange: true,
+
+      // 极端情况是否强制平仓 / Force close on extreme regime
+      forceCloseOnExtreme: true,
+
+      // 默认仓位比例 / Default position percent
+      positionPercent: 95,
+
+      // Regime 检测参数 / Regime detection parameters
+      regimeParams: {
+        // ADX 周期 / ADX period
+        adxPeriod: 14,
+
+        // ADX 趋势阈值 / ADX trend threshold
+        adxTrendThreshold: 25,
+
+        // ADX 强趋势阈值 / ADX strong trend threshold
+        adxStrongTrendThreshold: 40,
+
+        // 布林带周期 / Bollinger Bands period
+        bbPeriod: 20,
+
+        // ATR 周期 / ATR period
+        atrPeriod: 14,
+
+        // 低波动率百分位 / Low volatility percentile
+        lowVolPercentile: 25,
+
+        // 高波动率百分位 / High volatility percentile
+        highVolPercentile: 75,
+
+        // 极端波动率百分位 / Extreme volatility percentile
+        extremeVolPercentile: 95,
+
+        // Hurst 指数计算周期 / Hurst exponent period
+        hurstPeriod: 50,
+
+        // 最小状态持续 K 线数 / Minimum regime duration in candles
+        minRegimeDuration: 3,
+      },
+
+      // 子策略参数 / Sub-strategy parameters
+      strategyParams: {
+        SMA: {
+          shortPeriod: 10,
+          longPeriod: 30,
+        },
+        MACD: {
+          fastPeriod: 12,
+          slowPeriod: 26,
+          signalPeriod: 9,
+        },
+        RSI: {
+          period: 14,
+          overbought: 70,
+          oversold: 30,
+        },
+        BollingerBands: {
+          period: 20,
+          stdDev: 2,
+        },
+        Grid: {
+          gridCount: 10,
+          gridSpacing: 0.01,
+        },
+        ATRBreakout: {
+          atrPeriod: 14,
+          atrMultiplier: 2.0,
+        },
+      },
+
+      // Regime 策略映射 / Regime strategy mapping
+      // 可自定义覆盖 / Can be customized
+      regimeMap: {
+        trending_up: {
+          strategies: ['SMA', 'MACD'],
+          weights: { SMA: 0.6, MACD: 0.4 },
+        },
+        trending_down: {
+          strategies: ['SMA', 'MACD'],
+          weights: { SMA: 0.6, MACD: 0.4 },
+        },
+        ranging: {
+          strategies: ['RSI', 'BollingerBands', 'Grid'],
+          weights: { RSI: 0.4, BollingerBands: 0.4, Grid: 0.2 },
+        },
+        high_volatility: {
+          strategies: ['ATRBreakout'],
+          weights: { ATRBreakout: 1.0 },
+        },
+        extreme: {
+          strategies: [],
+          weights: {},
+        },
+      },
+    },
   },
 
   // ============================================

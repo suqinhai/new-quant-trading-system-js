@@ -1073,6 +1073,7 @@ describe('CustomStrategy', () => {
 | ATR突破 | src/strategies/ATRBreakoutStrategy.js | 波动率 |
 | 布林宽度 | src/strategies/BollingerWidthStrategy.js | 波动率 |
 | 波动Regime | src/strategies/VolatilityRegimeStrategy.js | 波动率 |
+| Regime切换 | src/strategies/RegimeSwitchingStrategy.js | 元策略 |
 | 网格 | src/strategies/GridStrategy.js | 套利 |
 | 资金费率套利 | src/strategies/FundingArbStrategy.js | 套利 |
 
@@ -1111,6 +1112,191 @@ const strategy = new VolatilityRegimeStrategy({
   highVolThreshold: 75,
   disableInExtreme: true
 });
+```
+
+### 市场状态切换策略 (Regime Switching)
+
+#### 概述
+
+RegimeSwitchingStrategy 是一个元策略，根据市场状态自动切换子策略组合：
+
+| 市场状态 | 说明 | 推荐策略 | 仓位比例 |
+|---------|------|---------|---------|
+| trending_up | 上涨趋势 | SMA, MACD | 100% |
+| trending_down | 下跌趋势 | SMA, MACD | 80% |
+| ranging | 震荡盘整 | RSI, 布林带, 网格 | 70% |
+| high_volatility | 高波动 | ATR 突破 | 50% |
+| extreme | 极端情况 | 停止交易 | 0% |
+
+#### 状态检测指标
+
+- **ADX (平均趋向指数)**: 衡量趋势强度，> 25 表示有趋势
+- **Bollinger Band Width**: 衡量波动率，宽度收缩表示盘整
+- **ATR (真实波幅)**: 衡量市场波动程度
+- **Hurst 指数**: 衡量趋势持续性，> 0.55 趋势性，< 0.45 均值回归
+
+#### 基础用法
+
+```javascript
+const { RegimeSwitchingStrategy } = require('./strategies');
+
+const strategy = new RegimeSwitchingStrategy({
+  symbol: 'BTC/USDT',
+  positionPercent: 95,
+  signalAggregation: 'weighted',  // 信号聚合模式
+  weightedThreshold: 0.5,         // 加权阈值
+  closeOnRegimeChange: true,      // 状态切换时平仓
+  forceCloseOnExtreme: true,      // 极端情况强制平仓
+});
+
+// 监听状态切换事件
+strategy.on('regime_change', (event) => {
+  console.log(`状态切换: ${event.from} → ${event.to}`);
+  console.log(`活跃策略: ${event.activeStrategies.join(', ')}`);
+});
+
+// 监听信号
+strategy.on('signal', (signal) => {
+  console.log(`信号: ${signal.type} @ ${signal.price}`);
+});
+```
+
+#### 信号聚合模式
+
+| 模式 | 说明 |
+|------|------|
+| weighted | 加权聚合，根据策略权重计算总信号 |
+| majority | 多数决，超过半数策略同意才生成信号 |
+| any | 任意策略发出信号即生效，卖出优先 |
+
+```javascript
+// 加权聚合示例
+const strategy = new RegimeSwitchingStrategy({
+  signalAggregation: 'weighted',
+  weightedThreshold: 0.5,  // 总权重 > 0.5 才生成信号
+});
+
+// 多数决示例
+const strategy = new RegimeSwitchingStrategy({
+  signalAggregation: 'majority',
+});
+
+// 任意信号示例
+const strategy = new RegimeSwitchingStrategy({
+  signalAggregation: 'any',
+});
+```
+
+#### 自定义 Regime 映射
+
+```javascript
+const { MarketRegime } = require('./strategies/RegimeSwitchingStrategy');
+
+const customRegimeMap = {
+  [MarketRegime.TRENDING_UP]: {
+    strategies: ['SMA', 'MACD'],
+    weights: { SMA: 0.7, MACD: 0.3 },
+  },
+  [MarketRegime.RANGING]: {
+    strategies: ['RSI', 'BollingerBands'],
+    weights: { RSI: 0.6, BollingerBands: 0.4 },
+  },
+  // ... 其他状态
+};
+
+const strategy = new RegimeSwitchingStrategy({
+  regimeMap: customRegimeMap,
+});
+```
+
+#### 配置参数
+
+```javascript
+const config = {
+  // 基础配置
+  symbol: 'BTC/USDT',
+  timeframe: '1h',
+  positionPercent: 95,
+
+  // 信号聚合
+  signalAggregation: 'weighted',
+  weightedThreshold: 0.5,
+
+  // Regime 检测参数
+  regimeParams: {
+    adxPeriod: 14,
+    adxTrendThreshold: 25,
+    adxStrongTrendThreshold: 40,
+    bbPeriod: 20,
+    atrPeriod: 14,
+    lowVolPercentile: 25,
+    highVolPercentile: 75,
+    extremeVolPercentile: 95,
+    hurstPeriod: 50,
+    minRegimeDuration: 3,  // 状态确认需要的 K 线数
+  },
+
+  // 子策略参数
+  strategyParams: {
+    SMA: { shortPeriod: 10, longPeriod: 30 },
+    MACD: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+    RSI: { period: 14, overbought: 70, oversold: 30 },
+    // ...
+  },
+
+  // 风控
+  closeOnRegimeChange: true,
+  forceCloseOnExtreme: true,
+};
+```
+
+#### 独立使用 MarketRegimeDetector
+
+```javascript
+const { MarketRegimeDetector, RegimeEvent } = require('./utils/MarketRegimeDetector');
+
+const detector = new MarketRegimeDetector({
+  adxPeriod: 14,
+  adxTrendThreshold: 25,
+  minRegimeDuration: 3,
+});
+
+// 监听事件
+detector.on(RegimeEvent.REGIME_CHANGE, (event) => {
+  console.log(`状态切换: ${event.from} → ${event.to}`);
+});
+
+detector.on(RegimeEvent.EXTREME_DETECTED, (event) => {
+  console.log('检测到极端市场情况！');
+});
+
+// 更新检测器
+const result = detector.update(candle, candleHistory);
+console.log(`当前状态: ${result.regime}`);
+console.log(`置信度: ${result.confidence}%`);
+console.log(`推荐策略: ${result.recommendation.strategies}`);
+```
+
+#### 公共 API
+
+```javascript
+// 获取当前状态
+strategy.getCurrentRegime();  // 'trending_up' | 'ranging' | ...
+
+// 获取活跃策略
+strategy.getActiveStrategies();  // ['SMA', 'MACD']
+
+// 获取统计信息
+strategy.getRegimeStats();
+// {
+//   currentRegime: 'trending_up',
+//   activeStrategies: ['SMA', 'MACD'],
+//   regimeChanges: 5,
+//   ...
+// }
+
+// 强制切换状态（测试用）
+strategy.forceRegime(MarketRegime.HIGH_VOLATILITY);
 ```
 
 ### 相关文档
