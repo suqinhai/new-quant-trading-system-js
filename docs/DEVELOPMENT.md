@@ -21,7 +21,8 @@
 
 - **三种运行模式**：回测(backtest)、影子交易(shadow)、实盘交易(live)
 - **多交易所支持**：Binance、Bybit、OKX
-- **多策略框架**：SMA、RSI、MACD、布林带、网格、资金费率套利
+- **多策略框架**：SMA、RSI、MACD、布林带、网格、资金费率套利、Regime 切换
+- **市场状态识别**：自动识别趋势/震荡/高波动市场，动态切换策略
 - **专业风控**：多层风控、黑天鹅保护、熔断机制
 - **完整监控**：Prometheus 指标、Telegram 告警、审计日志
 
@@ -73,6 +74,7 @@ src/
 │   ├── BaseStrategy.js    # 策略基类
 │   ├── SMAStrategy.js     # SMA 策略
 │   ├── RSIStrategy.js     # RSI 策略
+│   ├── RegimeSwitchingStrategy.js  # Regime 切换元策略
 │   └── ...                # 其他策略
 ├── exchange/              # 交易所集成
 │   ├── BaseExchange.js    # 交易所基类
@@ -103,6 +105,9 @@ src/
 │   └── MetricsExporter.js # 指标导出
 ├── monitoring/            # 系统监控
 ├── utils/                 # 工具函数
+│   ├── indicators.js      # 技术指标 (含 Hurst 指数)
+│   ├── MarketRegimeDetector.js  # 市场状态检测器
+│   └── helpers.js         # 辅助函数
 ├── config/                # 配置管理
 └── middleware/            # Express 中间件
 ```
@@ -388,6 +393,87 @@ class RiskSystem {
       positionCount: 0
     };
   }
+}
+```
+
+### 市场状态检测器 (MarketRegimeDetector)
+
+```javascript
+const { MarketRegimeDetector, MarketRegime } = require('./utils/MarketRegimeDetector');
+
+class MarketRegimeDetector extends EventEmitter {
+  constructor(config) {
+    // ADX 参数 (趋势强度)
+    this.adxTrendThreshold = 25;     // ADX > 25 认为有趋势
+    this.adxStrongTrendThreshold = 40;
+
+    // 波动率阈值
+    this.lowVolPercentile = 25;
+    this.highVolPercentile = 75;
+    this.extremeVolPercentile = 95;
+
+    // Hurst 指数阈值
+    this.hurstTrendThreshold = 0.55;  // H > 0.55 趋势特性
+    this.hurstMeanRevThreshold = 0.45; // H < 0.45 均值回归
+  }
+
+  // 更新市场状态
+  update(candle, history) {
+    return {
+      regime: 'trending_up' | 'trending_down' | 'ranging' | 'high_volatility' | 'extreme',
+      confidence: 0-100,
+      indicators: { adx, bbWidth, atr, hurst, ... },
+      recommendation: { strategies: [...], positionSizing: 0-1 }
+    };
+  }
+
+  // 市场状态枚举
+  const MarketRegime = {
+    TRENDING_UP: 'trending_up',       // 上涨趋势 → SMA/MACD
+    TRENDING_DOWN: 'trending_down',   // 下跌趋势 → SMA/MACD
+    RANGING: 'ranging',               // 震荡盘整 → Grid/RSI/布林
+    HIGH_VOLATILITY: 'high_volatility', // 高波动 → ATR突破
+    EXTREME: 'extreme',               // 极端情况 → 风控模式
+  };
+
+  // 事件
+  on('regime_change', ({ from, to, indicators }) => {});
+  on('extreme_detected', (data) => {});
+  on('volatility_spike', (data) => {});
+}
+```
+
+### Regime 切换元策略 (RegimeSwitchingStrategy)
+
+```javascript
+const { RegimeSwitchingStrategy } = require('./strategies');
+
+class RegimeSwitchingStrategy extends BaseStrategy {
+  constructor(config) {
+    // 自动根据市场状态切换策略组合
+    this.regimeMap = {
+      'trending_up': { strategies: ['SMA', 'MACD'], weights: { SMA: 0.6, MACD: 0.4 } },
+      'trending_down': { strategies: ['SMA', 'MACD'], weights: { SMA: 0.6, MACD: 0.4 } },
+      'ranging': { strategies: ['RSI', 'BollingerBands', 'Grid'], weights: { ... } },
+      'high_volatility': { strategies: ['ATRBreakout'], weights: { ATRBreakout: 1.0 } },
+      'extreme': { strategies: [], weights: {} }, // 停止交易
+    };
+
+    // 信号聚合模式
+    this.signalAggregation = 'weighted' | 'majority' | 'any';
+
+    // 风控设置
+    this.closeOnRegimeChange = true;  // 状态切换时平仓
+    this.forceCloseOnExtreme = true;  // 极端情况强制平仓
+  }
+
+  // 使用示例
+  const strategy = new RegimeSwitchingStrategy({
+    symbol: 'BTC/USDT',
+    positionPercent: 95,
+    signalAggregation: 'weighted',
+    weightedThreshold: 0.5,
+  });
 }
 ```
 

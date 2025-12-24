@@ -268,6 +268,24 @@ GET /api/strategies/types
         { "name": "overbought", "type": "number", "default": 70 },
         { "name": "oversold", "type": "number", "default": 30 }
       ]
+    },
+    {
+      "type": "RegimeSwitching",
+      "name": "市场状态切换",
+      "description": "根据市场状态自动切换策略组合",
+      "params": [
+        { "name": "signalAggregation", "type": "string", "default": "weighted", "options": ["weighted", "majority", "any"] },
+        { "name": "weightedThreshold", "type": "number", "default": 0.5 },
+        { "name": "closeOnRegimeChange", "type": "boolean", "default": true },
+        { "name": "forceCloseOnExtreme", "type": "boolean", "default": true }
+      ],
+      "regimes": [
+        { "regime": "trending_up", "strategies": ["SMA", "MACD"], "description": "上涨趋势" },
+        { "regime": "trending_down", "strategies": ["SMA", "MACD"], "description": "下跌趋势" },
+        { "regime": "ranging", "strategies": ["RSI", "BollingerBands", "Grid"], "description": "震荡盘整" },
+        { "regime": "high_volatility", "strategies": ["ATRBreakout"], "description": "高波动" },
+        { "regime": "extreme", "strategies": [], "description": "极端情况-风控模式" }
+      ]
     }
   ]
 }
@@ -936,6 +954,28 @@ socket.emit('subscribe', { channel: 'alerts' });
 socket.on('alert', (data) => {
   console.log(data);
   // { level: 'warning', message: '...', ... }
+});
+```
+
+#### 市场状态更新 (Regime Switching)
+
+```javascript
+socket.emit('subscribe', { channel: 'regime' });
+
+socket.on('regime', (data) => {
+  console.log(data);
+  // {
+  //   regime: 'trending_up',
+  //   prevRegime: 'ranging',
+  //   confidence: 75,
+  //   activeStrategies: ['SMA', 'MACD'],
+  //   indicators: { adx: 32.5, bbWidth: 4.2, hurst: 0.58 }
+  // }
+});
+
+socket.on('regime_change', (data) => {
+  console.log(data);
+  // { from: 'ranging', to: 'trending_up', timestamp: '...' }
 });
 ```
 
