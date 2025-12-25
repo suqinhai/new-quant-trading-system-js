@@ -205,6 +205,90 @@ export const StrategySchemas = {
     (data) => data.takerSellThreshold < data.takerBuyThreshold,
     { message: 'Taker sell threshold must be less than taker buy threshold' }
   ),
+
+  // ============================================
+  // 统计套利策略 / Statistical Arbitrage Strategy
+  // ============================================
+
+  statisticalArbitrage: z.object({
+    // 策略类型 / Strategy type
+    arbType: z.enum([
+      'pairs_trading',
+      'cointegration',
+      'cross_exchange',
+      'perpetual_spot',
+      'triangular',
+    ]).default('pairs_trading'),
+
+    // 配对配置 / Pairs configuration
+    candidatePairs: z.array(z.object({
+      assetA: z.string().min(1),
+      assetB: z.string().min(1),
+    })).min(1),
+
+    // 最大同时持有配对数 / Max active pairs
+    maxActivePairs: z.number().int().min(1).max(50).default(5),
+
+    // 回看周期 / Lookback period
+    lookbackPeriod: z.number().int().min(10).max(500).default(60),
+
+    // 协整检验周期 / Cointegration test period
+    cointegrationTestPeriod: z.number().int().min(30).max(1000).default(100),
+
+    // 协整检验参数 / Cointegration test parameters
+    adfSignificanceLevel: z.number().min(0.001).max(0.1).default(0.05),
+    minCorrelation: z.number().min(0).max(1).default(0.7),
+    minHalfLife: z.number().min(0.1).max(30).default(1),
+    maxHalfLife: z.number().min(1).max(365).default(30),
+
+    // Z-Score 信号参数 / Z-Score signal parameters
+    entryZScore: z.number().min(0.5).max(5).default(2.0),
+    exitZScore: z.number().min(0).max(3).default(0.5),
+    stopLossZScore: z.number().min(2).max(10).default(4.0),
+
+    // 最大持仓时间 (毫秒) / Max holding period (ms)
+    maxHoldingPeriod: z.number().int().min(60000).default(7 * 24 * 60 * 60 * 1000),
+
+    // 跨交易所套利参数 / Cross-exchange arbitrage parameters
+    spreadEntryThreshold: z.number().min(0.0001).max(0.1).default(0.003),
+    spreadExitThreshold: z.number().min(0).max(0.05).default(0.001),
+    tradingCost: z.number().min(0).max(0.01).default(0.001),
+    slippageEstimate: z.number().min(0).max(0.01).default(0.0005),
+
+    // 永续-现货基差参数 / Perpetual-spot basis parameters
+    basisEntryThreshold: z.number().min(0.01).max(1).default(0.15),
+    basisExitThreshold: z.number().min(0).max(0.5).default(0.05),
+    fundingRateThreshold: z.number().min(0).max(0.01).default(0.001),
+
+    // 仓位管理 / Position management
+    maxPositionPerPair: z.number().min(0.01).max(0.5).default(0.1),
+    maxTotalPosition: z.number().min(0.1).max(1).default(0.5),
+    symmetricPosition: z.boolean().default(true),
+
+    // 风险控制 / Risk control
+    maxLossPerPair: z.number().min(0.001).max(0.1).default(0.02),
+    maxDrawdown: z.number().min(0.01).max(0.5).default(0.1),
+    consecutiveLossLimit: z.number().int().min(1).max(20).default(3),
+    coolingPeriod: z.number().int().min(0).default(24 * 60 * 60 * 1000),
+
+    // 详细日志 / Verbose logging
+    verbose: z.boolean().default(false),
+  }).refine(
+    (data) => data.exitZScore < data.entryZScore,
+    { message: 'Exit Z-Score must be less than entry Z-Score' }
+  ).refine(
+    (data) => data.entryZScore < data.stopLossZScore,
+    { message: 'Entry Z-Score must be less than stop loss Z-Score' }
+  ).refine(
+    (data) => data.minHalfLife < data.maxHalfLife,
+    { message: 'Min half-life must be less than max half-life' }
+  ).refine(
+    (data) => data.spreadExitThreshold < data.spreadEntryThreshold,
+    { message: 'Spread exit threshold must be less than entry threshold' }
+  ).refine(
+    (data) => data.basisExitThreshold < data.basisEntryThreshold,
+    { message: 'Basis exit threshold must be less than entry threshold' }
+  ),
 };
 
 /**

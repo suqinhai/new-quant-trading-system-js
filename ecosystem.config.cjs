@@ -37,6 +37,7 @@
  * │ quant-live-rotation │ 3140       │ 3141    │ 8094         │ 9104        │
  * │ quant-live-fundext  │ 3150       │ 3151    │ 8095         │ 9105        │
  * │ quant-live-crossex  │ 3160       │ 3161    │ 8096         │ 9106        │
+ * │ quant-live-statarb  │ 3170       │ 3171    │ 8097         │ 9107        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -264,6 +265,13 @@ const STRATEGIES = [
     name: 'CrossExchangeSpread',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT',
     description: '跨交易所价差策略 / Cross-Exchange Spread Strategy',
+  },
+  // 统计套利策略 / Statistical Arbitrage Strategy
+  {
+    id: 'statarb',
+    name: 'StatisticalArbitrage',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,AVAX/USDT:USDT',
+    description: '统计套利策略 (配对交易/协整/跨所套利/期现基差) / Statistical Arbitrage Strategy',
   },
 ];
 

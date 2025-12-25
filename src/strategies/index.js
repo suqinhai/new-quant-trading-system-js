@@ -79,6 +79,23 @@ export {
   SPREAD_TYPES,
 } from './CrossExchangeSpreadStrategy.js';
 
+// ============================================
+// 统计套利策略 / Statistical Arbitrage Strategies
+// ============================================
+
+// 统计套利策略 / Statistical arbitrage strategy
+export {
+  StatisticalArbitrageStrategy,
+  PriceSeriesStore,
+  StatisticalCalculator,
+  PairManager,
+  SpreadCalculator,
+  STAT_ARB_TYPE,
+  PAIR_STATUS,
+  SIGNAL_TYPE,
+  STAT_ARB_DEFAULT_CONFIG,
+} from './StatisticalArbitrageStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -139,6 +156,16 @@ export const StrategyRegistry = {
   // 跨交易所价差策略 / Cross-exchange spread strategy
   CrossExchangeSpread: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),
   CrossExchange: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),  // 别名
+
+  // ============================================
+  // 统计套利策略 / Statistical Arbitrage Strategies
+  // ============================================
+
+  // 统计套利策略 / Statistical arbitrage strategy
+  StatisticalArbitrage: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),
+  StatArb: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
+  Pairs: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
+  Cointegration: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
 
   /**
    * 获取策略类

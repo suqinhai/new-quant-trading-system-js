@@ -677,6 +677,127 @@ export default {
       maxPositionPerPair: 0.1,              // 每对最大仓位
       positionPercent: 95,
     },
+
+    // ============================================
+    // 统计套利策略默认参数 / Statistical Arbitrage Strategy Defaults
+    // ============================================
+
+    // 统计套利策略默认参数 / Statistical Arbitrage strategy defaults
+    statisticalArbitrage: {
+      // ============================================
+      // 策略类型配置 / Strategy Type Configuration
+      // ============================================
+      // 套利类型: pairs_trading, cointegration, cross_exchange, perpetual_spot, triangular
+      arbType: 'pairs_trading',
+
+      // ============================================
+      // 配对配置 / Pairs Configuration
+      // ============================================
+
+      // 候选配对列表 / Candidate pairs list
+      candidatePairs: [
+        { assetA: 'BTC/USDT', assetB: 'ETH/USDT' },
+        { assetA: 'ETH/USDT', assetB: 'BNB/USDT' },
+        { assetA: 'SOL/USDT', assetB: 'AVAX/USDT' },
+      ],
+
+      // 最大同时持有配对数 / Max active pairs
+      maxActivePairs: 5,
+
+      // 回看周期 (用于计算统计量) / Lookback period for statistics
+      lookbackPeriod: 60,
+
+      // 协整检验周期 / Cointegration test period
+      cointegrationTestPeriod: 100,
+
+      // ============================================
+      // 协整检验配置 / Cointegration Test Configuration
+      // ============================================
+
+      // ADF检验显著性水平 / ADF test significance level
+      adfSignificanceLevel: 0.05,
+
+      // 最小相关性阈值 / Minimum correlation threshold
+      minCorrelation: 0.7,
+
+      // 半衰期限制 (天) / Half-life limits (days)
+      minHalfLife: 1,
+      maxHalfLife: 30,
+
+      // ============================================
+      // 信号配置 / Signal Configuration
+      // ============================================
+
+      // Z-Score开仓阈值 / Z-Score entry threshold
+      entryZScore: 2.0,
+
+      // Z-Score平仓阈值 / Z-Score exit threshold
+      exitZScore: 0.5,
+
+      // Z-Score止损阈值 / Z-Score stop loss threshold
+      stopLossZScore: 4.0,
+
+      // 最大持仓时间 (毫秒) / Max holding period (ms)
+      maxHoldingPeriod: 7 * 24 * 60 * 60 * 1000, // 7天 / 7 days
+
+      // ============================================
+      // 跨交易所套利配置 / Cross-Exchange Arbitrage Configuration
+      // ============================================
+
+      // 价差开仓阈值 (百分比) / Spread entry threshold (%)
+      spreadEntryThreshold: 0.003, // 0.3%
+
+      // 价差平仓阈值 (百分比) / Spread exit threshold (%)
+      spreadExitThreshold: 0.001, // 0.1%
+
+      // 交易成本 (单边) / Trading cost (one side)
+      tradingCost: 0.001, // 0.1%
+
+      // 滑点估计 / Slippage estimate
+      slippageEstimate: 0.0005, // 0.05%
+
+      // ============================================
+      // 永续-现货基差配置 / Perpetual-Spot Basis Configuration
+      // ============================================
+
+      // 基差入场阈值 (年化) / Basis entry threshold (annualized)
+      basisEntryThreshold: 0.15, // 15%
+
+      // 基差出场阈值 (年化) / Basis exit threshold (annualized)
+      basisExitThreshold: 0.05, // 5%
+
+      // 资金费率阈值 (8小时) / Funding rate threshold (8h)
+      fundingRateThreshold: 0.001, // 0.1%
+
+      // ============================================
+      // 仓位管理 / Position Management
+      // ============================================
+
+      // 单个配对最大仓位 / Max position per pair
+      maxPositionPerPair: 0.1, // 10%
+
+      // 总最大仓位 / Max total position
+      maxTotalPosition: 0.5, // 50%
+
+      // 仓位对称 / Symmetric position
+      symmetricPosition: true,
+
+      // ============================================
+      // 风险控制 / Risk Control
+      // ============================================
+
+      // 单配对最大亏损 / Max loss per pair
+      maxLossPerPair: 0.02, // 2%
+
+      // 总最大回撤 / Max drawdown
+      maxDrawdown: 0.10, // 10%
+
+      // 连续亏损次数触发冷却 / Consecutive loss limit
+      consecutiveLossLimit: 3,
+
+      // 冷却时间 (毫秒) / Cooling period (ms)
+      coolingPeriod: 24 * 60 * 60 * 1000, // 24小时 / 24 hours
+    },
   },
 
   // ============================================
