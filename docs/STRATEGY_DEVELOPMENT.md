@@ -12,6 +12,7 @@
 8. [回测验证](#回测验证)
 9. [策略优化](#策略优化)
 10. [最佳实践](#最佳实践)
+11. [横截面策略](#横截面策略-cross-sectional-strategies)
 
 ---
 
@@ -26,6 +27,8 @@
 │  波动率: ATRBreakout, BollingerWidth, VolRegime    │
 │  多周期: MultiTimeframe (1H+15M+5M 共振)           │
 │  套利: Grid, FundingArb                             │
+│  横截面: MomentumRank, Rotation, FundingExtreme    │
+│         CrossExchangeSpread (多资产排名/轮动/套利)  │
 └─────────────────────┬───────────────────────────────┘
                       │
                       ▼
@@ -1079,6 +1082,10 @@ describe('CustomStrategy', () => {
 | 订单流 | src/strategies/OrderFlowStrategy.js | 订单流 |
 | 网格 | src/strategies/GridStrategy.js | 套利 |
 | 资金费率套利 | src/strategies/FundingArbStrategy.js | 套利 |
+| 动量排名 | src/strategies/MomentumRankStrategy.js | 横截面 |
+| 强弱轮动 | src/strategies/RotationStrategy.js | 横截面 |
+| 费率极值 | src/strategies/FundingRateExtremeStrategy.js | 横截面 |
+| 跨所价差 | src/strategies/CrossExchangeSpreadStrategy.js | 横截面 |
 
 ### 波动率策略说明
 
@@ -1478,3 +1485,48 @@ strategy.forceRegime(MarketRegime.HIGH_VOLATILITY);
 - [代码开发文档](./DEVELOPMENT.md)
 - [API 参考文档](./API_REFERENCE.md)
 - [用户使用手册](./USER_MANUAL.md)
+- [横截面策略开发指南](./CROSS_SECTIONAL_STRATEGIES.md)
+
+---
+
+## 横截面策略 (Cross-Sectional Strategies)
+
+横截面策略是一类同时对多个资产进行排名和交易的策略。详细文档请参考 [横截面策略开发指南](./CROSS_SECTIONAL_STRATEGIES.md)。
+
+### 策略概览
+
+| 策略 | 说明 | 核心机制 |
+|------|------|----------|
+| MomentumRankStrategy | 动量排名策略 | 做多强势资产，做空弱势资产 |
+| RotationStrategy | 强弱轮动策略 | 基于相对强弱进行资产轮动 |
+| FundingRateExtremeStrategy | 资金费率极值策略 | 利用永续合约费率极值套利 |
+| CrossExchangeSpreadStrategy | 跨交易所价差策略 | 跨交易所价差套利 |
+
+### 快速示例
+
+```javascript
+import { MomentumRankStrategy } from './strategies/MomentumRankStrategy.js';
+
+const strategy = new MomentumRankStrategy({
+  symbols: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'ADA/USDT'],
+  topN: 2,           // 做多前2名
+  bottomN: 1,        // 做空后1名
+  lookbackPeriod: 14,
+  marketNeutral: true,
+  useCompositeMomentum: true,
+});
+
+// 监听事件
+strategy.on('rebalanced', ({ ranking, adjustments }) => {
+  console.log('再平衡完成:', adjustments);
+});
+
+await strategy.onInit();
+```
+
+### 核心组件
+
+- **AssetDataManager**: 多资产数据管理和指标计算
+- **PortfolioManager**: 组合仓位管理和再平衡
+
+详细 API 和配置参数请参考 [横截面策略开发指南](./CROSS_SECTIONAL_STRATEGIES.md)。

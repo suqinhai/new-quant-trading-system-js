@@ -286,6 +286,58 @@ GET /api/strategies/types
         { "regime": "high_volatility", "strategies": ["ATRBreakout"], "description": "高波动" },
         { "regime": "extreme", "strategies": [], "description": "极端情况-风控模式" }
       ]
+    },
+    {
+      "type": "MomentumRank",
+      "name": "动量排名策略",
+      "category": "cross_sectional",
+      "description": "多资产动量排名策略，做多强势、做空弱势",
+      "params": [
+        { "name": "symbols", "type": "array", "required": true },
+        { "name": "topN", "type": "number", "default": 3 },
+        { "name": "bottomN", "type": "number", "default": 3 },
+        { "name": "lookbackPeriod", "type": "number", "default": 14 },
+        { "name": "useCompositeMomentum", "type": "boolean", "default": true },
+        { "name": "marketNeutral", "type": "boolean", "default": false }
+      ]
+    },
+    {
+      "type": "Rotation",
+      "name": "强弱轮动策略",
+      "category": "cross_sectional",
+      "description": "基于相对强弱的资产轮动策略",
+      "params": [
+        { "name": "symbols", "type": "array", "required": true },
+        { "name": "strengthMetric", "type": "string", "default": "composite", "options": ["relative_strength", "momentum", "risk_adjusted", "trend_strength", "composite"] },
+        { "name": "rotationTrigger", "type": "string", "default": "hybrid", "options": ["periodic", "rank_change", "threshold", "hybrid"] },
+        { "name": "useBufferZone", "type": "boolean", "default": true }
+      ]
+    },
+    {
+      "type": "FundingRateExtreme",
+      "name": "资金费率极值策略",
+      "category": "cross_sectional",
+      "description": "利用永续合约资金费率极值进行套利",
+      "params": [
+        { "name": "symbols", "type": "array", "required": true },
+        { "name": "extremeDetection", "type": "string", "default": "percentile", "options": ["percentile", "z_score", "absolute", "historical"] },
+        { "name": "highRatePercentile", "type": "number", "default": 90 },
+        { "name": "lowRatePercentile", "type": "number", "default": 10 },
+        { "name": "minAnnualizedSpread", "type": "number", "default": 0.20 }
+      ]
+    },
+    {
+      "type": "CrossExchangeSpread",
+      "name": "跨交易所价差策略",
+      "category": "cross_sectional",
+      "description": "跨多个交易所的价差套利策略",
+      "params": [
+        { "name": "symbols", "type": "array", "required": true },
+        { "name": "exchanges", "type": "array", "required": true },
+        { "name": "spreadType", "type": "string", "default": "perp_perp", "options": ["spot_spot", "perp_perp", "spot_perp", "futures_spot"] },
+        { "name": "minSpreadToOpen", "type": "number", "default": 0.003 },
+        { "name": "closeSpreadThreshold", "type": "number", "default": 0.001 }
+      ]
     }
   ]
 }
