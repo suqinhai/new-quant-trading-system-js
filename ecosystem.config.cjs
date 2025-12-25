@@ -40,6 +40,7 @@
  * │ quant-live-statarb  │ 3170       │ 3171    │ 8097         │ 9107        │
  * │ quant-live-riskdriven│ 3180      │ 3181    │ 8098         │ 9108        │
  * │ quant-live-adaptive │ 3190       │ 3191    │ 8099         │ 9109        │
+ * │ quant-live-factors  │ 3200       │ 3201    │ 8100         │ 9110        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -288,6 +289,13 @@ const STRATEGIES = [
     name: 'Adaptive',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '自适应参数策略 (SMA/RSI/BB 参数随市场状态动态调整) / Adaptive Strategy',
+  },
+  // 因子投资策略 / Factor Investing Strategy
+  {
+    id: 'factors',
+    name: 'FactorInvesting',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT,LINK/USDT:USDT,UNI/USDT:USDT,ATOM/USDT:USDT,LTC/USDT:USDT,FIL/USDT:USDT',
+    description: '因子投资策略 (动量/波动率/资金流/换手率) / Factor Investing Strategy',
   },
 ];
 
