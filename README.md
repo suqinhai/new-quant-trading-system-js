@@ -58,6 +58,7 @@ npm run pm2:start
 | MultiTimeframe | 多周期共振 | 趋势跟踪 |
 | RegimeSwitching | 市场状态切换 | 自适应市场 |
 | **WeightedCombo** | 加权组合策略 | 多策略融合 |
+| **Adaptive** | 自适应参数策略 | 动态参数调整 |
 
 ### 横截面策略 (多币种)
 
@@ -283,6 +284,46 @@ node examples/runFactorInvesting.js
 
 ---
 
+## 自适应参数策略 (Adaptive Strategy)
+
+### 概述
+
+> **策略不变，参数是策略的一部分** — 这是专业量化 vs 普通量化的分水岭
+
+`AdaptiveStrategy` 让指标参数随市场状态动态调整，而不是使用固定参数。
+
+### 三大自适应机制
+
+| 机制 | 驱动因素 | 调整逻辑 |
+|------|----------|----------|
+| **SMA 周期** | 波动率 | 高波动→短周期(快速响应)，低波动→长周期(减少噪音) |
+| **RSI 阈值** | 市场状态 | 趋势市→宽阈值(25/75)，震荡市→窄阈值(35/65) |
+| **布林带宽度** | ATR | ATR高→大标准差(2.5-3.0)，ATR低→小标准差(1.5-2.0) |
+
+### 使用示例
+
+```javascript
+import { AdaptiveStrategy, AdaptiveMode } from './strategies/index.js';
+
+const strategy = new AdaptiveStrategy({
+  symbol: 'BTC/USDT',
+  adaptiveMode: AdaptiveMode.FULL,  // 完全自适应
+  smaBaseFast: 10,
+  smaBaseSlow: 30,
+  smaPeriodAdjustRange: 0.5,  // ±50% 调整范围
+});
+```
+
+### 运行示例
+
+```bash
+node examples/runAdaptiveStrategy.js
+```
+
+详细文档: [docs/adaptive-strategy.md](./docs/adaptive-strategy.md)
+
+---
+
 ## 项目结构
 
 ```
@@ -295,6 +336,7 @@ node examples/runFactorInvesting.js
 │   │   ├── SignalWeightingSystem.js
 │   │   ├── CrossSectionalStrategy.js   # 横截面策略基类
 │   │   ├── StatisticalArbitrageStrategy.js
+│   │   ├── AdaptiveStrategy.js         # 自适应参数策略
 │   │   └── ...
 │   ├── factors/            # Alpha 因子库
 │   │   ├── BaseFactor.js              # 因子基类
@@ -316,11 +358,13 @@ node examples/runFactorInvesting.js
 │   └── integration/        # 集成测试
 ├── examples/               # 示例代码
 │   ├── runWeightedCombo.js
-│   └── runFactorInvesting.js
+│   ├── runFactorInvesting.js
+│   └── runAdaptiveStrategy.js
 ├── docs/                   # 文档
 │   ├── FACTOR_INVESTING.md           # 因子投资文档
 │   ├── CROSS_SECTIONAL_STRATEGIES.md # 横截面策略文档
-│   └── STATISTICAL_ARBITRAGE.md      # 统计套利文档
+│   ├── STATISTICAL_ARBITRAGE.md      # 统计套利文档
+│   └── adaptive-strategy.md          # 自适应参数策略文档
 ├── ecosystem.config.cjs    # PM2 配置
 └── package.json
 ```

@@ -590,7 +590,19 @@ const getStrategyTypeLabel = (type) => {
     BollingerBands: '布林带',
     MACD: 'MACD',
     Grid: '网格交易',
-    FundingArb: '资金费率套利'
+    FundingArb: '资金费率套利',
+    ATRBreakout: 'ATR 突破',
+    BollingerWidth: '布林带宽度',
+    VolatilityRegime: '波动率状态',
+    RegimeSwitching: '市场状态切换',
+    OrderFlow: '订单流',
+    MultiTimeframe: '多周期共振',
+    WeightedCombo: '加权组合',
+    Adaptive: '自适应参数',
+    StatisticalArbitrage: '统计套利',
+    MomentumRank: '动量排名',
+    Rotation: '强弱轮动',
+    FactorInvesting: '因子投资'
   }
   return labels[type] || type
 }

@@ -97,6 +97,15 @@ export {
 } from './StatisticalArbitrageStrategy.js';
 
 // ============================================
+// 自适应参数策略 / Adaptive Strategy
+// ============================================
+
+export {
+  AdaptiveStrategy,
+  AdaptiveMode,
+} from './AdaptiveStrategy.js';
+
+// ============================================
 // 因子投资策略 / Factor Investing Strategy
 // ============================================
 
@@ -179,6 +188,14 @@ export const StrategyRegistry = {
   StatArb: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
   Pairs: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
   Cointegration: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
+
+  // ============================================
+  // 自适应参数策略 / Adaptive Strategy
+  // ============================================
+
+  // 自适应参数策略 / Adaptive strategy
+  Adaptive: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),
+  AdaptiveParams: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),  // 别名
 
   // ============================================
   // 因子投资策略 / Factor Investing Strategy
