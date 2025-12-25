@@ -1171,3 +1171,354 @@ curl -X POST http://localhost:3000/api/strategies \
 curl -X POST http://localhost:3000/api/strategies/1/start \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
+
+---
+
+## 执行 Alpha 模块
+
+执行 Alpha 是订单执行优化模块，提供编程 API 用于减少滑点和市场冲击。
+
+> 详细文档请参阅 [EXECUTION_ALPHA.md](./EXECUTION_ALPHA.md)
+
+### 模块导入
+
+```javascript
+import {
+  // 核心引擎
+  ExecutionAlphaEngine,
+  createExecutionAlphaEngine,
+  EXECUTION_STRATEGY,
+  ORDER_SIZE_CLASS,
+
+  // 盘口分析器
+  OrderBookAnalyzer,
+  LIQUIDITY_LEVEL,
+  PRESSURE_DIRECTION,
+
+  // TWAP/VWAP 执行器
+  TWAPVWAPExecutor,
+  ALGO_TYPE,
+  VOLUME_CURVES,
+
+  // 冰山单执行器
+  IcebergOrderExecutor,
+  SPLIT_STRATEGY,
+  DISPLAY_MODE,
+
+  // 滑点分析器
+  SlippageAnalyzer,
+  SLIPPAGE_RISK,
+  PERIOD_TYPE,
+
+  // 便捷函数
+  quickAnalyze,
+} from './src/executor/executionAlpha/index.js';
+```
+
+### ExecutionAlphaEngine
+
+统一的执行优化入口。
+
+#### 构造函数
+
+```javascript
+const engine = new ExecutionAlphaEngine(config);
+// 或使用工厂函数
+const engine = createExecutionAlphaEngine(config);
+```
+
+**配置参数：**
+
+| 参数 | 类型 | 默认值 | 描述 |
+|------|------|--------|------|
+| sizeClassThresholds | object | {...} | 订单大小分类阈值 |
+| strategyWeights | object | {...} | 策略选择权重 |
+| autoStrategyThresholds | object | {...} | 自动策略阈值 |
+| defaultTWAPDuration | number | 1800000 | 默认 TWAP 时长 (ms) |
+| defaultSliceCount | number | 20 | 默认切片数 |
+| enableAutoDelay | boolean | true | 启用自动延迟 |
+| enableSlippageRecording | boolean | true | 启用滑点记录 |
+| verbose | boolean | false | 详细日志 |
+
+#### 方法
+
+##### updateMarketData(symbol, data)
+
+更新市场数据。
+
+```javascript
+engine.updateMarketData('BTC/USDT', {
+  orderBook,      // 盘口数据
+  trades,         // 最近成交
+  candles,        // K线数据
+  dailyVolume,    // 日均成交量
+});
+```
+
+##### analyzeOrder(options)
+
+分析订单并获取执行建议。
+
+```javascript
+const analysis = engine.analyzeOrder({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  size: 5.0,
+  urgency: 0.5,  // 0-1
+});
+
+// 返回
+{
+  sizeClass: 'medium',
+  recommendedStrategy: 'twap',
+  liquidityLevel: 'medium',
+  slippageRisk: 'low',
+  estimatedSlippage: 0.0015,
+  suggestSplit: true,
+  strategyScores: { direct: 0.3, twap: 0.8, ... },
+}
+```
+
+##### generateExecutionPlan(options)
+
+生成执行计划。
+
+```javascript
+const plan = engine.generateExecutionPlan({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  size: 10.0,
+  strategy: 'auto',  // 或 'twap', 'vwap', 'iceberg'
+  duration: 3600000,
+});
+
+// 返回
+{
+  strategy: 'twap',
+  steps: [...],
+  estimatedDuration: 3600000,
+  estimatedSlippageSaving: 0.003,
+}
+```
+
+##### recordExecution(symbol, data)
+
+记录执行结果。
+
+```javascript
+engine.recordExecution('BTC/USDT', {
+  expectedPrice: 50000,
+  actualPrice: 50010,
+  size: 1.0,
+  side: 'buy',
+  strategy: 'twap',
+  timestamp: Date.now(),
+});
+```
+
+##### getExecutionStats(symbol)
+
+获取执行统计。
+
+```javascript
+const stats = engine.getExecutionStats('BTC/USDT');
+// 返回
+{
+  totalExecutions: 50,
+  averageSlippage: 0.0008,
+  slippageStdDev: 0.0003,
+  bestExecution: { strategy: 'vwap', slippage: 0.0001 },
+  worstExecution: { strategy: 'direct', slippage: 0.003 },
+  byStrategy: Map { 'twap' => {...}, 'vwap' => {...} },
+}
+```
+
+### OrderBookAnalyzer
+
+盘口深度分析器。
+
+```javascript
+const analyzer = new OrderBookAnalyzer({
+  depthLevels: 20,
+  imbalanceThreshold: 0.3,
+});
+
+// 分析盘口深度
+const depth = analyzer.analyzeDepth(orderBook, symbol);
+
+// 评估流动性
+const liquidity = analyzer.assessLiquidity(symbol, size, depth);
+
+// 估算冲击成本
+const impact = analyzer.estimateImpactCost(symbol, side, size, orderBook);
+```
+
+### TWAPVWAPExecutor
+
+TWAP/VWAP 执行器。
+
+```javascript
+const executor = new TWAPVWAPExecutor({
+  defaultAlgo: ALGO_TYPE.ADAPTIVE,
+  minSliceInterval: 5000,
+  maxSliceInterval: 300000,
+});
+
+// 创建执行计划
+const plan = executor.createExecutionPlan({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  totalSize: 10.0,
+  algo: ALGO_TYPE.TWAP,  // 或 VWAP, ADAPTIVE
+  duration: 3600000,
+  sliceCount: 20,
+  randomize: true,
+  randomRange: 0.2,
+  volumeCurve: VOLUME_CURVES.U_SHAPED,  // VWAP 专用
+  historicalVolume: [...],               // VWAP 专用
+});
+```
+
+**ALGO_TYPE 枚举：**
+- `TWAP` - 时间加权平均
+- `VWAP` - 成交量加权平均
+- `ADAPTIVE` - 自适应
+
+**VOLUME_CURVES 枚举：**
+- `UNIFORM` - 均匀分布
+- `U_SHAPED` - U型曲线
+- `FRONT_LOADED` - 前重后轻
+- `BACK_LOADED` - 前轻后重
+
+### IcebergOrderExecutor
+
+冰山单执行器。
+
+```javascript
+const executor = new IcebergOrderExecutor({
+  defaultSplitStrategy: SPLIT_STRATEGY.ADAPTIVE,
+  defaultDisplayMode: DISPLAY_MODE.DYNAMIC,
+  minSplitCount: 5,
+  maxSplitCount: 50,
+  randomizationRange: 0.2,
+});
+
+// 创建冰山单计划
+const plan = executor.createIcebergPlan({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  totalSize: 20.0,
+  splitStrategy: SPLIT_STRATEGY.ADAPTIVE,
+  displayMode: DISPLAY_MODE.DYNAMIC,
+  orderBook,
+  avgDailyVolume: 1000,
+});
+```
+
+**SPLIT_STRATEGY 枚举：**
+- `LINEAR` - 等分
+- `RANDOM` - 随机大小
+- `ADAPTIVE` - 自适应
+- `VOLUME_BASED` - 基于成交量
+
+**DISPLAY_MODE 枚举：**
+- `FIXED` - 固定显示量
+- `RANDOM` - 随机显示量
+- `DYNAMIC` - 动态调整
+
+### SlippageAnalyzer
+
+滑点分析器。
+
+```javascript
+const analyzer = new SlippageAnalyzer({
+  lookbackPeriod: 100,
+  warningThreshold: 0.005,
+  criticalThreshold: 0.01,
+});
+
+// 分析时段风险
+const risk = analyzer.analyzePeriodRisk(symbol);
+
+// 记录滑点
+analyzer.recordSlippage(symbol, {
+  expectedPrice: 50000,
+  actualPrice: 50025,
+  size: 1.0,
+  side: 'buy',
+  timestamp: Date.now(),
+});
+
+// 获取统计
+const stats = analyzer.getSlippageStats(symbol);
+
+// 预测滑点
+const prediction = analyzer.predictSlippage(symbol, side, size);
+```
+
+### quickAnalyze 函数
+
+快速分析便捷函数。
+
+```javascript
+const result = quickAnalyze(orderBook, symbol, side, size);
+
+// 返回
+{
+  depthAnalysis: {...},
+  liquidityAssessment: {...},
+  impactEstimation: {...},
+  recommendation: 'TWAP: 冲击成本较高，建议使用 TWAP 执行',
+}
+```
+
+### 常量枚举
+
+#### EXECUTION_STRATEGY
+
+```javascript
+{
+  DIRECT: 'direct',
+  TWAP: 'twap',
+  VWAP: 'vwap',
+  ICEBERG: 'iceberg',
+  ADAPTIVE: 'adaptive',
+  AUTO: 'auto',
+}
+```
+
+#### ORDER_SIZE_CLASS
+
+```javascript
+{
+  TINY: 'tiny',         // < 0.1% 日均量
+  SMALL: 'small',       // 0.1% - 0.5%
+  MEDIUM: 'medium',     // 0.5% - 2%
+  LARGE: 'large',       // 2% - 5%
+  VERY_LARGE: 'very_large', // > 5%
+}
+```
+
+#### LIQUIDITY_LEVEL
+
+```javascript
+{
+  VERY_HIGH: 'very_high',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+  VERY_LOW: 'very_low',
+}
+```
+
+#### SLIPPAGE_RISK
+
+```javascript
+{
+  MINIMAL: 'minimal',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  EXTREME: 'extreme',
+}
+```

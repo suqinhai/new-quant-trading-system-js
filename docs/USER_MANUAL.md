@@ -8,10 +8,11 @@
 4. [运行模式](#运行模式)
 5. [策略管理](#策略管理)
 6. [交易操作](#交易操作)
-7. [风控设置](#风控设置)
-8. [监控告警](#监控告警)
-9. [Web 界面](#web-界面)
-10. [常见问题](#常见问题)
+7. [执行优化](#执行优化)
+8. [风控设置](#风控设置)
+9. [监控告警](#监控告警)
+10. [Web 界面](#web-界面)
+11. [常见问题](#常见问题)
 
 ---
 
@@ -539,6 +540,106 @@ curl -X POST http://localhost:3000/api/positions/close \
   -H "Content-Type: application/json" \
   -d '{"symbol": "BTC/USDT"}'
 ```
+
+---
+
+## 执行优化
+
+系统内置执行 Alpha 模块，通过智能订单执行减少滑点和市场冲击。
+
+> 详细文档请参阅 [EXECUTION_ALPHA.md](./EXECUTION_ALPHA.md)
+
+### 核心功能
+
+| 功能 | 说明 |
+|------|------|
+| 盘口分析 | 实时分析盘口深度和流动性 |
+| TWAP/VWAP | 时间/成交量加权执行算法 |
+| 冰山单 | 隐藏真实订单意图 |
+| 滑点分析 | 预测和规避高滑点时段 |
+| 自适应执行 | 根据市场状况自动选择策略 |
+
+### 使用场景
+
+| 订单大小 | 日均量占比 | 推荐策略 |
+|---------|-----------|---------|
+| 极小单 | < 0.1% | 直接执行 |
+| 小单 | 0.1% - 0.5% | 直接执行 |
+| 中单 | 0.5% - 2% | TWAP |
+| 大单 | 2% - 5% | VWAP/冰山单 |
+| 超大单 | > 5% | 冰山单 + TWAP |
+
+### 快速使用
+
+```javascript
+import { createExecutionAlphaEngine, quickAnalyze } from './src/executor/executionAlpha/index.js';
+
+// 方式 1: 快速分析
+const result = quickAnalyze(orderBook, 'BTC/USDT', 'buy', 5.0);
+console.log(`建议: ${result.recommendation}`);
+
+// 方式 2: 使用引擎
+const engine = createExecutionAlphaEngine();
+
+// 更新市场数据
+engine.updateMarketData('BTC/USDT', { orderBook, dailyVolume: 1000 });
+
+// 获取执行建议
+const analysis = engine.analyzeOrder({
+  symbol: 'BTC/USDT',
+  side: 'buy',
+  size: 5.0,
+});
+
+console.log(`推荐策略: ${analysis.recommendedStrategy}`);
+console.log(`预估滑点: ${(analysis.estimatedSlippage * 100).toFixed(4)}%`);
+```
+
+### 配置执行 Alpha
+
+在 `config/default.js` 中配置：
+
+```javascript
+executor: {
+  executionAlpha: {
+    enabled: true,
+
+    // 订单大小分类阈值
+    sizeClassThresholds: {
+      tiny: 0.001,    // 0.1% 日均量
+      small: 0.005,   // 0.5%
+      medium: 0.02,   // 2%
+      large: 0.05,    // 5%
+    },
+
+    // 默认 TWAP 时长
+    defaultTWAPDuration: 30 * 60 * 1000,  // 30 分钟
+
+    // 高风险时段规避
+    enableAutoDelay: true,
+
+    // 滑点记录
+    enableSlippageRecording: true,
+  }
+}
+```
+
+### 运行示例
+
+```bash
+node examples/runExecutionAlpha.js
+```
+
+### 高风险时段
+
+以下时段滑点风险较高，系统会自动延迟或分批执行：
+
+| UTC 时间 | 原因 |
+|---------|------|
+| 00:00 | 资金费率结算 |
+| 08:00 | 资金费率结算 |
+| 16:00 | 资金费率结算 |
+| 整点前后 | 定时策略集中触发 |
 
 ---
 
