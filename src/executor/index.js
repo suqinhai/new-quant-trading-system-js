@@ -82,5 +82,57 @@ export {
   DEFAULT_CONFIG as PARTITION_HANDLER_CONFIG,
 } from './NetworkPartitionHandler.js';
 
+// ============================================
+// 执行 Alpha 模块导出
+// Execution Alpha Module Exports
+// ============================================
+
+// 导出执行 Alpha 引擎 / Export Execution Alpha Engine
+export { ExecutionAlphaEngine } from './executionAlpha/index.js';
+
+// 导出盘口分析器 / Export Order Book Analyzer
+export { OrderBookAnalyzer } from './executionAlpha/index.js';
+
+// 导出 TWAP/VWAP 执行器 / Export TWAP/VWAP Executor
+export { TWAPVWAPExecutor } from './executionAlpha/index.js';
+
+// 导出冰山单执行器 / Export Iceberg Executor
+export { IcebergOrderExecutor } from './executionAlpha/index.js';
+
+// 导出滑点分析器 / Export Slippage Analyzer
+export { SlippageAnalyzer } from './executionAlpha/index.js';
+
+// 导出执行 Alpha 常量 / Export Execution Alpha constants
+export {
+  // 执行策略 / Execution strategies
+  EXECUTION_STRATEGY,
+  ORDER_SIZE_CLASS,
+
+  // 盘口分析 / Order book analysis
+  LIQUIDITY_LEVEL,
+  PRESSURE_DIRECTION,
+
+  // TWAP/VWAP
+  ALGO_TYPE,
+  MARKET_CONDITION,
+  VOLUME_CURVES,
+
+  // 冰山单 / Iceberg
+  SPLIT_STRATEGY,
+  DISPLAY_MODE,
+  ICEBERG_STATUS,
+
+  // 滑点分析 / Slippage analysis
+  SLIPPAGE_RISK,
+  PERIOD_TYPE,
+  KNOWN_HIGH_RISK_PERIODS,
+} from './executionAlpha/index.js';
+
+// 导出便捷函数 / Export convenience functions
+export {
+  createExecutionAlphaEngine,
+  quickAnalyze,
+} from './executionAlpha/index.js';
+
 // 默认导出智能订单执行器 / Default export smart order executor
 export { SmartOrderExecutor as default } from './orderExecutor.js';

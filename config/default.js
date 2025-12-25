@@ -1266,6 +1266,104 @@ export default {
 
     // 并发订单数量 / Concurrent order count
     concurrency: 3,
+
+    // ============================================
+    // 执行 Alpha 配置 / Execution Alpha Configuration
+    // ============================================
+    executionAlpha: {
+      // 是否启用执行 Alpha / Whether to enable Execution Alpha
+      enabled: true,
+
+      // 订单大小分类阈值（相对于日均量）/ Order size classification thresholds
+      sizeClassThresholds: {
+        tiny: 0.001,      // 0.1% 日均量 / 0.1% of daily volume
+        small: 0.005,     // 0.5% 日均量 / 0.5% of daily volume
+        medium: 0.02,     // 2% 日均量 / 2% of daily volume
+        large: 0.05,      // 5% 日均量 / 5% of daily volume
+      },
+
+      // 策略选择权重 / Strategy selection weights
+      strategyWeights: {
+        liquidity: 0.3,      // 流动性权重 / Liquidity weight
+        slippageRisk: 0.3,   // 滑点风险权重 / Slippage risk weight
+        urgency: 0.2,        // 紧急性权重 / Urgency weight
+        orderSize: 0.2,      // 订单大小权重 / Order size weight
+      },
+
+      // 自动策略阈值 / Auto strategy thresholds
+      autoStrategyThresholds: {
+        minSizeForAlgo: 0.01,     // 1% 日均量使用 TWAP/VWAP / 1% for TWAP/VWAP
+        minSizeForIceberg: 0.02,  // 2% 日均量使用冰山单 / 2% for iceberg
+      },
+
+      // 默认 TWAP 执行时长（毫秒）/ Default TWAP duration (ms)
+      defaultTWAPDuration: 30 * 60 * 1000,  // 30 分钟 / 30 minutes
+
+      // 默认切片数 / Default slice count
+      defaultSliceCount: 20,
+
+      // 是否启用自动延迟（高滑点时段）/ Enable auto delay (high slippage periods)
+      enableAutoDelay: true,
+
+      // 是否启用滑点记录 / Enable slippage recording
+      enableSlippageRecording: true,
+
+      // 是否启用详细日志 / Enable verbose logging
+      verbose: false,
+
+      // 盘口分析配置 / Order book analyzer configuration
+      orderBookAnalyzer: {
+        // 深度分析层数 / Depth analysis levels
+        depthLevels: 20,
+        // 流动性评估阈值 / Liquidity assessment thresholds
+        liquidityThresholds: {
+          veryLow: 0.1,   // 10% 可执行
+          low: 0.3,       // 30%
+          medium: 0.6,    // 60%
+          high: 0.9,      // 90%
+        },
+      },
+
+      // 滑点分析配置 / Slippage analyzer configuration
+      slippageAnalyzer: {
+        // 历史数据回看周期 / Historical lookback period
+        lookbackPeriod: 100,
+        // 高风险时段（UTC 小时）/ High risk periods (UTC hours)
+        highRiskHours: [0, 8, 16],  // 整点结算时段
+        // 预警滑点阈值 / Warning slippage threshold
+        warningThreshold: 0.005,  // 0.5%
+        // 严重滑点阈值 / Critical slippage threshold
+        criticalThreshold: 0.01,  // 1%
+      },
+
+      // 冰山单配置 / Iceberg order configuration
+      iceberg: {
+        // 默认拆分策略: random, linear, adaptive
+        defaultSplitStrategy: 'adaptive',
+        // 默认显示模式: fixed, random, dynamic
+        defaultDisplayMode: 'dynamic',
+        // 最小拆分份数 / Minimum split count
+        minSplitCount: 5,
+        // 最大拆分份数 / Maximum split count
+        maxSplitCount: 50,
+        // 随机化范围 / Randomization range
+        randomizationRange: 0.2,  // ±20%
+      },
+
+      // TWAP/VWAP 配置 / TWAP/VWAP configuration
+      twapVwap: {
+        // 默认算法: twap, vwap, adaptive
+        defaultAlgo: 'adaptive',
+        // 最小切片间隔（毫秒）/ Minimum slice interval (ms)
+        minSliceInterval: 5000,   // 5 秒
+        // 最大切片间隔（毫秒）/ Maximum slice interval (ms)
+        maxSliceInterval: 300000, // 5 分钟
+        // 是否使用市场条件调整 / Use market condition adjustment
+        useMarketConditionAdjust: true,
+        // 成交量曲线类型: uniform, u_shaped, front_loaded, back_loaded
+        defaultVolumeCurve: 'u_shaped',
+      },
+    },
   },
 
   // ============================================
