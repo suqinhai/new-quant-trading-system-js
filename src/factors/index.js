@@ -10,7 +10,7 @@
 // 基础设施 / Infrastructure
 // ============================================
 
-export {
+import {
   BaseFactor,
   FACTOR_CATEGORY,
   FACTOR_DIRECTION,
@@ -18,12 +18,25 @@ export {
 } from './BaseFactor.js';
 
 export {
+  BaseFactor,
+  FACTOR_CATEGORY,
+  FACTOR_DIRECTION,
+  FACTOR_FREQUENCY,
+};
+
+import {
   FactorRegistry,
   getGlobalRegistry,
   resetGlobalRegistry,
 } from './FactorRegistry.js';
 
 export {
+  FactorRegistry,
+  getGlobalRegistry,
+  resetGlobalRegistry,
+};
+
+import {
   FactorCombiner,
   NORMALIZATION_METHOD,
   COMBINATION_METHOD,
@@ -32,12 +45,21 @@ export {
   createRankCombiner,
 } from './FactorCombiner.js';
 
+export {
+  FactorCombiner,
+  NORMALIZATION_METHOD,
+  COMBINATION_METHOD,
+  createDefaultCombiner,
+  createEqualWeightCombiner,
+  createRankCombiner,
+};
+
 // ============================================
 // 因子实现 / Factor Implementations
 // ============================================
 
 // 动量因子 / Momentum Factors
-export {
+import {
   MomentumFactor,
   MOMENTUM_TYPE,
   Momentum1D,
@@ -48,8 +70,19 @@ export {
   createMomentumFactor,
 } from './factors/MomentumFactor.js';
 
-// 波动率因子 / Volatility Factors
 export {
+  MomentumFactor,
+  MOMENTUM_TYPE,
+  Momentum1D,
+  Momentum7D,
+  Momentum30D,
+  RiskAdjustedMomentum7D,
+  MomentumAcceleration14D,
+  createMomentumFactor,
+};
+
+// 波动率因子 / Volatility Factors
+import {
   VolatilityFactor,
   VOLATILITY_METHOD,
   BollingerWidth20,
@@ -59,8 +92,18 @@ export {
   createVolatilityFactor,
 } from './factors/VolatilityFactor.js';
 
-// 资金流向因子 / Money Flow Factors
 export {
+  VolatilityFactor,
+  VOLATILITY_METHOD,
+  BollingerWidth20,
+  ATRRatio,
+  KeltnerSqueeze,
+  VolatilityPercentile,
+  createVolatilityFactor,
+};
+
+// 资金流向因子 / Money Flow Factors
+import {
   MoneyFlowFactor,
   MONEY_FLOW_METHOD,
   MFI14,
@@ -70,8 +113,18 @@ export {
   createMoneyFlowFactor,
 } from './factors/MoneyFlowFactor.js';
 
-// 换手率因子 / Turnover Factors
 export {
+  MoneyFlowFactor,
+  MONEY_FLOW_METHOD,
+  MFI14,
+  OBVSlope20,
+  CMF20,
+  VolumeRatio14,
+  createMoneyFlowFactor,
+};
+
+// 换手率因子 / Turnover Factors
+import {
   TurnoverFactor,
   TURNOVER_METHOD,
   VolumeMAR20,
@@ -81,8 +134,18 @@ export {
   createTurnoverFactor,
 } from './factors/TurnoverFactor.js';
 
-// 资金费率因子 / Funding Rate Factors
 export {
+  TurnoverFactor,
+  TURNOVER_METHOD,
+  VolumeMAR20,
+  VolumeRank60,
+  RelativeVolume,
+  AbnormalVolume,
+  createTurnoverFactor,
+};
+
+// 资金费率因子 / Funding Rate Factors
+import {
   FundingRateFactor,
   FUNDING_RATE_METHOD,
   FundingRateCurrent,
@@ -94,8 +157,20 @@ export {
   createFundingRateFactor,
 } from './factors/FundingRateFactor.js';
 
-// 大单因子 / Large Order Factors
 export {
+  FundingRateFactor,
+  FUNDING_RATE_METHOD,
+  FundingRateCurrent,
+  FundingRateAvg7D,
+  FundingRatePercentile,
+  FundingRateZScore,
+  FundingRateExtreme,
+  FundingRateCumulative,
+  createFundingRateFactor,
+};
+
+// 大单因子 / Large Order Factors
+import {
   LargeOrderFactor,
   LARGE_ORDER_METHOD,
   LargeOrderVolumeRatio,
@@ -106,15 +181,32 @@ export {
   createLargeOrderFactor,
 } from './factors/LargeOrderFactor.js';
 
+export {
+  LargeOrderFactor,
+  LARGE_ORDER_METHOD,
+  LargeOrderVolumeRatio,
+  LargeOrderNetFlow,
+  LargeOrderBuySell,
+  WhaleActivity,
+  LargeOrderImbalance,
+  createLargeOrderFactor,
+};
+
 // ============================================
 // 策略 / Strategy
 // ============================================
+
+import {
+  FactorInvestingStrategy,
+  POSITION_TYPE,
+  WEIGHT_METHOD,
+} from './FactorInvestingStrategy.js';
 
 export {
   FactorInvestingStrategy,
   POSITION_TYPE,
   WEIGHT_METHOD,
-} from './FactorInvestingStrategy.js';
+};
 
 // ============================================
 // 预定义因子集合 / Predefined Factor Collections

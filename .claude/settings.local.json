@@ -94,7 +94,9 @@
       "Bash(tasklist:*)",
       "Bash(echo $MASTER_KEY)",
       "Bash(node -e:*)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(npx pm2 list)",
+      "Bash(npx pm2:*)"
     ]
   }
 }
