@@ -106,6 +106,17 @@ export {
 } from './AdaptiveStrategy.js';
 
 // ============================================
+// 风控驱动策略 / Risk-Driven Strategy
+// ============================================
+
+export {
+  RiskDrivenStrategy,
+  RiskMode,
+  RiskLevel,
+  RiskEvent,
+} from './RiskDrivenStrategy.js';
+
+// ============================================
 // 因子投资策略 / Factor Investing Strategy
 // ============================================
 
@@ -196,6 +207,17 @@ export const StrategyRegistry = {
   // 自适应参数策略 / Adaptive strategy
   Adaptive: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),
   AdaptiveParams: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),  // 别名
+
+  // ============================================
+  // 风控驱动策略 / Risk-Driven Strategy
+  // ============================================
+
+  // 风控驱动策略 / Risk-driven strategy
+  RiskDriven: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),
+  RiskBased: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
+  TargetVol: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
+  RiskParity: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
+  DrawdownControl: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
 
   // ============================================
   // 因子投资策略 / Factor Investing Strategy

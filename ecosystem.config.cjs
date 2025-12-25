@@ -38,6 +38,7 @@
  * │ quant-live-fundext  │ 3150       │ 3151    │ 8095         │ 9105        │
  * │ quant-live-crossex  │ 3160       │ 3161    │ 8096         │ 9106        │
  * │ quant-live-statarb  │ 3170       │ 3171    │ 8097         │ 9107        │
+ * │ quant-live-riskdriven│ 3180      │ 3181    │ 8098         │ 9108        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -272,6 +273,13 @@ const STRATEGIES = [
     name: 'StatisticalArbitrage',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,AVAX/USDT:USDT',
     description: '统计套利策略 (配对交易/协整/跨所套利/期现基差) / Statistical Arbitrage Strategy',
+  },
+  // 风控驱动策略 / Risk-Driven Strategy
+  {
+    id: 'riskdriven',
+    name: 'RiskDriven',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '风控驱动策略 (目标波动率/最大回撤/波动突破/风险平价) / Risk-Driven Strategy',
   },
 ];
 

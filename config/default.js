@@ -972,6 +972,101 @@ export default {
       // 排除的交易对 / Excluded symbols
       excludedSymbols: [],
     },
+
+    // ============================================
+    // 风控驱动策略默认参数 / Risk-Driven Strategy Defaults
+    // ============================================
+
+    // 风控驱动策略默认参数 / Risk-Driven strategy defaults
+    riskDriven: {
+      // ============================================
+      // 风险模式配置 / Risk Mode Configuration
+      // ============================================
+
+      // 风险模式: target_volatility, risk_parity, max_drawdown, volatility_breakout, correlation_monitor, combined
+      riskMode: 'combined',
+
+      // ============================================
+      // 目标波动率参数 / Target Volatility Parameters
+      // ============================================
+
+      // 目标年化波动率 / Target annualized volatility
+      targetVolatility: 0.15, // 15%
+
+      // 波动率计算回看周期 / Volatility lookback period
+      volatilityLookback: 20,
+
+      // 波动率调整速度 (0-1) / Volatility adjustment speed
+      volatilityAdjustSpeed: 0.3,
+
+      // 最小仓位比例 / Minimum position ratio
+      minPositionRatio: 0.1,
+
+      // 最大仓位比例 / Maximum position ratio
+      maxPositionRatio: 1.5,
+
+      // ============================================
+      // 最大回撤控制参数 / Max Drawdown Control Parameters
+      // ============================================
+
+      // 最大回撤阈值 / Max drawdown threshold
+      maxDrawdown: 0.15, // 15%
+
+      // 预警回撤阈值 / Warning drawdown threshold
+      warningDrawdown: 0.10, // 10%
+
+      // 严重回撤阈值 / Critical drawdown threshold
+      criticalDrawdown: 0.20, // 20%
+
+      // 紧急回撤阈值 / Emergency drawdown threshold
+      emergencyDrawdown: 0.25, // 25%
+
+      // 回撤减仓速度 / Drawdown reduce speed
+      drawdownReduceSpeed: 0.5,
+
+      // ============================================
+      // 波动率突破参数 / Volatility Breakout Parameters
+      // ============================================
+
+      // 波动率突破阈值 (倍数) / Volatility breakout threshold (multiplier)
+      volatilityBreakoutThreshold: 2.0,
+
+      // 波动率突破回看周期 / Volatility breakout lookback period
+      volatilityBreakoutLookback: 60,
+
+      // 强制减仓比例 / Force reduce ratio
+      forceReduceRatio: 0.5,
+
+      // ============================================
+      // 风险平价参数 / Risk Parity Parameters
+      // ============================================
+
+      // 风险平价再平衡阈值 / Risk parity rebalance threshold
+      riskParityRebalanceThreshold: 0.1,
+
+      // ============================================
+      // 相关性监控参数 / Correlation Monitor Parameters
+      // ============================================
+
+      // 相关性计算回看周期 / Correlation lookback period
+      correlationLookback: 30,
+
+      // 相关性阈值 / Correlation threshold
+      correlationThreshold: 0.8,
+
+      // 相关性突增倍数 / Correlation spike multiplier
+      correlationSpikeMultiplier: 1.5,
+
+      // 监控资产列表 / Assets to monitor
+      assets: ['BTC/USDT', 'ETH/USDT'],
+
+      // ============================================
+      // 仓位参数 / Position Parameters
+      // ============================================
+
+      // 仓位百分比 / Position percent
+      positionPercent: 95,
+    },
   },
 
   // ============================================
