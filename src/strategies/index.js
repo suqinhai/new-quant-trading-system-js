@@ -31,6 +31,10 @@ export { OrderFlowStrategy } from './OrderFlowStrategy.js';
 // 多周期共振策略 / Multi-timeframe resonance strategy
 export { MultiTimeframeStrategy } from './MultiTimeframeStrategy.js';
 
+// 加权组合策略 / Weighted combo strategy
+export { WeightedComboStrategy } from './WeightedComboStrategy.js';
+export { SignalWeightingSystem, StrategyStatus } from './SignalWeightingSystem.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -64,6 +68,10 @@ export const StrategyRegistry = {
   // 多周期共振策略 / Multi-timeframe resonance strategy
   MultiTimeframe: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),
   MTF: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),  // 别名
+
+  // 加权组合策略 / Weighted combo strategy
+  WeightedCombo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),
+  Combo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),  // 别名
 
   /**
    * 获取策略类

@@ -20,29 +20,30 @@ import { RSIStrategy } from './RSIStrategy.js';
 import { BollingerBandsStrategy } from './BollingerBandsStrategy.js';
 import { GridStrategy } from './GridStrategy.js';
 import { ATRBreakoutStrategy } from './ATRBreakoutStrategy.js';
+import { WeightedComboStrategy } from './WeightedComboStrategy.js';
 
 /**
  * 策略配置映射
  */
 const REGIME_STRATEGY_MAP = {
   [MarketRegime.TRENDING_UP]: {
-    strategies: ['SMA', 'MACD'],
-    weights: { SMA: 0.6, MACD: 0.4 },
+    strategies: ['SMA', 'MACD', 'WeightedCombo'],
+    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 },
     description: '上涨趋势策略组',
   },
   [MarketRegime.TRENDING_DOWN]: {
-    strategies: ['SMA', 'MACD'],
-    weights: { SMA: 0.6, MACD: 0.4 },
+    strategies: ['SMA', 'MACD', 'WeightedCombo'],
+    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 },
     description: '下跌趋势策略组',
   },
   [MarketRegime.RANGING]: {
-    strategies: ['RSI', 'BollingerBands', 'Grid'],
-    weights: { RSI: 0.3, BollingerBands: 0.4, Grid: 0.3 },
+    strategies: ['RSI', 'BollingerBands', 'Grid', 'WeightedCombo'],
+    weights: { RSI: 0.2, BollingerBands: 0.25, Grid: 0.2, WeightedCombo: 0.35 },
     description: '震荡策略组',
   },
   [MarketRegime.HIGH_VOLATILITY]: {
-    strategies: ['ATRBreakout'],
-    weights: { ATRBreakout: 1.0 },
+    strategies: ['ATRBreakout', 'WeightedCombo'],
+    weights: { ATRBreakout: 0.5, WeightedCombo: 0.5 },
     description: '高波动策略组',
   },
   [MarketRegime.EXTREME]: {
@@ -62,6 +63,7 @@ const STRATEGY_CLASS_MAP = {
   BollingerBands: BollingerBandsStrategy,
   Grid: GridStrategy,
   ATRBreakout: ATRBreakoutStrategy,
+  WeightedCombo: WeightedComboStrategy,
 };
 
 /**
@@ -111,6 +113,13 @@ export class RegimeSwitchingStrategy extends BaseStrategy {
       BollingerBands: params.bbParams || { period: 20, stdDev: 2 },
       Grid: params.gridParams || { gridCount: 10, gridSpacing: 0.01 },
       ATRBreakout: params.atrBreakoutParams || { atrPeriod: 14, multiplier: 2 },
+      WeightedCombo: params.weightedComboParams || {
+        strategyWeights: { SMA: 0.4, RSI: 0.2, MACD: 0.4 },
+        buyThreshold: 0.7,
+        sellThreshold: 0.3,
+        dynamicWeights: true,
+        circuitBreaker: true,
+      },
     };
 
     // ============================================

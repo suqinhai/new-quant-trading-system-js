@@ -31,6 +31,7 @@
  * │ quant-live-regime   │ 3080       │ 3081    │ 8088         │ 9098        │
  * │ quant-live-orderflow│ 3090       │ 3091    │ 8089         │ 9099        │
  * │ quant-live-mtf      │ 3100       │ 3101    │ 8090         │ 9100        │
+ * │ quant-live-combo    │ 3110       │ 3111    │ 8091         │ 9101        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -220,6 +221,13 @@ const STRATEGIES = [
     name: 'MultiTimeframe',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '多周期共振策略 (1H趋势+15M回调+5M入场) / Multi-Timeframe Resonance Strategy',
+  },
+  // 加权组合策略 / Weighted Combo Strategy
+  {
+    id: 'combo',
+    name: 'WeightedCombo',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '加权组合策略 (SMA+RSI+MACD打分) / Weighted Combo Strategy (Signal Scoring)',
   },
 ];
 

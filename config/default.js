@@ -376,26 +376,154 @@ export default {
       // 可自定义覆盖 / Can be customized
       regimeMap: {
         trending_up: {
-          strategies: ['SMA', 'MACD', 'MultiTimeframe'],
-          weights: { SMA: 0.4, MACD: 0.3, MultiTimeframe: 0.3 },
+          strategies: ['SMA', 'MACD', 'MultiTimeframe', 'WeightedCombo'],
+          weights: { SMA: 0.25, MACD: 0.2, MultiTimeframe: 0.2, WeightedCombo: 0.35 },
         },
         trending_down: {
-          strategies: ['SMA', 'MACD'],
-          weights: { SMA: 0.6, MACD: 0.4 },
+          strategies: ['SMA', 'MACD', 'WeightedCombo'],
+          weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 },
         },
         ranging: {
-          strategies: ['RSI', 'BollingerBands', 'Grid'],
-          weights: { RSI: 0.4, BollingerBands: 0.4, Grid: 0.2 },
+          strategies: ['RSI', 'BollingerBands', 'Grid', 'WeightedCombo'],
+          weights: { RSI: 0.2, BollingerBands: 0.25, Grid: 0.2, WeightedCombo: 0.35 },
         },
         high_volatility: {
-          strategies: ['ATRBreakout', 'OrderFlow'],
-          weights: { ATRBreakout: 0.6, OrderFlow: 0.4 },
+          strategies: ['ATRBreakout', 'OrderFlow', 'WeightedCombo'],
+          weights: { ATRBreakout: 0.35, OrderFlow: 0.3, WeightedCombo: 0.35 },
         },
         extreme: {
           strategies: [],
           weights: {},
         },
       },
+    },
+
+    // ============================================
+    // 加权组合策略默认参数 / Weighted Combo Strategy Defaults
+    // ============================================
+
+    // 加权组合策略默认参数 / Weighted Combo strategy defaults
+    weightedCombo: {
+      // ============================================
+      // 策略权重配置 / Strategy Weight Configuration
+      // ============================================
+
+      // 策略权重 (总和应为 1.0) / Strategy weights (should sum to 1.0)
+      strategyWeights: {
+        SMA: 0.4,           // SMA 趋势策略权重 40%
+        RSI: 0.2,           // RSI 超买超卖策略权重 20%
+        MACD: 0.4,          // MACD 策略权重 40%
+      },
+
+      // 交易阈值 / Trading thresholds
+      buyThreshold: 0.7,    // 总分 >= 0.7 买入
+      sellThreshold: 0.3,   // 总分 <= 0.3 卖出
+
+      // ============================================
+      // 子策略参数 / Sub-strategy Parameters
+      // ============================================
+
+      smaParams: {
+        shortPeriod: 10,
+        longPeriod: 30,
+      },
+      rsiParams: {
+        period: 14,
+        overbought: 70,
+        oversold: 30,
+      },
+      macdParams: {
+        fastPeriod: 12,
+        slowPeriod: 26,
+        signalPeriod: 9,
+      },
+      bbParams: {
+        period: 20,
+        stdDev: 2,
+      },
+      atrParams: {
+        period: 14,
+        multiplier: 2,
+      },
+
+      // ============================================
+      // 动态权重调整 / Dynamic Weight Adjustment
+      // ============================================
+
+      // 是否启用动态权重 / Enable dynamic weights
+      dynamicWeights: true,
+
+      // 权重调整因子 (0-1) / Weight adjustment factor
+      adjustmentFactor: 0.2,
+
+      // 评估周期 (交易次数) / Evaluation period (trade count)
+      evaluationPeriod: 20,
+
+      // 最小权重 / Minimum weight
+      minWeight: 0.05,
+
+      // 最大权重 / Maximum weight
+      maxWeight: 0.6,
+
+      // ============================================
+      // 相关性限制 / Correlation Limit
+      // ============================================
+
+      // 是否启用相关性限制 / Enable correlation limit
+      correlationLimit: true,
+
+      // 最大允许相关性 / Maximum allowed correlation
+      maxCorrelation: 0.7,
+
+      // 相关性惩罚系数 / Correlation penalty factor
+      correlationPenaltyFactor: 0.5,
+
+      // 相关性矩阵 / Correlation matrix
+      correlationMatrix: {
+        'SMA-MACD': 0.6,            // SMA 和 MACD 相关性较高
+        'SMA-RSI': 0.3,             // SMA 和 RSI 相关性中等
+        'RSI-BollingerBands': 0.4,  // RSI 和布林带相关性中等
+        'MACD-BollingerBands': 0.5, // MACD 和布林带相关性中等
+        'SMA-BollingerBands': 0.5,  // SMA 和布林带相关性中等
+      },
+
+      // ============================================
+      // 熔断机制 / Circuit Breaker
+      // ============================================
+
+      // 是否启用熔断 / Enable circuit breaker
+      circuitBreaker: true,
+
+      // 连续亏损次数触发熔断 / Consecutive losses to trigger
+      consecutiveLossLimit: 5,
+
+      // 最大回撤触发熔断 (百分比) / Max drawdown to trigger
+      maxDrawdownLimit: 0.15,
+
+      // 最低胜率触发熔断 / Minimum win rate to trigger
+      minWinRate: 0.3,
+
+      // 评估窗口 (交易次数) / Evaluation window (trade count)
+      evaluationWindow: 30,
+
+      // 冷却时间 (毫秒) / Cooling period (ms)
+      coolingPeriod: 3600000,  // 1 小时
+
+      // 是否自动恢复 / Auto recover
+      autoRecover: true,
+
+      // ============================================
+      // 止盈止损 / Take Profit & Stop Loss
+      // ============================================
+
+      takeProfitPercent: 3.0,   // 止盈百分比
+      stopLossPercent: 1.5,     // 止损百分比
+
+      // ============================================
+      // 仓位参数 / Position Parameters
+      // ============================================
+
+      positionPercent: 95,      // 仓位百分比
     },
   },
 
