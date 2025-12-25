@@ -525,6 +525,158 @@ export default {
 
       positionPercent: 95,      // 仓位百分比
     },
+
+    // ============================================
+    // 横截面策略默认参数 / Cross-Sectional Strategy Defaults
+    // ============================================
+
+    // 横截面策略基础参数 / Cross-Sectional base strategy defaults
+    crossSectional: {
+      // ============================================
+      // 监控交易对列表 / Symbols to monitor
+      // ============================================
+      symbols: [
+        'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
+        'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT',
+      ],
+
+      // ============================================
+      // 基础参数 / Basic Parameters
+      // ============================================
+      lookbackPeriod: 20,                    // 回看周期 (K线数量)
+      rebalancePeriod: 24 * 60 * 60 * 1000,  // 再平衡周期 (毫秒, 默认每天)
+
+      // ============================================
+      // 排名配置 / Ranking Configuration
+      // ============================================
+      topN: 3,                              // 选取 Top N 个做多
+      bottomN: 3,                           // 选取 Bottom N 个做空
+      rankingMetric: 'returns',             // 排名指标: returns, sharpe, momentum, volatility
+      rankDirection: 'descending',          // 排名方向: ascending, descending
+
+      // ============================================
+      // 仓位配置 / Position Configuration
+      // ============================================
+      positionType: 'long_short',           // 仓位类型: long_only, short_only, long_short, market_neutral
+      maxPositionPerAsset: 0.15,            // 单个资产最大仓位比例
+      maxPositionPerSide: 0.5,              // 单边总仓位比例
+      minPositionSize: 0.01,                // 最小仓位比例
+      equalWeight: true,                    // 是否等权重
+
+      // ============================================
+      // 风控配置 / Risk Control Configuration
+      // ============================================
+      stopLoss: 0.05,                       // 止损比例
+      takeProfit: 0.15,                     // 止盈比例
+      maxDrawdown: 0.10,                    // 最大回撤
+      maxCorrelation: 0.8,                  // 最大相关性 (避免持有高度相关资产)
+
+      // ============================================
+      // 过滤器配置 / Filter Configuration
+      // ============================================
+      minDailyVolume: 10000000,             // 最小日均成交量 (USDT)
+      minPrice: 0.0001,                     // 最小价格
+      excludedSymbols: [],                  // 排除的交易对
+    },
+
+    // 动量排名策略默认参数 / Momentum Rank strategy defaults
+    momentumRank: {
+      // 继承横截面策略基础参数 / Inherits from crossSectional
+      lookbackPeriod: 20,
+      rebalancePeriod: 24 * 60 * 60 * 1000,
+      topN: 5,
+      bottomN: 0,                           // 只做多不做空
+      rankingMetric: 'momentum',            // 使用动量排名
+      positionType: 'long_only',
+
+      // 动量计算参数 / Momentum calculation parameters
+      shortMomentumPeriod: 5,               // 短期动量周期
+      longMomentumPeriod: 20,               // 长期动量周期
+      momentumSmoothing: 3,                 // 动量平滑周期
+      useRelativeMomentum: true,            // 是否使用相对动量
+
+      // 仓位参数 / Position parameters
+      maxPositionPerAsset: 0.2,
+      positionPercent: 95,
+    },
+
+    // 轮动策略默认参数 / Rotation strategy defaults
+    rotation: {
+      // 基础参数 / Basic parameters
+      lookbackPeriod: 14,
+      rebalancePeriod: 7 * 24 * 60 * 60 * 1000, // 每周再平衡
+      topN: 3,
+      bottomN: 0,
+      positionType: 'long_only',
+
+      // 轮动参数 / Rotation parameters
+      rotationMode: 'performance',          // 轮动模式: performance, volatility, mixed
+      holdingPeriod: 7 * 24 * 60 * 60 * 1000, // 持有周期 (毫秒)
+      minHoldingScore: 0.6,                 // 最小持有得分
+
+      // 动量参数 / Momentum parameters
+      momentumWeight: 0.6,                  // 动量权重
+      volatilityWeight: 0.2,                // 波动率权重
+      volumeWeight: 0.2,                    // 成交量权重
+
+      // 仓位参数 / Position parameters
+      maxPositionPerAsset: 0.33,
+      positionPercent: 95,
+    },
+
+    // 资金费率极值策略默认参数 / Funding Rate Extreme strategy defaults
+    fundingRateExtreme: {
+      // 基础参数 / Basic parameters
+      lookbackPeriod: 24,                   // 24小时回看
+      rebalancePeriod: 8 * 60 * 60 * 1000,  // 每8小时再平衡 (与资金费率周期对齐)
+
+      // 资金费率阈值 / Funding rate thresholds
+      extremeHighThreshold: 0.001,          // 极端高费率阈值 (0.1%)
+      extremeLowThreshold: -0.001,          // 极端低费率阈值 (-0.1%)
+      normalHighThreshold: 0.0005,          // 正常高费率阈值 (0.05%)
+      normalLowThreshold: -0.0005,          // 正常低费率阈值 (-0.05%)
+
+      // 策略模式 / Strategy mode
+      mode: 'contrarian',                   // 模式: contrarian (逆向), trend (顺势)
+
+      // 过滤条件 / Filter conditions
+      minFundingRateHistory: 24,            // 最小资金费率历史数量
+      minAverageDailyVolume: 50000000,      // 最小日均成交量
+
+      // 仓位参数 / Position parameters
+      topN: 3,
+      bottomN: 3,
+      positionType: 'long_short',
+      maxPositionPerAsset: 0.15,
+      positionPercent: 95,
+    },
+
+    // 跨交易所价差策略默认参数 / Cross-Exchange Spread strategy defaults
+    crossExchangeSpread: {
+      // 基础参数 / Basic parameters
+      exchanges: ['binance', 'okx'],        // 监控的交易所
+      lookbackPeriod: 20,
+      rebalancePeriod: 60 * 1000,           // 每分钟检查 (套利策略需要高频)
+
+      // 价差阈值 / Spread thresholds
+      minSpreadThreshold: 0.002,            // 最小价差阈值 (0.2%)
+      entrySpreadThreshold: 0.005,          // 入场价差阈值 (0.5%)
+      exitSpreadThreshold: 0.001,           // 出场价差阈值 (0.1%)
+
+      // 套利模式 / Arbitrage mode
+      mode: 'statistical',                  // 模式: simple (简单), statistical (统计)
+      meanReversionPeriod: 50,              // 均值回归周期
+      stdDevThreshold: 2.0,                 // 标准差阈值
+
+      // 执行参数 / Execution parameters
+      maxSlippage: 0.001,                   // 最大滑点
+      simultaneousExecution: true,          // 是否同时执行
+      executionTimeout: 5000,               // 执行超时 (毫秒)
+
+      // 仓位参数 / Position parameters
+      maxPositionPerPair: 0.1,              // 每对最大仓位
+      positionPercent: 95,
+    },
   },
 
   // ============================================

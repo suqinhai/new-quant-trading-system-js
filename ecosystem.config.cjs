@@ -32,6 +32,11 @@
  * │ quant-live-orderflow│ 3090       │ 3091    │ 8089         │ 9099        │
  * │ quant-live-mtf      │ 3100       │ 3101    │ 8090         │ 9100        │
  * │ quant-live-combo    │ 3110       │ 3111    │ 8091         │ 9101        │
+ * │ quant-live-crosssec │ 3120       │ 3121    │ 8092         │ 9102        │
+ * │ quant-live-momrank  │ 3130       │ 3131    │ 8093         │ 9103        │
+ * │ quant-live-rotation │ 3140       │ 3141    │ 8094         │ 9104        │
+ * │ quant-live-fundext  │ 3150       │ 3151    │ 8095         │ 9105        │
+ * │ quant-live-crossex  │ 3160       │ 3161    │ 8096         │ 9106        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -228,6 +233,37 @@ const STRATEGIES = [
     name: 'WeightedCombo',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '加权组合策略 (SMA+RSI+MACD打分) / Weighted Combo Strategy (Signal Scoring)',
+  },
+  // 横截面策略 / Cross-Sectional Strategies
+  {
+    id: 'crosssectional',
+    name: 'CrossSectional',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    description: '横截面策略 (多币种排名轮动) / Cross-Sectional Strategy (Multi-Asset Ranking Rotation)',
+  },
+  {
+    id: 'momentumrank',
+    name: 'MomentumRank',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    description: '动量排名策略 / Momentum Ranking Strategy',
+  },
+  {
+    id: 'rotation',
+    name: 'Rotation',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    description: '板块轮动策略 / Sector Rotation Strategy',
+  },
+  {
+    id: 'fundingextreme',
+    name: 'FundingRateExtreme',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    description: '资金费率极值策略 / Funding Rate Extreme Strategy',
+  },
+  {
+    id: 'crossexchange',
+    name: 'CrossExchangeSpread',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT',
+    description: '跨交易所价差策略 / Cross-Exchange Spread Strategy',
   },
 ];
 

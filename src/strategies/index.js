@@ -35,6 +35,50 @@ export { MultiTimeframeStrategy } from './MultiTimeframeStrategy.js';
 export { WeightedComboStrategy } from './WeightedComboStrategy.js';
 export { SignalWeightingSystem, StrategyStatus } from './SignalWeightingSystem.js';
 
+// ============================================
+// 横截面策略 (多币种) / Cross-Sectional Strategies (Multi-Asset)
+// ============================================
+
+// 横截面策略基类 / Cross-sectional strategy base class
+export {
+  CrossSectionalStrategy,
+  AssetDataManager,
+  PortfolioManager,
+  CROSS_SECTIONAL_TYPES,
+  RANK_DIRECTION,
+  POSITION_TYPE,
+} from './CrossSectionalStrategy.js';
+
+// 动量排名策略 / Momentum rank strategy
+export {
+  MomentumRankStrategy,
+  MOMENTUM_METRICS,
+} from './MomentumRankStrategy.js';
+
+// 强弱轮动策略 / Rotation strategy
+export {
+  RotationStrategy,
+  STRENGTH_METRICS,
+  ROTATION_TRIGGERS,
+} from './RotationStrategy.js';
+
+// 资金费率极值策略 / Funding rate extreme strategy
+export {
+  FundingRateExtremeStrategy,
+  FundingRateDataManager,
+  FUNDING_FREQUENCY,
+  EXTREME_DETECTION,
+} from './FundingRateExtremeStrategy.js';
+
+// 跨交易所价差策略 / Cross-exchange spread strategy
+export {
+  CrossExchangeSpreadStrategy,
+  CrossExchangePriceManager,
+  ArbitragePositionManager,
+  SUPPORTED_EXCHANGES,
+  SPREAD_TYPES,
+} from './CrossExchangeSpreadStrategy.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -72,6 +116,29 @@ export const StrategyRegistry = {
   // 加权组合策略 / Weighted combo strategy
   WeightedCombo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),
   Combo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),  // 别名
+
+  // ============================================
+  // 横截面策略 / Cross-Sectional Strategies
+  // ============================================
+
+  // 横截面策略基类 / Cross-sectional base
+  CrossSectional: () => import('./CrossSectionalStrategy.js').then(m => m.CrossSectionalStrategy),
+
+  // 动量排名策略 / Momentum rank strategy
+  MomentumRank: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy),
+  Momentum: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy),  // 别名
+
+  // 强弱轮动策略 / Rotation strategy
+  Rotation: () => import('./RotationStrategy.js').then(m => m.RotationStrategy),
+  TopBottom: () => import('./RotationStrategy.js').then(m => m.RotationStrategy),  // 别名
+
+  // 资金费率极值策略 / Funding rate extreme strategy
+  FundingRateExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy),
+  FundingExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy),  // 别名
+
+  // 跨交易所价差策略 / Cross-exchange spread strategy
+  CrossExchangeSpread: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),
+  CrossExchange: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),  // 别名
 
   /**
    * 获取策略类
