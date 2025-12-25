@@ -1067,6 +1067,105 @@ export default {
       // 仓位百分比 / Position percent
       positionPercent: 95,
     },
+
+    // ============================================
+    // 自适应参数策略默认参数 / Adaptive Strategy Defaults
+    // ============================================
+
+    // 自适应参数策略默认参数 / Adaptive strategy defaults
+    adaptive: {
+      // ============================================
+      // 自适应模式配置 / Adaptive Mode Configuration
+      // ============================================
+
+      // 自适应模式: full, sma_only, rsi_only, bb_only, custom
+      adaptiveMode: 'full',
+
+      // 启用开关 / Enable flags
+      enableSMAAdaptive: true,       // 启用 SMA 周期自适应
+      enableRSIAdaptive: true,       // 启用 RSI 阈值自适应
+      enableBBAdaptive: true,        // 启用布林带自适应
+
+      // ============================================
+      // SMA 自适应参数 / SMA Adaptive Parameters
+      // ============================================
+
+      // 基准周期 / Base periods
+      smaBaseFast: 10,               // 快线基准周期
+      smaBaseSlow: 30,               // 慢线基准周期
+
+      // 波动率调整范围 (0.5 = 可缩短/延长 50%) / Volatility adjustment range
+      smaPeriodAdjustRange: 0.5,
+
+      // 波动率阈值 / Volatility thresholds
+      smaVolLowThreshold: 25,        // 低波动百分位
+      smaVolHighThreshold: 75,       // 高波动百分位
+
+      // ============================================
+      // RSI 自适应参数 / RSI Adaptive Parameters
+      // ============================================
+
+      // RSI 周期 / RSI period
+      rsiPeriod: 14,
+
+      // 基准阈值 / Base thresholds
+      rsiBaseOversold: 30,           // 基准超卖阈值
+      rsiBaseOverbought: 70,         // 基准超买阈值
+
+      // 趋势市阈值 / Trending market thresholds
+      rsiTrendingOversold: 25,       // 趋势市超卖
+      rsiTrendingOverbought: 75,     // 趋势市超买
+
+      // 震荡市阈值 / Ranging market thresholds
+      rsiRangingOversold: 35,        // 震荡市超卖
+      rsiRangingOverbought: 65,      // 震荡市超买
+
+      // ============================================
+      // 布林带自适应参数 / Bollinger Bands Adaptive Parameters
+      // ============================================
+
+      // 布林带周期 / Bollinger period
+      bbPeriod: 20,
+
+      // 标准差调整范围 / Std dev adjustment range
+      bbBaseStdDev: 2.0,             // 基准标准差
+      bbMinStdDev: 1.5,              // 低波动时标准差
+      bbMaxStdDev: 3.0,              // 高波动时标准差
+
+      // ATR 参考参数 / ATR reference parameters
+      atrPeriod: 14,
+      atrLookback: 100,
+
+      // ============================================
+      // 信号融合参数 / Signal Fusion Parameters
+      // ============================================
+
+      // 信号权重 / Signal weights
+      smaWeight: 0.4,                // SMA 信号权重
+      rsiWeight: 0.3,                // RSI 信号权重
+      bbWeight: 0.3,                 // 布林带信号权重
+
+      // 信号确认阈值 / Signal threshold
+      signalThreshold: 0.5,
+
+      // 趋势过滤 / Trend filter
+      useTrendFilter: true,
+      trendMAPeriod: 50,
+
+      // ============================================
+      // 市场状态检测参数 / Market Regime Detection Parameters
+      // ============================================
+
+      adxPeriod: 14,                 // ADX 周期
+      adxTrendThreshold: 25,         // ADX 趋势阈值
+      extremeVolPercentile: 95,      // 极端波动率百分位
+
+      // ============================================
+      // 仓位参数 / Position Parameters
+      // ============================================
+
+      positionPercent: 95,           // 仓位百分比
+    },
   },
 
   // ============================================

@@ -39,6 +39,7 @@
  * │ quant-live-crossex  │ 3160       │ 3161    │ 8096         │ 9106        │
  * │ quant-live-statarb  │ 3170       │ 3171    │ 8097         │ 9107        │
  * │ quant-live-riskdriven│ 3180      │ 3181    │ 8098         │ 9108        │
+ * │ quant-live-adaptive │ 3190       │ 3191    │ 8099         │ 9109        │
  * │ quant-shadow-*      │ 32xx       │ 32xx    │ 82xx         │ 92xx        │
  * └─────────────────────┴────────────┴─────────┴──────────────┴─────────────┘
  */
@@ -280,6 +281,13 @@ const STRATEGIES = [
     name: 'RiskDriven',
     symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
     description: '风控驱动策略 (目标波动率/最大回撤/波动突破/风险平价) / Risk-Driven Strategy',
+  },
+  // 自适应参数策略 / Adaptive Strategy
+  {
+    id: 'adaptive',
+    name: 'Adaptive',
+    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    description: '自适应参数策略 (SMA/RSI/BB 参数随市场状态动态调整) / Adaptive Strategy',
   },
 ];
 
