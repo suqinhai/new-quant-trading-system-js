@@ -665,3 +665,11 @@ A: 使用以下配置:
 - **v1.2.0**: 添加 RotationStrategy
 - **v1.3.0**: 添加 FundingRateExtremeStrategy
 - **v1.4.0**: 添加 CrossExchangeSpreadStrategy
+
+---
+
+## 相关文档
+
+- [因子投资文档 / Factor Investing](./FACTOR_INVESTING.md) - Alpha 因子库，多因子打分排名系统
+- [统计套利文档 / Statistical Arbitrage](./STATISTICAL_ARBITRAGE.md) - 配对交易、协整套利
+- [策略开发指南 / Strategy Development](./STRATEGY_DEVELOPMENT.md) - 通用策略开发指南

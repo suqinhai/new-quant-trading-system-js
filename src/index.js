@@ -36,6 +36,9 @@ import { loadConfig } from '../config/index.js';
 // 导入工具函数 / Import utilities
 import { logger, formatDate, sleep } from './utils/index.js';
 
+// 导入因子库 / Import factor library
+import * as Factors from './factors/index.js';
+
 /**
  * 量化交易引擎
  * Quant Trading Engine
@@ -571,6 +574,9 @@ export class TradingEngine extends EventEmitter {
 export function createEngine(config = {}) {
   return new TradingEngine(config);
 }
+
+// 导出因子库 / Export factor library
+export { Factors };
 
 // 默认导出 / Default export
 export default TradingEngine;

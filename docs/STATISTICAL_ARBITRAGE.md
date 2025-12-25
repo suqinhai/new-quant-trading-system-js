@@ -476,3 +476,11 @@ A: 策略会自动：
 ## 更新日志
 
 - **v1.0.0** (2024-12): 初始版本，支持配对交易、协整、跨交易所、期现套利
+
+---
+
+## 相关文档
+
+- [因子投资文档 / Factor Investing](./FACTOR_INVESTING.md) - Alpha 因子库，多因子打分排名系统
+- [横截面策略文档 / Cross-Sectional Strategies](./CROSS_SECTIONAL_STRATEGIES.md) - 多资产排名策略
+- [策略开发指南 / Strategy Development](./STRATEGY_DEVELOPMENT.md) - 通用策略开发指南

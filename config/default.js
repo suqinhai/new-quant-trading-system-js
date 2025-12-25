@@ -798,6 +798,180 @@ export default {
       // 冷却时间 (毫秒) / Cooling period (ms)
       coolingPeriod: 24 * 60 * 60 * 1000, // 24小时 / 24 hours
     },
+
+    // ============================================
+    // 因子投资策略默认参数 / Factor Investing Strategy Defaults
+    // ============================================
+
+    // 因子投资策略默认参数 / Factor Investing strategy defaults
+    factorInvesting: {
+      // ============================================
+      // 监控交易对列表 / Symbols to monitor
+      // ============================================
+      symbols: [
+        'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
+        'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT',
+        'LINK/USDT', 'UNI/USDT', 'ATOM/USDT', 'LTC/USDT', 'FIL/USDT',
+      ],
+
+      // ============================================
+      // 因子类别配置 / Factor Category Configuration
+      // ============================================
+      factorConfig: {
+        // 动量因子 / Momentum factors
+        momentum: {
+          enabled: true,
+          totalWeight: 0.35,
+          factors: {
+            'Momentum_7d': { weight: 0.4 },
+            'Momentum_30d': { weight: 0.35 },
+            'RiskAdj_Momentum_7d': { weight: 0.25 },
+          },
+        },
+
+        // 波动率因子 / Volatility factors
+        volatility: {
+          enabled: true,
+          totalWeight: 0.15,
+          factors: {
+            'BB_Width_20': { weight: 0.5 },
+            'ATR_Ratio': { weight: 0.3 },
+            'Keltner_Squeeze': { weight: 0.2 },
+          },
+        },
+
+        // 资金流向因子 / Money flow factors
+        moneyFlow: {
+          enabled: true,
+          totalWeight: 0.25,
+          factors: {
+            'MFI_14': { weight: 0.4 },
+            'OBV_Slope_20': { weight: 0.3 },
+            'CMF_20': { weight: 0.3 },
+          },
+        },
+
+        // 换手率因子 / Turnover factors
+        turnover: {
+          enabled: true,
+          totalWeight: 0.15,
+          factors: {
+            'Vol_MA_Ratio_20': { weight: 0.4 },
+            'Relative_Volume': { weight: 0.35 },
+            'Abnormal_Volume': { weight: 0.25 },
+          },
+        },
+
+        // 资金费率因子 / Funding rate factors
+        fundingRate: {
+          enabled: false, // 需要实时数据 / Requires live data
+          totalWeight: 0.1,
+          factors: {
+            'Funding_Percentile': { weight: 0.5 },
+            'Funding_ZScore': { weight: 0.3 },
+            'Funding_Extreme_Signal': { weight: 0.2 },
+          },
+        },
+
+        // 大单因子 / Large order factors
+        largeOrder: {
+          enabled: false, // 需要成交明细 / Requires trade details
+          totalWeight: 0.1,
+          factors: {
+            'LargeOrder_Imbalance': { weight: 0.4 },
+            'LargeOrder_Net_Flow': { weight: 0.3 },
+            'Whale_Activity': { weight: 0.3 },
+          },
+        },
+      },
+
+      // ============================================
+      // 标准化与组合配置 / Normalization & Combination Config
+      // ============================================
+
+      // 标准化方法: zscore, min_max, percentile, rank, robust
+      normalizationMethod: 'zscore',
+
+      // 组合方法: weighted_sum, weighted_average, rank_average, ic_weighted, equal
+      combinationMethod: 'weighted_average',
+
+      // ============================================
+      // 选股配置 / Stock Selection Configuration
+      // ============================================
+
+      // 做多 Top N 个资产 / Long top N assets
+      topN: 5,
+
+      // 做空 Bottom N 个资产 / Short bottom N assets
+      bottomN: 5,
+
+      // 仓位类型: long_only, short_only, long_short, market_neutral
+      positionType: 'long_short',
+
+      // 权重分配方法: equal, score_weighted, volatility_parity, risk_parity
+      weightMethod: 'equal',
+
+      // ============================================
+      // 再平衡配置 / Rebalancing Configuration
+      // ============================================
+
+      // 再平衡周期 (毫秒) / Rebalance period (ms)
+      rebalancePeriod: 24 * 60 * 60 * 1000, // 每天 / Daily
+
+      // 最小变化阈值 (低于此不调仓) / Minimum change threshold
+      minRebalanceThreshold: 0.05, // 5%
+
+      // 换手限制 / Turnover limit
+      maxTurnover: 0.3, // 单次最大换手 30%
+
+      // ============================================
+      // 仓位管理 / Position Management
+      // ============================================
+
+      // 单资产最大仓位 / Max position per asset
+      maxPositionPerAsset: 0.15, // 15%
+
+      // 单边最大仓位 / Max position per side
+      maxPositionPerSide: 0.5, // 50%
+
+      // 总仓位百分比 / Total position percent
+      positionPercent: 95,
+
+      // ============================================
+      // 风险控制 / Risk Control
+      // ============================================
+
+      // 单资产止损 / Stop loss per asset
+      stopLoss: 0.05, // 5%
+
+      // 单资产止盈 / Take profit per asset
+      takeProfit: 0.15, // 15%
+
+      // 总组合最大回撤 / Max portfolio drawdown
+      maxDrawdown: 0.10, // 10%
+
+      // 是否启用波动率缩放 / Enable volatility scaling
+      volatilityScaling: true,
+
+      // 目标波动率 (年化) / Target volatility (annualized)
+      targetVolatility: 0.20, // 20%
+
+      // ============================================
+      // 过滤器配置 / Filter Configuration
+      // ============================================
+
+      // 最小日均成交量 (USDT) / Minimum daily volume
+      minDailyVolume: 10000000,
+
+      // 最小价格 / Minimum price
+      minPrice: 0.0001,
+
+      // 最小因子有效数据点 / Minimum valid data points for factors
+      minDataPoints: 30,
+
+      // 排除的交易对 / Excluded symbols
+      excludedSymbols: [],
+    },
   },
 
   // ============================================

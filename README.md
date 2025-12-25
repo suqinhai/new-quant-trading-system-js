@@ -59,6 +59,30 @@ npm run pm2:start
 | RegimeSwitching | 市场状态切换 | 自适应市场 |
 | **WeightedCombo** | 加权组合策略 | 多策略融合 |
 
+### 横截面策略 (多币种)
+
+| 策略 | 说明 | 适用场景 |
+|------|------|----------|
+| MomentumRank | 动量排名策略 | 多币种轮动 |
+| Rotation | 强弱轮动策略 | 行业/板块轮动 |
+| FundingRateExtreme | 资金费率极值 | 逆向套利 |
+| CrossExchangeSpread | 跨交易所价差 | 套利交易 |
+| StatisticalArbitrage | 统计套利 | 配对交易/协整 |
+
+### 因子投资策略 (Alpha Factory)
+
+| 策略 | 说明 | 适用场景 |
+|------|------|----------|
+| **FactorInvesting** | 多因子打分排名 | 量化选币 |
+
+**因子库包含**:
+- 动量因子 (1d/7d/30d/风险调整)
+- 波动率因子 (布林带宽度/ATR比值/挤压)
+- 资金流向因子 (MFI/OBV/CMF)
+- 换手率因子 (相对成交量/异常成交量)
+- 资金费率因子 (极值信号/Z-Score)
+- 大单因子 (净流入/买卖不平衡)
+
 ---
 
 ## 加权组合策略 (WeightedCombo)
@@ -192,6 +216,73 @@ regimeMap: {
 
 ---
 
+## 因子投资策略 (Factor Investing)
+
+### 概述
+
+`FactorInvestingStrategy` 是一套完整的多因子投资系统，不是单一策略，而是一整套 **Alpha 工厂**。
+
+核心思想: **横截面 + 因子 = 长期 Alpha 来源**
+
+### 因子类别
+
+| 类别 | 因子示例 | 方向 |
+|------|----------|------|
+| 动量 | Momentum_7d, Momentum_30d, RiskAdj_Momentum | 正向 |
+| 波动率 | BB_Width, ATR_Ratio, Keltner_Squeeze | 负向 |
+| 资金流 | MFI_14, OBV_Slope, CMF_20 | 正向 |
+| 换手率 | Vol_MA_Ratio, Relative_Volume, Abnormal_Volume | 正向 |
+| 资金费率 | Funding_Percentile, Funding_ZScore | 负向 |
+| 大单 | LargeOrder_Imbalance, Whale_Activity | 正向 |
+
+### 使用示例
+
+```javascript
+import {
+  FactorInvestingStrategy,
+  createFullRegistry,
+  FactorCombiner,
+} from './src/factors/index.js';
+
+// 1. 创建因子投资策略
+const strategy = new FactorInvestingStrategy({
+  symbols: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', ...],
+  factorConfig: {
+    momentum: { enabled: true, totalWeight: 0.4 },
+    volatility: { enabled: true, totalWeight: 0.15 },
+    moneyFlow: { enabled: true, totalWeight: 0.25 },
+    turnover: { enabled: true, totalWeight: 0.2 },
+  },
+  topN: 5,           // 做多 Top 5
+  bottomN: 5,        // 做空 Bottom 5
+  positionType: 'long_short',
+  weightMethod: 'equal',
+  rebalancePeriod: 24 * 60 * 60 * 1000, // 每天
+});
+
+// 2. 或直接使用因子库
+const registry = createFullRegistry();
+const factorValues = await registry.calculateBatch(
+  ['Momentum_7d', 'MFI_14', 'BB_Width_20'],
+  dataMap
+);
+
+const combiner = new FactorCombiner({ factorWeights: {...} });
+const scores = combiner.calculateScores(factorValues, symbols);
+const { long, short } = combiner.getTopBottomN(scores, 5, 5);
+```
+
+### 运行示例
+
+```bash
+# 运行因子投资示例
+node examples/runFactorInvesting.js
+```
+
+详细文档: [docs/FACTOR_INVESTING.md](./docs/FACTOR_INVESTING.md)
+
+---
+
 ## 项目结构
 
 ```
@@ -202,7 +293,21 @@ regimeMap: {
 │   │   ├── BaseStrategy.js
 │   │   ├── WeightedComboStrategy.js
 │   │   ├── SignalWeightingSystem.js
+│   │   ├── CrossSectionalStrategy.js   # 横截面策略基类
+│   │   ├── StatisticalArbitrageStrategy.js
 │   │   └── ...
+│   ├── factors/            # Alpha 因子库
+│   │   ├── BaseFactor.js              # 因子基类
+│   │   ├── FactorRegistry.js          # 因子注册表
+│   │   ├── FactorCombiner.js          # 因子组合器
+│   │   ├── FactorInvestingStrategy.js # 因子投资策略
+│   │   └── factors/                   # 具体因子
+│   │       ├── MomentumFactor.js
+│   │       ├── VolatilityFactor.js
+│   │       ├── MoneyFlowFactor.js
+│   │       ├── TurnoverFactor.js
+│   │       ├── FundingRateFactor.js
+│   │       └── LargeOrderFactor.js
 │   ├── services/           # 核心服务
 │   ├── utils/              # 工具函数
 │   └── main.js             # 入口文件
@@ -210,7 +315,12 @@ regimeMap: {
 │   ├── unit/               # 单元测试
 │   └── integration/        # 集成测试
 ├── examples/               # 示例代码
-│   └── runWeightedCombo.js
+│   ├── runWeightedCombo.js
+│   └── runFactorInvesting.js
+├── docs/                   # 文档
+│   ├── FACTOR_INVESTING.md           # 因子投资文档
+│   ├── CROSS_SECTIONAL_STRATEGIES.md # 横截面策略文档
+│   └── STATISTICAL_ARBITRAGE.md      # 统计套利文档
 ├── ecosystem.config.cjs    # PM2 配置
 └── package.json
 ```

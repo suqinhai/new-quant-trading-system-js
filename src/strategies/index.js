@@ -96,6 +96,19 @@ export {
   STAT_ARB_DEFAULT_CONFIG,
 } from './StatisticalArbitrageStrategy.js';
 
+// ============================================
+// 因子投资策略 / Factor Investing Strategy
+// ============================================
+
+export {
+  FactorInvestingStrategy,
+  POSITION_TYPE as FACTOR_POSITION_TYPE,
+  WEIGHT_METHOD,
+} from '../factors/FactorInvestingStrategy.js';
+
+// 导出因子库 / Export Factor Library
+export * as FactorLibrary from '../factors/index.js';
+
 // 默认导出基类 / Default export base class
 export { BaseStrategy as default } from './BaseStrategy.js';
 
@@ -166,6 +179,16 @@ export const StrategyRegistry = {
   StatArb: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
   Pairs: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
   Cointegration: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
+
+  // ============================================
+  // 因子投资策略 / Factor Investing Strategy
+  // ============================================
+
+  // 因子投资策略 / Factor investing strategy
+  FactorInvesting: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),
+  Factors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
+  MultiFactors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
+  AlphaFactory: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
 
   /**
    * 获取策略类
