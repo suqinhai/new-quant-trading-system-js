@@ -45,7 +45,7 @@ node --version  # >= 18.0.0
 npm --version   # >= 8.0.0
 
 # PM2 进程管理器
-npm install -g pm2
+sudo npm install -g pm2
 
 # Redis（可选，用于缓存）
 sudo apt-get install redis-server
