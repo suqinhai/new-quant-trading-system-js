@@ -8,10 +8,11 @@
 4. [PM2 进程管理](#pm2-进程管理)
 5. [Docker 部署](#docker-部署)
 6. [监控配置](#监控配置)
-7. [日志管理](#日志管理)
-8. [备份恢复](#备份恢复)
-9. [性能优化](#性能优化)
-10. [安全加固](#安全加固)
+7. [ClickHouse 配置](#clickhouse-配置)
+8. [日志管理](#日志管理)
+9. [备份恢复](#备份恢复)
+10. [性能优化](#性能优化)
+11. [安全加固](#安全加固)
 
 ---
 
@@ -50,8 +51,20 @@ sudo npm install -g pm2
 # Redis（可选，用于缓存）
 sudo apt-get install redis-server
 
-# ClickHouse（可选，用于大数据分析）
-# 参考 ClickHouse 官方文档安装
+# ClickHouse（用于交易数据归档和分析）
+# Ubuntu/Debian 安装
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
+sudo apt-get update
+sudo apt-get install -y clickhouse-server clickhouse-client
+
+# 启动服务
+sudo systemctl start clickhouse-server
+sudo systemctl enable clickhouse-server
+
+# 验证安装
+clickhouse-client --query "SELECT version()"
 ```
 
 ### 网络配置
@@ -455,6 +468,141 @@ groups:
 
 ---
 
+## ClickHouse 配置
+
+ClickHouse 用于存储历史交易数据、订单归档和审计日志，系统启动时会自动创建所需的数据库和表结构。
+
+### 表结构说明
+
+系统自动创建以下表：
+
+| 表名 | 用途 | TTL |
+|------|------|-----|
+| `trades` | 交易记录 | 3 年 |
+| `orders_archive` | 订单归档 | 3 年 |
+| `positions_archive` | 持仓归档 | 5 年 |
+| `audit_logs` | 审计日志 | 2 年 |
+| `balance_snapshots` | 余额快照 | 1 年 |
+| `trades_daily_stats` | 每日交易统计（物化视图） | - |
+| `orders_hourly_stats` | 每小时订单统计（物化视图） | - |
+
+### 环境变量配置
+
+```bash
+# ClickHouse 配置
+CLICKHOUSE_HOST=http://localhost:8123   # HTTP 接口地址
+CLICKHOUSE_PORT=8123                     # HTTP 端口
+CLICKHOUSE_USER=default                  # 用户名
+CLICKHOUSE_PASSWORD=                     # 密码（默认为空）
+CLICKHOUSE_DB=quant_trading              # 数据库名
+```
+
+### Docker 部署配置
+
+使用 docker-compose 启动时，ClickHouse 服务已包含在配置中：
+
+```bash
+# 启动包含 ClickHouse 的完整服务
+docker-compose up -d
+
+# 仅启动 ClickHouse
+docker-compose up -d clickhouse
+
+# 查看 ClickHouse 日志
+docker-compose logs -f clickhouse
+```
+
+### 常用运维命令
+
+```bash
+# 连接到 ClickHouse
+clickhouse-client -h localhost -d quant_trading
+
+# 查看表大小和行数
+clickhouse-client --query "
+  SELECT
+    table,
+    formatReadableSize(sum(data_compressed_bytes)) as compressed,
+    formatReadableSize(sum(data_uncompressed_bytes)) as uncompressed,
+    sum(rows) as rows
+  FROM system.parts
+  WHERE database = 'quant_trading' AND active = 1
+  GROUP BY table
+  ORDER BY sum(data_compressed_bytes) DESC
+"
+
+# 查看最近交易记录
+clickhouse-client --query "
+  SELECT * FROM quant_trading.trades
+  ORDER BY timestamp DESC LIMIT 10
+"
+
+# 查看每日交易统计
+clickhouse-client --query "
+  SELECT * FROM quant_trading.trades_daily_stats
+  ORDER BY date DESC LIMIT 7
+"
+
+# 手动优化表（合并分区）
+clickhouse-client --query "OPTIMIZE TABLE quant_trading.trades FINAL"
+
+# 清理过期数据（通常由 TTL 自动处理）
+clickhouse-client --query "ALTER TABLE quant_trading.trades DELETE WHERE timestamp < now() - INTERVAL 3 YEAR"
+```
+
+### 性能优化配置
+
+自定义配置文件 `config/clickhouse/custom.xml`：
+
+```xml
+<clickhouse>
+    <!-- 查询并发限制 -->
+    <max_concurrent_queries>100</max_concurrent_queries>
+    <max_connections>4096</max_connections>
+
+    <!-- 内存限制（3GB 单查询，4GB 全部查询）-->
+    <max_memory_usage>3000000000</max_memory_usage>
+    <max_memory_usage_for_all_queries>4000000000</max_memory_usage_for_all_queries>
+
+    <!-- 压缩配置 -->
+    <compression>
+        <case>
+            <method>lz4</method>
+        </case>
+    </compression>
+</clickhouse>
+```
+
+### 监控指标
+
+通过 API 获取 ClickHouse 状态：
+
+```bash
+# 健康检查
+curl http://localhost:8123/ping
+
+# 获取表统计（通过应用 API）
+curl http://localhost:3000/api/system/clickhouse/stats
+```
+
+### ClickHouse 备份
+
+```bash
+# 备份指定表
+clickhouse-client --query "
+  BACKUP TABLE quant_trading.trades, quant_trading.orders_archive
+  TO Disk('backups', 'backup_$(date +%Y%m%d)')
+"
+
+# 或使用 clickhouse-backup 工具
+clickhouse-backup create daily_backup
+
+# 恢复备份
+clickhouse-backup restore daily_backup
+```
+
+---
+
 ## 日志管理
 
 ### 日志目录结构
@@ -539,6 +687,12 @@ cp /opt/trading-system/.env $BACKUP_DIR/config_$DATE.env
 redis-cli BGSAVE
 cp /var/lib/redis/dump.rdb $BACKUP_DIR/redis_$DATE.rdb
 
+# 备份 ClickHouse 数据
+clickhouse-client --query "
+  BACKUP TABLE quant_trading.trades, quant_trading.orders_archive, quant_trading.positions_archive, quant_trading.audit_logs
+  TO Disk('backups', 'backup_$DATE')
+" 2>/dev/null || echo "ClickHouse backup skipped (if not installed)"
+
 # 清理 30 天前的备份
 find $BACKUP_DIR -mtime +30 -delete
 
@@ -564,6 +718,12 @@ pm2 stop all
 # 恢复 Redis
 cp /var/backups/trading-system/redis_20240115_020000.rdb /var/lib/redis/dump.rdb
 systemctl restart redis
+
+# 恢复 ClickHouse（如果使用）
+clickhouse-client --query "
+  RESTORE TABLE quant_trading.trades, quant_trading.orders_archive, quant_trading.positions_archive, quant_trading.audit_logs
+  FROM Disk('backups', 'backup_20240115_020000')
+"
 
 # 启动服务
 pm2 start all
@@ -680,14 +840,16 @@ server {
 - [ ] 持仓和订单状态
 - [ ] API 连接状态
 - [ ] 磁盘空间使用
+- [ ] ClickHouse 健康状态 (`curl http://localhost:8123/ping`)
 
 ### 周期检查
 
-- [ ] 备份验证
+- [ ] 备份验证（Redis + ClickHouse）
 - [ ] 日志清理
 - [ ] 安全更新
 - [ ] 性能指标分析
 - [ ] API 密钥轮换
+- [ ] ClickHouse 表优化 (`OPTIMIZE TABLE ... FINAL`)
 
 ### 紧急处理
 
