@@ -74,6 +74,13 @@ sudo systemctl enable clickhouse-server
 clickhouse-client --query "SELECT version()"
 ```
 
+
+# 设置解密MASTER_KEY
+nano ~/.bashrc
+export MASTER_KEY="你的主密码"
+source ~/.bashrc
+
+
 ### 网络配置
 
 确保服务器可以访问以下域名：
