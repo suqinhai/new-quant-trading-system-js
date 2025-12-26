@@ -5,6 +5,8 @@
  * @module src/api/rateLimit
  */
 
+import { SafeMap, SafeTTLMap, AsyncLock } from '../utils/SafeCollection.js';
+
 /**
  * 限流策略枚举
  */
@@ -119,11 +121,32 @@ export const DEFAULT_RATE_LIMIT_CONFIG = {
 export class RateLimiter {
   constructor(config = {}) {
     this.config = { ...DEFAULT_RATE_LIMIT_CONFIG, ...config };
-    this.stores = new Map();  // 存储限流计数
-    this.blocked = new Map(); // 存储封禁信息
+
+    // 使用线程安全的 Map 存储限流计数
+    // Use thread-safe Map for rate limit counters
+    this.stores = new SafeMap();
+
+    // 使用带 TTL 的线程安全 Map 存储封禁信息
+    // Use TTL-enabled thread-safe Map for block info
+    this.blocked = new SafeTTLMap(30 * 60 * 1000); // 默认 30 分钟过期
+
+    // 每个 key 的锁，用于原子复合操作
+    // Per-key locks for atomic compound operations
+    this._keyLocks = new Map();
 
     // 定期清理过期数据
     this.cleanupInterval = setInterval(() => this.cleanup(), 60 * 1000);
+  }
+
+  /**
+   * 获取 key 对应的锁
+   * @private
+   */
+  _getLock(key) {
+    if (!this._keyLocks.has(key)) {
+      this._keyLocks.set(key, new AsyncLock());
+    }
+    return this._keyLocks.get(key);
   }
 
   /**
@@ -183,52 +206,58 @@ export class RateLimiter {
    * 检查是否被封禁
    */
   isBlocked(key) {
-    const blockInfo = this.blocked.get(key);
-    if (!blockInfo) return false;
-
-    if (Date.now() > blockInfo.until) {
-      this.blocked.delete(key);
-      return false;
-    }
-
-    return true;
+    // SafeTTLMap 的 has() 方法已经考虑了过期
+    // SafeTTLMap.has() already considers expiry
+    return this.blocked.has(key);
   }
 
   /**
    * 封禁客户端
    */
-  block(key, duration) {
-    this.blocked.set(key, {
+  async block(key, duration) {
+    await this.blocked.set(key, {
       until: Date.now() + duration,
       blockedAt: Date.now(),
-    });
+    }, duration);
   }
 
   /**
-   * 滑动窗口限流检查
+   * 滑动窗口限流检查 (线程安全)
+   * Thread-safe sliding window rate limit check
    */
-  checkSlidingWindow(key, config, role) {
+  async checkSlidingWindow(key, config, role) {
     const now = Date.now();
     const windowStart = now - config.windowMs;
-
-    // 获取或创建存储
-    if (!this.stores.has(key)) {
-      this.stores.set(key, []);
-    }
-
-    const timestamps = this.stores.get(key);
-
-    // 移除窗口外的时间戳
-    while (timestamps.length > 0 && timestamps[0] < windowStart) {
-      timestamps.shift();
-    }
 
     // 计算限流上限 (考虑角色加成)
     const roleConfig = this.config.roles[role] || { multiplier: 1 };
     const maxRequests = Math.floor(config.maxRequests * roleConfig.multiplier);
 
-    // 检查是否超限
-    if (timestamps.length >= maxRequests) {
+    // 使用原子操作更新时间戳数组
+    // Use atomic operation to update timestamps array
+    const result = await this.stores.compute(key, (k, timestamps) => {
+      // 初始化或获取时间戳数组
+      let arr = timestamps || [];
+
+      // 移除窗口外的时间戳 (原子操作内)
+      // Remove expired timestamps (within atomic operation)
+      arr = arr.filter(ts => ts >= windowStart);
+
+      // 检查是否超限
+      if (arr.length >= maxRequests) {
+        // 超限，不添加新时间戳，返回当前数组
+        return { timestamps: arr, allowed: false };
+      }
+
+      // 未超限，添加新时间戳
+      arr.push(now);
+      return { timestamps: arr, allowed: true };
+    });
+
+    const timestamps = result.timestamps;
+    const allowed = result.allowed;
+
+    if (!allowed) {
       return {
         allowed: false,
         remaining: 0,
@@ -237,9 +266,6 @@ export class RateLimiter {
         retryAfter: Math.ceil((timestamps[0] + config.windowMs - now) / 1000),
       };
     }
-
-    // 记录请求
-    timestamps.push(now);
 
     return {
       allowed: true,
@@ -250,24 +276,35 @@ export class RateLimiter {
   }
 
   /**
-   * 固定窗口限流检查
+   * 固定窗口限流检查 (线程安全)
+   * Thread-safe fixed window rate limit check
    */
-  checkFixedWindow(key, config, role) {
+  async checkFixedWindow(key, config, role) {
     const now = Date.now();
     const windowKey = `${key}:${Math.floor(now / config.windowMs)}`;
-
-    if (!this.stores.has(windowKey)) {
-      this.stores.set(windowKey, { count: 0, windowStart: now });
-    }
-
-    const window = this.stores.get(windowKey);
 
     // 计算限流上限
     const roleConfig = this.config.roles[role] || { multiplier: 1 };
     const maxRequests = Math.floor(config.maxRequests * roleConfig.multiplier);
 
-    if (window.count >= maxRequests) {
-      const reset = window.windowStart + config.windowMs;
+    // 使用原子操作更新计数
+    // Use atomic operation to update count
+    const result = await this.stores.compute(windowKey, (k, window) => {
+      // 初始化或获取窗口数据
+      const data = window || { count: 0, windowStart: now };
+
+      // 检查是否超限
+      if (data.count >= maxRequests) {
+        return { ...data, allowed: false };
+      }
+
+      // 未超限，增加计数
+      return { count: data.count + 1, windowStart: data.windowStart, allowed: true };
+    });
+
+    const reset = result.windowStart + config.windowMs;
+
+    if (!result.allowed) {
       return {
         allowed: false,
         remaining: 0,
@@ -277,20 +314,19 @@ export class RateLimiter {
       };
     }
 
-    window.count++;
-
     return {
       allowed: true,
-      remaining: maxRequests - window.count,
+      remaining: maxRequests - result.count,
       limit: maxRequests,
-      reset: window.windowStart + config.windowMs,
+      reset,
     };
   }
 
   /**
-   * 限流检查
+   * 限流检查 (线程安全)
+   * Thread-safe rate limit check
    */
-  check(req) {
+  async check(req) {
     // 白名单跳过
     if (this.isWhitelisted(req)) {
       return { allowed: true, remaining: Infinity, limit: Infinity };
@@ -305,8 +341,8 @@ export class RateLimiter {
         allowed: false,
         remaining: 0,
         limit: 0,
-        reset: blockInfo.until,
-        retryAfter: Math.ceil((blockInfo.until - Date.now()) / 1000),
+        reset: blockInfo?.until || Date.now() + 60000,
+        retryAfter: blockInfo ? Math.ceil((blockInfo.until - Date.now()) / 1000) : 60,
         blocked: true,
       };
     }
@@ -317,25 +353,26 @@ export class RateLimiter {
 
     let result;
     if (strategy === RateLimitStrategy.FIXED_WINDOW) {
-      result = this.checkFixedWindow(`${key}:${req.path}`, routeConfig, role);
+      result = await this.checkFixedWindow(`${key}:${req.path}`, routeConfig, role);
     } else {
-      result = this.checkSlidingWindow(`${key}:${req.path}`, routeConfig, role);
+      result = await this.checkSlidingWindow(`${key}:${req.path}`, routeConfig, role);
     }
 
     // 超限封禁
     if (!result.allowed && routeConfig.blockDuration) {
-      this.block(key, routeConfig.blockDuration);
+      await this.block(key, routeConfig.blockDuration);
     }
 
     return result;
   }
 
   /**
-   * Express 中间件
+   * Express 中间件 (异步)
+   * Express middleware (async)
    */
   middleware() {
-    return (req, res, next) => {
-      const result = this.check(req);
+    return async (req, res, next) => {
+      const result = await this.check(req);
 
       // 设置响应头
       res.setHeader(this.config.headers.limit, result.limit);
@@ -359,62 +396,71 @@ export class RateLimiter {
   }
 
   /**
-   * 清理过期数据
+   * 清理过期数据 (线程安全)
+   * Thread-safe cleanup of expired data
    */
-  cleanup() {
+  async cleanup() {
     const now = Date.now();
+    const maxWindow = Math.max(
+      this.config.global.windowMs,
+      ...Object.values(this.config.routes).map(r => r.windowMs || 0)
+    );
 
-    // 清理滑动窗口数据
-    for (const [key, timestamps] of this.stores.entries()) {
-      if (Array.isArray(timestamps)) {
-        const maxWindow = Math.max(
-          this.config.global.windowMs,
-          ...Object.values(this.config.routes).map(r => r.windowMs || 0)
-        );
-        while (timestamps.length > 0 && timestamps[0] < now - maxWindow) {
-          timestamps.shift();
-        }
-        if (timestamps.length === 0) {
-          this.stores.delete(key);
-        }
+    // 使用 SafeMap 的 cleanupExpired 方法安全清理
+    // Use SafeMap's cleanupExpired for safe cleanup
+    await this.stores.cleanupExpired((value, key) => {
+      // 滑动窗口数据：检查时间戳数组是否为空或全部过期
+      if (Array.isArray(value)) {
+        const validTimestamps = value.filter(ts => ts >= now - maxWindow);
+        return validTimestamps.length === 0;
       }
-    }
 
-    // 清理固定窗口数据 (带时间戳的 key)
-    for (const [key] of this.stores.entries()) {
-      if (key.includes(':') && !key.startsWith('user:') && !key.startsWith('ip:')) {
+      // 固定窗口数据：检查是否过期
+      if (value && typeof value === 'object' && value.windowStart) {
+        return value.windowStart + maxWindow * 2 < now;
+      }
+
+      // 其他类型数据：检查 key 中的窗口编号
+      if (typeof key === 'string' && key.includes(':')) {
         const parts = key.split(':');
         const windowNum = parseInt(parts[parts.length - 1]);
         if (!isNaN(windowNum)) {
-          const maxWindow = Math.max(
-            this.config.global.windowMs,
-            ...Object.values(this.config.routes).map(r => r.windowMs || 0)
-          );
-          if (windowNum * maxWindow < now - maxWindow * 2) {
-            this.stores.delete(key);
-          }
+          return windowNum * maxWindow < now - maxWindow * 2;
         }
       }
-    }
 
-    // 清理过期封禁
-    for (const [key, info] of this.blocked.entries()) {
-      if (info.until < now) {
-        this.blocked.delete(key);
+      return false;
+    });
+
+    // SafeTTLMap 会自动清理过期的封禁记录
+    // SafeTTLMap automatically cleans up expired block records
+
+    // 清理未使用的 key 锁
+    // Cleanup unused key locks
+    for (const [key] of this._keyLocks) {
+      if (!this.stores.has(key)) {
+        this._keyLocks.delete(key);
       }
     }
   }
 
   /**
-   * 重置客户端限流
+   * 重置客户端限流 (线程安全)
+   * Thread-safe reset client rate limit
    */
-  reset(clientKey) {
-    for (const [key] of this.stores.entries()) {
+  async reset(clientKey) {
+    const keysToDelete = [];
+    for (const key of this.stores.keys()) {
       if (key.startsWith(clientKey)) {
-        this.stores.delete(key);
+        keysToDelete.push(key);
       }
     }
-    this.blocked.delete(clientKey);
+
+    for (const key of keysToDelete) {
+      await this.stores.delete(key);
+    }
+
+    await this.blocked.delete(clientKey);
   }
 
   /**
@@ -432,14 +478,16 @@ export class RateLimiter {
   }
 
   /**
-   * 销毁限流器
+   * 销毁限流器 (线程安全)
+   * Thread-safe destroy rate limiter
    */
   destroy() {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
-    this.stores.clear();
-    this.blocked.clear();
+    this.stores.clearSync();
+    this.blocked.destroy();
+    this._keyLocks.clear();
   }
 }
 

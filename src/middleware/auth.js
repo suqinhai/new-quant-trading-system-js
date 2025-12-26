@@ -9,6 +9,7 @@
  */
 
 import crypto from 'crypto';
+import { SafeMap, SafeSet, SafeTTLMap } from '../utils/SafeCollection.js';
 
 // JWT 配置
 const JWT_ALGORITHM = 'HS256';
@@ -62,19 +63,24 @@ class AuthManager {
     };
 
     // 用户存储 (生产环境应使用数据库)
-    this.users = new Map();
+    // Use thread-safe Map for user storage
+    this.users = new SafeMap();
 
-    // 刷新令牌存储
-    this.refreshTokens = new Map();
+    // 刷新令牌存储 (使用带 TTL 的线程安全 Map)
+    // Use TTL-enabled thread-safe Map for refresh tokens
+    this.refreshTokens = new SafeTTLMap(this.config.refreshTokenExpiry);
 
     // 登录尝试记录
-    this.loginAttempts = new Map();
+    // Thread-safe Map for login attempts
+    this.loginAttempts = new SafeMap();
 
     // 活跃会话
-    this.activeSessions = new Map();
+    // Thread-safe Map for active sessions
+    this.activeSessions = new SafeMap();
 
     // 令牌黑名单 (用于注销)
-    this.tokenBlacklist = new Set();
+    // Thread-safe Set for token blacklist
+    this.tokenBlacklist = new SafeSet();
 
     // 初始化默认管理员 (生产环境应从配置加载)
     this._initDefaultUser();
@@ -119,8 +125,9 @@ class AuthManager {
       'sha512'
     ).toString('hex');
 
-    // 存储用户
-    this.users.set(username, {
+    // 存储用户 (线程安全同步写入)
+    // Thread-safe sync write for user storage
+    this.users.setSync(username, {
       username,
       passwordHash: hash,
       salt,
@@ -135,12 +142,14 @@ class AuthManager {
   }
 
   /**
-   * 验证密码
+   * 验证密码 (线程安全)
+   * Verify password (thread-safe)
+   *
    * @param {string} username - 用户名
    * @param {string} password - 密码
-   * @returns {{ valid: boolean, user?: Object, error?: string }}
+   * @returns {Promise<{ valid: boolean, user?: Object, error?: string }>}
    */
-  verifyPassword(username, password) {
+  async verifyPassword(username, password) {
     const user = this.users.get(username);
 
     if (!user) {
@@ -168,20 +177,33 @@ class AuthManager {
 
     if (hashBuffer.length !== storedBuffer.length ||
         !crypto.timingSafeEqual(hashBuffer, storedBuffer)) {
-      // 记录失败尝试
-      user.failedAttempts++;
-      if (user.failedAttempts >= this.config.maxLoginAttempts) {
-        user.lockedUntil = Date.now() + this.config.lockoutDuration;
-        user.failedAttempts = 0;
+      // 使用原子更新记录失败尝试 / Atomic update for failed attempts
+      const updatedUser = await this.users.update(username, (u) => {
+        if (!u) return u;
+        const failedAttempts = u.failedAttempts + 1;
+        if (failedAttempts >= this.config.maxLoginAttempts) {
+          return {
+            ...u,
+            failedAttempts: 0,
+            lockedUntil: Date.now() + this.config.lockoutDuration,
+          };
+        }
+        return { ...u, failedAttempts };
+      });
+
+      if (updatedUser && updatedUser.lockedUntil && Date.now() < updatedUser.lockedUntil) {
         return { valid: false, error: 'Too many failed attempts. Account locked.' };
       }
       return { valid: false, error: 'Invalid password' };
     }
 
-    // 重置失败计数
-    user.failedAttempts = 0;
-    user.lockedUntil = null;
-    user.lastLogin = Date.now();
+    // 使用原子更新重置失败计数 / Atomic update to reset failed count
+    await this.users.update(username, (u) => ({
+      ...u,
+      failedAttempts: 0,
+      lockedUntil: null,
+      lastLogin: Date.now(),
+    }));
 
     return { valid: true, user: { username: user.username, role: user.role } };
   }
@@ -272,15 +294,18 @@ class AuthManager {
   }
 
   /**
-   * 生成刷新令牌
+   * 生成刷新令牌 (线程安全)
+   * Generate refresh token (thread-safe)
+   *
    * @param {string} username - 用户名
    * @param {string} clientIp - 客户端 IP
-   * @returns {string} 刷新令牌
+   * @returns {Promise<string>} 刷新令牌
    */
-  generateRefreshToken(username, clientIp) {
+  async generateRefreshToken(username, clientIp) {
     const refreshToken = crypto.randomBytes(32).toString('hex');
 
-    this.refreshTokens.set(refreshToken, {
+    // SafeTTLMap 自动处理过期 / SafeTTLMap handles expiry automatically
+    await this.refreshTokens.set(refreshToken, {
       username,
       clientIp,
       createdAt: Date.now(),
@@ -288,18 +313,21 @@ class AuthManager {
     });
 
     // 清理该用户的旧刷新令牌 (限制并发会话)
-    this._cleanupUserSessions(username);
+    await this._cleanupUserSessions(username);
 
     return refreshToken;
   }
 
   /**
-   * 使用刷新令牌获取新的访问令牌
+   * 使用刷新令牌获取新的访问令牌 (线程安全)
+   * Refresh access token (thread-safe)
+   *
    * @param {string} refreshToken - 刷新令牌
    * @param {string} clientIp - 客户端 IP
-   * @returns {{ success: boolean, accessToken?: string, error?: string }}
+   * @returns {Promise<{ success: boolean, accessToken?: string, error?: string }>}
    */
-  refreshAccessToken(refreshToken, clientIp) {
+  async refreshAccessToken(refreshToken, clientIp) {
+    // SafeTTLMap 自动处理过期检查 / SafeTTLMap handles expiry check automatically
     const tokenData = this.refreshTokens.get(refreshToken);
 
     if (!tokenData) {
@@ -307,7 +335,7 @@ class AuthManager {
     }
 
     if (Date.now() > tokenData.expiresAt) {
-      this.refreshTokens.delete(refreshToken);
+      await this.refreshTokens.delete(refreshToken);
       return { success: false, error: 'Refresh token expired' };
     }
 
@@ -331,32 +359,37 @@ class AuthManager {
   }
 
   /**
-   * 撤销令牌 (注销)
+   * 撤销令牌 (注销) - 线程安全
+   * Revoke token (logout) - thread-safe
+   *
    * @param {string} token - 访问令牌
    * @param {string} refreshToken - 刷新令牌 (可选)
    */
-  revokeToken(token, refreshToken = null) {
-    // 将访问令牌加入黑名单
-    this.tokenBlacklist.add(token);
+  async revokeToken(token, refreshToken = null) {
+    // 将访问令牌加入黑名单 (线程安全)
+    // Thread-safe add to blacklist
+    await this.tokenBlacklist.add(token);
 
     // 删除刷新令牌
     if (refreshToken) {
-      this.refreshTokens.delete(refreshToken);
+      await this.refreshTokens.delete(refreshToken);
     }
 
     // 定期清理黑名单 (过期令牌不需要保留)
-    this._cleanupBlacklist();
+    await this._cleanupBlacklist();
   }
 
   /**
-   * 清理用户会话
+   * 清理用户会话 (线程安全)
+   * Cleanup user sessions (thread-safe)
    * @private
    */
-  _cleanupUserSessions(username) {
+  async _cleanupUserSessions(username) {
     const userTokens = [];
 
+    // 收集该用户的所有令牌 / Collect all tokens for this user
     for (const [token, data] of this.refreshTokens) {
-      if (data.username === username) {
+      if (data && data.username === username) {
         userTokens.push({ token, createdAt: data.createdAt });
       }
     }
@@ -364,34 +397,40 @@ class AuthManager {
     // 按创建时间排序
     userTokens.sort((a, b) => b.createdAt - a.createdAt);
 
-    // 删除超过限制的旧会话
-    for (let i = this.config.maxConcurrentSessions; i < userTokens.length; i++) {
-      this.refreshTokens.delete(userTokens[i].token);
+    // 删除超过限制的旧会话 (线程安全)
+    // Thread-safe delete of excess sessions
+    const tokensToDelete = userTokens.slice(this.config.maxConcurrentSessions);
+    for (const { token } of tokensToDelete) {
+      await this.refreshTokens.delete(token);
     }
   }
 
   /**
-   * 清理黑名单
+   * 清理黑名单 (线程安全)
+   * Cleanup blacklist (thread-safe)
    * @private
    */
-  _cleanupBlacklist() {
-    // 简单实现：限制黑名单大小
+  async _cleanupBlacklist() {
+    // 使用 SafeSet 的 limitSize 方法限制黑名单大小
+    // Use SafeSet's limitSize to limit blacklist size
     if (this.tokenBlacklist.size > 10000) {
       // 清空黑名单 (过期令牌无论如何都会失效)
-      this.tokenBlacklist.clear();
+      await this.tokenBlacklist.clear();
     }
   }
 
   /**
-   * 更改密码
+   * 更改密码 (线程安全)
+   * Change password (thread-safe)
+   *
    * @param {string} username - 用户名
    * @param {string} oldPassword - 旧密码
    * @param {string} newPassword - 新密码
-   * @returns {{ success: boolean, error?: string }}
+   * @returns {Promise<{ success: boolean, error?: string }>}
    */
-  changePassword(username, oldPassword, newPassword) {
+  async changePassword(username, oldPassword, newPassword) {
     // 验证旧密码
-    const verify = this.verifyPassword(username, oldPassword);
+    const verify = await this.verifyPassword(username, oldPassword);
     if (!verify.valid) {
       return { success: false, error: verify.error };
     }
@@ -400,8 +439,6 @@ class AuthManager {
     if (newPassword.length < this.config.minPasswordLength) {
       return { success: false, error: `Password must be at least ${this.config.minPasswordLength} characters` };
     }
-
-    const user = this.users.get(username);
 
     // 生成新盐值和哈希
     const salt = crypto.randomBytes(16).toString('hex');
@@ -413,15 +450,23 @@ class AuthManager {
       'sha512'
     ).toString('hex');
 
-    // 更新用户
-    user.salt = salt;
-    user.passwordHash = hash;
+    // 使用原子更新用户密码 / Atomic update user password
+    await this.users.update(username, (user) => ({
+      ...user,
+      salt,
+      passwordHash: hash,
+    }));
 
-    // 撤销所有刷新令牌 (强制重新登录)
+    // 撤销所有刷新令牌 (强制重新登录) - 线程安全
+    // Revoke all refresh tokens (force re-login) - thread-safe
+    const tokensToDelete = [];
     for (const [token, data] of this.refreshTokens) {
-      if (data.username === username) {
-        this.refreshTokens.delete(token);
+      if (data && data.username === username) {
+        tokensToDelete.push(token);
       }
+    }
+    for (const token of tokensToDelete) {
+      await this.refreshTokens.delete(token);
     }
 
     return { success: true };
@@ -481,7 +526,7 @@ function createAuthMiddleware(authManager, options = {}) {
  * @returns {Function} 路由处理器
  */
 function createLoginHandler(authManager) {
-  return (req, res) => {
+  return async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -497,8 +542,8 @@ function createLoginHandler(authManager) {
       req.connection?.remoteAddress ||
       'unknown';
 
-    // 验证凭证
-    const result = authManager.verifyPassword(username, password);
+    // 验证凭证 (async)
+    const result = await authManager.verifyPassword(username, password);
 
     if (!result.valid) {
       return res.status(401).json({
@@ -507,13 +552,13 @@ function createLoginHandler(authManager) {
       });
     }
 
-    // 生成令牌
+    // 生成令牌 (async)
     const accessToken = authManager.generateToken({
       sub: result.user.username,
       role: result.user.role,
     });
 
-    const refreshToken = authManager.generateRefreshToken(username, clientIp);
+    const refreshToken = await authManager.generateRefreshToken(username, clientIp);
 
     res.json({
       success: true,
@@ -531,7 +576,7 @@ function createLoginHandler(authManager) {
  * @returns {Function} 路由处理器
  */
 function createRefreshHandler(authManager) {
-  return (req, res) => {
+  return async (req, res) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
@@ -546,7 +591,8 @@ function createRefreshHandler(authManager) {
       req.connection?.remoteAddress ||
       'unknown';
 
-    const result = authManager.refreshAccessToken(refreshToken, clientIp);
+    // 刷新访问令牌 (async)
+    const result = await authManager.refreshAccessToken(refreshToken, clientIp);
 
     if (!result.success) {
       return res.status(401).json({
@@ -569,13 +615,14 @@ function createRefreshHandler(authManager) {
  * @returns {Function} 路由处理器
  */
 function createLogoutHandler(authManager) {
-  return (req, res) => {
+  return async (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     const { refreshToken } = req.body;
 
     if (token) {
-      authManager.revokeToken(token, refreshToken);
+      // 撤销令牌 (async)
+      await authManager.revokeToken(token, refreshToken);
     }
 
     res.json({

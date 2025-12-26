@@ -23,6 +23,9 @@ import { v4 as uuidv4 } from 'uuid';
 // 导入并发队列 / Import concurrency queue
 import PQueue from 'p-queue';
 
+// 导入线程安全集合 / Import thread-safe collections
+import { SafeMap, AsyncLock } from '../utils/SafeCollection.js';
+
 // ============================================
 // 常量定义 / Constants Definition
 // ============================================
@@ -169,8 +172,8 @@ const DEFAULT_CONFIG = {
 // ============================================
 
 /**
- * 账户锁管理器
- * Account Lock Manager
+ * 账户锁管理器 (线程安全)
+ * Account Lock Manager (Thread-Safe)
  *
  * 为每个账户提供独立的互斥锁，确保多账户并行安全
  * Provides independent mutex locks for each account to ensure multi-account parallel safety
@@ -181,26 +184,30 @@ class AccountLockManager {
    * Constructor
    */
   constructor() {
-    // 账户锁映射 / Account lock map
-    // 格式: { accountId: { queue, activeCount } }
-    // Format: { accountId: { queue, activeCount } }
-    this.locks = new Map();
+    // 使用线程安全的 Map 存储账户锁
+    // Use thread-safe Map for account locks
+    this.locks = new SafeMap();
 
     // 全局队列 / Global queue
     this.globalQueue = new PQueue({ concurrency: DEFAULT_CONFIG.maxConcurrentGlobal });
+
+    // 锁，用于创建新账户队列的原子操作
+    // Lock for atomic creation of new account queues
+    this._creationLock = new AsyncLock();
   }
 
   /**
-   * 获取账户队列
-   * Get account queue
+   * 获取账户队列 (线程安全)
+   * Get account queue (thread-safe)
    *
    * @param {string} accountId - 账户 ID / Account ID
    * @param {number} concurrency - 并发数 / Concurrency
-   * @returns {PQueue} 账户队列 / Account queue
+   * @returns {Promise<PQueue>} 账户队列 / Account queue
    */
-  getAccountQueue(accountId, concurrency = DEFAULT_CONFIG.maxConcurrentPerAccount) {
-    // 如果账户队列不存在，创建新的 / If account queue doesn't exist, create new one
-    if (!this.locks.has(accountId)) {
+  async getAccountQueue(accountId, concurrency = DEFAULT_CONFIG.maxConcurrentPerAccount) {
+    // 使用 getOrCreate 原子操作
+    // Use atomic getOrCreate operation
+    const lockInfo = await this.locks.getOrCreate(accountId, async () => {
       // 创建新队列 / Create new queue
       const queue = new PQueue({
         // 设置并发数 / Set concurrency
@@ -210,8 +217,8 @@ class AccountLockManager {
         timeout: DEFAULT_CONFIG.queueTimeout,
       });
 
-      // 保存队列 / Save queue
-      this.locks.set(accountId, {
+      // 返回锁信息 / Return lock info
+      return {
         // 队列实例 / Queue instance
         queue,
 
@@ -220,16 +227,16 @@ class AccountLockManager {
 
         // 创建时间 / Creation time
         createdAt: Date.now(),
-      });
-    }
+      };
+    });
 
     // 返回队列 / Return queue
-    return this.locks.get(accountId).queue;
+    return lockInfo.queue;
   }
 
   /**
-   * 在账户队列中执行任务
-   * Execute task in account queue
+   * 在账户队列中执行任务 (线程安全)
+   * Execute task in account queue (thread-safe)
    *
    * @param {string} accountId - 账户 ID / Account ID
    * @param {Function} task - 要执行的任务 / Task to execute
@@ -237,13 +244,13 @@ class AccountLockManager {
    */
   async executeInQueue(accountId, task) {
     // 获取账户队列 / Get account queue
-    const queue = this.getAccountQueue(accountId);
+    const queue = await this.getAccountQueue(accountId);
 
-    // 获取账户锁信息 / Get account lock info
-    const lockInfo = this.locks.get(accountId);
-
-    // 增加活跃计数 / Increment active count
-    lockInfo.activeCount++;
+    // 原子增加活跃计数 / Atomically increment active count
+    await this.locks.update(accountId, (lockInfo) => ({
+      ...lockInfo,
+      activeCount: lockInfo.activeCount + 1,
+    }));
 
     try {
       // 在队列中执行任务 / Execute task in queue
@@ -251,8 +258,11 @@ class AccountLockManager {
       return await this.globalQueue.add(() => queue.add(task));
 
     } finally {
-      // 减少活跃计数 / Decrement active count
-      lockInfo.activeCount--;
+      // 原子减少活跃计数 / Atomically decrement active count
+      await this.locks.update(accountId, (lockInfo) => ({
+        ...lockInfo,
+        activeCount: lockInfo.activeCount - 1,
+      }));
     }
   }
 
@@ -264,17 +274,17 @@ class AccountLockManager {
    * @returns {Object} 账户状态 / Account status
    */
   getAccountStatus(accountId) {
+    // 获取锁信息 / Get lock info
+    const lockInfo = this.locks.get(accountId);
+
     // 如果账户不存在 / If account doesn't exist
-    if (!this.locks.has(accountId)) {
+    if (!lockInfo) {
       return {
         exists: false,          // 不存在 / Doesn't exist
         activeCount: 0,         // 活跃数 / Active count
         pendingCount: 0,        // 等待数 / Pending count
       };
     }
-
-    // 获取锁信息 / Get lock info
-    const lockInfo = this.locks.get(accountId);
 
     // 返回状态 / Return status
     return {
@@ -286,32 +296,28 @@ class AccountLockManager {
   }
 
   /**
-   * 清理空闲账户
-   * Clean up idle accounts
+   * 清理空闲账户 (线程安全)
+   * Clean up idle accounts (thread-safe)
    *
    * @param {number} maxIdleTime - 最大空闲时间 (毫秒) / Maximum idle time (ms)
    */
-  cleanupIdleAccounts(maxIdleTime = 300000) {
+  async cleanupIdleAccounts(maxIdleTime = 300000) {
     // 当前时间 / Current time
     const now = Date.now();
 
-    // 遍历所有账户 / Iterate all accounts
-    for (const [accountId, lockInfo] of this.locks) {
-      // 如果没有活跃任务且队列为空 / If no active tasks and queue is empty
-      if (lockInfo.activeCount === 0 && lockInfo.queue.size === 0) {
-        // 如果超过空闲时间 / If exceeds idle time
-        if (now - lockInfo.createdAt > maxIdleTime) {
-          // 删除账户锁 / Delete account lock
-          this.locks.delete(accountId);
-        }
-      }
-    }
+    // 使用安全清理方法 / Use safe cleanup method
+    await this.locks.cleanupExpired((lockInfo, accountId) => {
+      // 如果没有活跃任务且队列为空且超过空闲时间 / If no active tasks, queue empty, and exceeds idle time
+      return lockInfo.activeCount === 0 &&
+             lockInfo.queue.size === 0 &&
+             now - lockInfo.createdAt > maxIdleTime;
+    });
   }
 }
 
 /**
- * 限频管理器
- * Rate Limit Manager
+ * 限频管理器 (线程安全)
+ * Rate Limit Manager (Thread-Safe)
  *
  * 处理 429 错误和限频控制
  * Handles 429 errors and rate limiting
@@ -327,10 +333,9 @@ class RateLimitManager {
     // 保存配置 / Save config
     this.config = config;
 
-    // 交易所限频状态 / Exchange rate limit status
-    // 格式: { exchangeId: { waitUntil, consecutiveErrors, lastError } }
-    // Format: { exchangeId: { waitUntil, consecutiveErrors, lastError } }
-    this.rateLimitStatus = new Map();
+    // 使用线程安全的 Map 存储交易所限频状态
+    // Use thread-safe Map for exchange rate limit status
+    this.rateLimitStatus = new SafeMap();
   }
 
   /**
@@ -377,59 +382,51 @@ class RateLimitManager {
   }
 
   /**
-   * 记录 429 错误
-   * Record 429 error
+   * 记录 429 错误 (线程安全)
+   * Record 429 error (thread-safe)
    *
    * @param {string} exchangeId - 交易所 ID / Exchange ID
    * @param {Object} error - 错误对象 / Error object
    */
-  recordRateLimitError(exchangeId, error) {
-    // 获取或创建状态 / Get or create status
-    let status = this.rateLimitStatus.get(exchangeId);
-
-    if (!status) {
-      // 创建新状态 / Create new status
-      status = {
+  async recordRateLimitError(exchangeId, error) {
+    // 使用原子操作更新状态 / Use atomic operation to update status
+    await this.rateLimitStatus.compute(exchangeId, (key, status) => {
+      const current = status || {
         waitUntil: 0,           // 等待截止时间 / Wait until time
         consecutiveErrors: 0,   // 连续错误次数 / Consecutive error count
         lastError: null,        // 最后一次错误 / Last error
       };
-      this.rateLimitStatus.set(exchangeId, status);
-    }
 
-    // 增加连续错误计数 / Increment consecutive error count
-    status.consecutiveErrors++;
+      // 增加连续错误计数 / Increment consecutive error count
+      const consecutiveErrors = current.consecutiveErrors + 1;
 
-    // 保存最后错误 / Save last error
-    status.lastError = error;
+      // 计算等待时间 (指数退避) / Calculate wait time (exponential backoff)
+      const waitTime = Math.min(
+        this.config.rateLimitInitialWait *
+          Math.pow(this.config.rateLimitBackoffMultiplier, consecutiveErrors - 1),
+        this.config.rateLimitMaxWait
+      );
 
-    // 计算等待时间 (指数退避) / Calculate wait time (exponential backoff)
-    // 等待时间 = 初始等待 × 退避乘数 ^ (连续错误次数 - 1)
-    // Wait time = initial wait × backoff multiplier ^ (consecutive errors - 1)
-    const waitTime = Math.min(
-      this.config.rateLimitInitialWait *
-        Math.pow(this.config.rateLimitBackoffMultiplier, status.consecutiveErrors - 1),
-      this.config.rateLimitMaxWait
-    );
-
-    // 设置等待截止时间 / Set wait until time
-    status.waitUntil = Date.now() + waitTime;
+      return {
+        consecutiveErrors,
+        lastError: error,
+        waitUntil: Date.now() + waitTime,
+      };
+    });
   }
 
   /**
-   * 清除限频状态
-   * Clear rate limit status
+   * 清除限频状态 (线程安全)
+   * Clear rate limit status (thread-safe)
    *
    * @param {string} exchangeId - 交易所 ID / Exchange ID
    */
-  clearRateLimitStatus(exchangeId) {
-    // 获取状态 / Get status
-    const status = this.rateLimitStatus.get(exchangeId);
-
-    // 如果有状态，重置连续错误计数 / If has status, reset consecutive error count
-    if (status) {
-      status.consecutiveErrors = 0;
-    }
+  async clearRateLimitStatus(exchangeId) {
+    // 使用原子操作更新状态 / Use atomic operation to update status
+    await this.rateLimitStatus.updateIfPresent(exchangeId, (status) => ({
+      ...status,
+      consecutiveErrors: 0,
+    }));
   }
 
   /**
@@ -452,8 +449,8 @@ class RateLimitManager {
 }
 
 /**
- * Nonce 管理器
- * Nonce Manager
+ * Nonce 管理器 (线程安全)
+ * Nonce Manager (Thread-Safe)
  *
  * 处理 nonce 冲突和时间戳同步
  * Handles nonce conflicts and timestamp synchronization
@@ -469,109 +466,112 @@ class NonceManager {
     // 保存配置 / Save config
     this.config = config;
 
-    // 每个交易所的 nonce 状态 / Nonce status per exchange
-    // 格式: { exchangeId: { lastNonce, timestampOffset, serverTime } }
-    // Format: { exchangeId: { lastNonce, timestampOffset, serverTime } }
-    this.nonceStatus = new Map();
+    // 使用线程安全的 Map 存储每个交易所的 nonce 状态
+    // Use thread-safe Map for nonce status per exchange
+    this.nonceStatus = new SafeMap();
   }
 
   /**
-   * 获取下一个 nonce
-   * Get next nonce
+   * 获取下一个 nonce (线程安全)
+   * Get next nonce (thread-safe)
    *
    * @param {string} exchangeId - 交易所 ID / Exchange ID
-   * @returns {number} 下一个 nonce / Next nonce
+   * @returns {Promise<number>} 下一个 nonce / Next nonce
    */
-  getNextNonce(exchangeId) {
-    // 获取或创建状态 / Get or create status
-    let status = this.nonceStatus.get(exchangeId);
-
-    if (!status) {
-      // 创建新状态 / Create new status
-      status = {
+  async getNextNonce(exchangeId) {
+    // 使用原子操作获取并更新 nonce / Use atomic operation to get and update nonce
+    const result = await this.nonceStatus.compute(exchangeId, (key, status) => {
+      const current = status || {
         lastNonce: 0,           // 最后使用的 nonce / Last used nonce
         timestampOffset: this.config.timestampOffset,  // 时间戳偏移 / Timestamp offset
         serverTime: 0,          // 服务器时间 / Server time
       };
-      this.nonceStatus.set(exchangeId, status);
-    }
 
-    // 计算新 nonce (基于时间戳) / Calculate new nonce (timestamp based)
-    // 使用毫秒级时间戳加上偏移 / Use millisecond timestamp plus offset
-    const timestamp = Date.now() + status.timestampOffset;
+      // 计算新 nonce (基于时间戳) / Calculate new nonce (timestamp based)
+      const timestamp = Date.now() + current.timestampOffset;
 
-    // 确保 nonce 递增 / Ensure nonce is increasing
-    // 如果新时间戳小于等于上次 nonce，则加 1 / If new timestamp <= last nonce, add 1
-    const newNonce = Math.max(timestamp, status.lastNonce + 1);
+      // 确保 nonce 递增 / Ensure nonce is increasing
+      const newNonce = Math.max(timestamp, current.lastNonce + 1);
 
-    // 保存新 nonce / Save new nonce
-    status.lastNonce = newNonce;
+      // 返回更新后的状态 / Return updated status
+      return {
+        ...current,
+        lastNonce: newNonce,
+      };
+    });
 
     // 返回新 nonce / Return new nonce
-    return newNonce;
+    return result.lastNonce;
   }
 
   /**
-   * 更新时间戳偏移
-   * Update timestamp offset
+   * 更新时间戳偏移 (线程安全)
+   * Update timestamp offset (thread-safe)
    *
    * @param {string} exchangeId - 交易所 ID / Exchange ID
    * @param {number} serverTime - 服务器时间 / Server time
    */
-  updateTimestampOffset(exchangeId, serverTime) {
-    // 获取或创建状态 / Get or create status
-    let status = this.nonceStatus.get(exchangeId);
-
-    if (!status) {
-      // 创建新状态 / Create new status
-      status = {
-        lastNonce: 0,
-        timestampOffset: 0,
-        serverTime: 0,
-      };
-      this.nonceStatus.set(exchangeId, status);
-    }
-
+  async updateTimestampOffset(exchangeId, serverTime) {
     // 计算本地时间 / Calculate local time
     const localTime = Date.now();
 
     // 计算偏移量 / Calculate offset
-    // 偏移量 = 服务器时间 - 本地时间 / Offset = server time - local time
     const offset = serverTime - localTime;
 
-    // 更新偏移量 / Update offset
-    status.timestampOffset = offset;
-    status.serverTime = serverTime;
+    // 使用原子操作更新状态 / Use atomic operation to update status
+    await this.nonceStatus.compute(exchangeId, (key, status) => {
+      const current = status || {
+        lastNonce: 0,
+        timestampOffset: 0,
+        serverTime: 0,
+      };
+
+      return {
+        ...current,
+        timestampOffset: offset,
+        serverTime,
+      };
+    });
   }
 
   /**
-   * 处理 nonce 冲突
-   * Handle nonce conflict
+   * 处理 nonce 冲突 (线程安全)
+   * Handle nonce conflict (thread-safe)
    *
    * @param {string} exchangeId - 交易所 ID / Exchange ID
    * @param {Object} error - 错误对象 / Error object
    */
-  handleNonceConflict(exchangeId, error) {
-    // 获取状态 / Get status
-    const status = this.nonceStatus.get(exchangeId);
+  async handleNonceConflict(exchangeId, error) {
+    // 尝试从错误消息中提取服务器时间 / Try to extract server time from error message
+    const serverTimeMatch = error.message?.match(/timestamp[:\s]+(\d+)/i);
 
-    if (status) {
-      // 尝试从错误消息中提取服务器时间 / Try to extract server time from error message
-      // 某些交易所会在错误中返回期望的时间戳 / Some exchanges return expected timestamp in error
-      const serverTimeMatch = error.message?.match(/timestamp[:\s]+(\d+)/i);
+    // 使用原子操作更新状态 / Use atomic operation to update status
+    await this.nonceStatus.compute(exchangeId, (key, status) => {
+      if (!status) {
+        return {
+          lastNonce: 0,
+          timestampOffset: 1000,  // 默认增加 1 秒 / Default add 1 second
+          serverTime: 0,
+        };
+      }
+
+      let newOffset = status.timestampOffset;
 
       if (serverTimeMatch) {
         // 更新时间戳偏移 / Update timestamp offset
         const serverTime = parseInt(serverTimeMatch[1], 10);
-        this.updateTimestampOffset(exchangeId, serverTime);
+        newOffset = serverTime - Date.now();
       } else {
         // 简单增加偏移量 / Simply increase offset
-        status.timestampOffset += 1000;  // 增加 1 秒 / Add 1 second
+        newOffset += 1000;  // 增加 1 秒 / Add 1 second
       }
 
-      // 重置最后 nonce / Reset last nonce
-      status.lastNonce = 0;
-    }
+      return {
+        ...status,
+        timestampOffset: newOffset,
+        lastNonce: 0,  // 重置最后 nonce / Reset last nonce
+      };
+    });
   }
 
   /**
@@ -625,7 +625,7 @@ export class SmartOrderExecutor extends EventEmitter {
     // 交易所实例映射 / Exchange instance map
     // 格式: { exchangeId: exchangeInstance }
     // Format: { exchangeId: exchangeInstance }
-    this.exchanges = new Map();
+    this.exchanges = new SafeMap();
 
     // 账户锁管理器 / Account lock manager
     this.lockManager = new AccountLockManager();
@@ -636,15 +636,13 @@ export class SmartOrderExecutor extends EventEmitter {
     // Nonce 管理器 / Nonce manager
     this.nonceManager = new NonceManager(this.config);
 
-    // 活跃订单映射 / Active orders map
-    // 格式: { orderId: orderInfo }
-    // Format: { orderId: orderInfo }
-    this.activeOrders = new Map();
+    // 使用线程安全的 Map 存储活跃订单
+    // Use thread-safe Map for active orders
+    this.activeOrders = new SafeMap();
 
-    // 订单监控定时器映射 / Order monitoring timer map
-    // 格式: { orderId: timerId }
-    // Format: { orderId: timerId }
-    this.orderMonitors = new Map();
+    // 使用线程安全的 Map 存储订单监控定时器
+    // Use thread-safe Map for order monitoring timers
+    this.orderMonitors = new SafeMap();
 
     // 统计信息 / Statistics
     this.stats = {
@@ -674,11 +672,15 @@ export class SmartOrderExecutor extends EventEmitter {
   async init(exchanges) {
     // 处理交易所输入 / Process exchange input
     if (exchanges instanceof Map) {
-      // 如果是 Map，直接使用 / If Map, use directly
-      this.exchanges = exchanges;
+      // 如果是 Map，逐个设置 / If Map, set one by one
+      for (const [id, instance] of exchanges) {
+        await this.exchanges.set(id, instance);
+      }
     } else if (typeof exchanges === 'object') {
-      // 如果是对象，转换为 Map / If object, convert to Map
-      this.exchanges = new Map(Object.entries(exchanges));
+      // 如果是对象，逐个设置 / If object, set one by one
+      for (const [id, instance] of Object.entries(exchanges)) {
+        await this.exchanges.set(id, instance);
+      }
     }
 
     // 同步各交易所时间 / Sync time with each exchange
@@ -730,7 +732,7 @@ export class SmartOrderExecutor extends EventEmitter {
    * 停止执行器
    * Stop executor
    */
-  stop() {
+  async stop() {
     // 标记为停止 / Mark as stopped
     this.running = false;
 
@@ -741,7 +743,7 @@ export class SmartOrderExecutor extends EventEmitter {
     }
 
     // 清空监控映射 / Clear monitor map
-    this.orderMonitors.clear();
+    this.orderMonitors.clearSync();
 
     // 记录日志 / Log
     this.log('智能订单执行器已停止 / Smart order executor stopped', 'info');
@@ -844,8 +846,8 @@ export class SmartOrderExecutor extends EventEmitter {
       options,
     };
 
-    // 保存到活跃订单 / Save to active orders
-    this.activeOrders.set(clientOrderId, orderInfo);
+    // 保存到活跃订单 (线程安全) / Save to active orders (thread-safe)
+    this.activeOrders.setSync(clientOrderId, orderInfo);
 
     // 更新统计 / Update statistics
     this.stats.totalOrders++;
@@ -870,8 +872,8 @@ export class SmartOrderExecutor extends EventEmitter {
       // 更新统计 / Update statistics
       this.stats.failedOrders++;
 
-      // 从活跃订单中移除 / Remove from active orders
-      this.activeOrders.delete(clientOrderId);
+      // 从活跃订单中移除 (线程安全) / Remove from active orders (thread-safe)
+      this.activeOrders.deleteSync(clientOrderId);
 
       // 发出失败事件 / Emit failed event
       this.emit('orderFailed', { orderInfo, error });
@@ -922,8 +924,8 @@ export class SmartOrderExecutor extends EventEmitter {
       options,
     };
 
-    // 保存到活跃订单 / Save to active orders
-    this.activeOrders.set(clientOrderId, orderInfo);
+    // 保存到活跃订单 (线程安全) / Save to active orders (thread-safe)
+    this.activeOrders.setSync(clientOrderId, orderInfo);
 
     // 更新统计 / Update statistics
     this.stats.totalOrders++;
@@ -947,7 +949,7 @@ export class SmartOrderExecutor extends EventEmitter {
       this.stats.failedOrders++;
 
       // 移除活跃订单 / Remove active order
-      this.activeOrders.delete(clientOrderId);
+      this.activeOrders.deleteSync(clientOrderId);
 
       // 发出事件 / Emit event
       this.emit('orderFailed', { orderInfo, error });
@@ -1139,7 +1141,7 @@ export class SmartOrderExecutor extends EventEmitter {
         this.stats.filledOrders++;
 
         // 移除活跃订单 / Remove from active orders
-        this.activeOrders.delete(orderInfo.clientOrderId);
+        this.activeOrders.deleteSync(orderInfo.clientOrderId);
 
         // 发出成交事件 / Emit filled event
         this.emit('orderFilled', { orderInfo, exchangeOrder });
@@ -1238,8 +1240,8 @@ export class SmartOrderExecutor extends EventEmitter {
       await this._checkAndResubmitOrder(orderInfo, exchange);
     }, this.config.unfillTimeout);
 
-    // 保存定时器 ID / Save timer ID
-    this.orderMonitors.set(orderInfo.clientOrderId, timerId);
+    // 保存定时器 ID (线程安全) / Save timer ID (thread-safe)
+    this.orderMonitors.setSync(orderInfo.clientOrderId, timerId);
   }
 
   /**
@@ -1289,7 +1291,7 @@ export class SmartOrderExecutor extends EventEmitter {
         this.stats.filledOrders++;
 
         // 移除活跃订单 / Remove active order
-        this.activeOrders.delete(orderInfo.clientOrderId);
+        this.activeOrders.deleteSync(orderInfo.clientOrderId);
 
         // 发出成交事件 / Emit filled event
         this.emit('orderFilled', { orderInfo, exchangeOrder: latestOrder });
@@ -1309,7 +1311,7 @@ export class SmartOrderExecutor extends EventEmitter {
         if (remainingAmount < orderInfo.amount * 0.01) {
           orderInfo.status = ORDER_STATUS.FILLED;
           this.stats.filledOrders++;
-          this.activeOrders.delete(orderInfo.clientOrderId);
+          this.activeOrders.deleteSync(orderInfo.clientOrderId);
           this.emit('orderFilled', { orderInfo, exchangeOrder: latestOrder });
           return;
         }
@@ -1518,8 +1520,8 @@ export class SmartOrderExecutor extends EventEmitter {
   }
 
   /**
-   * 清除订单监控
-   * Clear order monitor
+   * 清除订单监控 (线程安全)
+   * Clear order monitor (thread-safe)
    *
    * @param {string} clientOrderId - 客户端订单 ID / Client order ID
    * @private
@@ -1531,7 +1533,7 @@ export class SmartOrderExecutor extends EventEmitter {
     // 如果存在，清除定时器 / If exists, clear timer
     if (timerId) {
       clearTimeout(timerId);
-      this.orderMonitors.delete(clientOrderId);
+      this.orderMonitors.deleteSync(clientOrderId);
     }
   }
 
@@ -1624,7 +1626,7 @@ export class SmartOrderExecutor extends EventEmitter {
       this._clearOrderMonitor(clientOrderId);
 
       // 移除活跃订单 / Remove active order
-      this.activeOrders.delete(clientOrderId);
+      this.activeOrders.deleteSync(clientOrderId);
 
       // 发出取消事件 / Emit cancel event
       this.emit('orderCanceled', { orderInfo });
