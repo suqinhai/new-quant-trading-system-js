@@ -369,20 +369,31 @@ node examples/runAdaptiveStrategy.js
 └── package.json
 ```
 
-## 运行测试
+## 测试
+
+### 测试概览
+
+| 类别 | 文件数 | 测试用例 | 说明 |
+|------|--------|----------|------|
+| 单元测试 | 64 | ~3500+ | 模块级别测试 |
+| 集成测试 | 7 | ~150+ | 模块间交互测试 |
+| 端到端测试 | 10 | ~250+ | 全流程测试 |
+| **总计** | **87** | **~4200+** | 覆盖率目标 60% |
+
+### 运行测试
 
 ```bash
 # 运行所有测试
-npm test
+pnpm test
 
 # 运行单元测试
-npm run test:unit
+pnpm test:unit
 
 # 运行集成测试
-npm run test:integration
+pnpm test:integration
 
 # 测试覆盖率
-npm run test:coverage
+pnpm test:coverage
 ```
 
 ## PM2 命令
