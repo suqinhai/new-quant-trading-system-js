@@ -165,6 +165,21 @@ const DEFAULT_CONFIG = {
 
   // 日志前缀 / Log prefix
   logPrefix: '[SmartExecutor]',
+
+  // ============================================
+  // DryRun 配置 / DryRun Configuration
+  // ============================================
+
+  // 是否启用 dryRun 模式 (影子模式) / Enable dryRun mode (shadow mode)
+  // 启用后订单不会真实执行，仅模拟成交
+  // When enabled, orders will not be actually executed, only simulated
+  dryRun: false,
+
+  // dryRun 模式下的模拟成交延迟 (毫秒) / Simulated fill delay in dryRun mode (ms)
+  dryRunFillDelay: 100,
+
+  // dryRun 模式下的滑点模拟 / Slippage simulation in dryRun mode
+  dryRunSlippage: 0.0001,  // 0.01%
 };
 
 // ============================================
@@ -975,6 +990,11 @@ export class SmartOrderExecutor extends EventEmitter {
       throw new Error(`交易所不存在 / Exchange not found: ${orderInfo.exchangeId}`);
     }
 
+    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
+    if (this.config.dryRun) {
+      return await this._executeDryRunOrder(orderInfo);
+    }
+
     // 重试循环 / Retry loop
     while (orderInfo.resubmitCount <= this.config.maxResubmitAttempts) {
       try {
@@ -1083,6 +1103,89 @@ export class SmartOrderExecutor extends EventEmitter {
   }
 
   /**
+   * 执行 DryRun 订单 (模拟成交)
+   * Execute DryRun order (simulated fill)
+   *
+   * @param {Object} orderInfo - 订单信息 / Order info
+   * @returns {Promise<Object>} 模拟执行结果 / Simulated execution result
+   * @private
+   */
+  async _executeDryRunOrder(orderInfo) {
+    // 记录日志 / Log
+    this.log(
+      `[DryRun] 模拟订单 / Simulating order: ${orderInfo.symbol} ${orderInfo.side} ` +
+      `${orderInfo.amount} @ ${orderInfo.currentPrice}`,
+      'info'
+    );
+
+    // 模拟网络延迟 / Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, this.config.dryRunFillDelay));
+
+    // 计算模拟成交价格 (添加滑点) / Calculate simulated fill price (with slippage)
+    const slippageMultiplier = orderInfo.side === SIDE.BUY
+      ? (1 + this.config.dryRunSlippage)   // 买入价格略高 / Buy price slightly higher
+      : (1 - this.config.dryRunSlippage);  // 卖出价格略低 / Sell price slightly lower
+
+    const simulatedPrice = orderInfo.currentPrice * slippageMultiplier;
+
+    // 生成模拟订单 ID / Generate simulated order ID
+    const simulatedOrderId = `dryrun_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    // 构建模拟交易所订单响应 / Build simulated exchange order response
+    const simulatedExchangeOrder = {
+      id: simulatedOrderId,
+      clientOrderId: orderInfo.clientOrderId,
+      symbol: orderInfo.symbol,
+      type: orderInfo.type === ORDER_TYPE.MARKET ? 'market' : 'limit',
+      side: orderInfo.side,
+      amount: orderInfo.amount,
+      price: orderInfo.currentPrice,
+      average: simulatedPrice,
+      filled: orderInfo.amount,
+      remaining: 0,
+      status: 'closed',
+      fee: {
+        cost: orderInfo.amount * simulatedPrice * 0.0004,  // 模拟 0.04% 手续费
+        currency: 'USDT',
+      },
+      timestamp: Date.now(),
+      datetime: new Date().toISOString(),
+      info: { dryRun: true },  // 标记为 dryRun 订单
+    };
+
+    // 更新订单信息 / Update order info
+    orderInfo.exchangeOrderId = simulatedOrderId;
+    orderInfo.status = ORDER_STATUS.FILLED;
+    orderInfo.filledAmount = orderInfo.amount;
+    orderInfo.avgPrice = simulatedPrice;
+    orderInfo.updatedAt = Date.now();
+
+    // 更新统计 / Update statistics
+    this.stats.filledOrders++;
+
+    // 移除活跃订单 / Remove from active orders
+    this.activeOrders.deleteSync(orderInfo.clientOrderId);
+
+    // 发出成交事件 / Emit filled event
+    this.emit('orderFilled', { orderInfo, exchangeOrder: simulatedExchangeOrder });
+
+    // 记录日志 / Log
+    this.log(
+      `[DryRun] 模拟成交 / Simulated fill: ${orderInfo.symbol} ${orderInfo.side} ` +
+      `${orderInfo.amount} @ ${simulatedPrice.toFixed(2)}`,
+      'info'
+    );
+
+    // 返回结果 / Return result
+    return {
+      success: true,
+      dryRun: true,
+      orderInfo,
+      exchangeOrder: simulatedExchangeOrder,
+    };
+  }
+
+  /**
    * 直接执行市价单
    * Execute market order directly
    *
@@ -1096,6 +1199,13 @@ export class SmartOrderExecutor extends EventEmitter {
 
     if (!exchange) {
       throw new Error(`交易所不存在 / Exchange not found: ${orderInfo.exchangeId}`);
+    }
+
+    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
+    if (this.config.dryRun) {
+      // 市价单设置类型为 MARKET / Set type to MARKET for market orders
+      orderInfo.type = ORDER_TYPE.MARKET;
+      return await this._executeDryRunOrder(orderInfo);
     }
 
     // 重试循环 / Retry loop
