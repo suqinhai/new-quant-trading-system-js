@@ -127,9 +127,9 @@ describe('FundingArbStrategy', () => {
     });
 
     it('应该初始化内部状态', () => {
-      expect(strategy.fundingRates).toBeDefined();
-      expect(strategy.positions).toBeDefined();
-      expect(strategy.arbOpportunities).toBeDefined();
+      expect(strategy.fundingManager).toBeDefined();
+      expect(strategy.positionManager).toBeDefined();
+      expect(strategy.config).toBeDefined();
     });
   });
 
@@ -175,6 +175,7 @@ describe('FundingArbStrategy', () => {
   describe('onFundingRate 事件处理', () => {
     it('应该更新资金费率数据', async () => {
       await strategy.onInit();
+      strategy.running = true; // 启用运行状态以处理事件
 
       const fundingData = {
         exchange: 'binance',
@@ -185,8 +186,9 @@ describe('FundingArbStrategy', () => {
 
       await strategy.onFundingRate(fundingData);
 
-      // 验证费率已存储
-      expect(strategy.fundingRates.get('binance:BTC/USDT:USDT')).toBeDefined();
+      // 验证费率已存储 (使用嵌套 Map 结构)
+      const symbolRates = strategy.fundingManager.fundingRates.get('BTC/USDT:USDT');
+      expect(symbolRates?.get('binance')).toBeDefined();
     });
 
     it('应该在收到多个交易所费率后计算利差', async () => {
@@ -218,28 +220,24 @@ describe('FundingArbStrategy', () => {
     });
 
     it('应该检测有效的套利机会', () => {
-      // 设置不同的费率
-      strategy.fundingRates.set('binance:BTC/USDT:USDT', {
-        exchange: 'binance',
-        symbol: 'BTC/USDT:USDT',
+      // 使用 fundingManager 的方法设置不同的费率
+      strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'binance', {
         fundingRate: 0.0001,
-        timestamp: Date.now(),
+        fundingTimestamp: Date.now(),
       });
 
-      strategy.fundingRates.set('bybit:BTC/USDT:USDT', {
-        exchange: 'bybit',
-        symbol: 'BTC/USDT:USDT',
+      strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'bybit', {
         fundingRate: 0.0006,
-        timestamp: Date.now(),
+        fundingTimestamp: Date.now(),
       });
 
-      const opportunities = strategy.findArbOpportunities('BTC/USDT:USDT');
+      // 使用 fundingManager.findBestOpportunity 查找套利机会
+      const opportunity = strategy.fundingManager.findBestOpportunity('BTC/USDT:USDT');
 
-      if (opportunities && opportunities.length > 0) {
-        const opp = opportunities[0];
-        expect(opp.longExchange).toBeDefined();
-        expect(opp.shortExchange).toBeDefined();
-        expect(opp.annualizedSpread).toBeGreaterThan(0);
+      if (opportunity) {
+        expect(opportunity.longExchange).toBeDefined();
+        expect(opportunity.shortExchange).toBeDefined();
+        expect(opportunity.annualizedSpread).toBeGreaterThan(0);
       }
     });
 
@@ -391,7 +389,7 @@ describe('FundingArbStrategy', () => {
 
       // 简化计算：每个周期赚取利差
       const pnl = (entrySpread - exitSpread) * positionSize * holdingPeriods;
-      expect(pnl).toBe(0.9); // 0.9 USDT
+      expect(pnl).toBeCloseTo(0.9, 10); // 0.9 USDT (使用 toBeCloseTo 处理浮点精度)
     });
 
     it('应该计算未实现盈亏', () => {
@@ -430,42 +428,36 @@ describe('FundingArbStrategy 边界条件', () => {
     await strategy.onInit();
 
     // 没有费率数据时不应该崩溃
-    const opportunities = strategy.findArbOpportunities?.('BTC/USDT:USDT');
-    expect(opportunities === undefined || opportunities?.length === 0).toBe(true);
+    const opportunity = strategy.fundingManager?.findBestOpportunity?.('BTC/USDT:USDT');
+    expect(opportunity === undefined || opportunity === null).toBe(true);
   });
 
   it('应该处理单一交易所数据的情况', async () => {
     const strategy = new FundingArbStrategy({});
     await strategy.onInit();
 
-    strategy.fundingRates.set('binance:BTC/USDT:USDT', {
-      exchange: 'binance',
-      symbol: 'BTC/USDT:USDT',
+    strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'binance', {
       fundingRate: 0.0001,
-      timestamp: Date.now(),
+      fundingTimestamp: Date.now(),
     });
 
     // 只有一个交易所时无法套利
-    const opportunities = strategy.findArbOpportunities?.('BTC/USDT:USDT');
-    expect(opportunities === undefined || opportunities?.length === 0).toBe(true);
+    const opportunity = strategy.fundingManager?.findBestOpportunity?.('BTC/USDT:USDT');
+    expect(opportunity === undefined || opportunity === null).toBe(true);
   });
 
   it('应该处理费率为0的情况', async () => {
     const strategy = new FundingArbStrategy({});
     await strategy.onInit();
 
-    strategy.fundingRates.set('binance:BTC/USDT:USDT', {
-      exchange: 'binance',
-      symbol: 'BTC/USDT:USDT',
+    strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'binance', {
       fundingRate: 0,
-      timestamp: Date.now(),
+      fundingTimestamp: Date.now(),
     });
 
-    strategy.fundingRates.set('bybit:BTC/USDT:USDT', {
-      exchange: 'bybit',
-      symbol: 'BTC/USDT:USDT',
+    strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'bybit', {
       fundingRate: 0,
-      timestamp: Date.now(),
+      fundingTimestamp: Date.now(),
     });
 
     // 两个费率都为0时利差为0
@@ -475,18 +467,14 @@ describe('FundingArbStrategy 边界条件', () => {
     const strategy = new FundingArbStrategy({});
     await strategy.onInit();
 
-    strategy.fundingRates.set('binance:BTC/USDT:USDT', {
-      exchange: 'binance',
-      symbol: 'BTC/USDT:USDT',
+    strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'binance', {
       fundingRate: -0.0002,
-      timestamp: Date.now(),
+      fundingTimestamp: Date.now(),
     });
 
-    strategy.fundingRates.set('bybit:BTC/USDT:USDT', {
-      exchange: 'bybit',
-      symbol: 'BTC/USDT:USDT',
+    strategy.fundingManager._saveFundingRate('BTC/USDT:USDT', 'bybit', {
       fundingRate: 0.0003,
-      timestamp: Date.now(),
+      fundingTimestamp: Date.now(),
     });
 
     // 负费率时做多方收取资金费

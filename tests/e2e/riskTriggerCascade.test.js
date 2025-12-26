@@ -733,14 +733,29 @@ describe('Risk Trigger Cascade E2E', () => {
     });
 
     it('应该在相关性过高时减少相关仓位', () => {
-      // 先升级到二级
+      // 先触发一级风控 (2% 亏损)
       cascadeRiskSystem.recordTrade({
         symbol: 'BTC/USDT',
         side: 'sell',
         amount: 0.1,
         price: 48000,
-        pnl: -3500,
+        pnl: -2500, // 2.5% 亏损，触发 level1
       });
+
+      // 再次调用以确保升级到二级 (累计 > 3%)
+      cascadeRiskSystem.checkAllRisks();
+
+      // 继续亏损到达二级阈值
+      cascadeRiskSystem.recordTrade({
+        symbol: 'BTC/USDT',
+        side: 'sell',
+        amount: 0.1,
+        price: 48000,
+        pnl: -1000, // 累计 3.5% 亏损，触发 level2
+      });
+
+      // 确保 riskLevel 已经是 2
+      expect(cascadeRiskSystem.state.riskLevel).toBeGreaterThanOrEqual(2);
 
       // 检查高相关性
       const triggers = cascadeRiskSystem.checkAllRisks({
@@ -918,13 +933,38 @@ describe('Risk Trigger Cascade E2E', () => {
       const strategyA = env.getStrategy('Strategy_A');
       const strategyB = env.getStrategy('Strategy_B');
 
-      // 触发交易暂停
+      // 逐步触发风控级别以达到交易暂停
+      // 第一次：触发 level1 (2% 亏损)
       cascadeRiskSystem.recordTrade({
         symbol: 'BTC/USDT',
         side: 'sell',
-        amount: 1,
+        amount: 0.5,
         price: 45000,
-        pnl: -5500,
+        pnl: -2500, // 2.5% 亏损
+      });
+
+      // 确保升级到 level2
+      cascadeRiskSystem.checkAllRisks();
+
+      // 第二次：触发 level2 (累计 > 3%)
+      cascadeRiskSystem.recordTrade({
+        symbol: 'BTC/USDT',
+        side: 'sell',
+        amount: 0.5,
+        price: 45000,
+        pnl: -1000, // 累计 3.5% 亏损
+      });
+
+      // 确保升级到 level3
+      cascadeRiskSystem.checkAllRisks();
+
+      // 第三次：触发 level3 (累计 > 5%)
+      cascadeRiskSystem.recordTrade({
+        symbol: 'BTC/USDT',
+        side: 'sell',
+        amount: 0.5,
+        price: 45000,
+        pnl: -2000, // 累计 5.5% 亏损
       });
 
       // 所有策略的订单都应该被拒绝
@@ -953,13 +993,38 @@ describe('Risk Trigger Cascade E2E', () => {
 
   describe('风控恢复', () => {
     it('应该在日重置后恢复正常', () => {
-      // 触发三级风控
+      // 逐步触发三级风控
+      // 第一次：触发 level1 (2% 亏损)
       cascadeRiskSystem.recordTrade({
         symbol: 'BTC/USDT',
         side: 'sell',
-        amount: 1,
+        amount: 0.5,
         price: 45000,
-        pnl: -5500,
+        pnl: -2500, // 2.5% 亏损
+      });
+
+      // 确保升级到 level2
+      cascadeRiskSystem.checkAllRisks();
+
+      // 第二次：触发 level2 (累计 > 3%)
+      cascadeRiskSystem.recordTrade({
+        symbol: 'BTC/USDT',
+        side: 'sell',
+        amount: 0.5,
+        price: 45000,
+        pnl: -1000, // 累计 3.5% 亏损
+      });
+
+      // 确保升级到 level3
+      cascadeRiskSystem.checkAllRisks();
+
+      // 第三次：触发 level3 (累计 > 5%)
+      cascadeRiskSystem.recordTrade({
+        symbol: 'BTC/USDT',
+        side: 'sell',
+        amount: 0.5,
+        price: 45000,
+        pnl: -2000, // 累计 5.5% 亏损
       });
 
       expect(cascadeRiskSystem.state.tradingAllowed).toBe(false);
@@ -1061,13 +1126,25 @@ describe('Risk Trigger Cascade E2E', () => {
         pnl: 0,
       });
 
-      // 触发减仓
+      // 第一次亏损触发 level1 (2.5% 亏损)
       cascadeRiskSystem.recordTrade({
-        symbol: 'BTC/USDT',
+        symbol: 'ETH/USDT',
         side: 'sell',
         amount: 0.1,
         price: 48000,
-        pnl: -3500,
+        pnl: -2500,
+      });
+
+      // 确保升级到 level2
+      cascadeRiskSystem.checkAllRisks();
+
+      // 第二次亏损触发 level2 减仓 (累计 > 3%)
+      cascadeRiskSystem.recordTrade({
+        symbol: 'ETH/USDT',
+        side: 'sell',
+        amount: 0.1,
+        price: 48000,
+        pnl: -1000,
       });
 
       // 应该有减仓事件

@@ -648,6 +648,24 @@ export class BaseExchange extends EventEmitter {
     this.emit('disconnected', { exchange: this.name });
   }
 
+  /**
+   * 断开连接 (close 的别名)
+   * Disconnect (alias for close)
+   */
+  async disconnect() {
+    return this.close();
+  }
+
+  /**
+   * 获取交易对精度信息
+   * Get precision info for a symbol
+   * @param {string} symbol - 交易对 / Trading pair
+   * @returns {Object} 精度信息 / Precision info
+   */
+  getPrecision(symbol) {
+    return this.precisions[symbol] || null;
+  }
+
   // ============================================
   // 受保护方法 (子类必须实现) / Protected Methods (must be implemented by subclass)
   // ============================================

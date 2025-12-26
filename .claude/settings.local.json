@@ -98,7 +98,10 @@
       "Bash(npx pm2 list)",
       "Bash(npx pm2:*)",
       "Bash(du:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(pnpm test:coverage:*)",
+      "Bash(tee:*)",
+      "Bash(timeout 240 npx vitest:*)"
     ]
   }
 }

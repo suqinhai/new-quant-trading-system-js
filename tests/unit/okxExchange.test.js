@@ -7,172 +7,185 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock CCXT
 vi.mock('ccxt', () => {
-  const mockOkx = vi.fn().mockImplementation((config) => ({
-    id: 'okx',
-    name: 'OKX',
-    config,
-    markets: {},
-
-    // API 方法
-    loadMarkets: vi.fn().mockResolvedValue({
-      'BTC/USDT:USDT': {
-        id: 'BTC-USDT-SWAP',
-        symbol: 'BTC/USDT:USDT',
-        base: 'BTC',
-        quote: 'USDT',
-        settle: 'USDT',
-        type: 'swap',
-        precision: { amount: 0.001, price: 0.1 },
-        limits: {
-          amount: { min: 0.001, max: 10000 },
-          price: { min: 0.1, max: 1000000 },
-        },
-        active: true,
-      },
-      'ETH/USDT:USDT': {
-        id: 'ETH-USDT-SWAP',
-        symbol: 'ETH/USDT:USDT',
-        base: 'ETH',
-        quote: 'USDT',
-        settle: 'USDT',
-        type: 'swap',
-        precision: { amount: 0.01, price: 0.01 },
-        limits: {
-          amount: { min: 0.01, max: 10000 },
-          price: { min: 0.01, max: 100000 },
-        },
-        active: true,
-      },
-    }),
-
-    fetchBalance: vi.fn().mockResolvedValue({
-      USDT: { free: 10000, used: 1000, total: 11000 },
-      BTC: { free: 0.5, used: 0, total: 0.5 },
-    }),
-
-    fetchTicker: vi.fn().mockResolvedValue({
-      symbol: 'BTC/USDT:USDT',
-      last: 50000,
-      bid: 49990,
-      ask: 50010,
-      high: 51000,
-      low: 49000,
-      volume: 10000,
-      timestamp: Date.now(),
-    }),
-
-    fetchMarkPrice: vi.fn().mockResolvedValue({
-      symbol: 'BTC/USDT:USDT',
-      markPrice: 50005,
-      indexPrice: 50000,
-      timestamp: Date.now(),
-    }),
-
-    fetchFundingRate: vi.fn().mockResolvedValue({
-      symbol: 'BTC/USDT:USDT',
-      fundingRate: 0.0001,
-      fundingTimestamp: Date.now() + 8 * 3600000,
-      nextFundingRate: 0.00015,
-      nextFundingTimestamp: Date.now() + 16 * 3600000,
-    }),
-
-    fetchPositions: vi.fn().mockResolvedValue([
-      {
-        symbol: 'BTC/USDT:USDT',
-        side: 'long',
-        contracts: 0.1,
-        contractSize: 1,
-        unrealizedPnl: 100,
-        leverage: 10,
-        entryPrice: 49000,
-        markPrice: 50000,
-        liquidationPrice: 45000,
-      },
-    ]),
-
-    createOrder: vi.fn().mockImplementation((symbol, type, side, amount, price, params) => {
-      return Promise.resolve({
-        id: 'order_okx_' + Date.now(),
-        clientOrderId: 'client_' + Date.now(),
-        symbol,
-        type,
-        side,
-        amount,
-        price: price || 50000,
-        status: 'open',
-        filled: 0,
-        remaining: amount,
-        timestamp: Date.now(),
-        info: { ordType: type },
-      });
-    }),
-
-    cancelOrder: vi.fn().mockResolvedValue({
-      id: 'order_okx_123',
-      status: 'canceled',
-    }),
-
-    fetchOrder: vi.fn().mockResolvedValue({
-      id: 'order_okx_123',
-      symbol: 'BTC/USDT:USDT',
-      status: 'closed',
-      filled: 0.1,
-      remaining: 0,
-    }),
-
-    fetchOpenOrders: vi.fn().mockResolvedValue([]),
-    fetchClosedOrders: vi.fn().mockResolvedValue([]),
-
-    setLeverage: vi.fn().mockResolvedValue({ leverage: 10 }),
-
-    privateGetAccountConfig: vi.fn().mockResolvedValue({
-      data: [{
-        posMode: 'long_short_mode',
-        autoLoan: true,
-        level: '1',
-        acctLv: '2',
-        uid: '123456',
-      }],
-    }),
-
-    privatePostAccountSetPositionMode: vi.fn().mockResolvedValue({
-      code: '0',
-      msg: '',
-    }),
-
-    privateGetTradeOrdersAlgoPending: vi.fn().mockResolvedValue({
-      data: [
-        {
-          algoId: 'algo_123',
-          instId: 'BTC-USDT-SWAP',
-          ordType: 'conditional',
-          side: 'buy',
-          sz: '0.1',
-          triggerPx: '48000',
-          ordPx: '48000',
-          state: 'live',
-          cTime: Date.now().toString(),
-        },
-      ],
-    }),
-
-    marketId: vi.fn().mockImplementation((symbol) => {
-      const map = {
-        'BTC/USDT:USDT': 'BTC-USDT-SWAP',
-        'ETH/USDT:USDT': 'ETH-USDT-SWAP',
+  // 使用 class 模拟构造函数
+  // Use class to mock constructor
+  class MockOkx {
+    constructor(config) {
+      this.id = 'okx';
+      this.name = 'OKX';
+      this.config = config;
+      this.markets = {};
+      this.has = {
+        fetchPositions: true,
+        fetchFundingRate: true,
+        setLeverage: true,
+        cancelAllOrders: true,
       };
-      return map[symbol] || symbol;
-    }),
 
-    priceToPrecision: vi.fn().mockImplementation((symbol, price) => parseFloat(price.toFixed(1))),
-    amountToPrecision: vi.fn().mockImplementation((symbol, amount) => parseFloat(amount.toFixed(3))),
-  }));
+      // API 方法
+      this.loadMarkets = vi.fn().mockResolvedValue({
+        'BTC/USDT:USDT': {
+          id: 'BTC-USDT-SWAP',
+          symbol: 'BTC/USDT:USDT',
+          base: 'BTC',
+          quote: 'USDT',
+          settle: 'USDT',
+          type: 'swap',
+          precision: { amount: 0.001, price: 0.1 },
+          limits: {
+            amount: { min: 0.001, max: 10000 },
+            price: { min: 0.1, max: 1000000 },
+          },
+          active: true,
+        },
+        'ETH/USDT:USDT': {
+          id: 'ETH-USDT-SWAP',
+          symbol: 'ETH/USDT:USDT',
+          base: 'ETH',
+          quote: 'USDT',
+          settle: 'USDT',
+          type: 'swap',
+          precision: { amount: 0.01, price: 0.01 },
+          limits: {
+            amount: { min: 0.01, max: 10000 },
+            price: { min: 0.01, max: 100000 },
+          },
+          active: true,
+        },
+      });
+
+      this.fetchBalance = vi.fn().mockResolvedValue({
+        USDT: { free: 10000, used: 1000, total: 11000 },
+        BTC: { free: 0.5, used: 0, total: 0.5 },
+        total: { USDT: 11000, BTC: 0.5 },
+        free: { USDT: 10000, BTC: 0.5 },
+        used: { USDT: 1000, BTC: 0 },
+      });
+
+      this.fetchTicker = vi.fn().mockResolvedValue({
+        symbol: 'BTC/USDT:USDT',
+        last: 50000,
+        bid: 49990,
+        ask: 50010,
+        high: 51000,
+        low: 49000,
+        volume: 10000,
+        timestamp: Date.now(),
+      });
+
+      this.fetchMarkPrice = vi.fn().mockResolvedValue({
+        symbol: 'BTC/USDT:USDT',
+        markPrice: 50005,
+        indexPrice: 50000,
+        timestamp: Date.now(),
+      });
+
+      this.fetchFundingRate = vi.fn().mockResolvedValue({
+        symbol: 'BTC/USDT:USDT',
+        fundingRate: 0.0001,
+        fundingTimestamp: Date.now() + 8 * 3600000,
+        nextFundingRate: 0.00015,
+        nextFundingTimestamp: Date.now() + 16 * 3600000,
+      });
+
+      this.fetchPositions = vi.fn().mockResolvedValue([
+        {
+          symbol: 'BTC/USDT:USDT',
+          side: 'long',
+          contracts: 0.1,
+          contractSize: 1,
+          unrealizedPnl: 100,
+          leverage: 10,
+          entryPrice: 49000,
+          markPrice: 50000,
+          liquidationPrice: 45000,
+        },
+      ]);
+
+      this.createOrder = vi.fn().mockImplementation((symbol, type, side, amount, price, params) => {
+        return Promise.resolve({
+          id: 'order_okx_' + Date.now(),
+          clientOrderId: 'client_' + Date.now(),
+          symbol,
+          type,
+          side,
+          amount,
+          price: price || 50000,
+          status: 'open',
+          filled: 0,
+          remaining: amount,
+          timestamp: Date.now(),
+          info: { ordType: type },
+        });
+      });
+
+      this.cancelOrder = vi.fn().mockResolvedValue({
+        id: 'order_okx_123',
+        status: 'canceled',
+      });
+
+      this.fetchOrder = vi.fn().mockResolvedValue({
+        id: 'order_okx_123',
+        symbol: 'BTC/USDT:USDT',
+        status: 'closed',
+        filled: 0.1,
+        remaining: 0,
+      });
+
+      this.fetchOpenOrders = vi.fn().mockResolvedValue([]);
+      this.fetchClosedOrders = vi.fn().mockResolvedValue([]);
+
+      this.setLeverage = vi.fn().mockResolvedValue({ leverage: 10 });
+
+      this.privateGetAccountConfig = vi.fn().mockResolvedValue({
+        data: [{
+          posMode: 'long_short_mode',
+          autoLoan: true,
+          level: '1',
+          acctLv: '2',
+          uid: '123456',
+        }],
+      });
+
+      this.privatePostAccountSetPositionMode = vi.fn().mockResolvedValue({
+        code: '0',
+        msg: '',
+      });
+
+      this.privateGetTradeOrdersAlgoPending = vi.fn().mockResolvedValue({
+        data: [
+          {
+            algoId: 'algo_123',
+            instId: 'BTC-USDT-SWAP',
+            ordType: 'conditional',
+            side: 'buy',
+            sz: '0.1',
+            triggerPx: '48000',
+            ordPx: '48000',
+            state: 'live',
+            cTime: Date.now().toString(),
+          },
+        ],
+      });
+
+      this.marketId = vi.fn().mockImplementation((symbol) => {
+        const map = {
+          'BTC/USDT:USDT': 'BTC-USDT-SWAP',
+          'ETH/USDT:USDT': 'ETH-USDT-SWAP',
+        };
+        return map[symbol] || symbol;
+      });
+
+      this.priceToPrecision = vi.fn().mockImplementation((symbol, price) => parseFloat(price.toFixed(1)));
+      this.amountToPrecision = vi.fn().mockImplementation((symbol, amount) => parseFloat(amount.toFixed(3)));
+    }
+  }
 
   return {
     default: {
-      okx: mockOkx,
+      okx: MockOkx,
     },
-    okx: mockOkx,
+    okx: MockOkx,
   };
 });
 
@@ -229,8 +242,8 @@ describe('OKXExchange', () => {
     it('应该获取账户余额', async () => {
       const balance = await exchange.fetchBalance();
       expect(balance).toBeDefined();
-      expect(balance.USDT).toBeDefined();
-      expect(balance.USDT.free).toBe(10000);
+      expect(balance.free).toBeDefined();
+      expect(balance.free.USDT).toBe(10000);
     });
 
     it('应该获取持仓信息', async () => {
@@ -342,8 +355,8 @@ describe('OKXExchange', () => {
     it('应该创建限价订单', async () => {
       const order = await exchange.createOrder(
         'BTC/USDT:USDT',
-        'limit',
         'buy',
+        'limit',
         0.1,
         49000
       );
@@ -356,8 +369,8 @@ describe('OKXExchange', () => {
     it('应该创建市价订单', async () => {
       const order = await exchange.createOrder(
         'BTC/USDT:USDT',
-        'market',
         'sell',
+        'market',
         0.1
       );
       expect(order).toBeDefined();
@@ -416,7 +429,7 @@ describe('OKXExchange', () => {
       const eventSpy = vi.fn();
       exchange.on('orderCreated', eventSpy);
 
-      await exchange.createOrder('BTC/USDT:USDT', 'limit', 'buy', 0.1, 49000);
+      await exchange.createOrder('BTC/USDT:USDT', 'buy', 'limit', 0.1, 49000);
 
       expect(eventSpy).toHaveBeenCalled();
     });
