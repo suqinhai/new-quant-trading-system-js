@@ -44,9 +44,8 @@
 ### 数据库
 | 数据库 | 驱动 | 用途 |
 |--------|------|------|
-| SQLite | better-sqlite3 | 本地持久化存储 |
-| Redis | ioredis | 高速缓存、实时状态 |
-| ClickHouse | @clickhouse/client | 大数据分析、归档 |
+| Redis | ioredis | 实时数据存储、订单/持仓状态 |
+| ClickHouse | @clickhouse/client | 历史数据分析、交易归档 |
 
 ### 工具库
 | 库 | 用途 |
@@ -96,9 +95,9 @@ src/
 │   ├── orderExecutor.js   # 智能执行器
 │   └── ExchangeFailover.js # 故障转移
 ├── database/              # 数据库层
-│   ├── DatabaseManager.js # SQLite 管理
-│   ├── redis/             # Redis 模块
-│   └── clickhouse/        # ClickHouse 模块
+│   ├── DatabaseManager.js # 本地存储 (预留)
+│   ├── redis/             # Redis 模块 (主存储)
+│   └── clickhouse/        # ClickHouse 模块 (归档)
 ├── logger/                # 日志告警
 │   ├── PnLLogger.js       # PnL 日志
 │   ├── TelegramNotifier.js # Telegram 通知

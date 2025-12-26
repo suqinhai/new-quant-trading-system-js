@@ -375,9 +375,6 @@ curl http://localhost:9090/metrics | grep eventloop
 
 3. **检查数据库性能**
 ```bash
-# SQLite
-sqlite3 /var/lib/trading-system/data/trading.db "PRAGMA integrity_check;"
-
 # Redis
 redis-cli info stats
 ```
@@ -455,35 +452,14 @@ pm2 restart marketdata-service
 redis-cli FLUSHDB
 ```
 
-### 问题：数据库损坏
-
-**症状：**
-```
-Error: SQLITE_CORRUPT: database disk image is malformed
-```
-
-**解决方案：**
-
-1. **尝试修复**
-```bash
-sqlite3 trading.db "PRAGMA integrity_check;"
-sqlite3 trading.db ".recover" | sqlite3 recovered.db
-```
-
-2. **从备份恢复**
-```bash
-pm2 stop all
-cp /var/backups/trading-system/db_latest/* /var/lib/trading-system/data/
-pm2 start all
-```
-
 ### 问题：交易记录丢失
 
 **排查步骤：**
 
-1. **检查数据库**
+1. **检查 Redis 数据**
 ```bash
-sqlite3 /var/lib/trading-system/data/trading.db "SELECT COUNT(*) FROM trades;"
+redis-cli KEYS "trade:*" | wc -l
+redis-cli KEYS "order:*" | wc -l
 ```
 
 2. **检查 ClickHouse 归档**

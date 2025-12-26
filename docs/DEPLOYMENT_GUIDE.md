@@ -526,9 +526,6 @@ DATA_DIR="/var/lib/trading-system/data"
 # 创建备份目录
 mkdir -p $BACKUP_DIR
 
-# 备份 SQLite 数据库
-cp $DATA_DIR/*.db $BACKUP_DIR/db_$DATE/
-
 # 备份配置文件
 cp /opt/trading-system/.env $BACKUP_DIR/config_$DATE.env
 
@@ -557,9 +554,6 @@ crontab -e
 ```bash
 # 停止服务
 pm2 stop all
-
-# 恢复数据库
-cp /var/backups/trading-system/db_20240115_020000/* /var/lib/trading-system/data/
 
 # 恢复 Redis
 cp /var/backups/trading-system/redis_20240115_020000.rdb /var/lib/redis/dump.rdb
