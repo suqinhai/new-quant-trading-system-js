@@ -51,6 +51,13 @@ sudo npm install -g pm2
 # Redis（可选，用于缓存）
 sudo apt-get install redis-server
 
+# Redis（设置密码）
+echo "requirepass 你的强密码" | sudo tee -a /etc/redis/redis.conf
+
+#重启 Redis 服务
+sudo systemctl restart redis-server
+
+
 # ClickHouse（用于交易数据归档和分析）
 # Ubuntu/Debian 安装
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
