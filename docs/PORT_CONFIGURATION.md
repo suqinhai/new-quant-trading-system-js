@@ -158,43 +158,65 @@ Shadow 模式:
 
 ## 五、快速参考 - 端口范围汇总
 
-### PM2:Shadow 模式
+### 端口开放原则
+
+> **重要**: 大部分端口是内部服务调用，**无需对外开放**！
+> 只需确保 **出站端口** 通畅即可。
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                      PM2:SHADOW 模式                               │
-│                    npm run pm2:shadow                              │
+│                    必须放行的出站端口                               │
+│              (无论 Shadow 还是 Live 模式都需要)                      │
 ├────────────────────────────────────────────────────────────────────┤
-│ TCP 入站 (Inbound):                                                │
-│   • 3100-3309    HTTP + WebSocket (策略服务)                        │
-│   • 8180-8200    Dashboard (监控面板)                               │
-│   • 9190-9210    Prometheus Metrics (指标)                         │
-├────────────────────────────────────────────────────────────────────┤
-│ TCP 出站 (Outbound):                                               │
-│   • 6379         Redis                                             │
-│   • 8123         ClickHouse                                        │
-│   • 443          HTTPS (交易所/Telegram)                            │
+│ TCP 出站 (Outbound) - 必须放行:                                     │
+│   • 443          HTTPS (交易所API/Telegram) ⭐ 核心                  │
 │   • 587          SMTP (邮件告警)                                    │
+│                                                                    │
+│ TCP 出站 (Outbound) - 跨服务器部署时需要:                            │
+│   • 6379         Redis (如果 Redis 在其他服务器)                     │
+│   • 8123         ClickHouse (如果 ClickHouse 在其他服务器)           │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-### PM2:Live 模式
+### 入站端口 (可选 - 按需开放)
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                       PM2:LIVE 模式                                │
-│                     npm run pm2:live                               │
+│              可选入站端口 (仅特定场景需要)                           │
 ├────────────────────────────────────────────────────────────────────┤
-│ TCP 入站 (Inbound):                                                │
+│ 场景: 远程访问监控面板 (不推荐直接开放，建议用 SSH 隧道)              │
+│   • 8080-8100    Live 模式 Dashboard                               │
+│   • 8180-8200    Shadow 模式 Dashboard                             │
+│                                                                    │
+│ 场景: 外部 Prometheus 服务器采集指标                                 │
+│   • 9090-9110    Live 模式 Metrics                                 │
+│   • 9190-9210    Shadow 模式 Metrics                               │
+│                                                                    │
+│ 场景: 外部系统调用 REST API (一般不需要)                             │
+│   • 3000-3209    Live 模式 HTTP+WS                                 │
+│   • 3100-3309    Shadow 模式 HTTP+WS                               │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### 内部端口使用 (无需对外开放)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                PM2:SHADOW 模式 (内部端口)                           │
+├────────────────────────────────────────────────────────────────────┤
+│ 内部服务 (localhost):                                              │
+│   • 3100-3309    HTTP + WebSocket (策略服务)                        │
+│   • 8180-8200    Dashboard (监控面板)                               │
+│   • 9190-9210    Prometheus Metrics (指标)                         │
+└────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│                 PM2:LIVE 模式 (内部端口)                            │
+├────────────────────────────────────────────────────────────────────┤
+│ 内部服务 (localhost):                                              │
 │   • 3000-3209    HTTP + WebSocket (策略服务)                        │
 │   • 8080-8100    Dashboard (监控面板)                               │
 │   • 9090-9110    Prometheus Metrics (指标)                         │
-├────────────────────────────────────────────────────────────────────┤
-│ TCP 出站 (Outbound):                                               │
-│   • 6379         Redis                                             │
-│   • 8123         ClickHouse                                        │
-│   • 443          HTTPS (交易所/Telegram)                            │
-│   • 587          SMTP (邮件告警)                                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -202,112 +224,93 @@ Shadow 模式:
 
 ## 六、防火墙配置
 
-### Linux (UFW)
+> **重要提示**: 大部分入站端口无需开放，只需确保出站端口通畅。
+> 以下配置仅供需要远程访问内部服务时参考。
+
+### Linux (UFW) - 最小化配置
 
 ```bash
 #!/bin/bash
 # ============================================
-# Shadow 模式防火墙配置
+# 必须: 确保出站端口通畅
 # ============================================
 
-# HTTP + WebSocket
-sudo ufw allow 3100:3309/tcp comment 'Quant Shadow HTTP+WS'
+# 交易所 API (必须)
+sudo ufw allow out 443/tcp comment 'HTTPS - Exchange API/Telegram'
 
-# Dashboard
-sudo ufw allow 8180:8200/tcp comment 'Quant Shadow Dashboard'
-
-# Prometheus Metrics
-sudo ufw allow 9190:9210/tcp comment 'Quant Shadow Metrics'
+# 邮件告警 (如需要)
+sudo ufw allow out 587/tcp comment 'SMTP - Email alerts'
 
 # ============================================
-# Live 模式防火墙配置
+# 可选: 跨服务器部署时
 # ============================================
 
-# HTTP + WebSocket
-sudo ufw allow 3000:3209/tcp comment 'Quant Live HTTP+WS'
+# Redis (如果在其他服务器)
+# sudo ufw allow out 6379/tcp comment 'Redis'
 
-# Dashboard
-sudo ufw allow 8080:8100/tcp comment 'Quant Live Dashboard'
-
-# Prometheus Metrics
-sudo ufw allow 9090:9110/tcp comment 'Quant Live Metrics'
+# ClickHouse (如果在其他服务器)
+# sudo ufw allow out 8123/tcp comment 'ClickHouse'
 
 # ============================================
-# 出站规则 (通常默认允许)
+# 可选: 远程访问监控面板 (不推荐，建议用 SSH 隧道)
 # ============================================
 
-sudo ufw allow out 6379/tcp comment 'Redis'
-sudo ufw allow out 8123/tcp comment 'ClickHouse'
-sudo ufw allow out 443/tcp comment 'HTTPS'
-sudo ufw allow out 587/tcp comment 'SMTP'
+# Live 模式 Dashboard (限制来源 IP 更安全)
+# sudo ufw allow from YOUR_IP to any port 8080:8100 proto tcp comment 'Live Dashboard'
+
+# Shadow 模式 Dashboard
+# sudo ufw allow from YOUR_IP to any port 8180:8200 proto tcp comment 'Shadow Dashboard'
 
 # 启用防火墙
 sudo ufw enable
 sudo ufw status verbose
 ```
 
-### Linux (iptables)
+### 推荐: 使用 SSH 隧道访问内部服务
+
+```bash
+# 访问 Live 模式的 Dashboard (端口 8080)
+ssh -L 8080:localhost:8080 user@your-server.com
+# 本地浏览器访问: http://localhost:8080
+
+# 同时转发多个端口
+ssh -L 8080:localhost:8080 \
+    -L 9090:localhost:9090 \
+    user@your-server.com
+
+# 后台运行
+ssh -fN -L 8080:localhost:8080 user@your-server.com
+```
+
+### Linux (iptables) - 最小化配置
 
 ```bash
 #!/bin/bash
 # ============================================
-# Shadow 模式
+# 必须: 确保出站端口通畅 (大多数系统默认允许)
 # ============================================
 
-# HTTP + WebSocket (3100-3309)
-iptables -A INPUT -p tcp --dport 3100:3309 -j ACCEPT
-
-# Dashboard (8180-8200)
-iptables -A INPUT -p tcp --dport 8180:8200 -j ACCEPT
-
-# Metrics (9190-9210)
-iptables -A INPUT -p tcp --dport 9190:9210 -j ACCEPT
-
-# ============================================
-# Live 模式
-# ============================================
-
-# HTTP + WebSocket (3000-3209)
-iptables -A INPUT -p tcp --dport 3000:3209 -j ACCEPT
-
-# Dashboard (8080-8100)
-iptables -A INPUT -p tcp --dport 8080:8100 -j ACCEPT
-
-# Metrics (9090-9110)
-iptables -A INPUT -p tcp --dport 9090:9110 -j ACCEPT
+# 如果出站被限制，添加以下规则:
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT  # 交易所 API
+iptables -A OUTPUT -p tcp --dport 587 -j ACCEPT  # SMTP
 
 # 保存规则
 iptables-save > /etc/iptables/rules.v4
 ```
 
-### Windows 防火墙
+### Windows 防火墙 - 最小化配置
 
 ```powershell
 # ============================================
-# Shadow 模式 (PowerShell 管理员)
+# 可选: 远程访问监控面板 (PowerShell 管理员)
+# 仅在需要远程访问时配置，建议用 SSH 隧道替代
 # ============================================
 
-# HTTP + WebSocket
-New-NetFirewallRule -DisplayName "Quant Shadow HTTP+WS" -Direction Inbound -Protocol TCP -LocalPort 3100-3309 -Action Allow
+# Live 模式 Dashboard (限制来源 IP 更安全)
+# New-NetFirewallRule -DisplayName "Quant Live Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8080-8100 -RemoteAddress YOUR_IP -Action Allow
 
-# Dashboard
-New-NetFirewallRule -DisplayName "Quant Shadow Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8180-8200 -Action Allow
-
-# Metrics
-New-NetFirewallRule -DisplayName "Quant Shadow Metrics" -Direction Inbound -Protocol TCP -LocalPort 9190-9210 -Action Allow
-
-# ============================================
-# Live 模式
-# ============================================
-
-# HTTP + WebSocket
-New-NetFirewallRule -DisplayName "Quant Live HTTP+WS" -Direction Inbound -Protocol TCP -LocalPort 3000-3209 -Action Allow
-
-# Dashboard
-New-NetFirewallRule -DisplayName "Quant Live Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8080-8100 -Action Allow
-
-# Metrics
-New-NetFirewallRule -DisplayName "Quant Live Metrics" -Direction Inbound -Protocol TCP -LocalPort 9090-9110 -Action Allow
+# Shadow 模式 Dashboard
+# New-NetFirewallRule -DisplayName "Quant Shadow Dashboard" -Direction Inbound -Protocol TCP -LocalPort 8180-8200 -RemoteAddress YOUR_IP -Action Allow
 ```
 
 ---
@@ -496,25 +499,60 @@ HTTP_PORT=4000 WS_PORT=4001 npm run shadow
 | AWS | EC2 > Security Groups > Inbound rules |
 | Azure | VM > Networking > Inbound port rules |
 
-添加入站规则示例：
-- 协议: TCP
-- 端口范围: 3000-3309, 8080-8200, 9090-9210
-- 来源: 0.0.0.0/0 (或限制为特定 IP)
+#### 入站规则 (按需开放)
+
+> **重要**: 大部分端口是内部服务调用，无需对外开放！只有以下场景才需要：
+
+| 场景 | 需开放端口 | 说明 |
+|------|-----------|------|
+| 远程访问监控面板 | 8080-8100 (Live) 或 8180-8200 (Shadow) | 建议限制来源 IP |
+| 外部 Prometheus 采集 | 9090-9110 (Live) 或 9190-9210 (Shadow) | 仅 Prometheus 服务器 IP |
+| 外部调用 REST API | 对应策略的 HTTP 端口 | 一般不需要 |
+
+**推荐做法**: 使用 SSH 隧道访问内部服务，而非直接开放端口：
+```bash
+# 通过 SSH 隧道访问远程服务器的 Dashboard
+ssh -L 8080:localhost:8080 user@your-server.com
+# 然后本地访问 http://localhost:8080
+```
+
+#### 出站规则 (必须放行)
+
+| 端口 | 服务 | 重要性 |
+|------|------|--------|
+| 443 | HTTPS (交易所API/Telegram) | **必须** |
+| 587 | SMTP (邮件告警) | 需要邮件通知时 |
+| 6379 | Redis | Redis 在其他服务器时 |
+| 8123 | ClickHouse | ClickHouse 在其他服务器时 |
+
+> **注意**: 如果 Redis 和 ClickHouse 部署在同一服务器，无需开放 6379 和 8123
 
 ---
 
 ## 附录: 端口使用一览表
 
-| 端口范围 | 模式 | 用途 |
-|----------|------|------|
-| 3000-3209 | Live | HTTP API + WebSocket |
-| 3100-3309 | Shadow | HTTP API + WebSocket |
-| 6379 | - | Redis |
-| 8080-8100 | Live | Dashboard 监控面板 |
-| 8123 | - | ClickHouse |
-| 8180-8200 | Shadow | Dashboard 监控面板 |
-| 9090-9110 | Live | Prometheus Metrics |
-| 9190-9210 | Shadow | Prometheus Metrics |
+| 端口范围 | 模式 | 用途 | 需对外开放 |
+|----------|------|------|-----------|
+| 443 | - | 交易所API/Telegram (出站) | N/A (出站) |
+| 587 | - | SMTP 邮件告警 (出站) | N/A (出站) |
+| 3000-3209 | Live | HTTP API + WebSocket | 否 (内部) |
+| 3100-3309 | Shadow | HTTP API + WebSocket | 否 (内部) |
+| 6379 | - | Redis | 跨服务器时 |
+| 8080-8100 | Live | Dashboard 监控面板 | 可选 |
+| 8123 | - | ClickHouse | 跨服务器时 |
+| 8180-8200 | Shadow | Dashboard 监控面板 | 可选 |
+| 9090-9110 | Live | Prometheus Metrics | 可选 |
+| 9190-9210 | Shadow | Prometheus Metrics | 可选 |
+
+### 总结
+
+**必须确保通畅的出站端口:**
+- `443` - 交易所 API、Telegram 通知
+
+**按需开放的入站端口:**
+- Dashboard 端口 - 仅需远程访问监控面板时
+- Metrics 端口 - 仅外部 Prometheus 采集时
+- HTTP/WS 端口 - 一般不需要
 
 ---
 
