@@ -29,6 +29,12 @@
 
 ### 软件依赖
 
+# 更新软件包列表
+sudo apt update
+
+# 安装 Git
+sudo apt install git -y
+
 ```bash
 # Node.js 18+
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
