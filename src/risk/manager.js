@@ -99,6 +99,34 @@ const DEFAULT_CONFIG = {
   drawdownWarningThreshold: 0.05,
 
   // ============================================
+  // 净值回撤配置 / Equity Drawdown Configuration
+  // (从历史最高点计算，不随日期重置)
+  // (Calculated from all-time high, does not reset daily)
+  // ============================================
+
+  // 净值最大回撤阈值 (20% = 0.20) / Max equity drawdown threshold
+  // 触发紧急全平 / Triggers emergency close
+  maxEquityDrawdown: 0.20,
+
+  // 净值回撤危险阈值 (15% = 0.15) / Equity drawdown danger threshold
+  // 触发减仓 / Triggers position reduction
+  equityDrawdownDangerThreshold: 0.15,
+
+  // 净值回撤警告阈值 (10% = 0.10) / Equity drawdown warning threshold
+  // 暂停新开仓 / Pauses new positions
+  equityDrawdownWarningThreshold: 0.10,
+
+  // 净值回撤提醒阈值 (5% = 0.05) / Equity drawdown alert threshold
+  // 发出警报 / Emits alert
+  equityDrawdownAlertThreshold: 0.05,
+
+  // 是否启用净值回撤监控 / Enable equity drawdown monitoring
+  enableEquityDrawdownMonitor: true,
+
+  // 净值回撤减仓比例 (30% = 0.30) / Equity drawdown reduction ratio
+  equityDrawdownReduceRatio: 0.30,
+
+  // ============================================
   // BTC 急跌配置 / BTC Crash Configuration
   // ============================================
 
@@ -216,6 +244,39 @@ export class AdvancedRiskManager extends EventEmitter {
       currentDrawdown: 0,
     };
 
+    // 净值回撤监控 (历史最高点) / Equity drawdown monitoring (all-time high)
+    // 不随日期重置 / Does not reset daily
+    this.equityDrawdown = {
+      // 历史最高净值 / All-time high equity
+      allTimeHighEquity: 0,
+
+      // 历史最高净值时间 / All-time high timestamp
+      allTimeHighTime: 0,
+
+      // 当前净值回撤 / Current equity drawdown
+      currentDrawdown: 0,
+
+      // 当前净值回撤金额 / Current equity drawdown amount
+      currentDrawdownAmount: 0,
+
+      // 最大净值回撤 (历史) / Maximum equity drawdown (historical)
+      maxDrawdown: 0,
+
+      // 最大净值回撤时间 / Maximum drawdown timestamp
+      maxDrawdownTime: 0,
+
+      // 最后更新时间 / Last update time
+      lastUpdateTime: 0,
+
+      // 回撤触发次数统计 / Drawdown trigger counts
+      triggerCounts: {
+        alert: 0,      // 提醒次数 / Alert count
+        warning: 0,    // 警告次数 / Warning count
+        danger: 0,     // 危险次数 / Danger count
+        emergency: 0,  // 紧急次数 / Emergency count
+      },
+    };
+
     // 风控状态 / Risk state
     this.state = {
       // 当前风险级别 / Current risk level
@@ -280,6 +341,17 @@ export class AdvancedRiskManager extends EventEmitter {
     this.log(`保证金率阈值: ${(this.config.emergencyMarginRate * 100).toFixed(0)}%`, 'info');
     this.log(`单币种仓位阈值: ${(this.config.maxSinglePositionRatio * 100).toFixed(0)}%`, 'info');
     this.log(`每日回撤阈值: ${(this.config.maxDailyDrawdown * 100).toFixed(0)}%`, 'info');
+
+    // 净值回撤日志 / Equity drawdown log
+    if (this.config.enableEquityDrawdownMonitor) {
+      this.log(`净值回撤监控: 已启用`, 'info');
+      this.log(`  - 提醒阈值: ${(this.config.equityDrawdownAlertThreshold * 100).toFixed(0)}%`, 'info');
+      this.log(`  - 警告阈值: ${(this.config.equityDrawdownWarningThreshold * 100).toFixed(0)}%`, 'info');
+      this.log(`  - 危险阈值: ${(this.config.equityDrawdownDangerThreshold * 100).toFixed(0)}%`, 'info');
+      this.log(`  - 紧急阈值: ${(this.config.maxEquityDrawdown * 100).toFixed(0)}%`, 'info');
+    } else {
+      this.log(`净值回撤监控: 已禁用`, 'info');
+    }
   }
 
   /**
@@ -378,31 +450,47 @@ export class AdvancedRiskManager extends EventEmitter {
       return;
     }
 
-    // 2. 检查每日回撤 / Check daily drawdown
+    // 2. 检查净值回撤 (历史最高点) / Check equity drawdown (all-time high)
+    const equityDrawdownResult = this._checkEquityDrawdown();
+    if (equityDrawdownResult.action === RISK_ACTION.EMERGENCY_CLOSE) {
+      // 触发紧急全平 / Trigger emergency close
+      await this._triggerEmergencyClose('净值回撤超限 / Equity drawdown exceeded', equityDrawdownResult);
+      return;
+    }
+    if (equityDrawdownResult.action === RISK_ACTION.REDUCE_POSITION) {
+      // 触发减仓 / Trigger position reduction
+      await this._reducePositionsForEquityDrawdown(equityDrawdownResult);
+    }
+    if (equityDrawdownResult.action === RISK_ACTION.PAUSE_TRADING) {
+      // 暂停新开仓 / Pause new positions
+      this._pauseTrading('净值回撤警告 / Equity drawdown warning', equityDrawdownResult);
+    }
+
+    // 3. 检查每日回撤 / Check daily drawdown
     const drawdownResult = this._checkDailyDrawdown();
     if (drawdownResult.action === RISK_ACTION.PAUSE_TRADING) {
       // 暂停交易 / Pause trading
       this._pauseTrading('每日回撤超限 / Daily drawdown exceeded', drawdownResult);
     }
 
-    // 3. 检查 BTC 急跌 / Check BTC crash
+    // 4. 检查 BTC 急跌 / Check BTC crash
     const btcCrashResult = this._checkBtcCrash();
     if (btcCrashResult.action === RISK_ACTION.REDUCE_POSITION) {
       // 减仓山寨币 / Reduce altcoin positions
       await this._reduceAltcoinPositions(btcCrashResult);
     }
 
-    // 4. 检查仓位集中度 / Check position concentration
+    // 5. 检查仓位集中度 / Check position concentration
     const concentrationResult = this._checkPositionConcentration();
     if (concentrationResult.action === RISK_ACTION.ALERT) {
       // 发出警报 / Emit alert
       this._emitAlert('仓位集中度过高 / Position concentration too high', concentrationResult);
     }
 
-    // 5. 更新强平价格 / Update liquidation prices
+    // 6. 更新强平价格 / Update liquidation prices
     this._updateLiquidationPrices();
 
-    // 6. 检查强平风险 / Check liquidation risk
+    // 7. 检查强平风险 / Check liquidation risk
     const liquidationResult = this._checkLiquidationRisk();
     if (liquidationResult.action === RISK_ACTION.ALERT) {
       // 发出强平预警 / Emit liquidation warning
@@ -692,6 +780,150 @@ export class AdvancedRiskManager extends EventEmitter {
         `当日回撤警告: ${(drawdown * 100).toFixed(2)}% > ${(this.config.drawdownWarningThreshold * 100).toFixed(0)}%`,
         'warn'
       );
+
+    } else {
+      // 正常 / Normal
+      result.level = RISK_LEVEL.NORMAL;
+    }
+
+    // 返回结果 / Return result
+    return result;
+  }
+
+  /**
+   * 检查净值回撤 (从历史最高点计算)
+   * Check equity drawdown (calculated from all-time high)
+   *
+   * @returns {Object} 检查结果 / Check result
+   * @private
+   */
+  _checkEquityDrawdown() {
+    // 结果对象 / Result object
+    const result = {
+      // 检查类型 / Check type
+      type: 'equityDrawdown',
+
+      // 动作 / Action
+      action: RISK_ACTION.NONE,
+
+      // 当前回撤 / Current drawdown
+      drawdown: 0,
+
+      // 回撤金额 / Drawdown amount
+      drawdownAmount: 0,
+
+      // 历史最高净值 / All-time high equity
+      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity,
+
+      // 当前权益 / Current equity
+      currentEquity: 0,
+
+      // 阈值 / Threshold
+      threshold: this.config.maxEquityDrawdown,
+    };
+
+    // 如果未启用净值回撤监控，跳过 / If equity drawdown monitoring disabled, skip
+    if (!this.config.enableEquityDrawdownMonitor) {
+      return result;
+    }
+
+    // 计算当前总权益 / Calculate current total equity
+    let currentEquity = 0;
+    for (const [, accountInfo] of this.accountData) {
+      currentEquity += accountInfo.equity || 0;
+    }
+
+    // 保存当前权益 / Save current equity
+    result.currentEquity = currentEquity;
+
+    // 如果当前权益为0，跳过 / If current equity is 0, skip
+    if (currentEquity <= 0) {
+      return result;
+    }
+
+    // 更新历史最高净值 / Update all-time high equity
+    if (currentEquity > this.equityDrawdown.allTimeHighEquity) {
+      this.equityDrawdown.allTimeHighEquity = currentEquity;
+      this.equityDrawdown.allTimeHighTime = Date.now();
+      result.allTimeHighEquity = currentEquity;
+
+      // 创新高时重置回撤 / Reset drawdown on new high
+      this.equityDrawdown.currentDrawdown = 0;
+      this.equityDrawdown.currentDrawdownAmount = 0;
+    }
+
+    // 计算回撤 / Calculate drawdown
+    // 回撤 = (历史最高 - 当前权益) / 历史最高
+    // Drawdown = (all-time high - current equity) / all-time high
+    const drawdown = this.equityDrawdown.allTimeHighEquity > 0
+      ? (this.equityDrawdown.allTimeHighEquity - currentEquity) / this.equityDrawdown.allTimeHighEquity
+      : 0;
+
+    const drawdownAmount = this.equityDrawdown.allTimeHighEquity - currentEquity;
+
+    // 保存回撤 / Save drawdown
+    result.drawdown = drawdown;
+    result.drawdownAmount = drawdownAmount;
+    this.equityDrawdown.currentDrawdown = drawdown;
+    this.equityDrawdown.currentDrawdownAmount = drawdownAmount;
+    this.equityDrawdown.lastUpdateTime = Date.now();
+
+    // 更新最大历史回撤 / Update maximum historical drawdown
+    if (drawdown > this.equityDrawdown.maxDrawdown) {
+      this.equityDrawdown.maxDrawdown = drawdown;
+      this.equityDrawdown.maxDrawdownTime = Date.now();
+    }
+
+    // 判断风险级别和动作 / Determine risk level and action
+    if (drawdown >= this.config.maxEquityDrawdown) {
+      // 紧急全平 / Emergency close
+      result.action = RISK_ACTION.EMERGENCY_CLOSE;
+      result.level = RISK_LEVEL.EMERGENCY;
+      this.equityDrawdown.triggerCounts.emergency++;
+
+      // 记录日志 / Log
+      this.log(
+        `🚨 净值回撤触发紧急全平: ${(drawdown * 100).toFixed(2)}% >= ${(this.config.maxEquityDrawdown * 100).toFixed(0)}% (损失 ${drawdownAmount.toFixed(2)} USDT)`,
+        'error'
+      );
+
+    } else if (drawdown >= this.config.equityDrawdownDangerThreshold) {
+      // 危险 - 触发减仓 / Danger - trigger position reduction
+      result.action = RISK_ACTION.REDUCE_POSITION;
+      result.level = RISK_LEVEL.DANGER;
+      this.equityDrawdown.triggerCounts.danger++;
+
+      // 记录日志 / Log
+      this.log(
+        `⚠️ 净值回撤危险: ${(drawdown * 100).toFixed(2)}% >= ${(this.config.equityDrawdownDangerThreshold * 100).toFixed(0)}%，触发减仓`,
+        'error'
+      );
+
+    } else if (drawdown >= this.config.equityDrawdownWarningThreshold) {
+      // 警告 - 暂停新开仓 / Warning - pause new positions
+      result.action = RISK_ACTION.PAUSE_TRADING;
+      result.level = RISK_LEVEL.WARNING;
+      this.equityDrawdown.triggerCounts.warning++;
+
+      // 记录日志 / Log
+      this.log(
+        `⚠️ 净值回撤警告: ${(drawdown * 100).toFixed(2)}% >= ${(this.config.equityDrawdownWarningThreshold * 100).toFixed(0)}%，暂停新开仓`,
+        'warn'
+      );
+
+    } else if (drawdown >= this.config.equityDrawdownAlertThreshold) {
+      // 提醒 / Alert
+      result.action = RISK_ACTION.ALERT;
+      result.level = RISK_LEVEL.WARNING;
+      this.equityDrawdown.triggerCounts.alert++;
+
+      // 记录日志 (仅详细模式) / Log (verbose mode only)
+      if (this.config.verbose) {
+        this.log(
+          `净值回撤提醒: ${(drawdown * 100).toFixed(2)}% (历史最高: ${this.equityDrawdown.allTimeHighEquity.toFixed(2)} USDT)`,
+          'warn'
+        );
+      }
 
     } else {
       // 正常 / Normal
@@ -1059,6 +1291,97 @@ export class AdvancedRiskManager extends EventEmitter {
   }
 
   /**
+   * 净值回撤触发减仓
+   * Reduce positions for equity drawdown
+   *
+   * @param {Object} details - 详情 / Details
+   * @private
+   */
+  async _reducePositionsForEquityDrawdown(details) {
+    // 记录触发 / Record trigger
+    this._recordTrigger('reduceForEquityDrawdown', '净值回撤危险 / Equity drawdown danger', details);
+
+    // 记录日志 / Log
+    const reduceRatio = this.config.equityDrawdownReduceRatio;
+    this.log(
+      `📉 净值回撤触发减仓: 回撤 ${(details.drawdown * 100).toFixed(2)}%, 减仓比例 ${(reduceRatio * 100).toFixed(0)}%`,
+      'warn'
+    );
+
+    // 发出减仓事件 / Emit reduce event
+    this.emit('reduceForEquityDrawdown', {
+      details,
+      ratio: reduceRatio,
+      drawdown: details.drawdown,
+      drawdownAmount: details.drawdownAmount,
+    });
+
+    // 收集需要减仓的仓位 / Collect positions to reduce
+    const positionsToReduce = [];
+
+    // 遍历所有持仓 / Iterate all positions
+    for (const [exchangeName, positions] of this.positionData) {
+      for (const [symbol, position] of Object.entries(positions)) {
+        // 计算减仓数量 / Calculate reduction amount
+        const currentSize = Math.abs(position.contracts || position.size || 0);
+        const reduceAmount = currentSize * reduceRatio;
+
+        // 如果有仓位需要减 / If position needs reduction
+        if (reduceAmount > 0) {
+          positionsToReduce.push({
+            exchange: exchangeName,
+            symbol,
+            side: position.side,
+            currentSize,
+            reduceAmount,
+          });
+        }
+      }
+    }
+
+    // 调用执行器减仓 / Call executor to reduce
+    if (this.executor && positionsToReduce.length > 0) {
+      this.log(`需要减仓 ${positionsToReduce.length} 个仓位 / Need to reduce ${positionsToReduce.length} positions`, 'info');
+
+      for (const pos of positionsToReduce) {
+        try {
+          // 记录日志 / Log
+          this.log(`减仓: ${pos.symbol} 减少 ${pos.reduceAmount.toFixed(4)} (${(reduceRatio * 100).toFixed(0)}%)`, 'info');
+
+          // 确定平仓方向 / Determine close direction
+          const closeSide = pos.side === POSITION_SIDE.LONG || pos.side === 'long' ? 'sell' : 'buy';
+
+          // 调用执行器 / Call executor
+          await this.executor.executeMarketOrder({
+            symbol: pos.symbol,
+            side: closeSide,
+            amount: pos.reduceAmount,
+            reduceOnly: true,
+          });
+
+        } catch (error) {
+          // 记录错误 / Log error
+          this.log(`减仓失败 ${pos.symbol}: ${error.message}`, 'error');
+        }
+      }
+
+      this.log('✓ 净值回撤减仓完成 / Equity drawdown reduction completed', 'info');
+    } else if (positionsToReduce.length === 0) {
+      this.log('无持仓需要减仓 / No positions to reduce', 'info');
+    } else {
+      // 执行器不可用 / Executor not available
+      this.log('⚠️ 执行器不可用，需要手动减仓', 'error');
+
+      // 发出警报 / Emit alert
+      this.emit('alert', {
+        type: 'executorUnavailable',
+        message: '执行器不可用，需要手动减仓 / Executor unavailable, manual reduction required',
+        positionsToReduce,
+      });
+    }
+  }
+
+  /**
    * 发出警报
    * Emit alert
    *
@@ -1361,6 +1684,20 @@ export class AdvancedRiskManager extends EventEmitter {
     this.dailyEquity.peakEquity = totalEquity;
     this.dailyEquity.dayStart = this._getDayStart();
     this.dailyEquity.currentDrawdown = 0;
+
+    // 初始化/更新净值回撤数据 / Initialize/update equity drawdown data
+    // 如果历史最高为0，说明是首次初始化 / If all-time high is 0, it's first initialization
+    if (this.equityDrawdown.allTimeHighEquity === 0) {
+      this.equityDrawdown.allTimeHighEquity = totalEquity;
+      this.equityDrawdown.allTimeHighTime = Date.now();
+    }
+    // 如果当前权益超过历史最高，更新 / Update if current equity exceeds all-time high
+    else if (totalEquity > this.equityDrawdown.allTimeHighEquity) {
+      this.equityDrawdown.allTimeHighEquity = totalEquity;
+      this.equityDrawdown.allTimeHighTime = Date.now();
+    }
+
+    this.equityDrawdown.lastUpdateTime = Date.now();
   }
 
   /**
@@ -1554,6 +1891,9 @@ export class AdvancedRiskManager extends EventEmitter {
       // 每日权益 / Daily equity
       dailyEquity: { ...this.dailyEquity },
 
+      // 净值回撤 / Equity drawdown
+      equityDrawdown: { ...this.equityDrawdown },
+
       // 强平价格 / Liquidation prices
       liquidationPrices: Array.from(this.liquidationPrices.entries()).map(([symbol, data]) => ({
         symbol,
@@ -1572,6 +1912,11 @@ export class AdvancedRiskManager extends EventEmitter {
         maxSinglePositionRatio: this.config.maxSinglePositionRatio,
         maxDailyDrawdown: this.config.maxDailyDrawdown,
         btcCrashThreshold: this.config.btcCrashThreshold,
+        // 净值回撤配置 / Equity drawdown config
+        maxEquityDrawdown: this.config.maxEquityDrawdown,
+        equityDrawdownDangerThreshold: this.config.equityDrawdownDangerThreshold,
+        equityDrawdownWarningThreshold: this.config.equityDrawdownWarningThreshold,
+        enableEquityDrawdownMonitor: this.config.enableEquityDrawdownMonitor,
       },
     };
   }
@@ -1594,6 +1939,129 @@ export class AdvancedRiskManager extends EventEmitter {
    */
   getRiskLevel() {
     return this.state.riskLevel;
+  }
+
+  /**
+   * 获取净值回撤状态
+   * Get equity drawdown status
+   *
+   * @returns {Object} 净值回撤状态 / Equity drawdown status
+   */
+  getEquityDrawdownStatus() {
+    return {
+      // 是否启用 / Whether enabled
+      enabled: this.config.enableEquityDrawdownMonitor,
+
+      // 历史最高净值 / All-time high equity
+      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity,
+
+      // 历史最高净值时间 / All-time high timestamp
+      allTimeHighTime: this.equityDrawdown.allTimeHighTime,
+
+      // 当前净值回撤 (百分比) / Current drawdown (percentage)
+      currentDrawdown: this.equityDrawdown.currentDrawdown,
+
+      // 当前净值回撤金额 / Current drawdown amount
+      currentDrawdownAmount: this.equityDrawdown.currentDrawdownAmount,
+
+      // 最大历史回撤 / Maximum historical drawdown
+      maxDrawdown: this.equityDrawdown.maxDrawdown,
+
+      // 最大回撤时间 / Maximum drawdown time
+      maxDrawdownTime: this.equityDrawdown.maxDrawdownTime,
+
+      // 触发次数统计 / Trigger counts
+      triggerCounts: { ...this.equityDrawdown.triggerCounts },
+
+      // 阈值配置 / Threshold configuration
+      thresholds: {
+        alert: this.config.equityDrawdownAlertThreshold,
+        warning: this.config.equityDrawdownWarningThreshold,
+        danger: this.config.equityDrawdownDangerThreshold,
+        emergency: this.config.maxEquityDrawdown,
+      },
+
+      // 当前风险级别 / Current risk level
+      riskLevel: this._getEquityDrawdownRiskLevel(),
+
+      // 最后更新时间 / Last update time
+      lastUpdateTime: this.equityDrawdown.lastUpdateTime,
+    };
+  }
+
+  /**
+   * 获取净值回撤风险级别
+   * Get equity drawdown risk level
+   *
+   * @returns {string} 风险级别 / Risk level
+   * @private
+   */
+  _getEquityDrawdownRiskLevel() {
+    const drawdown = this.equityDrawdown.currentDrawdown;
+
+    if (drawdown >= this.config.maxEquityDrawdown) {
+      return RISK_LEVEL.EMERGENCY;
+    } else if (drawdown >= this.config.equityDrawdownDangerThreshold) {
+      return RISK_LEVEL.DANGER;
+    } else if (drawdown >= this.config.equityDrawdownWarningThreshold) {
+      return RISK_LEVEL.WARNING;
+    } else if (drawdown >= this.config.equityDrawdownAlertThreshold) {
+      return RISK_LEVEL.WARNING;
+    }
+
+    return RISK_LEVEL.NORMAL;
+  }
+
+  /**
+   * 设置历史最高净值 (用于恢复状态)
+   * Set all-time high equity (for state restoration)
+   *
+   * @param {number} equity - 历史最高净值 / All-time high equity
+   * @param {number} timestamp - 时间戳 / Timestamp
+   */
+  setAllTimeHighEquity(equity, timestamp = Date.now()) {
+    if (equity > 0) {
+      this.equityDrawdown.allTimeHighEquity = equity;
+      this.equityDrawdown.allTimeHighTime = timestamp;
+      this.log(`设置历史最高净值: ${equity.toFixed(2)} USDT`, 'info');
+    }
+  }
+
+  /**
+   * 重置净值回撤统计
+   * Reset equity drawdown statistics
+   *
+   * @param {boolean} resetAllTimeHigh - 是否重置历史最高 / Whether to reset all-time high
+   */
+  resetEquityDrawdownStats(resetAllTimeHigh = false) {
+    // 重置触发计数 / Reset trigger counts
+    this.equityDrawdown.triggerCounts = {
+      alert: 0,
+      warning: 0,
+      danger: 0,
+      emergency: 0,
+    };
+
+    // 重置最大回撤 / Reset max drawdown
+    this.equityDrawdown.maxDrawdown = 0;
+    this.equityDrawdown.maxDrawdownTime = 0;
+
+    // 如果需要，重置历史最高 / Reset all-time high if needed
+    if (resetAllTimeHigh) {
+      // 计算当前总权益 / Calculate current total equity
+      let currentEquity = 0;
+      for (const [, accountInfo] of this.accountData) {
+        currentEquity += accountInfo.equity || 0;
+      }
+
+      this.equityDrawdown.allTimeHighEquity = currentEquity;
+      this.equityDrawdown.allTimeHighTime = Date.now();
+      this.equityDrawdown.currentDrawdown = 0;
+      this.equityDrawdown.currentDrawdownAmount = 0;
+    }
+
+    this.log('净值回撤统计已重置 / Equity drawdown stats reset', 'info');
+    this.emit('equityDrawdownReset', { resetAllTimeHigh });
   }
 }
 
