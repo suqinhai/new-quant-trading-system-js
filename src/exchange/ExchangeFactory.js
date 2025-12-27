@@ -10,6 +10,7 @@
 import { BinanceExchange } from './BinanceExchange.js';
 import { BybitExchange } from './BybitExchange.js';
 import { OKXExchange } from './OKXExchange.js';
+import { GateExchange } from './GateExchange.js';
 
 /**
  * 交易所工厂
@@ -28,6 +29,7 @@ export class ExchangeFactory {
     binance: BinanceExchange,    // Binance 交易所 / Binance exchange
     bybit: BybitExchange,        // Bybit 交易所 / Bybit exchange
     okx: OKXExchange,            // OKX 交易所 / OKX exchange
+    gate: GateExchange,          // Gate.io 交易所 / Gate.io exchange
   };
 
   /**

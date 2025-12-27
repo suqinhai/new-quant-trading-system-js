@@ -24,7 +24,7 @@
 
 | 功能 | 描述 |
 |------|------|
-| 多交易所支持 | Binance、Bybit、OKX |
+| 多交易所支持 | Binance、Bybit、OKX、Gate.io |
 | 多策略运行 | 同时运行多个交易策略 |
 | 专业回测 | 基于历史数据的策略验证 |
 | 影子交易 | 实时行情下的模拟交易 |
@@ -67,6 +67,10 @@ BYBIT_SECRET=您的密钥
 OKX_API_KEY=您的API密钥
 OKX_SECRET=您的密钥
 OKX_PASSPHRASE=您的密码
+
+# Gate.io
+GATE_API_KEY=您的API密钥
+GATE_SECRET=您的密钥
 ```
 
 ### 3. 运行回测（推荐首次使用）
@@ -114,6 +118,16 @@ exchanges: {
     sandbox: false,  // true 使用测试网
     options: {
       defaultType: 'spot',  // 'spot' | 'future'
+      adjustForTimeDifference: true
+    }
+  },
+  gate: {
+    enabled: true,
+    apiKey: process.env.GATE_API_KEY,
+    secret: process.env.GATE_SECRET,
+    sandbox: false,  // true 使用测试网
+    options: {
+      defaultType: 'spot',  // 'spot' | 'swap' | 'future'
       adjustForTimeDifference: true
     }
   }
