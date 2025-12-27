@@ -152,6 +152,7 @@ describe('ExchangeFactory', () => {
       expect(exchanges).toContain('binance');
       expect(exchanges).toContain('bybit');
       expect(exchanges).toContain('okx');
+      expect(exchanges).toContain('gate');
     });
   });
 
@@ -160,6 +161,8 @@ describe('ExchangeFactory', () => {
       expect(ExchangeFactory.isSupported('binance')).toBe(true);
       expect(ExchangeFactory.isSupported('BINANCE')).toBe(true);
       expect(ExchangeFactory.isSupported('Bybit')).toBe(true);
+      expect(ExchangeFactory.isSupported('gate')).toBe(true);
+      expect(ExchangeFactory.isSupported('GATE')).toBe(true);
     });
 
     it('应该拒绝不支持的交易所', () => {
@@ -198,6 +201,16 @@ describe('ExchangeFactory', () => {
 
       expect(exchange).toBeDefined();
       expect(exchange.name).toBe('bybit');
+    });
+
+    it('应该创建 Gate.io 交易所实例', () => {
+      const exchange = ExchangeFactory.create('gate', {
+        apiKey: 'test-key',
+        secret: 'test-secret',
+      });
+
+      expect(exchange).toBeDefined();
+      expect(exchange.name).toBe('gate');
     });
 
     it('应该对不支持的交易所抛出错误', () => {
@@ -1328,6 +1341,265 @@ describe('OKXExchange', () => {
 
     it('应该保存密码配置', () => {
       expect(exchange.config.password).toBe('test-password');
+    });
+  });
+});
+
+// ============================================
+// GateExchange 测试
+// ============================================
+
+import { GateExchange } from '../../src/exchange/GateExchange.js';
+
+describe('GateExchange', () => {
+  let exchange;
+
+  // Mock CCXT for Gate.io specific methods
+  function createGateMockCcxt() {
+    return {
+      ...createMockCcxtExchange(),
+      publicSpotGetTime: vi.fn().mockResolvedValue({ server_time: Date.now() / 1000 }),
+      fetchTradingFee: vi.fn().mockResolvedValue({
+        maker: 0.002,
+        taker: 0.002,
+      }),
+      fetchFundingRateHistory: vi.fn().mockResolvedValue([
+        { symbol: 'BTC/USDT', fundingRate: 0.0001, timestamp: Date.now(), datetime: new Date().toISOString() },
+      ]),
+      setPositionMode: vi.fn().mockResolvedValue({ success: true }),
+      setMarginMode: vi.fn().mockResolvedValue({ success: true }),
+      fetchMarkPrice: vi.fn().mockResolvedValue({
+        symbol: 'BTC/USDT',
+        markPrice: 51000,
+        indexPrice: 50900,
+        timestamp: Date.now(),
+        datetime: new Date().toISOString(),
+      }),
+      privateFuturesGetSettleAccountBook: vi.fn().mockResolvedValue([
+        { contract: 'BTC_USDT', type: 'FUNDING_FEE', change: '0.123', text: 'USDT', time: String(Date.now() / 1000) },
+      ]),
+      fetchMyTrades: vi.fn().mockResolvedValue([
+        { id: 'trade-1', order: 'order-1', symbol: 'BTC/USDT', side: 'buy', price: 50000, amount: 0.1, cost: 5000, fee: { cost: 10, currency: 'USDT' }, timestamp: Date.now(), datetime: new Date().toISOString() },
+      ]),
+      fetchWithdrawals: vi.fn().mockResolvedValue([
+        { id: 'w-1', txid: 'tx-1', currency: 'USDT', amount: 100, fee: { cost: 1, currency: 'USDT' }, status: 'ok', address: '0x...', tag: null, timestamp: Date.now(), datetime: new Date().toISOString() },
+      ]),
+      fetchDeposits: vi.fn().mockResolvedValue([
+        { id: 'd-1', txid: 'tx-2', currency: 'USDT', amount: 200, status: 'ok', address: '0x...', tag: null, timestamp: Date.now(), datetime: new Date().toISOString() },
+      ]),
+      fetchCurrencies: vi.fn().mockResolvedValue({
+        USDT: { id: 'USDT', code: 'USDT', name: 'Tether' },
+        BTC: { id: 'BTC', code: 'BTC', name: 'Bitcoin' },
+      }),
+      marketId: vi.fn().mockReturnValue('BTC_USDT'),
+    };
+  }
+
+  beforeEach(() => {
+    exchange = new GateExchange({
+      apiKey: 'test-api-key',
+      secret: 'test-secret',
+      defaultType: 'swap',
+    });
+    // Override _createExchange to use mock
+    exchange._createExchange = () => createGateMockCcxt();
+  });
+
+  afterEach(() => {
+    if (exchange) {
+      exchange.removeAllListeners();
+    }
+  });
+
+  describe('构造函数', () => {
+    it('应该设置交易所名称为 gate', () => {
+      expect(exchange.name).toBe('gate');
+    });
+
+    it('应该使用默认交易类型', () => {
+      const e = new GateExchange();
+      expect(e.config.defaultType).toBe('spot');
+    });
+  });
+
+  describe('fetchServerTime', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取服务器时间', async () => {
+      const serverTime = await exchange.fetchServerTime();
+      expect(serverTime).toBeGreaterThan(0);
+    });
+  });
+
+  describe('fetchTradingFee', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取交易手续费', async () => {
+      const fee = await exchange.fetchTradingFee('BTC/USDT');
+
+      expect(fee.symbol).toBe('BTC/USDT');
+      expect(fee.maker).toBe(0.002);
+      expect(fee.taker).toBe(0.002);
+      expect(fee.exchange).toBe('gate');
+    });
+  });
+
+  describe('fetchFundingRateHistory', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取历史资金费率', async () => {
+      const history = await exchange.fetchFundingRateHistory('BTC/USDT');
+
+      expect(Array.isArray(history)).toBe(true);
+      expect(history.length).toBeGreaterThan(0);
+      expect(history[0].exchange).toBe('gate');
+    });
+
+    it('现货模式应该抛出错误', async () => {
+      exchange.config.defaultType = 'spot';
+
+      await expect(exchange.fetchFundingRateHistory('BTC/USDT')).rejects.toThrow();
+    });
+  });
+
+  describe('setPositionMode', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该设置持仓模式', async () => {
+      const result = await exchange.setPositionMode(true);
+      expect(result).toBeDefined();
+    });
+
+    it('应该发射 positionModeSet 事件', async () => {
+      const listener = vi.fn();
+      exchange.on('positionModeSet', listener);
+
+      await exchange.setPositionMode(false);
+
+      expect(listener).toHaveBeenCalled();
+    });
+
+    it('现货模式应该抛出错误', async () => {
+      exchange.config.defaultType = 'spot';
+
+      await expect(exchange.setPositionMode(true)).rejects.toThrow();
+    });
+  });
+
+  describe('setMarginMode', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该设置保证金模式', async () => {
+      const result = await exchange.setMarginMode('isolated', 'BTC/USDT');
+      expect(result).toBeDefined();
+    });
+
+    it('应该发射 marginModeSet 事件', async () => {
+      const listener = vi.fn();
+      exchange.on('marginModeSet', listener);
+
+      await exchange.setMarginMode('cross', 'BTC/USDT');
+
+      expect(listener).toHaveBeenCalled();
+    });
+
+    it('无效的保证金模式应该抛出错误', async () => {
+      await expect(exchange.setMarginMode('invalid', 'BTC/USDT')).rejects.toThrow();
+    });
+
+    it('现货模式应该抛出错误', async () => {
+      exchange.config.defaultType = 'spot';
+
+      await expect(exchange.setMarginMode('cross', 'BTC/USDT')).rejects.toThrow();
+    });
+  });
+
+  describe('fetchMarkPrice', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取标记价格', async () => {
+      const markPrice = await exchange.fetchMarkPrice('BTC/USDT');
+
+      expect(markPrice.symbol).toBe('BTC/USDT');
+      expect(markPrice.markPrice).toBe(51000);
+      expect(markPrice.exchange).toBe('gate');
+    });
+
+    it('现货模式应该抛出错误', async () => {
+      exchange.config.defaultType = 'spot';
+
+      await expect(exchange.fetchMarkPrice('BTC/USDT')).rejects.toThrow();
+    });
+  });
+
+  describe('createStopOrder', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该创建止损订单', async () => {
+      const order = await exchange.createStopOrder('BTC/USDT', 'sell', 0.1, {
+        stopPrice: 45000,
+      });
+
+      expect(order).toBeDefined();
+      expect(order.symbol).toBe('BTC/USDT');
+    });
+
+    it('应该发射 stopOrderCreated 事件', async () => {
+      const listener = vi.fn();
+      exchange.on('stopOrderCreated', listener);
+
+      await exchange.createStopOrder('BTC/USDT', 'sell', 0.1, {
+        stopPrice: 45000,
+      });
+
+      expect(listener).toHaveBeenCalled();
+    });
+
+    it('没有止损价格应该抛出错误', async () => {
+      await expect(exchange.createStopOrder('BTC/USDT', 'sell', 0.1, {})).rejects.toThrow();
+    });
+  });
+
+  describe('fetchMyTrades', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取交易历史', async () => {
+      const trades = await exchange.fetchMyTrades('BTC/USDT');
+
+      expect(Array.isArray(trades)).toBe(true);
+      expect(trades.length).toBeGreaterThan(0);
+      expect(trades[0].symbol).toBe('BTC/USDT');
+      expect(trades[0].exchange).toBe('gate');
+    });
+  });
+
+  describe('fetchCurrencies', () => {
+    beforeEach(async () => {
+      await exchange.connect();
+    });
+
+    it('应该获取币种信息', async () => {
+      const currencies = await exchange.fetchCurrencies();
+
+      expect(currencies).toBeDefined();
+      expect(currencies.USDT).toBeDefined();
+      expect(currencies.BTC).toBeDefined();
     });
   });
 });

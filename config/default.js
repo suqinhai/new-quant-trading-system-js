@@ -58,6 +58,30 @@ export default {
       // 默认交易类型: 'spot' | 'swap' | 'future'
       defaultType: 'spot',
     },
+
+    // Gate.io 配置 / Gate.io configuration
+    gate: {
+      // 是否启用 / Whether enabled
+      enabled: true,
+
+      // 是否使用沙盒模式 / Whether to use sandbox mode
+      sandbox: false,
+
+      // API 请求超时 (毫秒) / API request timeout (ms)
+      timeout: 30000,
+
+      // 是否启用限速 / Whether to enable rate limiting
+      enableRateLimit: true,
+
+      // 默认交易类型: 'spot' | 'swap' | 'future'
+      defaultType: 'spot',
+
+      // 选项 / Options
+      options: {
+        // 调整时间戳 / Adjust for time difference
+        adjustForTimeDifference: true,
+      },
+    },
   },
 
   // ============================================
