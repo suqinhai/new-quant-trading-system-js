@@ -82,6 +82,32 @@ export default {
         adjustForTimeDifference: true,
       },
     },
+
+    // Deribit 配置 / Deribit configuration
+    deribit: {
+      // 是否启用 / Whether enabled
+      enabled: true,
+
+      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      sandbox: false,
+
+      // API 请求超时 (毫秒) / API request timeout (ms)
+      timeout: 30000,
+
+      // 是否启用限速 / Whether to enable rate limiting
+      enableRateLimit: true,
+
+      // 默认交易类型: 'swap' | 'future' | 'option'
+      // Deribit 专注于衍生品，默认为永续合约
+      // Deribit focuses on derivatives, default to perpetual
+      defaultType: 'swap',
+
+      // 选项 / Options
+      options: {
+        // 调整时间戳 / Adjust for time difference
+        adjustForTimeDifference: true,
+      },
+    },
   },
 
   // ============================================

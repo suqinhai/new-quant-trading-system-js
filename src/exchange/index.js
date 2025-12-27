@@ -14,6 +14,7 @@ export { BinanceExchange } from './BinanceExchange.js';
 export { BybitExchange } from './BybitExchange.js';
 export { OKXExchange } from './OKXExchange.js';
 export { GateExchange } from './GateExchange.js';
+export { DeribitExchange } from './DeribitExchange.js';
 
 // 导出工厂类 / Export factory class
 export { ExchangeFactory } from './ExchangeFactory.js';

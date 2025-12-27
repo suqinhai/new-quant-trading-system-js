@@ -45,6 +45,11 @@ const WS_ENDPOINTS = {
     public: 'wss://ws.okx.com:8443/ws/v5/public',       // 公共频道 / Public channel
     business: 'wss://ws.okx.com:8443/ws/v5/business',   // 业务频道 / Business channel
   },
+  // Deribit 端点 / Deribit endpoints
+  deribit: {
+    public: 'wss://www.deribit.com/ws/api/v2',          // 生产环境 / Production
+    testnet: 'wss://test.deribit.com/ws/api/v2',        // 测试网 / Testnet
+  },
 };
 
 /**
@@ -791,6 +796,12 @@ export class MarketDataEngine extends EventEmitter {
         // OKX: 使用公共端点 / Use public endpoint
         return WS_ENDPOINTS.okx.public;
 
+      case 'deribit':
+        // Deribit: 根据 sandbox 配置选择端点 / Select endpoint based on sandbox config
+        return this.config.sandbox
+          ? WS_ENDPOINTS.deribit.testnet
+          : WS_ENDPOINTS.deribit.public;
+
       default:
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
@@ -896,6 +907,14 @@ export class MarketDataEngine extends EventEmitter {
         } else if (exchange === 'okx') {
           // OKX 使用 ping 字符串 / OKX uses ping string
           ws.send('ping');
+        } else if (exchange === 'deribit') {
+          // Deribit 使用 JSON-RPC 2.0 格式的 test 方法 / Deribit uses JSON-RPC 2.0 test method
+          ws.send(JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'public/test',
+            id: Date.now(),
+            params: {},
+          }));
         } else {
           // Binance 使用 WebSocket ping / Binance uses WebSocket ping
           ws.ping();
@@ -1074,6 +1093,9 @@ export class MarketDataEngine extends EventEmitter {
       case 'okx':
         return this._buildOKXSubscribeMessage(symbol, dataType);
 
+      case 'deribit':
+        return this._buildDeribitSubscribeMessage(symbol, dataType);
+
       default:
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
     }
@@ -1103,6 +1125,13 @@ export class MarketDataEngine extends EventEmitter {
 
       case 'okx':
         return { ...subMsg, op: 'unsubscribe' };
+
+      case 'deribit':
+        // Deribit 取消订阅只需修改方法名 / Deribit unsubscribe just needs to change method name
+        return {
+          ...subMsg,
+          method: subMsg.method.replace('subscribe', 'unsubscribe'),
+        };
 
       default:
         return subMsg;
@@ -1270,6 +1299,67 @@ export class MarketDataEngine extends EventEmitter {
   }
 
   /**
+   * 构建 Deribit 订阅消息
+   * Build Deribit subscription message
+   *
+   * Deribit 使用 JSON-RPC 2.0 格式
+   * Deribit uses JSON-RPC 2.0 format
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildDeribitSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> BTC-PERPETUAL / Convert symbol format
+    // Deribit 永续合约格式: BTC-PERPETUAL, ETH-PERPETUAL / Deribit perpetual format
+    const base = symbol.split('/')[0];
+    const deribitSymbol = `${base}-PERPETUAL`;
+
+    // 根据数据类型构建频道 / Build channel based on data type
+    let channels = [];
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        channels = [`ticker.${deribitSymbol}.100ms`];
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 (10 档) / Depth data (10 levels)
+        channels = [`book.${deribitSymbol}.10.100ms`];
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        channels = [`trades.${deribitSymbol}.100ms`];
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 永续合约状态 (包含资金费率) / Perpetual state (includes funding rate)
+        channels = [`perpetual.${deribitSymbol}.100ms`];
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 (1小时) / Kline data (1 hour)
+        channels = [`chart.trades.${deribitSymbol}.60`];
+        break;
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 JSON-RPC 2.0 格式的订阅消息 / Return JSON-RPC 2.0 format subscription message
+    return {
+      jsonrpc: '2.0',               // JSON-RPC 版本 / JSON-RPC version
+      method: 'public/subscribe',   // 订阅方法 / Subscribe method
+      id: Date.now(),               // 请求 ID / Request ID
+      params: {
+        channels,                   // 频道数组 / Channel array
+      },
+    };
+  }
+
+  /**
    * 获取订阅数量统计
    * Get subscription counts
    *
@@ -1328,6 +1418,10 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'okx':
           this._handleOKXMessage(message);
+          break;
+
+        case 'deribit':
+          this._handleDeribitMessage(message);
           break;
       }
 
@@ -1482,6 +1576,55 @@ export class MarketDataEngine extends EventEmitter {
           this._processKline('okx', message);
         }
         break;
+    }
+  }
+
+  /**
+   * 处理 Deribit 消息
+   * Handle Deribit message
+   *
+   * Deribit 使用 JSON-RPC 2.0 格式
+   * Deribit uses JSON-RPC 2.0 format
+   *
+   * @param {Object} message - 消息对象 / Message object
+   * @private
+   */
+  _handleDeribitMessage(message) {
+    // 处理心跳响应 (public/test) / Handle heartbeat response
+    if (message.result && message.result.version) {
+      return;
+    }
+
+    // 忽略订阅响应 / Ignore subscription responses
+    if (message.result && Array.isArray(message.result)) {
+      return;
+    }
+
+    // 检查是否是推送消息 / Check if it's a push message
+    if (!message.params || !message.params.channel || !message.params.data) {
+      return;
+    }
+
+    // 获取频道和数据 / Get channel and data
+    const channel = message.params.channel;
+    const data = message.params.data;
+
+    // 根据频道类型处理 / Handle based on channel type
+    if (channel.startsWith('ticker.')) {
+      // 处理行情数据 / Handle ticker data
+      this._processTicker('deribit', { channel, data });
+    } else if (channel.startsWith('book.')) {
+      // 处理深度数据 / Handle depth data
+      this._processDepth('deribit', { channel, data });
+    } else if (channel.startsWith('trades.')) {
+      // 处理成交数据 / Handle trade data
+      this._processTrade('deribit', { channel, data });
+    } else if (channel.startsWith('perpetual.')) {
+      // 处理永续合约数据 (资金费率) / Handle perpetual data (funding rate)
+      this._processFundingRate('deribit', { channel, data });
+    } else if (channel.startsWith('chart.trades.')) {
+      // 处理K线数据 / Handle kline data
+      this._processKline('deribit', { channel, data });
     }
   }
 
@@ -1703,6 +1846,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'okx':
           return this._normalizeOKXTicker(message);
 
+        case 'deribit':
+          return this._normalizeDeribitTicker(message);
+
         default:
           return null;
       }
@@ -1838,6 +1984,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'okx':
           return this._normalizeOKXDepth(message);
 
+        case 'deribit':
+          return this._normalizeDeribitDepth(message);
+
         default:
           return null;
       }
@@ -1965,6 +2114,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'okx':
           return this._normalizeOKXTrade(message);
 
+        case 'deribit':
+          return this._normalizeDeribitTrade(message);
+
         default:
           return null;
       }
@@ -2079,6 +2231,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'okx':
           return this._normalizeOKXFundingRate(message);
 
+        case 'deribit':
+          return this._normalizeDeribitFundingRate(message);
+
         default:
           return null;
       }
@@ -2159,6 +2314,9 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'okx':
           return this._normalizeOKXKline(message);
+
+        case 'deribit':
+          return this._normalizeDeribitKline(message);
 
         default:
           return null;
@@ -2271,6 +2429,204 @@ export class MarketDataEngine extends EventEmitter {
     };
   }
 
+  /**
+   * 标准化 Deribit 行情数据
+   * Normalize Deribit ticker data
+   *
+   * Deribit WebSocket 推送格式 / Deribit WebSocket push format:
+   * { channel: 'ticker.BTC-PERPETUAL.100ms', data: { ... } }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeDeribitTicker(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const channel = message.channel;
+
+    // 从频道提取交易对 / Extract symbol from channel
+    // 格式: ticker.BTC-PERPETUAL.100ms -> BTC-PERPETUAL
+    const symbolMatch = channel.match(/ticker\.(.+)\.100ms/);
+    const deribitSymbol = symbolMatch ? symbolMatch[1] : '';
+    const symbol = this._deribitToStandardSymbol(deribitSymbol);
+
+    return {
+      exchange: 'deribit',                           // 交易所 / Exchange
+      symbol,                                         // 交易对 / Trading pair
+      last: parseFloat(data.last_price || 0),        // 最新价 / Last price
+      bid: parseFloat(data.best_bid_price || 0),     // 最佳买价 / Best bid
+      bidSize: parseFloat(data.best_bid_amount || 0), // 最佳买量 / Best bid size
+      ask: parseFloat(data.best_ask_price || 0),     // 最佳卖价 / Best ask
+      askSize: parseFloat(data.best_ask_amount || 0), // 最佳卖量 / Best ask size
+      open: parseFloat(data.open_interest || 0),     // 持仓量 / Open interest (Deribit 没有 24h open)
+      high: parseFloat(data.max_price || 0),         // 最高价 / High price
+      low: parseFloat(data.min_price || 0),          // 最低价 / Low price
+      volume: parseFloat(data.stats?.volume || 0),   // 成交量 / Volume
+      quoteVolume: parseFloat(data.stats?.volume_usd || 0), // 成交额 / Quote volume
+      change: 0,                                      // Deribit 不直接提供 / Not directly provided
+      changePercent: parseFloat(data.stats?.price_change || 0), // 涨跌幅 / Price change percent
+      markPrice: parseFloat(data.mark_price || 0),   // 标记价格 / Mark price
+      indexPrice: parseFloat(data.index_price || 0), // 指数价格 / Index price
+      fundingRate: parseFloat(data.current_funding || 0), // 当前资金费率 / Current funding rate
+      exchangeTimestamp: data.timestamp,              // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                     // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Deribit 深度数据
+   * Normalize Deribit depth data
+   *
+   * Deribit WebSocket 推送格式 / Deribit WebSocket push format:
+   * { channel: 'book.BTC-PERPETUAL.10.100ms', data: { bids: [...], asks: [...] } }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeDeribitDepth(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const channel = message.channel;
+
+    // 从频道提取交易对 / Extract symbol from channel
+    // 格式: book.BTC-PERPETUAL.10.100ms -> BTC-PERPETUAL
+    const symbolMatch = channel.match(/book\.(.+)\.\d+\.100ms/);
+    const deribitSymbol = symbolMatch ? symbolMatch[1] : '';
+    const symbol = this._deribitToStandardSymbol(deribitSymbol);
+
+    return {
+      exchange: 'deribit',                    // 交易所 / Exchange
+      symbol,                                  // 交易对 / Trading pair
+      // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
+      // Deribit 格式: [action, price, amount] -> [price, amount]
+      bids: (data.bids || []).map(item => [
+        parseFloat(Array.isArray(item) ? item[1] : item.price),
+        parseFloat(Array.isArray(item) ? item[2] : item.amount),
+      ]),
+      // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
+      asks: (data.asks || []).map(item => [
+        parseFloat(Array.isArray(item) ? item[1] : item.price),
+        parseFloat(Array.isArray(item) ? item[2] : item.amount),
+      ]),
+      exchangeTimestamp: data.timestamp,       // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),              // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Deribit 成交数据
+   * Normalize Deribit trade data
+   *
+   * Deribit WebSocket 推送格式 / Deribit WebSocket push format:
+   * { channel: 'trades.BTC-PERPETUAL.100ms', data: [{ trade_id, price, amount, direction, ... }] }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeDeribitTrade(message) {
+    // 获取数据数组 / Get data array
+    const dataArray = Array.isArray(message.data) ? message.data : [message.data];
+    const channel = message.channel;
+
+    // 从频道提取交易对 / Extract symbol from channel
+    // 格式: trades.BTC-PERPETUAL.100ms -> BTC-PERPETUAL
+    const symbolMatch = channel.match(/trades\.(.+)\.100ms/);
+    const deribitSymbol = symbolMatch ? symbolMatch[1] : '';
+    const symbol = this._deribitToStandardSymbol(deribitSymbol);
+
+    // 标准化每笔成交 / Normalize each trade
+    return dataArray.map(data => ({
+      exchange: 'deribit',                       // 交易所 / Exchange
+      symbol,                                     // 交易对 / Trading pair
+      tradeId: data.trade_id?.toString() || '',  // 成交 ID / Trade ID
+      price: parseFloat(data.price || 0),        // 成交价格 / Trade price
+      amount: parseFloat(data.amount || 0),      // 成交数量 / Trade amount
+      side: data.direction || 'buy',             // 主动方向 / Aggressor side
+      exchangeTimestamp: data.timestamp,          // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                 // 本地时间戳 / Local timestamp
+    }));
+  }
+
+  /**
+   * 标准化 Deribit 资金费率数据
+   * Normalize Deribit funding rate data
+   *
+   * Deribit WebSocket 推送格式 / Deribit WebSocket push format:
+   * { channel: 'perpetual.BTC-PERPETUAL.100ms', data: { funding, ... } }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的资金费率数据 / Normalized funding rate data
+   * @private
+   */
+  _normalizeDeribitFundingRate(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const channel = message.channel;
+
+    // 从频道提取交易对 / Extract symbol from channel
+    // 格式: perpetual.BTC-PERPETUAL.100ms -> BTC-PERPETUAL
+    const symbolMatch = channel.match(/perpetual\.(.+)\.100ms/);
+    const deribitSymbol = symbolMatch ? symbolMatch[1] : '';
+    const symbol = this._deribitToStandardSymbol(deribitSymbol);
+
+    return {
+      exchange: 'deribit',                                // 交易所 / Exchange
+      symbol,                                              // 交易对 / Trading pair
+      markPrice: parseFloat(data.mark_price || 0),        // 标记价格 / Mark price
+      indexPrice: parseFloat(data.index_price || 0),      // 指数价格 / Index price
+      fundingRate: parseFloat(data.current_funding || 0), // 当前资金费率 / Current funding rate
+      interest: parseFloat(data.interest || 0),           // 利率 / Interest rate
+      nextFundingTime: null,                               // Deribit 不提供 / Not provided by Deribit
+      exchangeTimestamp: data.timestamp,                   // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                          // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Deribit K线数据
+   * Normalize Deribit kline data
+   *
+   * Deribit WebSocket 推送格式 / Deribit WebSocket push format:
+   * { channel: 'chart.trades.BTC-PERPETUAL.60', data: { open, high, low, close, volume, ... } }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeDeribitKline(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const channel = message.channel;
+
+    // 从频道提取交易对和时间间隔 / Extract symbol and interval from channel
+    // 格式: chart.trades.BTC-PERPETUAL.60 -> BTC-PERPETUAL, 60
+    const channelMatch = channel.match(/chart\.trades\.(.+)\.(\d+)/);
+    const deribitSymbol = channelMatch ? channelMatch[1] : '';
+    const intervalMinutes = channelMatch ? parseInt(channelMatch[2]) : 60;
+    const symbol = this._deribitToStandardSymbol(deribitSymbol);
+
+    return {
+      exchange: 'deribit',                   // 交易所 / Exchange
+      symbol,                                // 交易对 / Trading pair
+      interval: `${intervalMinutes}m`,       // 时间间隔 / Time interval
+      openTime: data.tick,                   // 开盘时间 / Open time
+      closeTime: data.tick + intervalMinutes * 60 * 1000, // 收盘时间 / Close time
+      open: parseFloat(data.open || 0),      // 开盘价 / Open price
+      high: parseFloat(data.high || 0),      // 最高价 / High price
+      low: parseFloat(data.low || 0),        // 最低价 / Low price
+      close: parseFloat(data.close || 0),    // 收盘价 / Close price
+      volume: parseFloat(data.volume || 0),  // 成交量 / Volume
+      quoteVolume: parseFloat(data.cost || 0), // 成交额 / Quote volume
+      trades: 0,                              // Deribit 不提供 / Not provided by Deribit
+      isClosed: true,                         // K 线是否收盘 / Is candle closed
+      exchangeTimestamp: data.tick,           // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),             // 本地时间戳 / Local timestamp
+    };
+  }
+
   // ============================================
   // 私有方法 - 交易对转换 / Private Methods - Symbol Conversion
   // ============================================
@@ -2343,6 +2699,40 @@ export class MarketDataEngine extends EventEmitter {
 
     // 如果无法解析，返回原始格式 / If cannot parse, return original
     return okxSymbol;
+  }
+
+  /**
+   * 将 Deribit 交易对转换为标准格式
+   * Convert Deribit symbol to standard format
+   *
+   * @param {string} deribitSymbol - Deribit 交易对 (如 BTC-PERPETUAL) / Deribit symbol
+   * @returns {string} 标准交易对 (如 BTC/USD) / Standard symbol
+   * @private
+   */
+  _deribitToStandardSymbol(deribitSymbol) {
+    // Deribit 永续合约格式: BTC-PERPETUAL -> BTC/USD
+    // Deribit perpetual format: BTC-PERPETUAL -> BTC/USD
+    if (deribitSymbol.endsWith('-PERPETUAL')) {
+      const base = deribitSymbol.replace('-PERPETUAL', '');
+      return `${base}/USD`;
+    }
+
+    // Deribit 期货格式: BTC-28MAR25 -> BTC/USD (带到期日)
+    // Deribit futures format: BTC-28MAR25 -> BTC/USD (with expiry)
+    const futuresMatch = deribitSymbol.match(/^([A-Z]+)-(\d{1,2}[A-Z]{3}\d{2})$/);
+    if (futuresMatch) {
+      return `${futuresMatch[1]}/USD`;
+    }
+
+    // Deribit 期权格式: BTC-28MAR25-50000-C -> BTC/USD (期权)
+    // Deribit options format: BTC-28MAR25-50000-C -> BTC/USD (options)
+    const optionsMatch = deribitSymbol.match(/^([A-Z]+)-/);
+    if (optionsMatch) {
+      return `${optionsMatch[1]}/USD`;
+    }
+
+    // 如果无法解析，返回原始格式 / If cannot parse, return original
+    return deribitSymbol;
   }
 
   // ============================================

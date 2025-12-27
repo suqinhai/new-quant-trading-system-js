@@ -24,7 +24,7 @@
 
 | 功能 | 描述 |
 |------|------|
-| 多交易所支持 | Binance、Bybit、OKX、Gate.io |
+| 多交易所支持 | Binance、Bybit、OKX、Gate.io、Deribit |
 | 多策略运行 | 同时运行多个交易策略 |
 | 专业回测 | 基于历史数据的策略验证 |
 | 影子交易 | 实时行情下的模拟交易 |
@@ -71,6 +71,11 @@ OKX_PASSPHRASE=您的密码
 # Gate.io
 GATE_API_KEY=您的API密钥
 GATE_SECRET=您的密钥
+
+# Deribit (专注于加密货币衍生品/期货/期权)
+DERIBIT_API_KEY=您的API密钥
+DERIBIT_API_SECRET=您的密钥
+DERIBIT_TESTNET=true
 ```
 
 ### 3. 运行回测（推荐首次使用）
@@ -128,6 +133,16 @@ exchanges: {
     sandbox: false,  // true 使用测试网
     options: {
       defaultType: 'spot',  // 'spot' | 'swap' | 'future'
+      adjustForTimeDifference: true
+    }
+  },
+  deribit: {
+    enabled: true,
+    apiKey: process.env.DERIBIT_API_KEY,
+    secret: process.env.DERIBIT_API_SECRET,
+    sandbox: process.env.DERIBIT_TESTNET === 'true',  // true 使用测试网
+    options: {
+      defaultType: 'swap',  // 'swap' | 'future' | 'option'
       adjustForTimeDifference: true
     }
   }
