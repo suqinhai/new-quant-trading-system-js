@@ -550,52 +550,110 @@ class TradingSystemRunner extends EventEmitter {
    * @private
    */
   async _initExchange() {
-    // 获取交易所名称 / Get exchange name
-    const exchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
+    // 初始化交易所映射 / Initialize exchanges map
+    this.exchanges = new Map();
 
-    // 输出日志 / Output log
-    this._log('info', `连接交易所: ${exchangeName} / Connecting exchange: ${exchangeName}`);
+    // 获取主交易所名称 / Get primary exchange name
+    const primaryExchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
 
-    // 获取交易所配置 / Get exchange configuration
-    const exchangeConfig = this.config.exchange?.[exchangeName] || {};
+    // 获取所有支持的交易所列表 / Get all supported exchanges
+    const supportedExchanges = ['binance', 'okx', 'bybit'];
 
-    // 获取 API 密钥 (支持多种环境变量命名) / Get API credentials (support multiple env var naming)
-    const upperName = exchangeName.toUpperCase();
-    const apiKey = exchangeConfig.apiKey ||
-                   process.env[`${upperName}_API_KEY`];
-    const secret = exchangeConfig.secret ||
-                   process.env[`${upperName}_SECRET`] ||
-                   process.env[`${upperName}_API_SECRET`];
-    const sandbox = exchangeConfig.sandbox ||
-                    process.env[`${upperName}_SANDBOX`] === 'true' ||
-                    process.env[`${upperName}_TESTNET`] === 'true';
+    // 遍历所有支持的交易所 / Iterate all supported exchanges
+    for (const exchangeName of supportedExchanges) {
+      // 获取交易所配置 / Get exchange configuration
+      const exchangeConfig = this.config.exchange?.[exchangeName] || {};
 
-    // 创建交易所实例 / Create exchange instance
-    this.exchange = ExchangeFactory.create(exchangeName, {
-      // API 密钥 / API key
-      apiKey,
+      // 检查是否启用 / Check if enabled
+      const isEnabled = exchangeConfig.enabled !== false;
 
-      // API 密钥 / API secret
-      secret,
+      // 获取 API 密钥 (支持多种环境变量命名) / Get API credentials
+      const upperName = exchangeName.toUpperCase();
+      const apiKey = exchangeConfig.apiKey ||
+                     process.env[`${upperName}_API_KEY`];
+      const secret = exchangeConfig.secret ||
+                     process.env[`${upperName}_SECRET`] ||
+                     process.env[`${upperName}_API_SECRET`];
+      // OKX 需要 passphrase / OKX requires passphrase
+      const password = exchangeConfig.password ||
+                       process.env[`${upperName}_PASSPHRASE`] ||
+                       process.env[`${upperName}_PASSWORD`];
 
-      // 是否沙盒模式 / Sandbox mode
-      sandbox,
+      // 如果没有 API 密钥或未启用，跳过 / If no API key or not enabled, skip
+      if (!isEnabled || !apiKey || !secret) {
+        if (this.options.verbose) {
+          this._log('debug', `跳过交易所 ${exchangeName}: enabled=${isEnabled}, hasKey=${!!apiKey}, hasSecret=${!!secret}`);
+        }
+        continue;
+      }
 
-      // 默认类型 (合约) / Default type (futures)
-      defaultType: 'swap',
+      // 输出日志 / Output log
+      this._log('info', `连接交易所: ${exchangeName} / Connecting exchange: ${exchangeName}`);
 
-      // 选项 / Options
-      options: {
-        // 默认保证金模式 / Default margin mode
-        defaultMarginMode: 'cross',
-      },
-    });
+      // 调试：显示密码状态 / Debug: show password status
+      if (exchangeName === 'okx') {
+        this._log('debug', `OKX 配置: hasPassword=${!!password}, fromConfig=${!!exchangeConfig.password}, fromEnv=${!!process.env.OKX_PASSPHRASE}`);
+      }
 
-    // 连接交易所并加载市场信息 / Connect exchange and load market info
-    await this.exchange.connect();
+      const sandbox = exchangeConfig.sandbox ||
+                      process.env[`${upperName}_SANDBOX`] === 'true' ||
+                      process.env[`${upperName}_TESTNET`] === 'true';
 
-    // 输出日志 / Output log
-    this._log('info', `交易所连接成功: ${exchangeName} / Exchange connected: ${exchangeName}`);
+      try {
+        // 创建交易所实例 / Create exchange instance
+        const exchangeOptions = {
+          // API 密钥 / API key
+          apiKey,
+
+          // API 密钥 / API secret
+          secret,
+
+          // 是否沙盒模式 / Sandbox mode
+          sandbox,
+
+          // 默认类型 (合约) / Default type (futures)
+          defaultType: 'swap',
+
+          // 选项 / Options
+          options: {
+            // 默认保证金模式 / Default margin mode
+            defaultMarginMode: 'cross',
+          },
+        };
+
+        // OKX 需要 password (passphrase) / OKX requires password (passphrase)
+        if (password) {
+          exchangeOptions.password = password;
+        }
+
+        const exchange = ExchangeFactory.create(exchangeName, exchangeOptions);
+
+        // 连接交易所并加载市场信息 / Connect exchange and load market info
+        await exchange.connect();
+
+        // 保存到映射 / Save to map
+        this.exchanges.set(exchangeName, exchange);
+
+        // 如果是主交易所，设置为默认 / If primary exchange, set as default
+        if (exchangeName === primaryExchangeName) {
+          this.exchange = exchange;
+        }
+
+        // 输出日志 / Output log
+        this._log('info', `交易所连接成功: ${exchangeName} / Exchange connected: ${exchangeName}`);
+
+      } catch (error) {
+        this._log('warn', `交易所 ${exchangeName} 连接失败: ${error.message} / Exchange connection failed`);
+      }
+    }
+
+    // 如果没有设置主交易所，使用第一个连接成功的 / If no primary exchange set, use first connected
+    if (!this.exchange && this.exchanges.size > 0) {
+      this.exchange = this.exchanges.values().next().value;
+    }
+
+    // 输出连接的交易所数量 / Output connected exchanges count
+    this._log('info', `已连接 ${this.exchanges.size} 个交易所 / Connected ${this.exchanges.size} exchanges: ${Array.from(this.exchanges.keys()).join(', ')}`);
   }
 
   /**
@@ -714,15 +772,10 @@ class TradingSystemRunner extends EventEmitter {
       this.strategy.setExchange(this.exchange);
     }
 
-    // 构建交易所 Map (用于多交易所策略如 FundingArbStrategy)
-    // Build exchanges Map (for multi-exchange strategies like FundingArbStrategy)
-    const exchangesMap = new Map();
-    const exchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
-    exchangesMap.set(exchangeName, this.exchange);
-
-    // 调用策略的 onInit 方法 (如果存在) / Call strategy's onInit method (if exists)
+    // 调用策略的 onInit 方法，传递所有已连接的交易所
+    // Call strategy's onInit method with all connected exchanges
     if (this.strategy.onInit && typeof this.strategy.onInit === 'function') {
-      await this.strategy.onInit(exchangesMap);
+      await this.strategy.onInit(this.exchanges);
     }
 
     // 初始化策略 / Initialize strategy

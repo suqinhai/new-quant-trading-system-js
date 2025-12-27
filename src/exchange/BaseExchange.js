@@ -112,6 +112,7 @@ export class BaseExchange extends EventEmitter {
     console.log(`[${this.name}] 配置信息 / Config info:`, {
       hasApiKey: !!this.config.apiKey,
       hasSecret: !!this.config.secret,
+      hasPassword: !!this.config.password,
       sandbox: this.config.sandbox,
       defaultType: this.config.defaultType,
     });
@@ -187,6 +188,9 @@ export class BaseExchange extends EventEmitter {
         code: error?.code,
         type: typeof error,
       });
+      // 打印完整堆栈 / Print full stack trace
+      console.error(`[${this.name}] 完整堆栈 / Full stack trace:`);
+      console.error(error?.stack);
 
       // 发出错误事件 / Emit error event
       this.emit('error', { type: 'connect', error: this._normalizeError(error) });

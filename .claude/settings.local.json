@@ -104,7 +104,12 @@
       "Bash(timeout 240 npx vitest:*)",
       "Bash(npx vitest run --reporter=verbose)",
       "Bash(npx vitest run)",
-      "Bash(npx vitest run --reporter=json)"
+      "Bash(npx vitest run --reporter=json)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(node scripts/test-okx-connection.js:*)",
+      "Bash(node scripts/test-binance-connection.js:*)",
+      "Bash(node scripts/diagnose-api.js:*)"
     ]
   }
 }
