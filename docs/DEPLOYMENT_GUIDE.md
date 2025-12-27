@@ -78,7 +78,7 @@ clickhouse-client --query "SELECT version()"
 
 # 设置解密MASTER_KEY
 nano ~/.bashrc
-export MASTER_KEY="你的主密码"
+export MASTER_KEY='你的主密码'
 source ~/.bashrc
 echo "$MASTER_KEY"
 
