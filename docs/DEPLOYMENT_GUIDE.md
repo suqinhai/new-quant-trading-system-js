@@ -80,6 +80,8 @@ clickhouse-client --query "SELECT version()"
 nano ~/.bashrc
 export MASTER_KEY="你的主密码"
 source ~/.bashrc
+echo "$MASTER_KEY"
+
 
 
 ### 网络配置
