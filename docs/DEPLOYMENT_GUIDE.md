@@ -67,8 +67,9 @@ sudo apt-get update
 sudo apt-get install -y clickhouse-server clickhouse-client
 
 # 启动服务
-sudo systemctl start clickhouse-server
 sudo systemctl enable clickhouse-server
+sudo systemctl start clickhouse-server
+
 
 # 验证安装
 clickhouse-client --query "SELECT version()"
