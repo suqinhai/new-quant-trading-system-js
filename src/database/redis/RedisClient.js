@@ -31,12 +31,30 @@ export const KEY_PREFIX = {
 };
 
 /**
+ * 构建 Redis URL
+ * Build Redis URL from environment variables
+ */
+function buildRedisUrl() {
+  if (process.env.REDIS_URL) {
+    return process.env.REDIS_URL;
+  }
+  const host = process.env.REDIS_HOST || 'localhost';
+  const port = process.env.REDIS_PORT || '6379';
+  const password = process.env.REDIS_PASSWORD;
+
+  if (password) {
+    return `redis://:${password}@${host}:${port}`;
+  }
+  return `redis://${host}:${port}`;
+}
+
+/**
  * 默认配置
  * Default configuration
  */
 const DEFAULT_CONFIG = {
   // Redis 连接 URL
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: buildRedisUrl(),
   // 数据库索引
   database: parseInt(process.env.REDIS_DB || '0', 10),
   // 键前缀
