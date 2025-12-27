@@ -79,10 +79,10 @@ const REDIS_KEYS = {
 const DEFAULT_CONFIG = {
   // Redis 配置 / Redis configuration
   redis: {
-    host: 'localhost',        // Redis 主机 / Redis host
-    port: 6379,               // Redis 端口 / Redis port
-    password: null,           // Redis 密码 / Redis password
-    db: 0,                    // Redis 数据库 / Redis database
+    host: process.env.REDIS_HOST || 'localhost',        // Redis 主机 / Redis host
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),  // Redis 端口 / Redis port
+    password: process.env.REDIS_PASSWORD || null,       // Redis 密码 / Redis password
+    db: parseInt(process.env.REDIS_DB || '0', 10),      // Redis 数据库 / Redis database
     keyPrefix: '',            // 键前缀 / Key prefix
   },
   // 重连配置 / Reconnection configuration
