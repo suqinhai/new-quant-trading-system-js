@@ -42,21 +42,23 @@ export class OKXExchange extends BaseExchange {
    * @protected
    */
   _createExchange() {
-    // 创建并返回 CCXT OKX 实例 / Create and return CCXT OKX instance
-    return new ccxt.okx({
-      // API 认证信息 / API authentication
-      apiKey: this.config.apiKey,         // API 密钥 / API key
-      secret: this.config.secret,         // API 密钥 / API secret
-      password: this.config.password,     // OKX 特有的密码短语 / OKX-specific passphrase
+    // 调试：打印配置信息 / Debug: print config info
+    console.log(`[${this.name}] 创建交易所实例，配置: / Creating exchange instance, config:`, {
+      hasApiKey: !!this.config.apiKey,
+      hasSecret: !!this.config.secret,
+      hasPassword: !!this.config.password,
+      apiKeyType: typeof this.config.apiKey,
+      secretType: typeof this.config.secret,
+      passwordType: typeof this.config.password,
+    });
 
+    // 构建基础配置 / Build base config
+    const exchangeConfig = {
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit,
+      enableRateLimit: this.config.enableRateLimit !== false,
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout,
-
-      // 代理设置 / Proxy settings
-      proxy: this.config.proxy,
+      timeout: this.config.timeout || 30000,
 
       // 配置选项 / Configuration options
       options: {
@@ -65,7 +67,7 @@ export class OKXExchange extends BaseExchange {
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
         // option = 期权 / Options
-        defaultType: this.config.defaultType,
+        defaultType: this.config.defaultType || 'swap',
 
         // 创建市价单时不需要价格 / Market order doesn't require price
         createMarketBuyOrderRequiresPrice: false,
@@ -73,7 +75,37 @@ export class OKXExchange extends BaseExchange {
         // 合并额外选项 / Merge additional options
         ...this.config.options,
       },
+    };
+
+    // API 认证信息 - 仅在有值时添加，避免 null 导致 substring 错误
+    // API authentication - only add when has value, avoid null causing substring error
+    if (this.config.apiKey && typeof this.config.apiKey === 'string') {
+      exchangeConfig.apiKey = this.config.apiKey;
+    }
+    if (this.config.secret && typeof this.config.secret === 'string') {
+      exchangeConfig.secret = this.config.secret;
+    }
+    if (this.config.password && typeof this.config.password === 'string') {
+      exchangeConfig.password = this.config.password;
+    }
+
+    // 代理设置 - 仅在有值时添加 / Proxy settings - only add when has value
+    if (this.config.proxy) {
+      exchangeConfig.proxy = this.config.proxy;
+    }
+
+    // 调试：打印最终配置 / Debug: print final config
+    console.log(`[${this.name}] 最终交易所配置: / Final exchange config:`, {
+      hasApiKey: !!exchangeConfig.apiKey,
+      hasSecret: !!exchangeConfig.secret,
+      hasPassword: !!exchangeConfig.password,
+      enableRateLimit: exchangeConfig.enableRateLimit,
+      timeout: exchangeConfig.timeout,
+      defaultType: exchangeConfig.options?.defaultType,
     });
+
+    // 创建并返回 CCXT OKX 实例 / Create and return CCXT OKX instance
+    return new ccxt.okx(exchangeConfig);
   }
 
   // ============================================

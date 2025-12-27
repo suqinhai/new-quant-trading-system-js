@@ -722,15 +722,28 @@ export class BaseExchange extends EventEmitter {
 
         // 如果不需要重试，抛出标准化的错误 / If no retry needed, throw normalized error
         if (!shouldRetry) {
+          // 调试：打印原始 ccxt 错误的完整信息 / Debug: print full original ccxt error info
+          console.error(`[${this.name}] ❌ ${operation} 原始错误详情 / Original error details:`);
+          console.error(`[${this.name}]   消息 / Message: ${error?.message}`);
+          console.error(`[${this.name}]   名称 / Name: ${error?.name}`);
+          console.error(`[${this.name}]   代码 / Code: ${error?.code}`);
+          console.error(`[${this.name}]   原始堆栈 / Original stack:`);
+          console.error(error?.stack);
+
           // 发出错误事件 / Emit error event
           this.emit('error', {
             type: 'request',
             operation,
             error: this._normalizeError(error),
+            originalStack: error?.stack,  // 保留原始堆栈 / Keep original stack
           });
 
+          // 创建标准化错误并保留原始堆栈 / Create normalized error and keep original stack
+          const normalizedError = this._normalizeError(error);
+          normalizedError.originalStack = error?.stack;
+
           // 抛出错误 / Throw error
-          throw this._normalizeError(error);
+          throw normalizedError;
         }
 
         // 计算指数退避延迟 / Calculate exponential backoff delay
