@@ -37,12 +37,12 @@ sudo apt update
 sudo apt install git -y
 
 ```bash
-# Node.js 18+
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Node.js 20+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # 验证安装
-node --version  # >= 18.0.0
+node --version  # >= 20.0.0
 npm --version   # >= 8.0.0
 
 # PM2 进程管理器
