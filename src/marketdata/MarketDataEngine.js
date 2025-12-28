@@ -50,6 +50,12 @@ const WS_ENDPOINTS = {
     public: 'wss://www.deribit.com/ws/api/v2',          // 生产环境 / Production
     testnet: 'wss://test.deribit.com/ws/api/v2',        // 测试网 / Testnet
   },
+  // Gate.io 端点 / Gate.io endpoints
+  gate: {
+    spot: 'wss://api.gateio.ws/ws/v4/',                 // 现货 / Spot
+    futures: 'wss://fx-ws.gateio.ws/v4/ws/usdt',        // USDT 永续 / USDT perpetual
+    delivery: 'wss://fx-ws.gateio.ws/v4/ws/btc',        // BTC 永续 / BTC perpetual
+  },
 };
 
 /**
@@ -802,6 +808,12 @@ export class MarketDataEngine extends EventEmitter {
           ? WS_ENDPOINTS.deribit.testnet
           : WS_ENDPOINTS.deribit.public;
 
+      case 'gate':
+        // Gate.io: 根据交易类型选择端点 / Select endpoint based on trading type
+        return tradingType === 'spot'
+          ? WS_ENDPOINTS.gate.spot
+          : WS_ENDPOINTS.gate.futures;
+
       default:
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
@@ -915,6 +927,13 @@ export class MarketDataEngine extends EventEmitter {
             id: Date.now(),
             params: {},
           }));
+        } else if (exchange === 'gate') {
+          // Gate.io 使用 ping 消息 / Gate.io uses ping message
+          // 现货和合约使用不同的格式 / Spot and futures use different formats
+          const pingMessage = this.config.tradingType === 'spot'
+            ? { time: Math.floor(Date.now() / 1000), channel: 'spot.ping' }
+            : { time: Math.floor(Date.now() / 1000), channel: 'futures.ping' };
+          ws.send(JSON.stringify(pingMessage));
         } else {
           // Binance 使用 WebSocket ping / Binance uses WebSocket ping
           ws.ping();
@@ -1096,6 +1115,9 @@ export class MarketDataEngine extends EventEmitter {
       case 'deribit':
         return this._buildDeribitSubscribeMessage(symbol, dataType);
 
+      case 'gate':
+        return this._buildGateSubscribeMessage(symbol, dataType);
+
       default:
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
     }
@@ -1132,6 +1154,10 @@ export class MarketDataEngine extends EventEmitter {
           ...subMsg,
           method: subMsg.method.replace('subscribe', 'unsubscribe'),
         };
+
+      case 'gate':
+        // Gate.io 取消订阅使用相同格式但 event 为 unsubscribe / Gate.io unsubscribe uses same format but event is unsubscribe
+        return { ...subMsg, event: 'unsubscribe' };
 
       default:
         return subMsg;
@@ -1360,6 +1386,84 @@ export class MarketDataEngine extends EventEmitter {
   }
 
   /**
+   * 构建 Gate.io 订阅消息
+   * Build Gate.io subscription message
+   *
+   * Gate.io WebSocket 订阅格式 / Gate.io WebSocket subscription format:
+   * 现货 / Spot: { time, channel: 'spot.xxx', event: 'subscribe', payload: [...] }
+   * 合约 / Futures: { time, channel: 'futures.xxx', event: 'subscribe', payload: [...] }
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildGateSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> BTC_USDT (现货) 或 BTC_USDT (合约)
+    // Convert symbol format: BTC/USDT -> BTC_USDT (spot) or BTC_USDT (futures)
+    const gateSymbol = symbol.replace('/', '_');
+
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+    const prefix = isSpot ? 'spot' : 'futures';
+
+    // 根据数据类型构建频道和 payload / Build channel and payload based on data type
+    let channel;
+    let payload;
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        channel = `${prefix}.tickers`;
+        payload = [gateSymbol];
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 / Depth data
+        // 现货: spot.order_book_update, 合约: futures.order_book_update
+        // Spot: spot.order_book_update, Futures: futures.order_book_update
+        channel = isSpot ? 'spot.order_book_update' : 'futures.order_book_update';
+        // 参数: [symbol, interval, depth] / Args: [symbol, interval, depth]
+        payload = isSpot ? [gateSymbol, '100ms'] : [gateSymbol, '20', '0'];
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        channel = `${prefix}.trades`;
+        payload = [gateSymbol];
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 资金费率 (仅合约) / Funding rate (futures only)
+        if (isSpot) {
+          throw new Error('资金费率仅适用于合约 / Funding rate only available for futures');
+        }
+        // 使用 tickers 频道获取资金费率信息 / Use tickers channel to get funding rate info
+        channel = 'futures.tickers';
+        payload = [gateSymbol];
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 / Kline data
+        channel = `${prefix}.candlesticks`;
+        // 参数: [interval, symbol] / Args: [interval, symbol]
+        payload = ['1h', gateSymbol];
+        break;
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 Gate.io 格式的订阅消息 / Return Gate.io format subscription message
+    return {
+      time: Math.floor(Date.now() / 1000),  // Unix 时间戳 (秒) / Unix timestamp (seconds)
+      channel,                               // 频道名称 / Channel name
+      event: 'subscribe',                    // 订阅事件 / Subscribe event
+      payload,                               // 订阅参数 / Subscription payload
+    };
+  }
+
+  /**
    * 获取订阅数量统计
    * Get subscription counts
    *
@@ -1422,6 +1526,10 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'deribit':
           this._handleDeribitMessage(message);
+          break;
+
+        case 'gate':
+          this._handleGateMessage(message);
           break;
       }
 
@@ -1625,6 +1733,58 @@ export class MarketDataEngine extends EventEmitter {
     } else if (channel.startsWith('chart.trades.')) {
       // 处理K线数据 / Handle kline data
       this._processKline('deribit', { channel, data });
+    }
+  }
+
+  /**
+   * 处理 Gate.io 消息
+   * Handle Gate.io message
+   *
+   * Gate.io WebSocket 推送格式 / Gate.io WebSocket push format:
+   * { time, channel: 'spot.xxx' | 'futures.xxx', event: 'update', result: {...} }
+   *
+   * @param {Object} message - 消息对象 / Message object
+   * @private
+   */
+  _handleGateMessage(message) {
+    // 处理 pong 响应 / Handle pong response
+    if (message.channel && (message.channel.endsWith('.pong') || message.channel.endsWith('.ping'))) {
+      return;
+    }
+
+    // 忽略订阅响应 / Ignore subscription responses
+    if (message.event === 'subscribe' || message.event === 'unsubscribe') {
+      return;
+    }
+
+    // 检查是否是更新消息 / Check if it's an update message
+    if (message.event !== 'update' || !message.result) {
+      return;
+    }
+
+    // 获取频道和数据 / Get channel and result
+    const channel = message.channel;
+    const result = message.result;
+
+    // 判断频道类型 / Determine channel type
+    // 现货频道: spot.xxx, 合约频道: futures.xxx / Spot channels: spot.xxx, Futures channels: futures.xxx
+    if (channel.endsWith('.tickers')) {
+      // 处理行情数据 / Handle ticker data
+      // 同时检查是否包含资金费率信息 (合约) / Also check for funding rate info (futures)
+      this._processTicker('gate', { channel, result });
+      // 如果是合约，也处理资金费率 / If futures, also process funding rate
+      if (channel.startsWith('futures.') && result.funding_rate !== undefined) {
+        this._processFundingRate('gate', { channel, result });
+      }
+    } else if (channel.endsWith('.order_book_update') || channel.endsWith('.order_book')) {
+      // 处理深度数据 / Handle depth data
+      this._processDepth('gate', { channel, result });
+    } else if (channel.endsWith('.trades')) {
+      // 处理成交数据 / Handle trade data
+      this._processTrade('gate', { channel, result });
+    } else if (channel.endsWith('.candlesticks')) {
+      // 处理K线数据 / Handle kline data
+      this._processKline('gate', { channel, result });
     }
   }
 
@@ -1849,6 +2009,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'deribit':
           return this._normalizeDeribitTicker(message);
 
+        case 'gate':
+          return this._normalizeGateTicker(message);
+
         default:
           return null;
       }
@@ -1987,6 +2150,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'deribit':
           return this._normalizeDeribitDepth(message);
 
+        case 'gate':
+          return this._normalizeGateDepth(message);
+
         default:
           return null;
       }
@@ -2117,6 +2283,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'deribit':
           return this._normalizeDeribitTrade(message);
 
+        case 'gate':
+          return this._normalizeGateTrade(message);
+
         default:
           return null;
       }
@@ -2234,6 +2403,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'deribit':
           return this._normalizeDeribitFundingRate(message);
 
+        case 'gate':
+          return this._normalizeGateFundingRate(message);
+
         default:
           return null;
       }
@@ -2317,6 +2489,9 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'deribit':
           return this._normalizeDeribitKline(message);
+
+        case 'gate':
+          return this._normalizeGateKline(message);
 
         default:
           return null;
@@ -2627,6 +2802,242 @@ export class MarketDataEngine extends EventEmitter {
     };
   }
 
+  /**
+   * 标准化 Gate.io 行情数据
+   * Normalize Gate.io ticker data
+   *
+   * Gate.io WebSocket 推送格式 / Gate.io WebSocket push format:
+   * 现货 / Spot: { currency_pair, last, ... }
+   * 合约 / Futures: { contract, last, funding_rate, ... }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeGateTicker(message) {
+    // 获取数据 / Get data
+    const data = message.result;
+    const channel = message.channel;
+    const isSpot = channel.startsWith('spot.');
+
+    // 转换交易对格式 / Convert symbol format
+    // 现货: currency_pair (BTC_USDT), 合约: contract (BTC_USDT)
+    const gateSymbol = isSpot ? data.currency_pair : data.contract;
+    const symbol = this._gateToStandardSymbol(gateSymbol);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.t ? parseInt(data.t) * 1000 : Date.now();
+
+    return {
+      exchange: 'gate',                         // 交易所 / Exchange
+      symbol,                                    // 交易对 / Trading pair
+      last: parseFloat(data.last || 0),         // 最新价 / Last price
+      bid: parseFloat(data.highest_bid || 0),   // 最佳买价 / Best bid
+      bidSize: 0,                                // Gate.io ticker 不提供 / Not provided
+      ask: parseFloat(data.lowest_ask || 0),    // 最佳卖价 / Best ask
+      askSize: 0,                                // Gate.io ticker 不提供 / Not provided
+      open: parseFloat(data.open_24h || data.last || 0), // 开盘价 / Open price
+      high: parseFloat(data.high_24h || 0),     // 最高价 / High price
+      low: parseFloat(data.low_24h || 0),       // 最低价 / Low price
+      volume: parseFloat(data.base_volume || data.volume_24h || 0), // 成交量 / Volume
+      quoteVolume: parseFloat(data.quote_volume || data.volume_24h_usd || 0), // 成交额 / Quote volume
+      change: parseFloat(data.change_utc8 || data.change_percentage || 0), // 涨跌额 / Price change
+      changePercent: parseFloat(data.change_percentage || 0), // 涨跌幅 / Price change percent
+      // 合约特有字段 / Futures-specific fields
+      markPrice: data.mark_price ? parseFloat(data.mark_price) : null, // 标记价格 / Mark price
+      indexPrice: data.index_price ? parseFloat(data.index_price) : null, // 指数价格 / Index price
+      fundingRate: data.funding_rate ? parseFloat(data.funding_rate) : null, // 资金费率 / Funding rate
+      nextFundingTime: data.funding_rate_indicative ? Date.now() + 8 * 3600 * 1000 : null, // 下次资金费率时间 / Next funding time
+      exchangeTimestamp: timestamp,              // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Gate.io 深度数据
+   * Normalize Gate.io depth data
+   *
+   * Gate.io WebSocket 推送格式 / Gate.io WebSocket push format:
+   * { s: symbol, bids: [[price, amount]], asks: [[price, amount]], ... }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeGateDepth(message) {
+    // 获取数据 / Get data
+    const data = message.result;
+    const channel = message.channel;
+    const isSpot = channel.startsWith('spot.');
+
+    // 转换交易对格式 / Convert symbol format
+    const gateSymbol = data.s || data.contract;
+    const symbol = this._gateToStandardSymbol(gateSymbol);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.t ? parseInt(data.t) * 1000 : Date.now();
+
+    return {
+      exchange: 'gate',                          // 交易所 / Exchange
+      symbol,                                     // 交易对 / Trading pair
+      // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
+      bids: (data.bids || []).map(item => {
+        // Gate.io 格式: [price, amount] 或 { p: price, s: amount }
+        if (Array.isArray(item)) {
+          return [parseFloat(item[0]), parseFloat(item[1])];
+        }
+        return [parseFloat(item.p || 0), parseFloat(item.s || 0)];
+      }),
+      // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
+      asks: (data.asks || []).map(item => {
+        if (Array.isArray(item)) {
+          return [parseFloat(item[0]), parseFloat(item[1])];
+        }
+        return [parseFloat(item.p || 0), parseFloat(item.s || 0)];
+      }),
+      exchangeTimestamp: timestamp,               // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                 // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Gate.io 成交数据
+   * Normalize Gate.io trade data
+   *
+   * Gate.io WebSocket 推送格式 / Gate.io WebSocket push format:
+   * 现货 / Spot: { id, create_time, side, currency_pair, amount, price }
+   * 合约 / Futures: { id, create_time, contract, size, price }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeGateTrade(message) {
+    // 获取数据 / Get data
+    const result = message.result;
+    const channel = message.channel;
+    const isSpot = channel.startsWith('spot.');
+
+    // Gate.io 可能返回单个成交或成交数组 / Gate.io may return single trade or trade array
+    const trades = Array.isArray(result) ? result : [result];
+
+    // 标准化每笔成交 / Normalize each trade
+    return trades.map(data => {
+      // 转换交易对格式 / Convert symbol format
+      const gateSymbol = isSpot ? data.currency_pair : data.contract;
+      const symbol = this._gateToStandardSymbol(gateSymbol);
+
+      // 获取时间戳 / Get timestamp
+      const timestamp = data.create_time
+        ? parseInt(data.create_time) * 1000
+        : (data.create_time_ms ? parseInt(data.create_time_ms) : Date.now());
+
+      return {
+        exchange: 'gate',                        // 交易所 / Exchange
+        symbol,                                   // 交易对 / Trading pair
+        tradeId: data.id?.toString() || '',      // 成交 ID / Trade ID
+        price: parseFloat(data.price || 0),      // 成交价格 / Trade price
+        amount: parseFloat(data.amount || data.size || 0), // 成交数量 / Trade amount
+        side: data.side || (data.size > 0 ? 'buy' : 'sell'), // 主动方向 / Aggressor side
+        exchangeTimestamp: timestamp,             // 交易所时间戳 / Exchange timestamp
+        localTimestamp: Date.now(),               // 本地时间戳 / Local timestamp
+      };
+    });
+  }
+
+  /**
+   * 标准化 Gate.io 资金费率数据
+   * Normalize Gate.io funding rate data
+   *
+   * Gate.io 资金费率在 tickers 中推送 / Gate.io funding rate is pushed in tickers
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的资金费率数据 / Normalized funding rate data
+   * @private
+   */
+  _normalizeGateFundingRate(message) {
+    // 获取数据 / Get data
+    const data = message.result;
+
+    // 转换交易对格式 / Convert symbol format
+    const gateSymbol = data.contract;
+    const symbol = this._gateToStandardSymbol(gateSymbol);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.t ? parseInt(data.t) * 1000 : Date.now();
+
+    return {
+      exchange: 'gate',                               // 交易所 / Exchange
+      symbol,                                          // 交易对 / Trading pair
+      markPrice: parseFloat(data.mark_price || 0),    // 标记价格 / Mark price
+      indexPrice: parseFloat(data.index_price || 0),  // 指数价格 / Index price
+      fundingRate: parseFloat(data.funding_rate || 0), // 当前资金费率 / Current funding rate
+      fundingRateIndicative: data.funding_rate_indicative
+        ? parseFloat(data.funding_rate_indicative)
+        : null,                                        // 预测资金费率 / Predicted funding rate
+      nextFundingTime: Date.now() + 8 * 3600 * 1000,  // 下次资金费率时间 (8小时后) / Next funding time (8h later)
+      exchangeTimestamp: timestamp,                    // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                      // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Gate.io K线数据
+   * Normalize Gate.io kline data
+   *
+   * Gate.io WebSocket K线格式 / Gate.io WebSocket kline format:
+   * { t, v, c, h, l, o, n } 或 { t, v, c, h, l, o, a }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeGateKline(message) {
+    // 获取数据 / Get data
+    const data = message.result;
+    const channel = message.channel;
+    const isSpot = channel.startsWith('spot.');
+
+    // 转换交易对格式 / Convert symbol format
+    // K线数据中使用 n (name) 字段存储交易对 / Kline data uses n (name) field for symbol
+    const gateSymbol = data.n || data.contract;
+    const symbol = this._gateToStandardSymbol(gateSymbol);
+
+    // 获取时间戳 / Get timestamp
+    const openTime = data.t ? parseInt(data.t) * 1000 : Date.now();
+
+    // 获取时间间隔 (从 a 字段或默认 1 小时) / Get interval (from a field or default 1 hour)
+    const interval = data.a || '1h';
+
+    // 计算收盘时间 (根据时间间隔) / Calculate close time (based on interval)
+    let intervalMs = 3600000; // 默认 1 小时 / Default 1 hour
+    if (interval.endsWith('m')) {
+      intervalMs = parseInt(interval) * 60 * 1000;
+    } else if (interval.endsWith('h')) {
+      intervalMs = parseInt(interval) * 3600 * 1000;
+    } else if (interval.endsWith('d')) {
+      intervalMs = parseInt(interval) * 86400 * 1000;
+    }
+
+    return {
+      exchange: 'gate',                        // 交易所 / Exchange
+      symbol,                                   // 交易对 / Trading pair
+      interval,                                 // 时间间隔 / Time interval
+      openTime,                                 // 开盘时间 / Open time
+      closeTime: openTime + intervalMs,         // 收盘时间 / Close time
+      open: parseFloat(data.o || 0),           // 开盘价 / Open price
+      high: parseFloat(data.h || 0),           // 最高价 / High price
+      low: parseFloat(data.l || 0),            // 最低价 / Low price
+      close: parseFloat(data.c || 0),          // 收盘价 / Close price
+      volume: parseFloat(data.v || 0),         // 成交量 / Volume
+      quoteVolume: parseFloat(data.v || 0) * parseFloat(data.c || 0), // 成交额 (估算) / Quote volume (estimated)
+      trades: 0,                                // Gate.io 不提供 / Not provided by Gate.io
+      isClosed: true,                           // 是否收盘 / Is candle closed
+      exchangeTimestamp: openTime,              // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),               // 本地时间戳 / Local timestamp
+    };
+  }
+
   // ============================================
   // 私有方法 - 交易对转换 / Private Methods - Symbol Conversion
   // ============================================
@@ -2733,6 +3144,33 @@ export class MarketDataEngine extends EventEmitter {
 
     // 如果无法解析，返回原始格式 / If cannot parse, return original
     return deribitSymbol;
+  }
+
+  /**
+   * 将 Gate.io 交易对转换为标准格式
+   * Convert Gate.io symbol to standard format
+   *
+   * @param {string} gateSymbol - Gate.io 交易对 (如 BTC_USDT) / Gate.io symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _gateToStandardSymbol(gateSymbol) {
+    // Gate.io 格式: BTC_USDT -> BTC/USDT
+    // Gate.io format: BTC_USDT -> BTC/USDT
+    if (!gateSymbol) {
+      return '';
+    }
+
+    // 使用下划线分割 / Split by underscore
+    const parts = gateSymbol.split('_');
+
+    // 如果有两部分，返回 BASE/QUOTE 格式 / If two parts, return BASE/QUOTE format
+    if (parts.length >= 2) {
+      return `${parts[0]}/${parts[1]}`;
+    }
+
+    // 如果无法解析，返回原始格式 / If cannot parse, return original
+    return gateSymbol;
   }
 
   // ============================================
