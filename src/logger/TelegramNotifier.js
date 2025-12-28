@@ -187,6 +187,11 @@ const DEFAULT_CONFIG = {
   // 消息前缀 / Message prefix
   messagePrefix: '🤖 量化交易系统',
 
+  // 服务名称 (用于区分不同实例) / Service name (to distinguish different instances)
+  // 优先级: SERVICE_NAME > PM2 进程名 > 空
+  // Priority: SERVICE_NAME > PM2 process name > empty
+  serviceName: process.env.SERVICE_NAME || (process.env.pm_id !== undefined ? process.env.name : ''),
+
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
@@ -882,11 +887,13 @@ export class TelegramNotifier extends EventEmitter {
       emoji = EMOJI.OFFLINE;
     }
 
-    // 构建标题 / Build title
+    // 构建标题 (带服务名) / Build title (with service name)
+    const header = this._getMessageHeader();
     const title = `${emoji} *风控警报 / Risk Alert*`;
 
     // 构建内容 / Build content
     const lines = [
+      `*${header}*`,
       title,
       '',
       `*类型:* ${alertType}`,
@@ -953,11 +960,13 @@ export class TelegramNotifier extends EventEmitter {
     const sideEmoji = trade.side === 'buy' ? EMOJI.BUY : EMOJI.SELL;
     const pnlEmoji = (trade.pnl || 0) >= 0 ? EMOJI.PROFIT : EMOJI.LOSS;
 
-    // 构建标题 / Build title
+    // 构建标题 (带服务名) / Build title (with service name)
+    const header = this._getMessageHeader();
     const title = `${sideEmoji} *交易成交 / Trade Executed*`;
 
     // 构建内容 / Build content
     const lines = [
+      `*${header}*`,
       title,
       '',
       `*交易对:* ${trade.symbol}`,
@@ -1178,8 +1187,12 @@ export class TelegramNotifier extends EventEmitter {
     const pnlEmoji = data.equity.change >= 0 ? EMOJI.UP : EMOJI.DOWN;
     const profitEmoji = data.pnl.total >= 0 ? EMOJI.PROFIT : EMOJI.LOSS;
 
+    // 获取带服务名的标题 / Get header with service name
+    const header = this._getMessageHeader();
+
     // 构建报告 / Build report
     const lines = [
+      `*${header}*`,
       `${EMOJI.CHART} *每日绩效报告 / Daily Performance Report*`,
       `📅 ${data.date}`,
       '',
@@ -1206,9 +1219,6 @@ export class TelegramNotifier extends EventEmitter {
       `最大回撤: ${(data.risk.maxDrawdown * 100).toFixed(2)}%`,
       `保证金率: ${(data.risk.marginRate * 100).toFixed(2)}%`,
       `今日警报: ${data.risk.alerts} 次`,
-      '',
-      `━━━━━━━━━━━━━━━━━━━━`,
-      `${EMOJI.ROBOT} _${this.config.messagePrefix}_`,
     ];
 
     // 返回格式化报告 / Return formatted report
@@ -1227,9 +1237,12 @@ export class TelegramNotifier extends EventEmitter {
    * @param {number} priority - 优先级 / Priority
    */
   async sendSystemMessage(message, priority = MESSAGE_PRIORITY.NORMAL) {
+    // 获取带服务名的标题 / Get header with service name
+    const header = this._getMessageHeader();
+
     // 格式化系统消息 / Format system message
     const formattedMessage = [
-      `${EMOJI.ROBOT} *${this.config.messagePrefix}*`,
+      `${EMOJI.ROBOT} *${header}*`,
       '',
       message,
       '',
@@ -1298,6 +1311,21 @@ export class TelegramNotifier extends EventEmitter {
         }
         break;
     }
+  }
+
+  /**
+   * 获取消息标题 (包含服务名)
+   * Get message header (includes service name)
+   *
+   * @returns {string} 消息标题 / Message header
+   * @private
+   */
+  _getMessageHeader() {
+    // 如果配置了服务名，添加到标题中 / If service name configured, add to header
+    if (this.config.serviceName) {
+      return `${this.config.messagePrefix} [${this.config.serviceName}]`;
+    }
+    return this.config.messagePrefix;
   }
 }
 
