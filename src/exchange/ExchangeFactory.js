@@ -14,6 +14,7 @@ import { GateExchange } from './GateExchange.js';
 import { DeribitExchange } from './DeribitExchange.js';
 import { BitgetExchange } from './BitgetExchange.js';
 import { KuCoinExchange } from './KuCoinExchange.js';
+import { KrakenExchange } from './KrakenExchange.js';
 
 /**
  * 交易所工厂
@@ -36,6 +37,7 @@ export class ExchangeFactory {
     deribit: DeribitExchange,    // Deribit 交易所 / Deribit exchange
     bitget: BitgetExchange,      // Bitget 交易所 / Bitget exchange
     kucoin: KuCoinExchange,      // KuCoin 交易所 / KuCoin exchange
+    kraken: KrakenExchange,      // Kraken 交易所 / Kraken exchange
   };
 
   /**

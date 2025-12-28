@@ -71,6 +71,12 @@ const WS_ENDPOINTS = {
     spotTokenApi: 'https://api.kucoin.com/api/v1/bullet-public',
     futuresTokenApi: 'https://api-futures.kucoin.com/api/v1/bullet-public',
   },
+  // Kraken 端点 / Kraken endpoints
+  kraken: {
+    spot: 'wss://ws.kraken.com',                        // 现货公共频道 / Spot public channel
+    spotPrivate: 'wss://ws-auth.kraken.com',            // 现货私有频道 / Spot private channel
+    futures: 'wss://futures.kraken.com/ws/v1',          // 合约公共频道 / Futures public channel
+  },
 };
 
 /**
@@ -858,6 +864,12 @@ export class MarketDataEngine extends EventEmitter {
           ? WS_ENDPOINTS.kucoin.spot
           : WS_ENDPOINTS.kucoin.futures;
 
+      case 'kraken':
+        // Kraken: 根据交易类型选择端点 / Select endpoint based on trading type
+        return tradingType === 'spot'
+          ? WS_ENDPOINTS.kraken.spot
+          : WS_ENDPOINTS.kraken.futures;
+
       default:
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
@@ -1071,6 +1083,15 @@ export class MarketDataEngine extends EventEmitter {
             id: Date.now().toString(),
             type: 'ping',
           }));
+        } else if (exchange === 'kraken') {
+          // Kraken 根据交易类型使用不同的心跳格式 / Kraken uses different heartbeat format based on trading type
+          if (this.config.tradingType === 'spot') {
+            // 现货使用 ping 事件 / Spot uses ping event
+            ws.send(JSON.stringify({ event: 'ping' }));
+          } else {
+            // 合约使用 heartbeat 事件 / Futures uses heartbeat event
+            ws.send(JSON.stringify({ event: 'heartbeat' }));
+          }
         } else {
           // Binance 使用 WebSocket ping / Binance uses WebSocket ping
           ws.ping();
@@ -1261,6 +1282,9 @@ export class MarketDataEngine extends EventEmitter {
       case 'kucoin':
         return this._buildKuCoinSubscribeMessage(symbol, dataType);
 
+      case 'kraken':
+        return this._buildKrakenSubscribeMessage(symbol, dataType);
+
       default:
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
     }
@@ -1309,6 +1333,10 @@ export class MarketDataEngine extends EventEmitter {
       case 'kucoin':
         // KuCoin 取消订阅使用相同格式但 type 为 unsubscribe / KuCoin unsubscribe uses same format but type is unsubscribe
         return { ...subMsg, type: 'unsubscribe' };
+
+      case 'kraken':
+        // Kraken 取消订阅使用相同格式但 event 为 unsubscribe / Kraken unsubscribe uses same format but event is unsubscribe
+        return { ...subMsg, event: 'unsubscribe' };
 
       default:
         return subMsg;
@@ -1782,6 +1810,220 @@ export class MarketDataEngine extends EventEmitter {
   }
 
   /**
+   * 构建 Kraken 订阅消息
+   * Build Kraken subscription message
+   *
+   * Kraken WebSocket 订阅格式 / Kraken WebSocket subscription format:
+   * 现货 / Spot: { event: 'subscribe', pair: ['XBT/USD'], subscription: { name: 'ticker' } }
+   * 合约 / Futures: { event: 'subscribe', product_ids: ['PI_XBTUSD'], feed: 'ticker' }
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildKrakenSubscribeMessage(symbol, dataType) {
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+
+    if (isSpot) {
+      // 现货订阅格式 / Spot subscription format
+      return this._buildKrakenSpotSubscribeMessage(symbol, dataType);
+    } else {
+      // 合约订阅格式 / Futures subscription format
+      return this._buildKrakenFuturesSubscribeMessage(symbol, dataType);
+    }
+  }
+
+  /**
+   * 构建 Kraken 现货订阅消息
+   * Build Kraken spot subscription message
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildKrakenSpotSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> XBT/USDT (Kraken 使用 XBT 代替 BTC)
+    // Convert symbol format: BTC/USDT -> XBT/USDT (Kraken uses XBT instead of BTC)
+    const krakenSymbol = this._toKrakenSpotSymbol(symbol);
+
+    // 根据数据类型构建订阅名称 / Build subscription name based on data type
+    let subscription;
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        subscription = { name: 'ticker' };
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 (10档) / Depth data (10 levels)
+        subscription = { name: 'book', depth: 10 };
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        subscription = { name: 'trade' };
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 现货不支持资金费率 / Spot doesn't support funding rate
+        throw new Error('资金费率仅适用于合约 / Funding rate only available for futures');
+
+      case DATA_TYPES.KLINE:
+        // K线数据 (60分钟) / Kline data (60 minutes)
+        subscription = { name: 'ohlc', interval: 60 };
+        break;
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 Kraken 现货格式的订阅消息 / Return Kraken spot format subscription message
+    return {
+      event: 'subscribe',      // 订阅事件 / Subscribe event
+      pair: [krakenSymbol],    // 交易对数组 / Trading pair array
+      subscription,            // 订阅配置 / Subscription config
+    };
+  }
+
+  /**
+   * 构建 Kraken 合约订阅消息
+   * Build Kraken futures subscription message
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildKrakenFuturesSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> PI_XBTUSD (Kraken Futures 格式)
+    // Convert symbol format: BTC/USDT -> PI_XBTUSD (Kraken Futures format)
+    const krakenFuturesSymbol = this._toKrakenFuturesSymbol(symbol);
+
+    // 根据数据类型构建 feed / Build feed based on data type
+    let feed;
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        feed = 'ticker';
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 / Depth data
+        feed = 'book';
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        feed = 'trade';
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 资金费率 / Funding rate
+        feed = 'ticker';  // Kraken Futures ticker 包含资金费率 / includes funding rate
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 (Kraken Futures 暂不支持 WebSocket K线)
+        // Kline data (Kraken Futures doesn't support WebSocket kline yet)
+        throw new Error('Kraken 合约暂不支持 WebSocket K线订阅 / Kraken futures does not support WebSocket kline subscription');
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 Kraken Futures 格式的订阅消息 / Return Kraken Futures format subscription message
+    return {
+      event: 'subscribe',              // 订阅事件 / Subscribe event
+      feed,                            // 数据类型 / Feed type
+      product_ids: [krakenFuturesSymbol], // 产品 ID 数组 / Product ID array
+    };
+  }
+
+  /**
+   * 转换为 Kraken 现货交易对格式
+   * Convert to Kraken spot symbol format
+   *
+   * @param {string} symbol - 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @returns {string} Kraken 现货交易对 (如 XBT/USDT) / Kraken spot symbol
+   * @private
+   */
+  _toKrakenSpotSymbol(symbol) {
+    // BTC/USDT -> XBT/USDT, ETH/USDT -> ETH/USDT
+    const [base, quote] = symbol.split('/');
+    // Kraken 使用 XBT 代替 BTC / Kraken uses XBT instead of BTC
+    const krakenBase = base === 'BTC' ? 'XBT' : base;
+    return `${krakenBase}/${quote}`;
+  }
+
+  /**
+   * 转换为 Kraken 合约交易对格式
+   * Convert to Kraken futures symbol format
+   *
+   * @param {string} symbol - 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @returns {string} Kraken 合约交易对 (如 PI_XBTUSD) / Kraken futures symbol
+   * @private
+   */
+  _toKrakenFuturesSymbol(symbol) {
+    // BTC/USDT -> PI_XBTUSD, ETH/USDT -> PI_ETHUSD
+    const [base, quote] = symbol.split('/');
+    // Kraken Futures 使用 XBT 代替 BTC / Kraken Futures uses XBT instead of BTC
+    const krakenBase = base === 'BTC' ? 'XBT' : base;
+    // 永续合约前缀为 PI_ / Perpetual prefix is PI_
+    // 报价货币: USDT -> USD / Quote currency: USDT -> USD
+    const krakenQuote = quote === 'USDT' ? 'USD' : quote;
+    return `PI_${krakenBase}${krakenQuote}`;
+  }
+
+  /**
+   * 从 Kraken 现货交易对转换为标准格式
+   * Convert from Kraken spot symbol to standard format
+   *
+   * @param {string} symbol - Kraken 现货交易对 (如 XBT/USDT) / Kraken spot symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _fromKrakenSpotSymbol(symbol) {
+    // XBT/USDT -> BTC/USDT, ETH/USDT -> ETH/USDT
+    const [base, quote] = symbol.split('/');
+    // XBT -> BTC
+    const standardBase = base === 'XBT' ? 'BTC' : base;
+    return `${standardBase}/${quote}`;
+  }
+
+  /**
+   * 从 Kraken 合约交易对转换为标准格式
+   * Convert from Kraken futures symbol to standard format
+   *
+   * @param {string} symbol - Kraken 合约交易对 (如 PI_XBTUSD) / Kraken futures symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _fromKrakenFuturesSymbol(symbol) {
+    // PI_XBTUSD -> BTC/USDT, PI_ETHUSD -> ETH/USDT
+    // 移除 PI_ 前缀 / Remove PI_ prefix
+    const withoutPrefix = symbol.replace(/^PI_/, '');
+    // 分离基础货币和报价货币 / Separate base and quote
+    const quoteMatch = withoutPrefix.match(/(USD|EUR|GBP)$/);
+    if (quoteMatch) {
+      const quote = quoteMatch[1];
+      let base = withoutPrefix.slice(0, -quote.length);
+      // XBT -> BTC
+      if (base === 'XBT') {
+        base = 'BTC';
+      }
+      // USD -> USDT
+      const standardQuote = quote === 'USD' ? 'USDT' : quote;
+      return `${base}/${standardQuote}`;
+    }
+    return symbol;
+  }
+
+  /**
    * 转换为 KuCoin 合约交易对格式
    * Convert to KuCoin futures symbol format
    *
@@ -1898,6 +2140,10 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'kucoin':
           this._handleKuCoinMessage(message);
+          break;
+
+        case 'kraken':
+          this._handleKrakenMessage(message);
           break;
       }
 
@@ -2285,6 +2531,141 @@ export class MarketDataEngine extends EventEmitter {
     }
   }
 
+  /**
+   * 处理 Kraken 消息
+   * Handle Kraken message
+   *
+   * Kraken WebSocket 推送格式 / Kraken WebSocket push format:
+   * 现货 / Spot:
+   * - 系统消息: { event: 'systemStatus' | 'heartbeat' | 'subscriptionStatus', ... }
+   * - 数据消息: [channelID, data, channelName, pair]  (数组格式)
+   *
+   * 合约 / Futures:
+   * - 系统消息: { event: 'info' | 'subscribed' | 'heartbeat', ... }
+   * - 数据消息: { feed: 'ticker' | 'trade' | 'book', product_id: 'PI_XBTUSD', ... }
+   *
+   * @param {Object|Array} message - 消息对象或数组 / Message object or array
+   * @private
+   */
+  _handleKrakenMessage(message) {
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+
+    if (isSpot) {
+      this._handleKrakenSpotMessage(message);
+    } else {
+      this._handleKrakenFuturesMessage(message);
+    }
+  }
+
+  /**
+   * 处理 Kraken 现货消息
+   * Handle Kraken spot message
+   *
+   * @param {Object|Array} message - 消息对象或数组 / Message object or array
+   * @private
+   */
+  _handleKrakenSpotMessage(message) {
+    // 处理事件消息 (对象格式) / Handle event messages (object format)
+    if (message && typeof message === 'object' && !Array.isArray(message)) {
+      const event = message.event;
+
+      // 忽略系统消息 / Ignore system messages
+      if (event === 'systemStatus' || event === 'heartbeat' || event === 'pong') {
+        return;
+      }
+
+      // 忽略订阅响应 / Ignore subscription responses
+      if (event === 'subscriptionStatus') {
+        if (message.status === 'error') {
+          console.error(`${this.logPrefix} Kraken 订阅错误 / Subscription error:`, message.errorMessage);
+        }
+        return;
+      }
+
+      return;
+    }
+
+    // 处理数据消息 (数组格式) / Handle data messages (array format)
+    // 格式: [channelID, data, channelName, pair]
+    if (Array.isArray(message) && message.length >= 4) {
+      const [channelId, data, channelName, pair] = message;
+
+      // 根据频道名称处理 / Handle based on channel name
+      if (channelName === 'ticker') {
+        // 处理行情数据 / Handle ticker data
+        this._processTicker('kraken', { data, pair, channelName });
+      } else if (channelName === 'book-10' || channelName.startsWith('book')) {
+        // 处理深度数据 / Handle depth data
+        this._processDepth('kraken', { data, pair, channelName });
+      } else if (channelName === 'trade') {
+        // 处理成交数据 / Handle trade data
+        this._processTrade('kraken', { data, pair, channelName });
+      } else if (channelName.startsWith('ohlc')) {
+        // 处理K线数据 / Handle kline data
+        this._processKline('kraken', { data, pair, channelName });
+      }
+    }
+  }
+
+  /**
+   * 处理 Kraken 合约消息
+   * Handle Kraken futures message
+   *
+   * @param {Object} message - 消息对象 / Message object
+   * @private
+   */
+  _handleKrakenFuturesMessage(message) {
+    // 忽略非对象消息 / Ignore non-object messages
+    if (!message || typeof message !== 'object') {
+      return;
+    }
+
+    // 处理事件消息 / Handle event messages
+    const event = message.event;
+    if (event) {
+      // 忽略系统消息 / Ignore system messages
+      if (event === 'info' || event === 'heartbeat') {
+        return;
+      }
+
+      // 忽略订阅响应 / Ignore subscription responses
+      if (event === 'subscribed' || event === 'unsubscribed') {
+        return;
+      }
+
+      // 处理错误 / Handle errors
+      if (event === 'error') {
+        console.error(`${this.logPrefix} Kraken Futures 错误 / Error:`, message.message || message);
+        return;
+      }
+
+      return;
+    }
+
+    // 处理数据消息 / Handle data messages
+    const feed = message.feed;
+    if (!feed) {
+      return;
+    }
+
+    // 根据 feed 类型处理 / Handle based on feed type
+    if (feed === 'ticker' || feed === 'ticker_lite') {
+      // 处理行情数据 / Handle ticker data
+      this._processTicker('kraken', message);
+      // 如果是 ticker，也处理资金费率 / If ticker, also process funding rate
+      if (message.funding_rate !== undefined) {
+        this._processFundingRate('kraken', message);
+      }
+    } else if (feed === 'book' || feed === 'book_snapshot') {
+      // 处理深度数据 / Handle depth data
+      this._processDepth('kraken', message);
+    } else if (feed === 'trade' || feed === 'trade_snapshot') {
+      // 处理成交数据 / Handle trade data
+      this._processTrade('kraken', message);
+    }
+  }
+
   // ============================================
   // 私有方法 - 数据处理 / Private Methods - Data Processing
   // ============================================
@@ -2515,6 +2896,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'kucoin':
           return this._normalizeKuCoinTicker(message);
 
+        case 'kraken':
+          return this._normalizeKrakenTicker(message);
+
         default:
           return null;
       }
@@ -2662,6 +3046,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'kucoin':
           return this._normalizeKuCoinDepth(message);
 
+        case 'kraken':
+          return this._normalizeKrakenDepth(message);
+
         default:
           return null;
       }
@@ -2801,6 +3188,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'kucoin':
           return [this._normalizeKuCoinTrade(message)];
 
+        case 'kraken':
+          return this._normalizeKrakenTrade(message);
+
         default:
           return null;
       }
@@ -2927,6 +3317,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'kucoin':
           return this._normalizeKuCoinFundingRate(message);
 
+        case 'kraken':
+          return this._normalizeKrakenFundingRate(message);
+
         default:
           return null;
       }
@@ -3019,6 +3412,9 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'kucoin':
           return this._normalizeKuCoinKline(message);
+
+        case 'kraken':
+          return this._normalizeKrakenKline(message);
 
         default:
           return null;
@@ -4201,6 +4597,345 @@ export class MarketDataEngine extends EventEmitter {
       isClosed: true,                                    // 是否收盘 / Is candle closed
       exchangeTimestamp: openTime,                       // 交易所时间戳 / Exchange timestamp
       localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  // ============================================
+  // Kraken 数据标准化方法 / Kraken Data Normalization Methods
+  // ============================================
+
+  /**
+   * 标准化 Kraken 行情数据
+   * Normalize Kraken ticker data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeKrakenTicker(message) {
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+
+    if (isSpot) {
+      return this._normalizeKrakenSpotTicker(message);
+    } else {
+      return this._normalizeKrakenFuturesTicker(message);
+    }
+  }
+
+  /**
+   * 标准化 Kraken 现货行情数据
+   * Normalize Kraken spot ticker data
+   *
+   * 现货数据格式 / Spot data format:
+   * { data: { a: [askPrice, wholeLotVol, lotVol], b: [bidPrice, ...], c: [close, vol], v: [vol24h], ... }, pair: 'XBT/USD' }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeKrakenSpotTicker(message) {
+    const data = message.data;
+    const pair = message.pair;
+    const symbol = this._fromKrakenSpotSymbol(pair);
+
+    return {
+      exchange: 'kraken',                           // 交易所 / Exchange
+      symbol,                                        // 交易对 / Trading pair
+      last: parseFloat(data.c?.[0] || 0),           // 最新价 / Last price
+      bid: parseFloat(data.b?.[0] || 0),            // 最佳买价 / Best bid
+      bidSize: parseFloat(data.b?.[2] || 0),        // 最佳买量 / Best bid size
+      ask: parseFloat(data.a?.[0] || 0),            // 最佳卖价 / Best ask
+      askSize: parseFloat(data.a?.[2] || 0),        // 最佳卖量 / Best ask size
+      open: parseFloat(data.o?.[0] || 0),           // 开盘价 / Open price
+      high: parseFloat(data.h?.[0] || 0),           // 最高价 / High price
+      low: parseFloat(data.l?.[0] || 0),            // 最低价 / Low price
+      volume: parseFloat(data.v?.[1] || 0),         // 24小时成交量 / 24h volume
+      quoteVolume: 0,                                // Kraken 不提供 / Not provided
+      change: 0,                                     // 需要计算 / Needs calculation
+      changePercent: parseFloat(data.p?.[1] || 0),  // VWAP 变化 / VWAP change
+      exchangeTimestamp: Date.now(),                 // Kraken 不提供时间戳 / Not provided
+      localTimestamp: Date.now(),                    // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Kraken 合约行情数据
+   * Normalize Kraken futures ticker data
+   *
+   * 合约数据格式 / Futures data format:
+   * { feed: 'ticker', product_id: 'PI_XBTUSD', bid: 50000, ask: 50001, ... }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeKrakenFuturesTicker(message) {
+    const symbol = this._fromKrakenFuturesSymbol(message.product_id);
+
+    return {
+      exchange: 'kraken',                                // 交易所 / Exchange
+      symbol,                                             // 交易对 / Trading pair
+      last: parseFloat(message.last || 0),               // 最新价 / Last price
+      bid: parseFloat(message.bid || 0),                 // 最佳买价 / Best bid
+      bidSize: parseFloat(message.bid_size || 0),        // 最佳买量 / Best bid size
+      ask: parseFloat(message.ask || 0),                 // 最佳卖价 / Best ask
+      askSize: parseFloat(message.ask_size || 0),        // 最佳卖量 / Best ask size
+      open: parseFloat(message.open24h || 0),            // 开盘价 / Open price
+      high: parseFloat(message.high24h || 0),            // 最高价 / High price
+      low: parseFloat(message.low24h || 0),              // 最低价 / Low price
+      volume: parseFloat(message.vol24h || 0),           // 成交量 / Volume
+      quoteVolume: parseFloat(message.volumeQuote || 0), // 成交额 / Quote volume
+      change: parseFloat(message.change24h || 0),        // 涨跌额 / Price change
+      changePercent: parseFloat(message.change24hPct || 0), // 涨跌幅 / Price change percent
+      markPrice: parseFloat(message.markPrice || 0),     // 标记价格 / Mark price
+      indexPrice: parseFloat(message.indexPrice || 0),   // 指数价格 / Index price
+      fundingRate: parseFloat(message.funding_rate || 0), // 资金费率 / Funding rate
+      nextFundingTime: message.next_funding_rate_time,   // 下次资金费率时间 / Next funding time
+      exchangeTimestamp: message.time || Date.now(),     // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                         // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Kraken 深度数据
+   * Normalize Kraken depth data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeKrakenDepth(message) {
+    const isSpot = this.config.tradingType === 'spot';
+
+    if (isSpot) {
+      return this._normalizeKrakenSpotDepth(message);
+    } else {
+      return this._normalizeKrakenFuturesDepth(message);
+    }
+  }
+
+  /**
+   * 标准化 Kraken 现货深度数据
+   * Normalize Kraken spot depth data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeKrakenSpotDepth(message) {
+    const data = message.data;
+    const pair = message.pair;
+    const symbol = this._fromKrakenSpotSymbol(pair);
+
+    // Kraken 现货深度格式: { as: [[price, vol, timestamp], ...], bs: [...] }
+    // as = asks, bs = bids
+    const asks = (data.as || data.a || []).map(([price, amount]) => [
+      parseFloat(price),
+      parseFloat(amount),
+    ]);
+
+    const bids = (data.bs || data.b || []).map(([price, amount]) => [
+      parseFloat(price),
+      parseFloat(amount),
+    ]);
+
+    return {
+      exchange: 'kraken',                    // 交易所 / Exchange
+      symbol,                                 // 交易对 / Trading pair
+      bids,                                   // 买单 / Bids
+      asks,                                   // 卖单 / Asks
+      exchangeTimestamp: Date.now(),         // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),            // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Kraken 合约深度数据
+   * Normalize Kraken futures depth data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeKrakenFuturesDepth(message) {
+    const symbol = this._fromKrakenFuturesSymbol(message.product_id);
+
+    // Kraken Futures 深度格式: { bids: [{price, qty}, ...], asks: [...] }
+    const bids = (message.bids || []).map(item => [
+      parseFloat(item.price || item[0]),
+      parseFloat(item.qty || item[1]),
+    ]);
+
+    const asks = (message.asks || []).map(item => [
+      parseFloat(item.price || item[0]),
+      parseFloat(item.qty || item[1]),
+    ]);
+
+    return {
+      exchange: 'kraken',                        // 交易所 / Exchange
+      symbol,                                     // 交易对 / Trading pair
+      bids,                                       // 买单 / Bids
+      asks,                                       // 卖单 / Asks
+      exchangeTimestamp: message.timestamp || Date.now(), // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Kraken 成交数据
+   * Normalize Kraken trade data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeKrakenTrade(message) {
+    const isSpot = this.config.tradingType === 'spot';
+
+    if (isSpot) {
+      return this._normalizeKrakenSpotTrade(message);
+    } else {
+      return this._normalizeKrakenFuturesTrade(message);
+    }
+  }
+
+  /**
+   * 标准化 Kraken 现货成交数据
+   * Normalize Kraken spot trade data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeKrakenSpotTrade(message) {
+    const data = message.data;
+    const pair = message.pair;
+    const symbol = this._fromKrakenSpotSymbol(pair);
+
+    // Kraken 现货成交格式: [[price, volume, time, side, orderType, misc], ...]
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((trade, index) => ({
+      exchange: 'kraken',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      tradeId: `${Date.now()}_${index}`,                // 成交 ID / Trade ID
+      price: parseFloat(trade[0]),                      // 成交价格 / Trade price
+      amount: parseFloat(trade[1]),                     // 成交数量 / Trade amount
+      side: trade[3] === 'b' ? 'buy' : 'sell',          // 方向 / Side
+      exchangeTimestamp: parseFloat(trade[2]) * 1000,   // 时间戳 (秒->毫秒) / Timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    }));
+  }
+
+  /**
+   * 标准化 Kraken 合约成交数据
+   * Normalize Kraken futures trade data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeKrakenFuturesTrade(message) {
+    const symbol = this._fromKrakenFuturesSymbol(message.product_id);
+
+    // 单笔成交 / Single trade
+    if (message.price !== undefined) {
+      return [{
+        exchange: 'kraken',                               // 交易所 / Exchange
+        symbol,                                            // 交易对 / Trading pair
+        tradeId: message.uid || message.trade_id || `${Date.now()}`, // 成交 ID / Trade ID
+        price: parseFloat(message.price),                 // 成交价格 / Trade price
+        amount: parseFloat(message.qty || message.size),  // 成交数量 / Trade amount
+        side: message.side?.toLowerCase() || 'buy',       // 方向 / Side
+        exchangeTimestamp: message.time || Date.now(),    // 交易所时间戳 / Exchange timestamp
+        localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+      }];
+    }
+
+    // 批量成交 / Batch trades
+    const trades = message.trades || [];
+    return trades.map(trade => ({
+      exchange: 'kraken',
+      symbol,
+      tradeId: trade.uid || trade.trade_id || `${Date.now()}_${Math.random()}`,
+      price: parseFloat(trade.price),
+      amount: parseFloat(trade.qty || trade.size),
+      side: trade.side?.toLowerCase() || 'buy',
+      exchangeTimestamp: trade.time || Date.now(),
+      localTimestamp: Date.now(),
+    }));
+  }
+
+  /**
+   * 标准化 Kraken 资金费率数据
+   * Normalize Kraken funding rate data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的资金费率数据 / Normalized funding rate data
+   * @private
+   */
+  _normalizeKrakenFundingRate(message) {
+    // Kraken 资金费率在 ticker 消息中 / Kraken funding rate is in ticker message
+    const symbol = this._fromKrakenFuturesSymbol(message.product_id);
+
+    return {
+      exchange: 'kraken',                                    // 交易所 / Exchange
+      symbol,                                                 // 交易对 / Trading pair
+      markPrice: parseFloat(message.markPrice || 0),         // 标记价格 / Mark price
+      indexPrice: parseFloat(message.indexPrice || 0),       // 指数价格 / Index price
+      fundingRate: parseFloat(message.funding_rate || 0),    // 当前资金费率 / Current funding rate
+      nextFundingTime: message.next_funding_rate_time,       // 下次资金费率时间 / Next funding time
+      exchangeTimestamp: message.time || Date.now(),         // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                             // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Kraken K线数据
+   * Normalize Kraken kline data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeKrakenKline(message) {
+    const data = message.data;
+    const pair = message.pair;
+    const symbol = this._fromKrakenSpotSymbol(pair);
+
+    // Kraken OHLC 格式: [time, etime, open, high, low, close, vwap, volume, count]
+    // 从频道名称获取间隔 / Get interval from channel name
+    const channelName = message.channelName || '';
+    const intervalMatch = channelName.match(/ohlc-(\d+)/);
+    const intervalMinutes = intervalMatch ? parseInt(intervalMatch[1]) : 60;
+
+    // 获取最新的 K 线数据 / Get latest candle data
+    const candle = Array.isArray(data) ? data : [data];
+    const latest = candle[candle.length - 1] || candle;
+
+    const openTime = parseFloat(latest[0] || 0) * 1000;  // 转换为毫秒 / Convert to ms
+    const closeTime = parseFloat(latest[1] || 0) * 1000;
+
+    return {
+      exchange: 'kraken',                              // 交易所 / Exchange
+      symbol,                                           // 交易对 / Trading pair
+      interval: `${intervalMinutes}m`,                 // 时间间隔 / Time interval
+      openTime,                                         // 开盘时间 / Open time
+      closeTime,                                        // 收盘时间 / Close time
+      open: parseFloat(latest[2] || 0),                // 开盘价 / Open price
+      high: parseFloat(latest[3] || 0),                // 最高价 / High price
+      low: parseFloat(latest[4] || 0),                 // 最低价 / Low price
+      close: parseFloat(latest[5] || 0),               // 收盘价 / Close price
+      vwap: parseFloat(latest[6] || 0),                // 成交量加权平均价 / VWAP
+      volume: parseFloat(latest[7] || 0),              // 成交量 / Volume
+      quoteVolume: 0,                                   // Kraken 不提供 / Not provided
+      trades: parseInt(latest[8] || 0),                // 成交笔数 / Trade count
+      isClosed: closeTime <= Date.now(),               // 是否收盘 / Is candle closed
+      exchangeTimestamp: openTime,                      // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                       // 本地时间戳 / Local timestamp
     };
   }
 

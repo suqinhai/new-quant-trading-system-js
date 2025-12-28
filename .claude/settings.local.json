@@ -109,7 +109,8 @@
       "Bash(ping:*)",
       "Bash(node scripts/test-okx-connection.js:*)",
       "Bash(node scripts/test-binance-connection.js:*)",
-      "Bash(node scripts/diagnose-api.js:*)"
+      "Bash(node scripts/diagnose-api.js:*)",
+      "Bash(dir /b \"C:\\\\Users\\\\kpskp\\\\Desktop\\\\新建文件夹\\\\new-quant-trading-system-js\")"
     ]
   }
 }

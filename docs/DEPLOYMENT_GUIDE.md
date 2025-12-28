@@ -94,6 +94,12 @@ echo "$MASTER_KEY"
 | Binance WS | stream.binance.com | WebSocket |
 | Bybit | api.bybit.com | 交易 API |
 | OKX | www.okx.com | 交易 API |
+| Gate.io | api.gateio.ws | 交易 API |
+| Deribit | www.deribit.com | 交易 API |
+| Bitget | api.bitget.com | 交易 API |
+| KuCoin | api.kucoin.com | 交易 API |
+| Kraken | api.kraken.com | 交易 API |
+| Kraken Futures | futures.kraken.com | 合约 API |
 | Telegram | api.telegram.org | 告警通知 |
 
 ---

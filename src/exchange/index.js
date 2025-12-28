@@ -17,6 +17,7 @@ export { GateExchange } from './GateExchange.js';
 export { DeribitExchange } from './DeribitExchange.js';
 export { BitgetExchange } from './BitgetExchange.js';
 export { KuCoinExchange } from './KuCoinExchange.js';
+export { KrakenExchange } from './KrakenExchange.js';
 
 // 导出工厂类 / Export factory class
 export { ExchangeFactory } from './ExchangeFactory.js';

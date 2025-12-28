@@ -158,6 +158,32 @@ export default {
         adjustForTimeDifference: true,
       },
     },
+
+    // Kraken 配置 / Kraken configuration
+    kraken: {
+      // 是否启用 / Whether enabled
+      enabled: true,
+
+      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      // 现货: 无测试网 | 合约测试网: demo-futures.kraken.com
+      sandbox: false,
+
+      // API 请求超时 (毫秒) / API request timeout (ms)
+      timeout: 30000,
+
+      // 是否启用限速 / Whether to enable rate limiting
+      enableRateLimit: true,
+
+      // 默认交易类型: 'spot' | 'swap' | 'future'
+      // Kraken 支持现货和合约交易 / Kraken supports spot and futures trading
+      defaultType: 'spot',
+
+      // 选项 / Options
+      options: {
+        // 调整时间戳 / Adjust for time difference
+        adjustForTimeDifference: true,
+      },
+    },
   },
 
   // ============================================

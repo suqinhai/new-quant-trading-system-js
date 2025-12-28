@@ -753,6 +753,20 @@ GET /api/exchanges
       "lastPing": "2024-01-15T14:30:00Z",
       "latency": 70,
       "features": ["spot", "futures"]
+    },
+    {
+      "name": "kucoin",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 75,
+      "features": ["spot", "futures"]
+    },
+    {
+      "name": "kraken",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 85,
+      "features": ["spot", "futures", "options"]
     }
   ]
 }

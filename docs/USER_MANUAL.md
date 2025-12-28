@@ -24,7 +24,7 @@
 
 | 功能 | 描述 |
 |------|------|
-| 多交易所支持 | Binance、Bybit、OKX、Gate.io、Deribit、Bitget |
+| 多交易所支持 | Binance、Bybit、OKX、Gate.io、Deribit、Bitget、KuCoin、Kraken |
 | 多策略运行 | 同时运行多个交易策略 |
 | 专业回测 | 基于历史数据的策略验证 |
 | 影子交易 | 实时行情下的模拟交易 |
@@ -82,6 +82,18 @@ BITGET_API_KEY=您的API密钥
 BITGET_API_SECRET=您的密钥
 BITGET_PASSPHRASE=您的密码
 BITGET_TESTNET=true
+
+# KuCoin (支持现货和合约交易)
+KUCOIN_API_KEY=您的API密钥
+KUCOIN_API_SECRET=您的密钥
+KUCOIN_PASSPHRASE=您的密码
+KUCOIN_TESTNET=true
+
+# Kraken (支持现货和合约交易)
+KRAKEN_API_KEY=您的API密钥
+KRAKEN_API_SECRET=您的密钥
+KRAKEN_TESTNET=true
+KRAKEN_DEFAULT_TYPE=spot
 ```
 
 ### 3. 运行回测（推荐首次使用）
@@ -160,6 +172,27 @@ exchanges: {
     sandbox: process.env.BITGET_TESTNET === 'true',  // true 使用测试网
     options: {
       defaultType: 'spot',  // 'spot' | 'swap' | 'future'
+      adjustForTimeDifference: true
+    }
+  },
+  kucoin: {
+    enabled: true,
+    apiKey: process.env.KUCOIN_API_KEY,
+    secret: process.env.KUCOIN_API_SECRET,
+    password: process.env.KUCOIN_PASSPHRASE,  // KuCoin 需要 passphrase
+    sandbox: process.env.KUCOIN_TESTNET === 'true',  // true 使用测试网
+    options: {
+      defaultType: 'spot',  // 'spot' | 'swap' | 'future'
+      adjustForTimeDifference: true
+    }
+  },
+  kraken: {
+    enabled: true,
+    apiKey: process.env.KRAKEN_API_KEY,
+    secret: process.env.KRAKEN_API_SECRET,
+    sandbox: process.env.KRAKEN_TESTNET === 'true',  // true 使用测试网 (仅合约)
+    options: {
+      defaultType: process.env.KRAKEN_DEFAULT_TYPE || 'spot',  // 'spot' | 'swap' | 'future'
       adjustForTimeDifference: true
     }
   }

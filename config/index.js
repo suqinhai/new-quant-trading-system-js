@@ -225,6 +225,41 @@ function buildEnvConfig() {
                 getExchangeKey('bybit', 'secret', 'BYBIT_API_SECRET'),
         sandbox: getEnvBool('BYBIT_SANDBOX') || getEnvBool('BYBIT_TESTNET'),
       },
+      gate: {
+        apiKey: getExchangeKey('gate', 'apiKey', 'GATE_API_KEY'),
+        secret: getExchangeKey('gate', 'secret', 'GATE_SECRET') ||
+                getExchangeKey('gate', 'secret', 'GATE_API_SECRET'),
+        sandbox: getEnvBool('GATE_SANDBOX') || getEnvBool('GATE_TESTNET'),
+      },
+      deribit: {
+        apiKey: getExchangeKey('deribit', 'apiKey', 'DERIBIT_API_KEY'),
+        secret: getExchangeKey('deribit', 'secret', 'DERIBIT_SECRET') ||
+                getExchangeKey('deribit', 'secret', 'DERIBIT_API_SECRET'),
+        sandbox: getEnvBool('DERIBIT_SANDBOX') || getEnvBool('DERIBIT_TESTNET'),
+      },
+      bitget: {
+        apiKey: getExchangeKey('bitget', 'apiKey', 'BITGET_API_KEY'),
+        secret: getExchangeKey('bitget', 'secret', 'BITGET_SECRET') ||
+                getExchangeKey('bitget', 'secret', 'BITGET_API_SECRET'),
+        password: getExchangeKey('bitget', 'passphrase', 'BITGET_PASSWORD') ||
+                  getExchangeKey('bitget', 'passphrase', 'BITGET_PASSPHRASE'),
+        sandbox: getEnvBool('BITGET_SANDBOX') || getEnvBool('BITGET_TESTNET'),
+      },
+      kucoin: {
+        apiKey: getExchangeKey('kucoin', 'apiKey', 'KUCOIN_API_KEY'),
+        secret: getExchangeKey('kucoin', 'secret', 'KUCOIN_SECRET') ||
+                getExchangeKey('kucoin', 'secret', 'KUCOIN_API_SECRET'),
+        password: getExchangeKey('kucoin', 'passphrase', 'KUCOIN_PASSWORD') ||
+                  getExchangeKey('kucoin', 'passphrase', 'KUCOIN_PASSPHRASE'),
+        sandbox: getEnvBool('KUCOIN_SANDBOX') || getEnvBool('KUCOIN_TESTNET'),
+      },
+      kraken: {
+        apiKey: getExchangeKey('kraken', 'apiKey', 'KRAKEN_API_KEY'),
+        secret: getExchangeKey('kraken', 'secret', 'KRAKEN_SECRET') ||
+                getExchangeKey('kraken', 'secret', 'KRAKEN_API_SECRET'),
+        sandbox: getEnvBool('KRAKEN_SANDBOX') || getEnvBool('KRAKEN_TESTNET'),
+        defaultType: getEnv('KRAKEN_DEFAULT_TYPE', 'spot'),
+      },
     },
 
     // 风控配置 / Risk configuration

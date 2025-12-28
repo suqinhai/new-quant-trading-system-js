@@ -5,7 +5,7 @@
 ## 功能特点
 
 - **多策略支持**: 内置多种交易策略，可灵活组合
-- **多交易所**: 支持 Binance、OKX、Bybit、Gate.io、Deribit、Bitget、KuCoin 等主流交易所
+- **多交易所**: 支持 Binance、OKX、Bybit、Gate.io、Deribit、Bitget、KuCoin、Kraken 等主流交易所
 - **实时/影子模式**: 支持实盘交易和影子模式测试
 - **完善风控**: 止损止盈、仓位管理、熔断机制
 - **回测系统**: 历史数据回测验证策略
