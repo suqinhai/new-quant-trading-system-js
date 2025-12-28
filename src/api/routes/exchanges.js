@@ -35,6 +35,7 @@ export function createExchangeRoutes(deps = {}) {
           { id: 'gate', name: 'Gate.io', status: 'disconnected' },
           { id: 'deribit', name: 'Deribit', status: 'disconnected' },
           { id: 'bitget', name: 'Bitget', status: 'disconnected' },
+          { id: 'kucoin', name: 'KuCoin', status: 'disconnected' },
         ];
       }
 

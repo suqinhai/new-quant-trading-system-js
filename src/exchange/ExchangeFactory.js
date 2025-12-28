@@ -13,6 +13,7 @@ import { OKXExchange } from './OKXExchange.js';
 import { GateExchange } from './GateExchange.js';
 import { DeribitExchange } from './DeribitExchange.js';
 import { BitgetExchange } from './BitgetExchange.js';
+import { KuCoinExchange } from './KuCoinExchange.js';
 
 /**
  * 交易所工厂
@@ -34,6 +35,7 @@ export class ExchangeFactory {
     gate: GateExchange,          // Gate.io 交易所 / Gate.io exchange
     deribit: DeribitExchange,    // Deribit 交易所 / Deribit exchange
     bitget: BitgetExchange,      // Bitget 交易所 / Bitget exchange
+    kucoin: KuCoinExchange,      // KuCoin 交易所 / KuCoin exchange
   };
 
   /**

@@ -557,7 +557,7 @@ class TradingSystemRunner extends EventEmitter {
     const primaryExchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
 
     // 获取所有支持的交易所列表 / Get all supported exchanges
-    const supportedExchanges = ['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget'];
+    const supportedExchanges = ['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget', 'kucoin'];
 
     // 遍历所有支持的交易所 / Iterate all supported exchanges
     for (const exchangeName of supportedExchanges) {

@@ -132,6 +132,32 @@ export default {
         adjustForTimeDifference: true,
       },
     },
+
+    // KuCoin 配置 / KuCoin configuration
+    kucoin: {
+      // 是否启用 / Whether enabled
+      enabled: true,
+
+      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      // 测试网: sandbox.kucoin.com | 生产: api.kucoin.com
+      sandbox: false,
+
+      // API 请求超时 (毫秒) / API request timeout (ms)
+      timeout: 30000,
+
+      // 是否启用限速 / Whether to enable rate limiting
+      enableRateLimit: true,
+
+      // 默认交易类型: 'spot' | 'swap' | 'future'
+      // KuCoin 支持现货和合约交易 / KuCoin supports spot and futures trading
+      defaultType: 'spot',
+
+      // 选项 / Options
+      options: {
+        // 调整时间戳 / Adjust for time difference
+        adjustForTimeDifference: true,
+      },
+    },
   },
 
   // ============================================

@@ -62,6 +62,15 @@ const WS_ENDPOINTS = {
     futures: 'wss://ws.bitget.com/v2/ws/public',        // 合约公共频道 / Futures public channel
     private: 'wss://ws.bitget.com/v2/ws/private',       // 私有频道 / Private channel
   },
+  // KuCoin 端点 / KuCoin endpoints
+  // 注意: KuCoin 需要先获取动态 token，这里仅作为备用 / Note: KuCoin requires dynamic token, these are fallbacks
+  kucoin: {
+    spot: 'wss://ws-api-spot.kucoin.com',               // 现货公共频道 / Spot public channel
+    futures: 'wss://ws-api-futures.kucoin.com',         // 合约公共频道 / Futures public channel
+    // REST API 端点用于获取 WebSocket token / REST API endpoints to get WebSocket token
+    spotTokenApi: 'https://api.kucoin.com/api/v1/bullet-public',
+    futuresTokenApi: 'https://api-futures.kucoin.com/api/v1/bullet-public',
+  },
 };
 
 /**
@@ -674,8 +683,25 @@ export class MarketDataEngine extends EventEmitter {
    * @private
    */
   async _connectExchange(exchange) {
-    // 获取 WebSocket URL / Get WebSocket URL
-    const wsUrl = this._getWsUrl(exchange);
+    // KuCoin 需要特殊处理：先获取动态 WebSocket URL 和 token
+    // KuCoin requires special handling: get dynamic WebSocket URL and token first
+    let wsUrl;
+    let connectId = null;
+
+    if (exchange === 'kucoin') {
+      try {
+        const wsInfo = await this._getKuCoinWebSocketInfo();
+        wsUrl = wsInfo.url;
+        connectId = wsInfo.connectId;
+        console.log(`${this.logPrefix} KuCoin WebSocket token 已获取 / KuCoin WebSocket token obtained`);
+      } catch (error) {
+        console.error(`${this.logPrefix} 获取 KuCoin WebSocket token 失败 / Failed to get KuCoin WebSocket token:`, error.message);
+        throw error;
+      }
+    } else {
+      // 其他交易所使用静态 URL / Other exchanges use static URL
+      wsUrl = this._getWsUrl(exchange);
+    }
 
     console.log(`${this.logPrefix} 正在连接 / Connecting to ${exchange}: ${wsUrl}`);
 
@@ -826,9 +852,88 @@ export class MarketDataEngine extends EventEmitter {
           ? WS_ENDPOINTS.bitget.spot
           : WS_ENDPOINTS.bitget.futures;
 
+      case 'kucoin':
+        // KuCoin: 根据交易类型选择端点 / Select endpoint based on trading type
+        return tradingType === 'spot'
+          ? WS_ENDPOINTS.kucoin.spot
+          : WS_ENDPOINTS.kucoin.futures;
+
       default:
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
+    }
+  }
+
+  /**
+   * 获取 KuCoin WebSocket 连接信息
+   * Get KuCoin WebSocket connection info
+   *
+   * KuCoin 要求先调用 REST API 获取动态的 WebSocket 服务器地址和 token
+   * KuCoin requires calling REST API first to get dynamic WebSocket server URL and token
+   *
+   * @returns {Promise<Object>} WebSocket 连接信息 / WebSocket connection info
+   * @private
+   */
+  async _getKuCoinWebSocketInfo() {
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+    const apiUrl = isSpot
+      ? WS_ENDPOINTS.kucoin.spotTokenApi
+      : WS_ENDPOINTS.kucoin.futuresTokenApi;
+
+    try {
+      // 调用 KuCoin REST API 获取 WebSocket token / Call KuCoin REST API to get WebSocket token
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // 检查响应状态 / Check response status
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 解析响应 / Parse response
+      const result = await response.json();
+
+      // 检查返回码 / Check return code
+      if (result.code !== '200000') {
+        throw new Error(`KuCoin API error: ${result.msg || result.code}`);
+      }
+
+      // 获取数据 / Get data
+      const data = result.data;
+
+      // 获取 WebSocket 服务器信息 / Get WebSocket server info
+      // KuCoin 返回的服务器列表中选择第一个 / Select the first server from KuCoin's server list
+      const server = data.instanceServers[0];
+      const token = data.token;
+
+      // 构建 WebSocket URL / Build WebSocket URL
+      // 格式: wss://server.endpoint?token=xxx&connectId=xxx
+      const connectId = `${Date.now()}`;
+      const wsUrl = `${server.endpoint}?token=${token}&connectId=${connectId}`;
+
+      // 存储 ping 间隔用于心跳 / Store ping interval for heartbeat
+      this._kucoinPingInterval = server.pingInterval || 18000;
+      this._kucoinPingTimeout = server.pingTimeout || 10000;
+
+      console.log(`${this.logPrefix} KuCoin WebSocket 服务器 / KuCoin WebSocket server: ${server.endpoint}`);
+      console.log(`${this.logPrefix} KuCoin Ping 间隔 / KuCoin Ping interval: ${this._kucoinPingInterval}ms`);
+
+      return {
+        url: wsUrl,
+        token,
+        connectId,
+        pingInterval: server.pingInterval,
+        pingTimeout: server.pingTimeout,
+      };
+
+    } catch (error) {
+      console.error(`${this.logPrefix} 获取 KuCoin WebSocket 信息失败 / Failed to get KuCoin WebSocket info:`, error.message);
+      throw error;
     }
   }
 
@@ -920,6 +1025,16 @@ export class MarketDataEngine extends EventEmitter {
       return;
     }
 
+    // 确定心跳间隔 / Determine heartbeat interval
+    // KuCoin 使用服务器返回的间隔，其他交易所使用配置的间隔
+    // KuCoin uses server-returned interval, others use configured interval
+    let heartbeatInterval = this.config.heartbeat.interval;
+    if (exchange === 'kucoin' && this._kucoinPingInterval) {
+      // KuCoin 要求在 pingTimeout 之前发送 ping
+      // KuCoin requires sending ping before pingTimeout
+      heartbeatInterval = this._kucoinPingInterval;
+    }
+
     // 创建心跳定时器 / Create heartbeat timer
     const timer = setInterval(() => {
       // 检查连接状态 / Check connection status
@@ -949,12 +1064,19 @@ export class MarketDataEngine extends EventEmitter {
         } else if (exchange === 'bitget') {
           // Bitget 使用 ping 字符串 / Bitget uses ping string
           ws.send('ping');
+        } else if (exchange === 'kucoin') {
+          // KuCoin 使用 JSON 格式的 ping 消息 / KuCoin uses JSON format ping message
+          // 格式: {"id":"xxx","type":"ping"}
+          ws.send(JSON.stringify({
+            id: Date.now().toString(),
+            type: 'ping',
+          }));
         } else {
           // Binance 使用 WebSocket ping / Binance uses WebSocket ping
           ws.ping();
         }
       }
-    }, this.config.heartbeat.interval);
+    }, heartbeatInterval);
 
     // 存储定时器 / Store timer
     this.heartbeatTimers.set(exchange, timer);
@@ -1136,6 +1258,9 @@ export class MarketDataEngine extends EventEmitter {
       case 'bitget':
         return this._buildBitgetSubscribeMessage(symbol, dataType);
 
+      case 'kucoin':
+        return this._buildKuCoinSubscribeMessage(symbol, dataType);
+
       default:
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
     }
@@ -1180,6 +1305,10 @@ export class MarketDataEngine extends EventEmitter {
       case 'bitget':
         // Bitget 取消订阅使用相同格式但 op 为 unsubscribe / Bitget unsubscribe uses same format but op is unsubscribe
         return { ...subMsg, op: 'unsubscribe' };
+
+      case 'kucoin':
+        // KuCoin 取消订阅使用相同格式但 type 为 unsubscribe / KuCoin unsubscribe uses same format but type is unsubscribe
+        return { ...subMsg, type: 'unsubscribe' };
 
       default:
         return subMsg;
@@ -1558,6 +1687,143 @@ export class MarketDataEngine extends EventEmitter {
   }
 
   /**
+   * 构建 KuCoin 订阅消息
+   * Build KuCoin subscription message
+   *
+   * KuCoin WebSocket 订阅格式 / KuCoin WebSocket subscription format:
+   * { id: messageId, type: 'subscribe', topic: '/market/ticker:BTC-USDT', privateChannel: false, response: true }
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildKuCoinSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> BTC-USDT
+    // Convert symbol format: BTC/USDT -> BTC-USDT
+    const kucoinSymbol = symbol.replace('/', '-');
+
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+
+    // 生成唯一消息 ID / Generate unique message ID
+    const messageId = Date.now().toString();
+
+    // 根据数据类型构建主题 / Build topic based on data type
+    let topic;
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        // 现货: /market/ticker:BTC-USDT
+        // 合约: /contractMarket/tickerV2:XBTUSDTM
+        if (isSpot) {
+          topic = `/market/ticker:${kucoinSymbol}`;
+        } else {
+          // 合约交易对格式: BTC-USDT -> XBTUSDTM (需要特殊处理)
+          const futuresSymbol = this._toKuCoinFuturesSymbol(symbol);
+          topic = `/contractMarket/tickerV2:${futuresSymbol}`;
+        }
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 / Depth data
+        if (isSpot) {
+          // 现货使用 level2Depth5 (5档) 或 level2Depth50 (50档)
+          topic = `/spotMarket/level2Depth5:${kucoinSymbol}`;
+        } else {
+          const futuresSymbol = this._toKuCoinFuturesSymbol(symbol);
+          topic = `/contractMarket/level2Depth5:${futuresSymbol}`;
+        }
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        if (isSpot) {
+          topic = `/market/match:${kucoinSymbol}`;
+        } else {
+          const futuresSymbol = this._toKuCoinFuturesSymbol(symbol);
+          topic = `/contractMarket/execution:${futuresSymbol}`;
+        }
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 资金费率 (仅合约) / Funding rate (futures only)
+        if (isSpot) {
+          throw new Error('资金费率仅适用于合约 / Funding rate only available for futures');
+        }
+        const futuresSymbol = this._toKuCoinFuturesSymbol(symbol);
+        topic = `/contract/instrument:${futuresSymbol}`;
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 / Kline data
+        if (isSpot) {
+          // 现货K线: /market/candles:BTC-USDT_1hour
+          topic = `/market/candles:${kucoinSymbol}_1hour`;
+        } else {
+          const futuresSymbol = this._toKuCoinFuturesSymbol(symbol);
+          topic = `/contractMarket/candle:${futuresSymbol}_1hour`;
+        }
+        break;
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 KuCoin 格式的订阅消息 / Return KuCoin format subscription message
+    return {
+      id: messageId,           // 消息 ID / Message ID
+      type: 'subscribe',       // 订阅类型 / Subscribe type
+      topic,                   // 主题 / Topic
+      privateChannel: false,   // 公共频道 / Public channel
+      response: true,          // 需要响应 / Need response
+    };
+  }
+
+  /**
+   * 转换为 KuCoin 合约交易对格式
+   * Convert to KuCoin futures symbol format
+   *
+   * @param {string} symbol - 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @returns {string} KuCoin 合约交易对 (如 XBTUSDTM) / KuCoin futures symbol
+   * @private
+   */
+  _toKuCoinFuturesSymbol(symbol) {
+    // BTC/USDT -> XBTUSDTM, ETH/USDT -> ETHUSDTM
+    const [base, quote] = symbol.split('/');
+    // KuCoin 合约中 BTC 使用 XBT / KuCoin futures uses XBT for BTC
+    const futuresBase = base === 'BTC' ? 'XBT' : base;
+    return `${futuresBase}${quote}M`;
+  }
+
+  /**
+   * 从 KuCoin 合约交易对转换为标准格式
+   * Convert from KuCoin futures symbol to standard format
+   *
+   * @param {string} symbol - KuCoin 合约交易对 (如 XBTUSDTM) / KuCoin futures symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _fromKuCoinFuturesSymbol(symbol) {
+    // XBTUSDTM -> BTC/USDT, ETHUSDTM -> ETH/USDT
+    // 移除末尾的 M / Remove trailing M
+    const withoutM = symbol.slice(0, -1);
+    // 分离基础货币和报价货币 / Separate base and quote
+    const quoteMatch = withoutM.match(/(USDT|USD|BTC)$/);
+    if (quoteMatch) {
+      const quote = quoteMatch[1];
+      let base = withoutM.slice(0, -quote.length);
+      // XBT -> BTC
+      if (base === 'XBT') {
+        base = 'BTC';
+      }
+      return `${base}/${quote}`;
+    }
+    return symbol;
+  }
+
+  /**
    * 获取订阅数量统计
    * Get subscription counts
    *
@@ -1628,6 +1894,10 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'bitget':
           this._handleBitgetMessage(message);
+          break;
+
+        case 'kucoin':
+          this._handleKuCoinMessage(message);
           break;
       }
 
@@ -1951,6 +2221,70 @@ export class MarketDataEngine extends EventEmitter {
     }
   }
 
+  /**
+   * 处理 KuCoin 消息
+   * Handle KuCoin message
+   *
+   * KuCoin WebSocket 推送格式 / KuCoin WebSocket push format:
+   * { type: 'message', topic: '/market/ticker:BTC-USDT', subject: 'trade.ticker', data: {...} }
+   *
+   * @param {Object} message - 消息对象 / Message object
+   * @private
+   */
+  _handleKuCoinMessage(message) {
+    // 忽略欢迎消息 / Ignore welcome message
+    if (message.type === 'welcome') {
+      return;
+    }
+
+    // 忽略订阅响应 / Ignore subscription responses
+    if (message.type === 'ack') {
+      return;
+    }
+
+    // 忽略 ping/pong 消息 / Ignore ping/pong messages
+    if (message.type === 'ping' || message.type === 'pong') {
+      return;
+    }
+
+    // 忽略错误响应 / Ignore error responses
+    if (message.type === 'error') {
+      console.error(`${this.logPrefix} KuCoin WebSocket 错误 / Error:`, message.data || message);
+      return;
+    }
+
+    // 如果不是消息类型，返回 / If not message type, return
+    if (message.type !== 'message') {
+      return;
+    }
+
+    // 获取主题和数据 / Get topic and data
+    const { topic, subject, data } = message;
+
+    // 如果没有主题或数据，返回 / If no topic or data, return
+    if (!topic || !data) {
+      return;
+    }
+
+    // 根据主题类型处理 / Handle based on topic type
+    if (topic.includes('/market/ticker:') || topic.includes('/contractMarket/tickerV2:')) {
+      // 处理行情数据 / Handle ticker data
+      this._processTicker('kucoin', message);
+    } else if (topic.includes('level2Depth') || topic.includes('orderbook')) {
+      // 处理深度数据 / Handle depth data
+      this._processDepth('kucoin', message);
+    } else if (topic.includes('/market/match:') || topic.includes('/contractMarket/execution:')) {
+      // 处理成交数据 / Handle trade data
+      this._processTrade('kucoin', message);
+    } else if (topic.includes('/contract/instrument:')) {
+      // 处理资金费率数据 / Handle funding rate data
+      this._processFundingRate('kucoin', message);
+    } else if (topic.includes('/market/candles:') || topic.includes('/contractMarket/candle:')) {
+      // 处理K线数据 / Handle kline data
+      this._processKline('kucoin', message);
+    }
+  }
+
   // ============================================
   // 私有方法 - 数据处理 / Private Methods - Data Processing
   // ============================================
@@ -2178,6 +2512,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'bitget':
           return this._normalizeBitgetTicker(message);
 
+        case 'kucoin':
+          return this._normalizeKuCoinTicker(message);
+
         default:
           return null;
       }
@@ -2322,6 +2659,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'bitget':
           return this._normalizeBitgetDepth(message);
 
+        case 'kucoin':
+          return this._normalizeKuCoinDepth(message);
+
         default:
           return null;
       }
@@ -2458,6 +2798,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'bitget':
           return this._normalizeBitgetTrade(message);
 
+        case 'kucoin':
+          return [this._normalizeKuCoinTrade(message)];
+
         default:
           return null;
       }
@@ -2581,6 +2924,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'bitget':
           return this._normalizeBitgetFundingRate(message);
 
+        case 'kucoin':
+          return this._normalizeKuCoinFundingRate(message);
+
         default:
           return null;
       }
@@ -2670,6 +3016,9 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'bitget':
           return this._normalizeBitgetKline(message);
+
+        case 'kucoin':
+          return this._normalizeKuCoinKline(message);
 
         default:
           return null;
@@ -3590,6 +3939,269 @@ export class MarketDataEngine extends EventEmitter {
 
     // 如果无法解析，返回原始格式 / If cannot parse, return original
     return bitgetSymbol;
+  }
+
+  /**
+   * 将 KuCoin 现货交易对转换为标准格式
+   * Convert KuCoin spot symbol to standard format
+   *
+   * @param {string} kucoinSymbol - KuCoin 交易对 (如 BTC-USDT) / KuCoin symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _kucoinToStandardSymbol(kucoinSymbol) {
+    // KuCoin 现货格式: BTC-USDT -> BTC/USDT
+    // KuCoin spot format: BTC-USDT -> BTC/USDT
+    if (!kucoinSymbol) {
+      return '';
+    }
+
+    // 使用短横线分割 / Split by hyphen
+    const parts = kucoinSymbol.split('-');
+
+    // 如果有两部分，返回 BASE/QUOTE 格式 / If two parts, return BASE/QUOTE format
+    if (parts.length >= 2) {
+      return `${parts[0]}/${parts[1]}`;
+    }
+
+    // 如果无法解析，返回原始格式 / If cannot parse, return original
+    return kucoinSymbol;
+  }
+
+  /**
+   * 标准化 KuCoin 行情数据
+   * Normalize KuCoin ticker data
+   *
+   * KuCoin WebSocket 推送格式 / KuCoin WebSocket push format:
+   * { type: 'message', topic: '/market/ticker:BTC-USDT', data: { price, size, ... } }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeKuCoinTicker(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const topic = message.topic;
+
+    // 从主题提取交易对 / Extract symbol from topic
+    // 现货格式: /market/ticker:BTC-USDT -> BTC-USDT
+    // 合约格式: /contractMarket/tickerV2:XBTUSDTM -> XBTUSDTM
+    let symbol;
+    const isSpot = topic.includes('/market/ticker:');
+    if (isSpot) {
+      const kucoinSymbol = topic.split(':')[1];
+      symbol = this._kucoinToStandardSymbol(kucoinSymbol);
+    } else {
+      const futuresSymbol = topic.split(':')[1];
+      symbol = this._fromKuCoinFuturesSymbol(futuresSymbol);
+    }
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.time || data.ts || Date.now();
+
+    return {
+      exchange: 'kucoin',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      last: parseFloat(data.price || data.lastTradePrice || 0), // 最新价 / Last price
+      bid: parseFloat(data.bestBid || data.bestBidPrice || 0), // 最佳买价 / Best bid
+      bidSize: parseFloat(data.bestBidSize || 0),       // 最佳买量 / Best bid size
+      ask: parseFloat(data.bestAsk || data.bestAskPrice || 0), // 最佳卖价 / Best ask
+      askSize: parseFloat(data.bestAskSize || 0),       // 最佳卖量 / Best ask size
+      open: parseFloat(data.open24h || 0),              // 开盘价 / Open price
+      high: parseFloat(data.high24h || 0),              // 最高价 / High price
+      low: parseFloat(data.low24h || 0),                // 最低价 / Low price
+      volume: parseFloat(data.vol24h || data.volume || 0), // 成交量 / Volume
+      quoteVolume: parseFloat(data.volValue24h || data.turnover || 0), // 成交额 / Quote volume
+      change: parseFloat(data.changePrice || 0),        // 涨跌额 / Price change
+      changePercent: parseFloat(data.changeRate || 0) * 100, // 涨跌幅 / Price change percent
+      // 合约特有字段 / Futures-specific fields
+      markPrice: data.markPrice ? parseFloat(data.markPrice) : null, // 标记价格 / Mark price
+      indexPrice: data.indexPrice ? parseFloat(data.indexPrice) : null, // 指数价格 / Index price
+      fundingRate: data.fundingRate ? parseFloat(data.fundingRate) : null, // 资金费率 / Funding rate
+      exchangeTimestamp: parseInt(timestamp),            // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 KuCoin 深度数据
+   * Normalize KuCoin depth data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeKuCoinDepth(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const topic = message.topic;
+
+    // 从主题提取交易对 / Extract symbol from topic
+    let symbol;
+    const isSpot = topic.includes('/spotMarket/') || topic.includes('/market/');
+    if (isSpot) {
+      const kucoinSymbol = topic.split(':')[1];
+      symbol = this._kucoinToStandardSymbol(kucoinSymbol);
+    } else {
+      const futuresSymbol = topic.split(':')[1];
+      symbol = this._fromKuCoinFuturesSymbol(futuresSymbol);
+    }
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.timestamp || data.ts || Date.now();
+
+    return {
+      exchange: 'kucoin',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
+      bids: (data.bids || []).map(item => [
+        parseFloat(Array.isArray(item) ? item[0] : item.price),
+        parseFloat(Array.isArray(item) ? item[1] : item.size),
+      ]),
+      // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
+      asks: (data.asks || []).map(item => [
+        parseFloat(Array.isArray(item) ? item[0] : item.price),
+        parseFloat(Array.isArray(item) ? item[1] : item.size),
+      ]),
+      exchangeTimestamp: parseInt(timestamp),            // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 KuCoin 成交数据
+   * Normalize KuCoin trade data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的成交数据 / Normalized trade data
+   * @private
+   */
+  _normalizeKuCoinTrade(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const topic = message.topic;
+
+    // 从主题提取交易对 / Extract symbol from topic
+    let symbol;
+    const isSpot = topic.includes('/market/match:');
+    if (isSpot) {
+      const kucoinSymbol = topic.split(':')[1];
+      symbol = this._kucoinToStandardSymbol(kucoinSymbol);
+    } else {
+      const futuresSymbol = topic.split(':')[1];
+      symbol = this._fromKuCoinFuturesSymbol(futuresSymbol);
+    }
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.time || data.ts || Date.now();
+
+    return {
+      exchange: 'kucoin',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      tradeId: data.tradeId || data.sequence || '',     // 成交 ID / Trade ID
+      price: parseFloat(data.price || 0),               // 成交价格 / Trade price
+      amount: parseFloat(data.size || data.qty || 0),   // 成交数量 / Trade amount
+      side: data.side || (data.makerOrderId ? 'buy' : 'sell'), // 主动方向 / Aggressor side
+      exchangeTimestamp: parseInt(timestamp),            // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 KuCoin 资金费率数据
+   * Normalize KuCoin funding rate data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的资金费率数据 / Normalized funding rate data
+   * @private
+   */
+  _normalizeKuCoinFundingRate(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const topic = message.topic;
+
+    // 从主题提取交易对 / Extract symbol from topic
+    const futuresSymbol = topic.split(':')[1];
+    const symbol = this._fromKuCoinFuturesSymbol(futuresSymbol);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.timestamp || data.ts || Date.now();
+
+    return {
+      exchange: 'kucoin',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      fundingRate: parseFloat(data.fundingRate || data.currentFundingRate || 0), // 当前资金费率 / Current funding rate
+      fundingTime: data.fundingTime || null,            // 资金费率结算时间 / Funding settlement time
+      nextFundingRate: data.predictedFundingFeeRate ? parseFloat(data.predictedFundingFeeRate) : null, // 预测下次资金费率 / Predicted next funding rate
+      exchangeTimestamp: parseInt(timestamp),            // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 KuCoin K线数据
+   * Normalize KuCoin kline data
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeKuCoinKline(message) {
+    // 获取数据 / Get data
+    const data = message.data;
+    const topic = message.topic;
+
+    // 从主题提取交易对和时间间隔 / Extract symbol and interval from topic
+    // 格式: /market/candles:BTC-USDT_1hour
+    const topicParts = topic.split(':')[1].split('_');
+    const isSpot = topic.includes('/market/candles:');
+
+    let symbol;
+    let interval = '1h';
+
+    if (isSpot) {
+      symbol = this._kucoinToStandardSymbol(topicParts[0]);
+      interval = topicParts[1] || '1hour';
+    } else {
+      symbol = this._fromKuCoinFuturesSymbol(topicParts[0]);
+      interval = topicParts[1] || '1hour';
+    }
+
+    // 获取K线数据 / Get candle data
+    const candles = Array.isArray(data.candles) ? data.candles : [data];
+    const candle = candles[0];
+
+    // 获取时间戳 / Get timestamp
+    const openTime = candle[0] ? parseInt(candle[0]) * 1000 : Date.now();
+
+    // 计算收盘时间 / Calculate close time
+    let intervalMs = 3600000; // 默认 1 小时 / Default 1 hour
+    if (interval.includes('min')) {
+      intervalMs = parseInt(interval) * 60 * 1000;
+    } else if (interval.includes('hour')) {
+      intervalMs = parseInt(interval) * 3600 * 1000;
+    } else if (interval.includes('day')) {
+      intervalMs = parseInt(interval) * 86400 * 1000;
+    }
+
+    return {
+      exchange: 'kucoin',                               // 交易所 / Exchange
+      symbol,                                            // 交易对 / Trading pair
+      interval,                                          // 时间间隔 / Time interval
+      openTime,                                          // 开盘时间 / Open time
+      closeTime: openTime + intervalMs,                  // 收盘时间 / Close time
+      open: parseFloat(candle[1] || 0),                 // 开盘价 / Open price
+      close: parseFloat(candle[2] || 0),                // 收盘价 / Close price
+      high: parseFloat(candle[3] || 0),                 // 最高价 / High price
+      low: parseFloat(candle[4] || 0),                  // 最低价 / Low price
+      volume: parseFloat(candle[5] || 0),               // 成交量 / Volume
+      quoteVolume: parseFloat(candle[6] || 0),          // 成交额 / Quote volume
+      trades: 0,                                         // KuCoin 不提供 / Not provided by KuCoin
+      isClosed: true,                                    // 是否收盘 / Is candle closed
+      exchangeTimestamp: openTime,                       // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                        // 本地时间戳 / Local timestamp
+    };
   }
 
   // ============================================
