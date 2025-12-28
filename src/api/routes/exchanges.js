@@ -27,12 +27,14 @@ export function createExchangeRoutes(deps = {}) {
       if (exchangeManager?.getExchanges) {
         exchanges = exchangeManager.getExchanges();
       } else {
-        // 默认支持的交易所
+        // 默认支持的交易所 / Default supported exchanges
         exchanges = [
           { id: 'binance', name: 'Binance', status: 'disconnected' },
           { id: 'okx', name: 'OKX', status: 'disconnected' },
-          { id: 'huobi', name: 'Huobi', status: 'disconnected' },
           { id: 'bybit', name: 'Bybit', status: 'disconnected' },
+          { id: 'gate', name: 'Gate.io', status: 'disconnected' },
+          { id: 'deribit', name: 'Deribit', status: 'disconnected' },
+          { id: 'bitget', name: 'Bitget', status: 'disconnected' },
         ];
       }
 

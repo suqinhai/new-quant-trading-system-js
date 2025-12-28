@@ -723,7 +723,36 @@ GET /api/exchanges
       "name": "bybit",
       "status": "connected",
       "lastPing": "2024-01-15T14:30:00Z",
-      "latency": 80
+      "latency": 80,
+      "features": ["spot", "futures", "options"]
+    },
+    {
+      "name": "okx",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 65,
+      "features": ["spot", "futures", "options"]
+    },
+    {
+      "name": "gate",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 90,
+      "features": ["spot", "futures"]
+    },
+    {
+      "name": "deribit",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 100,
+      "features": ["futures", "options"]
+    },
+    {
+      "name": "bitget",
+      "status": "connected",
+      "lastPing": "2024-01-15T14:30:00Z",
+      "latency": 70,
+      "features": ["spot", "futures"]
     }
   ]
 }

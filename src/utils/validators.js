@@ -30,8 +30,10 @@ export const ZodSchemas = {
     message: 'Symbol must be in format BASE/QUOTE (e.g., BTC/USDT)',
   }),
 
-  // 交易所名称
-  exchangeName: z.enum(['binance', 'okx', 'bybit', 'huobi', 'kucoin']),
+  // 交易所名称 / Exchange name
+  // 支持: binance, okx, bybit, gate, deribit, bitget
+  // Supported: binance, okx, bybit, gate, deribit, bitget
+  exchangeName: z.enum(['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget']),
 
   // 订单方向
   orderSide: z.enum(['buy', 'sell']),

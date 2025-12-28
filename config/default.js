@@ -108,6 +108,30 @@ export default {
         adjustForTimeDifference: true,
       },
     },
+
+    // Bitget 配置 / Bitget configuration
+    bitget: {
+      // 是否启用 / Whether enabled
+      enabled: true,
+
+      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      sandbox: false,
+
+      // API 请求超时 (毫秒) / API request timeout (ms)
+      timeout: 30000,
+
+      // 是否启用限速 / Whether to enable rate limiting
+      enableRateLimit: true,
+
+      // 默认交易类型: 'spot' | 'swap' | 'future'
+      defaultType: 'spot',
+
+      // 选项 / Options
+      options: {
+        // 调整时间戳 / Adjust for time difference
+        adjustForTimeDifference: true,
+      },
+    },
   },
 
   // ============================================

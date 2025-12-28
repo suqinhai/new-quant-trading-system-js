@@ -12,6 +12,7 @@ import { BybitExchange } from './BybitExchange.js';
 import { OKXExchange } from './OKXExchange.js';
 import { GateExchange } from './GateExchange.js';
 import { DeribitExchange } from './DeribitExchange.js';
+import { BitgetExchange } from './BitgetExchange.js';
 
 /**
  * 交易所工厂
@@ -32,6 +33,7 @@ export class ExchangeFactory {
     okx: OKXExchange,            // OKX 交易所 / OKX exchange
     gate: GateExchange,          // Gate.io 交易所 / Gate.io exchange
     deribit: DeribitExchange,    // Deribit 交易所 / Deribit exchange
+    bitget: BitgetExchange,      // Bitget 交易所 / Bitget exchange
   };
 
   /**

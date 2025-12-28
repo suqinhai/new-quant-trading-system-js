@@ -56,6 +56,12 @@ const WS_ENDPOINTS = {
     futures: 'wss://fx-ws.gateio.ws/v4/ws/usdt',        // USDT 永续 / USDT perpetual
     delivery: 'wss://fx-ws.gateio.ws/v4/ws/btc',        // BTC 永续 / BTC perpetual
   },
+  // Bitget 端点 / Bitget endpoints
+  bitget: {
+    spot: 'wss://ws.bitget.com/v2/ws/public',           // 现货公共频道 / Spot public channel
+    futures: 'wss://ws.bitget.com/v2/ws/public',        // 合约公共频道 / Futures public channel
+    private: 'wss://ws.bitget.com/v2/ws/private',       // 私有频道 / Private channel
+  },
 };
 
 /**
@@ -814,6 +820,12 @@ export class MarketDataEngine extends EventEmitter {
           ? WS_ENDPOINTS.gate.spot
           : WS_ENDPOINTS.gate.futures;
 
+      case 'bitget':
+        // Bitget: 根据交易类型选择端点 / Select endpoint based on trading type
+        return tradingType === 'spot'
+          ? WS_ENDPOINTS.bitget.spot
+          : WS_ENDPOINTS.bitget.futures;
+
       default:
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
@@ -934,6 +946,9 @@ export class MarketDataEngine extends EventEmitter {
             ? { time: Math.floor(Date.now() / 1000), channel: 'spot.ping' }
             : { time: Math.floor(Date.now() / 1000), channel: 'futures.ping' };
           ws.send(JSON.stringify(pingMessage));
+        } else if (exchange === 'bitget') {
+          // Bitget 使用 ping 字符串 / Bitget uses ping string
+          ws.send('ping');
         } else {
           // Binance 使用 WebSocket ping / Binance uses WebSocket ping
           ws.ping();
@@ -1118,6 +1133,9 @@ export class MarketDataEngine extends EventEmitter {
       case 'gate':
         return this._buildGateSubscribeMessage(symbol, dataType);
 
+      case 'bitget':
+        return this._buildBitgetSubscribeMessage(symbol, dataType);
+
       default:
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`);
     }
@@ -1158,6 +1176,10 @@ export class MarketDataEngine extends EventEmitter {
       case 'gate':
         // Gate.io 取消订阅使用相同格式但 event 为 unsubscribe / Gate.io unsubscribe uses same format but event is unsubscribe
         return { ...subMsg, event: 'unsubscribe' };
+
+      case 'bitget':
+        // Bitget 取消订阅使用相同格式但 op 为 unsubscribe / Bitget unsubscribe uses same format but op is unsubscribe
+        return { ...subMsg, op: 'unsubscribe' };
 
       default:
         return subMsg;
@@ -1464,6 +1486,78 @@ export class MarketDataEngine extends EventEmitter {
   }
 
   /**
+   * 构建 Bitget 订阅消息
+   * Build Bitget subscription message
+   *
+   * Bitget WebSocket V2 订阅格式 / Bitget WebSocket V2 subscription format:
+   * { op: 'subscribe', args: [{ instType, channel, instId }] }
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {string} dataType - 数据类型 / Data type
+   * @returns {Object} 订阅消息对象 / Subscription message object
+   * @private
+   */
+  _buildBitgetSubscribeMessage(symbol, dataType) {
+    // 转换交易对格式: BTC/USDT -> BTCUSDT (现货) 或 BTCUSDT (合约)
+    // Convert symbol format: BTC/USDT -> BTCUSDT (spot) or BTCUSDT (futures)
+    const bitgetSymbol = symbol.replace('/', '');
+
+    // 判断是现货还是合约 / Determine if spot or futures
+    const isSpot = this.config.tradingType === 'spot';
+    const instType = isSpot ? 'SPOT' : 'USDT-FUTURES';
+
+    // 根据数据类型构建频道和参数 / Build channel and args based on data type
+    let channel;
+    let instId = bitgetSymbol;
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        // 行情数据 / Ticker data
+        channel = 'ticker';
+        break;
+
+      case DATA_TYPES.DEPTH:
+        // 深度数据 / Depth data
+        // Bitget 深度频道格式 / Bitget depth channel format
+        channel = 'books15';  // 15档深度 / 15 levels depth
+        break;
+
+      case DATA_TYPES.TRADE:
+        // 逐笔成交 / Trade data
+        channel = 'trade';
+        break;
+
+      case DATA_TYPES.FUNDING_RATE:
+        // 资金费率 (仅合约) / Funding rate (futures only)
+        if (isSpot) {
+          throw new Error('资金费率仅适用于合约 / Funding rate only available for futures');
+        }
+        // Bitget 使用 ticker 频道获取资金费率 / Bitget uses ticker channel for funding rate
+        channel = 'ticker';
+        break;
+
+      case DATA_TYPES.KLINE:
+        // K线数据 / Kline data
+        // Bitget K线频道格式: candle1H / Bitget kline channel format: candle1H
+        channel = 'candle1H';
+        break;
+
+      default:
+        throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`);
+    }
+
+    // 返回 Bitget V2 格式的订阅消息 / Return Bitget V2 format subscription message
+    return {
+      op: 'subscribe',
+      args: [{
+        instType,      // 产品类型 / Instrument type
+        channel,       // 频道名称 / Channel name
+        instId,        // 产品 ID / Instrument ID
+      }],
+    };
+  }
+
+  /**
    * 获取订阅数量统计
    * Get subscription counts
    *
@@ -1501,7 +1595,7 @@ export class MarketDataEngine extends EventEmitter {
       // 转换为字符串 / Convert to string
       const dataStr = data.toString();
 
-      // 处理非 JSON 响应 (如 OKX 的 "pong") / Handle non-JSON responses (like OKX's "pong")
+      // 处理非 JSON 响应 (如 OKX 的 "pong", Bitget 的 "pong") / Handle non-JSON responses
       if (dataStr === 'pong' || dataStr === 'ping') {
         // 心跳响应，忽略 / Heartbeat response, ignore
         return;
@@ -1530,6 +1624,10 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'gate':
           this._handleGateMessage(message);
+          break;
+
+        case 'bitget':
+          this._handleBitgetMessage(message);
           break;
       }
 
@@ -1788,6 +1886,71 @@ export class MarketDataEngine extends EventEmitter {
     }
   }
 
+  /**
+   * 处理 Bitget 消息
+   * Handle Bitget message
+   *
+   * Bitget WebSocket V2 推送格式 / Bitget WebSocket V2 push format:
+   * { action: 'snapshot' | 'update', arg: { instType, channel, instId }, data: [...] }
+   *
+   * @param {Object} message - 消息对象 / Message object
+   * @private
+   */
+  _handleBitgetMessage(message) {
+    // 忽略订阅响应 / Ignore subscription responses
+    if (message.event === 'subscribe' || message.event === 'unsubscribe') {
+      return;
+    }
+
+    // 忽略错误响应 / Ignore error responses
+    if (message.event === 'error') {
+      console.error(`${this.logPrefix} Bitget WebSocket 错误 / Error:`, message.msg || message);
+      return;
+    }
+
+    // 获取参数和数据 / Get args and data
+    const { arg, data, action } = message;
+
+    // 如果没有参数或数据，返回 / If no args or data, return
+    if (!arg || !data || data.length === 0) {
+      return;
+    }
+
+    // 获取频道类型 / Get channel type
+    const channel = arg.channel;
+
+    // 根据频道类型处理 / Handle based on channel type
+    switch (channel) {
+      case 'ticker':
+        // 处理行情数据 / Handle ticker data
+        this._processTicker('bitget', message);
+        // 如果是合约，也处理资金费率 / If futures, also process funding rate
+        if (arg.instType !== 'SPOT' && data[0].fundingRate !== undefined) {
+          this._processFundingRate('bitget', message);
+        }
+        break;
+
+      case 'books5':
+      case 'books15':
+      case 'books':
+        // 处理深度数据 / Handle depth data
+        this._processDepth('bitget', message);
+        break;
+
+      case 'trade':
+        // 处理成交数据 / Handle trade data
+        this._processTrade('bitget', message);
+        break;
+
+      default:
+        // 检查是否是K线频道 (candle1H, candle1D 等) / Check if it's a kline channel
+        if (channel.startsWith('candle')) {
+          this._processKline('bitget', message);
+        }
+        break;
+    }
+  }
+
   // ============================================
   // 私有方法 - 数据处理 / Private Methods - Data Processing
   // ============================================
@@ -2012,6 +2175,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'gate':
           return this._normalizeGateTicker(message);
 
+        case 'bitget':
+          return this._normalizeBitgetTicker(message);
+
         default:
           return null;
       }
@@ -2153,6 +2319,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'gate':
           return this._normalizeGateDepth(message);
 
+        case 'bitget':
+          return this._normalizeBitgetDepth(message);
+
         default:
           return null;
       }
@@ -2286,6 +2455,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'gate':
           return this._normalizeGateTrade(message);
 
+        case 'bitget':
+          return this._normalizeBitgetTrade(message);
+
         default:
           return null;
       }
@@ -2406,6 +2578,9 @@ export class MarketDataEngine extends EventEmitter {
         case 'gate':
           return this._normalizeGateFundingRate(message);
 
+        case 'bitget':
+          return this._normalizeBitgetFundingRate(message);
+
         default:
           return null;
       }
@@ -2492,6 +2667,9 @@ export class MarketDataEngine extends EventEmitter {
 
         case 'gate':
           return this._normalizeGateKline(message);
+
+        case 'bitget':
+          return this._normalizeBitgetKline(message);
 
         default:
           return null;
@@ -3038,6 +3216,217 @@ export class MarketDataEngine extends EventEmitter {
     };
   }
 
+  /**
+   * 标准化 Bitget 行情数据
+   * Normalize Bitget ticker data
+   *
+   * Bitget WebSocket V2 推送格式 / Bitget WebSocket V2 push format:
+   * { arg: { instType, channel, instId }, data: [{ last, open24h, high24h, low24h, ... }] }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的行情数据 / Normalized ticker data
+   * @private
+   */
+  _normalizeBitgetTicker(message) {
+    // 获取数据 / Get data
+    const data = message.data[0];
+    const arg = message.arg;
+
+    // 转换交易对格式 / Convert symbol format
+    const symbol = this._bitgetToStandardSymbol(arg.instId);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.ts ? parseInt(data.ts) : Date.now();
+
+    return {
+      exchange: 'bitget',                              // 交易所 / Exchange
+      symbol,                                           // 交易对 / Trading pair
+      last: parseFloat(data.lastPr || data.last || 0), // 最新价 / Last price
+      bid: parseFloat(data.bidPr || data.bid1 || 0),   // 最佳买价 / Best bid
+      bidSize: parseFloat(data.bidSz || data.bidSz1 || 0), // 最佳买量 / Best bid size
+      ask: parseFloat(data.askPr || data.ask1 || 0),   // 最佳卖价 / Best ask
+      askSize: parseFloat(data.askSz || data.askSz1 || 0), // 最佳卖量 / Best ask size
+      open: parseFloat(data.open24h || data.openUtc0 || 0), // 开盘价 / Open price
+      high: parseFloat(data.high24h || 0),             // 最高价 / High price
+      low: parseFloat(data.low24h || 0),               // 最低价 / Low price
+      volume: parseFloat(data.baseVolume || data.vol24h || 0), // 成交量 / Volume
+      quoteVolume: parseFloat(data.quoteVolume || data.usdtVolume || 0), // 成交额 / Quote volume
+      change: parseFloat(data.change24h || 0),         // 涨跌额 / Price change
+      changePercent: parseFloat(data.changeUtc24h || data.change24h || 0) * 100, // 涨跌幅 / Price change percent
+      // 合约特有字段 / Futures-specific fields
+      markPrice: data.markPrice ? parseFloat(data.markPrice) : null, // 标记价格 / Mark price
+      indexPrice: data.indexPrice ? parseFloat(data.indexPrice) : null, // 指数价格 / Index price
+      fundingRate: data.fundingRate ? parseFloat(data.fundingRate) : null, // 资金费率 / Funding rate
+      nextFundingTime: data.nextFundingTime ? parseInt(data.nextFundingTime) : null, // 下次资金费率时间 / Next funding time
+      exchangeTimestamp: timestamp,                     // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                       // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Bitget 深度数据
+   * Normalize Bitget depth data
+   *
+   * Bitget WebSocket V2 推送格式 / Bitget WebSocket V2 push format:
+   * { arg: { instType, channel, instId }, data: [{ asks: [...], bids: [...], ts }] }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的深度数据 / Normalized depth data
+   * @private
+   */
+  _normalizeBitgetDepth(message) {
+    // 获取数据 / Get data
+    const data = message.data[0];
+    const arg = message.arg;
+
+    // 转换交易对格式 / Convert symbol format
+    const symbol = this._bitgetToStandardSymbol(arg.instId);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.ts ? parseInt(data.ts) : Date.now();
+
+    return {
+      exchange: 'bitget',                          // 交易所 / Exchange
+      symbol,                                       // 交易对 / Trading pair
+      // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
+      bids: (data.bids || []).map(item => [
+        parseFloat(item[0]),
+        parseFloat(item[1]),
+      ]),
+      // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
+      asks: (data.asks || []).map(item => [
+        parseFloat(item[0]),
+        parseFloat(item[1]),
+      ]),
+      exchangeTimestamp: timestamp,                 // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                   // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Bitget 成交数据
+   * Normalize Bitget trade data
+   *
+   * Bitget WebSocket V2 推送格式 / Bitget WebSocket V2 push format:
+   * { arg: { instType, channel, instId }, data: [{ tradeId, px, sz, side, ts }] }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Array} 标准化的成交数据数组 / Normalized trade data array
+   * @private
+   */
+  _normalizeBitgetTrade(message) {
+    // 获取数据数组 / Get data array
+    const dataArray = message.data;
+    const arg = message.arg;
+
+    // 转换交易对格式 / Convert symbol format
+    const symbol = this._bitgetToStandardSymbol(arg.instId);
+
+    // 标准化每笔成交 / Normalize each trade
+    return dataArray.map(data => ({
+      exchange: 'bitget',                          // 交易所 / Exchange
+      symbol,                                       // 交易对 / Trading pair
+      tradeId: data.tradeId?.toString() || '',     // 成交 ID / Trade ID
+      price: parseFloat(data.price || data.px || 0), // 成交价格 / Trade price
+      amount: parseFloat(data.size || data.sz || 0), // 成交数量 / Trade amount
+      side: data.side?.toLowerCase() || 'buy',     // 主动方向 / Aggressor side
+      exchangeTimestamp: parseInt(data.ts || Date.now()), // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                   // 本地时间戳 / Local timestamp
+    }));
+  }
+
+  /**
+   * 标准化 Bitget 资金费率数据
+   * Normalize Bitget funding rate data
+   *
+   * Bitget 资金费率在 ticker 中推送 / Bitget funding rate is pushed in ticker
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的资金费率数据 / Normalized funding rate data
+   * @private
+   */
+  _normalizeBitgetFundingRate(message) {
+    // 获取数据 / Get data
+    const data = message.data[0];
+    const arg = message.arg;
+
+    // 转换交易对格式 / Convert symbol format
+    const symbol = this._bitgetToStandardSymbol(arg.instId);
+
+    // 获取时间戳 / Get timestamp
+    const timestamp = data.ts ? parseInt(data.ts) : Date.now();
+
+    return {
+      exchange: 'bitget',                                // 交易所 / Exchange
+      symbol,                                             // 交易对 / Trading pair
+      markPrice: parseFloat(data.markPrice || 0),        // 标记价格 / Mark price
+      indexPrice: parseFloat(data.indexPrice || 0),      // 指数价格 / Index price
+      fundingRate: parseFloat(data.fundingRate || 0),    // 当前资金费率 / Current funding rate
+      nextFundingTime: data.nextFundingTime ? parseInt(data.nextFundingTime) : null, // 下次资金费率时间 / Next funding time
+      exchangeTimestamp: timestamp,                       // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                         // 本地时间戳 / Local timestamp
+    };
+  }
+
+  /**
+   * 标准化 Bitget K线数据
+   * Normalize Bitget kline data
+   *
+   * Bitget WebSocket V2 推送格式 / Bitget WebSocket V2 push format:
+   * { arg: { instType, channel, instId }, data: [[ts, o, h, l, c, vol, ...]] }
+   *
+   * @param {Object} message - 原始消息 / Raw message
+   * @returns {Object} 标准化的K线数据 / Normalized kline data
+   * @private
+   */
+  _normalizeBitgetKline(message) {
+    // 获取数据 / Get data
+    const data = message.data[0];
+    const arg = message.arg;
+
+    // 转换交易对格式 / Convert symbol format
+    const symbol = this._bitgetToStandardSymbol(arg.instId);
+
+    // 获取时间间隔 (从频道名称提取) / Get interval (extract from channel name)
+    const channel = arg.channel;
+    const interval = channel.replace('candle', '') || '1H';
+
+    // 解析K线数据 / Parse kline data
+    // Bitget K线格式: [ts, open, high, low, close, volume, quoteVolume, ...]
+    const openTime = parseInt(data[0]);
+
+    // 计算收盘时间 (根据时间间隔) / Calculate close time (based on interval)
+    let intervalMs = 3600000; // 默认 1 小时 / Default 1 hour
+    const intervalLower = interval.toLowerCase();
+    if (intervalLower.endsWith('m')) {
+      intervalMs = parseInt(intervalLower) * 60 * 1000;
+    } else if (intervalLower.endsWith('h')) {
+      intervalMs = parseInt(intervalLower) * 3600 * 1000;
+    } else if (intervalLower.endsWith('d') || intervalLower.endsWith('day')) {
+      intervalMs = 86400 * 1000;
+    } else if (intervalLower.endsWith('w') || intervalLower.endsWith('week')) {
+      intervalMs = 7 * 86400 * 1000;
+    }
+
+    return {
+      exchange: 'bitget',                        // 交易所 / Exchange
+      symbol,                                     // 交易对 / Trading pair
+      interval,                                   // 时间间隔 / Time interval
+      openTime,                                   // 开盘时间 / Open time
+      closeTime: openTime + intervalMs,           // 收盘时间 / Close time
+      open: parseFloat(data[1] || 0),            // 开盘价 / Open price
+      high: parseFloat(data[2] || 0),            // 最高价 / High price
+      low: parseFloat(data[3] || 0),             // 最低价 / Low price
+      close: parseFloat(data[4] || 0),           // 收盘价 / Close price
+      volume: parseFloat(data[5] || 0),          // 成交量 / Volume
+      quoteVolume: parseFloat(data[6] || 0),     // 成交额 / Quote volume
+      trades: 0,                                  // Bitget 不提供 / Not provided by Bitget
+      isClosed: true,                             // 是否收盘 / Is candle closed
+      exchangeTimestamp: openTime,                // 交易所时间戳 / Exchange timestamp
+      localTimestamp: Date.now(),                 // 本地时间戳 / Local timestamp
+    };
+  }
+
   // ============================================
   // 私有方法 - 交易对转换 / Private Methods - Symbol Conversion
   // ============================================
@@ -3171,6 +3560,36 @@ export class MarketDataEngine extends EventEmitter {
 
     // 如果无法解析，返回原始格式 / If cannot parse, return original
     return gateSymbol;
+  }
+
+  /**
+   * 将 Bitget 交易对转换为标准格式
+   * Convert Bitget symbol to standard format
+   *
+   * @param {string} bitgetSymbol - Bitget 交易对 (如 BTCUSDT) / Bitget symbol
+   * @returns {string} 标准交易对 (如 BTC/USDT) / Standard symbol
+   * @private
+   */
+  _bitgetToStandardSymbol(bitgetSymbol) {
+    // Bitget 格式: BTCUSDT -> BTC/USDT
+    // Bitget format: BTCUSDT -> BTC/USDT
+    if (!bitgetSymbol) {
+      return '';
+    }
+
+    // 常见的计价货币 / Common quote currencies
+    const quotes = ['USDT', 'USDC', 'USD', 'BTC', 'ETH'];
+
+    // 尝试匹配计价货币 / Try to match quote currency
+    for (const quote of quotes) {
+      if (bitgetSymbol.endsWith(quote)) {
+        const base = bitgetSymbol.slice(0, -quote.length);
+        return `${base}/${quote}`;
+      }
+    }
+
+    // 如果无法解析，返回原始格式 / If cannot parse, return original
+    return bitgetSymbol;
   }
 
   // ============================================

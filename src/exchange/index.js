@@ -15,6 +15,7 @@ export { BybitExchange } from './BybitExchange.js';
 export { OKXExchange } from './OKXExchange.js';
 export { GateExchange } from './GateExchange.js';
 export { DeribitExchange } from './DeribitExchange.js';
+export { BitgetExchange } from './BitgetExchange.js';
 
 // 导出工厂类 / Export factory class
 export { ExchangeFactory } from './ExchangeFactory.js';
