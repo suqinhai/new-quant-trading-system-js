@@ -333,6 +333,10 @@ STRATEGIES.forEach((strategy, index) => {
   );
 
   // 影子配置 / Shadow configuration
+  // 根据交易对数量动态分配内存 / Dynamically allocate memory based on symbol count
+  const symbolCount = strategy.symbols.split(',').length;
+  const shadowMaxMemory = symbolCount > 5 ? '2G' : (symbolCount > 2 ? '1G' : '512M');
+
   apps.push(
     createAppConfig({
       name: `quant-shadow-${strategy.id}`,
@@ -343,7 +347,7 @@ STRATEGIES.forEach((strategy, index) => {
       wsPort: shadowPortBase + 1,
       dashboardPort: shadowDashboardPort,
       metricsPort: shadowMetricsPort,
-      maxMemory: '512M',
+      maxMemory: shadowMaxMemory,
     })
   );
 });
