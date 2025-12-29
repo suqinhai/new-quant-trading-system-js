@@ -84,6 +84,17 @@ function createAppConfig(options) {
   const isLive = mode === 'live';
   const verboseFlag = isLive ? '' : ' --verbose';
 
+  // 将 maxMemory 转换为 MB 用于 Node.js --max-old-space-size
+  // Convert maxMemory to MB for Node.js --max-old-space-size
+  const memoryToMB = (mem) => {
+    const match = mem.match(/^(\d+)(M|G)$/i);
+    if (!match) return 1024; // 默认 1GB
+    const value = parseInt(match[1], 10);
+    const unit = match[2].toUpperCase();
+    return unit === 'G' ? value * 1024 : value;
+  };
+  const maxOldSpaceSize = memoryToMB(maxMemory);
+
   return {
     // 应用名称 / Application name
     name,
@@ -93,6 +104,10 @@ function createAppConfig(options) {
 
     // 命令行参数 / Command line arguments
     args: `${mode} --strategy ${strategy} --symbols ${symbols}${verboseFlag}`,
+
+    // Node.js 参数 - 设置最大堆内存
+    // Node.js arguments - set max heap memory
+    node_args: `--max-old-space-size=${maxOldSpaceSize}`,
 
     // ============================================
     // 进程配置 / Process Configuration
