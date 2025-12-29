@@ -351,8 +351,8 @@ STRATEGIES.forEach((strategy, index) => {
   // 根据交易对数量动态分配内存 / Dynamically allocate memory based on symbol count
   const symbolCount = strategy.symbols.split(',').length;
   // 多币种策略需要更多内存 / Multi-symbol strategies need more memory
-  // >= 10 个币种: 4G, > 5 个币种: 3G, > 2 个币种: 1.5G, 其他: 512M
-  const shadowMaxMemory = symbolCount >= 10 ? '4G' : (symbolCount > 5 ? '3G' : (symbolCount > 2 ? '1500M' : '512M'));
+  // >= 10 个币种: 6G, > 5 个币种: 4G, > 2 个币种: 1.5G, 其他: 512M
+  const shadowMaxMemory = symbolCount >= 10 ? '6G' : (symbolCount > 5 ? '4G' : (symbolCount > 2 ? '1500M' : '512M'));
 
   apps.push(
     createAppConfig({
