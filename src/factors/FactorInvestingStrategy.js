@@ -124,7 +124,7 @@ export class FactorInvestingStrategy extends BaseStrategy {
 
     // 再平衡配置 / Rebalance configuration
     this.rebalancePeriod = params.rebalancePeriod || 24 * 60 * 60 * 1000; // 默认每天
-    this.lastRebalanceTime = 0;
+    this.lastRebalanceTime = Date.now(); // 初始化为当前时间，避免启动后立即触发再平衡
     this.minRebalanceChange = params.minRebalanceChange || 0.1; // 10% 变化才再平衡
 
     // 仓位限制 / Position limits
@@ -211,6 +211,17 @@ export class FactorInvestingStrategy extends BaseStrategy {
    * @private
    */
   async _rebalance() {
+    // 检查数据是否充足 / Check if data is sufficient
+    const validSymbols = this.symbols.filter(s => {
+      const data = this.assetData.get(s);
+      return data && data.candles.length >= 10; // 至少需要10根K线
+    });
+
+    if (validSymbols.length < 3) {
+      this.log(`数据不足，跳过本次再平衡 (有效交易对: ${validSymbols.length}/${this.symbols.length})`, 'warn');
+      return;
+    }
+
     this.log('开始因子计算和再平衡...');
 
     try {
