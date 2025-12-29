@@ -472,6 +472,18 @@ class TradingSystemRunner extends EventEmitter {
         httpEnabled: this.mode !== RUN_MODE.BACKTEST,  // 非回测模式启用 / Enable in non-backtest mode
         httpPort: parseInt(process.env.METRICS_PORT, 10) || this.config.server?.metricsPort || 9090,  // HTTP 端口 / HTTP port
       },
+
+      // 告警管理器配置 / Alert Manager configuration
+      alertManager: {
+        emailEnabled: !!process.env.SMTP_HOST,  // 如果配置了SMTP则启用邮件 / Enable email if SMTP configured
+        enableTelegram: process.env.TELEGRAM_ENABLED === 'true',  // Telegram 告警 / Telegram alerts
+        smtpHost: process.env.SMTP_HOST,
+        smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587,
+        smtpUser: process.env.SMTP_USER,
+        smtpPass: process.env.SMTP_PASS,
+        alertEmailTo: process.env.ALERT_EMAIL_TO,
+        emailLevelThreshold: 'danger',  // danger 及以上级别发邮件 / Send email for danger level and above
+      },
     });
 
     // 如果是实盘或影子模式，初始化 Telegram / If live or shadow mode, initialize Telegram
@@ -1053,7 +1065,7 @@ class TradingSystemRunner extends EventEmitter {
       // 记录到日志模块 / Log to logger module
       if (this.loggerModule) {
         this.loggerModule.pnlLogger.logTrade(order);
-        this.loggerModule.telegramNotifier.sendTradeNotification(order);
+        this.loggerModule.telegramNotifier.sendTradeNotification(order, this.mode);
       }
     });
 

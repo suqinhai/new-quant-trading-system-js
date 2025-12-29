@@ -171,9 +171,6 @@ const DEFAULT_CONFIG = {
   // 是否启用交易通知 / Enable trade notifications
   tradeNotifyEnabled: true,
 
-  // 最小通知金额 (USDT) / Minimum notification amount (USDT)
-  minTradeNotifyAmount: 100,
-
   // ============================================
   // 消息格式配置 / Message Format Configuration
   // ============================================
@@ -922,23 +919,16 @@ export class TelegramNotifier extends EventEmitter {
    * Send trade notification
    *
    * @param {Object} trade - 交易数据 / Trade data
+   * @param {string} mode - 运行模式 (live/shadow) / Running mode
    */
-  async sendTradeNotification(trade) {
+  async sendTradeNotification(trade, mode = 'unknown') {
     // 如果交易通知未启用 / If trade notifications not enabled
     if (!this.config.tradeNotifyEnabled) {
       return;
     }
 
-    // 计算交易金额 / Calculate trade amount
-    const tradeValue = (trade.amount || 0) * (trade.price || 0);
-
-    // 如果金额小于最小通知金额 / If amount less than minimum
-    if (tradeValue < this.config.minTradeNotifyAmount) {
-      return;
-    }
-
     // 格式化交易消息 / Format trade message
-    const message = this._formatTradeMessage(trade);
+    const message = this._formatTradeMessage(trade, mode);
 
     // 发送消息 / Send message
     await this.sendMessage(message, {
@@ -952,13 +942,33 @@ export class TelegramNotifier extends EventEmitter {
    * Format trade message
    *
    * @param {Object} trade - 交易数据 / Trade data
+   * @param {string} mode - 运行模式 / Running mode
    * @returns {string} 格式化后的消息 / Formatted message
    * @private
    */
-  _formatTradeMessage(trade) {
+  _formatTradeMessage(trade, mode = 'unknown') {
     // 选择 emoji / Choose emoji
     const sideEmoji = trade.side === 'buy' ? EMOJI.BUY : EMOJI.SELL;
     const pnlEmoji = (trade.pnl || 0) >= 0 ? EMOJI.PROFIT : EMOJI.LOSS;
+
+    // 模式显示 / Mode display
+    const modeEmoji = mode === 'live' ? '🔴' : '⚪';
+    const modeText = mode === 'live' ? '实盘 / Live' : (mode === 'shadow' ? '影子 / Shadow' : mode);
+
+    // 计算交易金额 / Calculate trade value
+    const tradeValue = ((trade.amount || 0) * (trade.price || 0)).toFixed(2);
+
+    // 格式化成交时间 / Format execution time
+    const execTime = trade.timestamp ? new Date(trade.timestamp) : new Date();
+    const timeStr = execTime.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
 
     // 构建标题 (带服务名) / Build title (with service name)
     const header = this._getMessageHeader();
@@ -969,20 +979,21 @@ export class TelegramNotifier extends EventEmitter {
       `*${header}*`,
       title,
       '',
-      `*交易对:* ${trade.symbol}`,
+      `${modeEmoji} *模式:* ${modeText}`,
+      `*币种:* ${trade.symbol}`,
       `*方向:* ${trade.side === 'buy' ? '买入 / Buy' : '卖出 / Sell'}`,
       `*数量:* ${trade.amount}`,
       `*价格:* ${trade.price}`,
-      `*金额:* ${(trade.amount * trade.price).toFixed(2)} USDT`,
+      `*交易金额:* ${tradeValue} USDT`,
     ];
 
     // 如果有 PnL / If has PnL
-    if (trade.pnl !== undefined) {
+    if (trade.pnl !== undefined && trade.pnl !== null) {
       lines.push(`*盈亏:* ${pnlEmoji} ${trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)} USDT`);
     }
 
-    // 添加时间 / Add time
-    lines.push(`*时间:* ${new Date().toLocaleTimeString('zh-CN')}`);
+    // 添加成交时间 / Add execution time
+    lines.push(`*成交时间:* ${timeStr}`);
 
     // 返回格式化消息 / Return formatted message
     return lines.join('\n');

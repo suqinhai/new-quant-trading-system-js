@@ -17,6 +17,9 @@
 // 导入事件发射器 / Import EventEmitter
 import EventEmitter from 'eventemitter3';
 
+// 导入邮件发送库 / Import email library
+import nodemailer from 'nodemailer';
+
 // ============================================
 // 常量定义 / Constants Definition
 // ============================================
@@ -106,6 +109,32 @@ const DEFAULT_CONFIG = {
 
   // 启用事件发射 / Enable event emission
   eventsEnabled: true,
+
+  // 启用邮件通知 / Enable email notifications
+  emailEnabled: false,
+
+  // ============================================
+  // 邮件配置 / Email Configuration
+  // ============================================
+
+  // SMTP 主机 / SMTP host
+  smtpHost: process.env.SMTP_HOST || '',
+
+  // SMTP 端口 / SMTP port
+  smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587,
+
+  // SMTP 用户 / SMTP user
+  smtpUser: process.env.SMTP_USER || '',
+
+  // SMTP 密码 / SMTP password
+  smtpPass: process.env.SMTP_PASS || '',
+
+  // 告警接收邮箱 / Alert recipient email
+  alertEmailTo: process.env.ALERT_EMAIL_TO || '',
+
+  // 邮件发送级别 (只有 >= 此级别才发邮件) / Email level threshold
+  // 可选: warning, danger, critical, emergency
+  emailLevelThreshold: 'danger',
 
   // ============================================
   // 历史记录配置 / History Configuration
@@ -224,6 +253,12 @@ export class AlertManager extends EventEmitter {
 
     // 检查定时器 / Check timer
     this.checkTimer = null;
+
+    // 邮件发送器 / Email transporter
+    this.emailTransporter = null;
+
+    // 初始化邮件发送器 / Initialize email transporter
+    this._initEmailTransporter();
   }
 
   // ============================================
@@ -958,6 +993,145 @@ export class AlertManager extends EventEmitter {
         alert.data
       );
     }
+
+    // 发送邮件通知 / Send email notification
+    if (this.config.emailEnabled && this._shouldSendEmail(alert.level)) {
+      this._sendEmailNotification(alert);
+    }
+  }
+
+  /**
+   * 判断是否应该发送邮件
+   * Check if should send email
+   *
+   * @param {string} level - 警报级别 / Alert level
+   * @returns {boolean} 是否发送 / Whether to send
+   * @private
+   */
+  _shouldSendEmail(level) {
+    const levelOrder = [
+      ALERT_LEVEL.INFO,
+      ALERT_LEVEL.WARNING,
+      ALERT_LEVEL.DANGER,
+      ALERT_LEVEL.CRITICAL,
+      ALERT_LEVEL.EMERGENCY,
+    ];
+
+    const currentIndex = levelOrder.indexOf(level);
+    const thresholdIndex = levelOrder.indexOf(this.config.emailLevelThreshold);
+
+    return currentIndex >= thresholdIndex;
+  }
+
+  /**
+   * 初始化邮件发送器
+   * Initialize email transporter
+   * @private
+   */
+  _initEmailTransporter() {
+    // 检查是否启用邮件 / Check if email enabled
+    if (!this.config.emailEnabled) {
+      return;
+    }
+
+    // 检查必要配置 / Check required configuration
+    if (!this.config.smtpHost || !this.config.smtpUser || !this.config.smtpPass) {
+      this.log('邮件配置不完整，已禁用邮件通知 / Email config incomplete, disabled', 'warn');
+      this.config.emailEnabled = false;
+      return;
+    }
+
+    try {
+      // 创建邮件发送器 / Create email transporter
+      this.emailTransporter = nodemailer.createTransport({
+        host: this.config.smtpHost,
+        port: this.config.smtpPort,
+        secure: this.config.smtpPort === 465,
+        auth: {
+          user: this.config.smtpUser,
+          pass: this.config.smtpPass,
+        },
+      });
+
+      this.log('邮件发送器初始化成功 / Email transporter initialized', 'info');
+    } catch (error) {
+      this.log(`邮件发送器初始化失败: ${error.message} / Email init failed`, 'error');
+      this.config.emailEnabled = false;
+    }
+  }
+
+  /**
+   * 发送邮件通知
+   * Send email notification
+   *
+   * @param {Object} alert - 警报对象 / Alert object
+   * @private
+   */
+  async _sendEmailNotification(alert) {
+    if (!this.emailTransporter) {
+      return;
+    }
+
+    try {
+      // 构建邮件内容 / Build email content
+      const subject = `[${alert.level.toUpperCase()}] ${alert.title}`;
+      const html = this._buildEmailHtml(alert);
+
+      // 发送邮件 / Send email
+      await this.emailTransporter.sendMail({
+        from: this.config.smtpUser,
+        to: this.config.alertEmailTo,
+        subject,
+        html,
+      });
+
+      this.log(`邮件通知已发送: ${alert.title} / Email sent`, 'info');
+    } catch (error) {
+      this.log(`邮件发送失败: ${error.message} / Email send failed`, 'error');
+    }
+  }
+
+  /**
+   * 构建邮件 HTML
+   * Build email HTML
+   *
+   * @param {Object} alert - 警报对象 / Alert object
+   * @returns {string} HTML 内容 / HTML content
+   * @private
+   */
+  _buildEmailHtml(alert) {
+    const levelColors = {
+      [ALERT_LEVEL.INFO]: '#17a2b8',
+      [ALERT_LEVEL.WARNING]: '#ffc107',
+      [ALERT_LEVEL.DANGER]: '#fd7e14',
+      [ALERT_LEVEL.CRITICAL]: '#dc3545',
+      [ALERT_LEVEL.EMERGENCY]: '#ff0000',
+    };
+
+    const color = levelColors[alert.level] || '#6c757d';
+    const timestamp = new Date(alert.timestamp).toLocaleString('zh-CN');
+
+    return `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <div style="background-color: ${color}; color: white; padding: 15px; border-radius: 5px 5px 0 0;">
+          <h2 style="margin: 0; font-size: 18px;">${alert.title}</h2>
+        </div>
+        <div style="padding: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 5px 5px;">
+          <p style="margin: 0 0 10px;"><strong>级别 / Level:</strong> ${alert.level.toUpperCase()}</p>
+          <p style="margin: 0 0 10px;"><strong>类别 / Category:</strong> ${alert.category}</p>
+          <p style="margin: 0 0 10px;"><strong>时间 / Time:</strong> ${timestamp}</p>
+          <p style="margin: 0 0 10px;"><strong>消息 / Message:</strong></p>
+          <p style="background-color: white; padding: 10px; border-radius: 3px; margin: 0 0 10px; border: 1px solid #dee2e6;">${alert.message}</p>
+          ${Object.keys(alert.data || {}).length > 0 ? `
+            <p style="margin: 0 0 10px;"><strong>详情 / Details:</strong></p>
+            <pre style="background-color: white; padding: 10px; border-radius: 3px; margin: 0; overflow-x: auto; border: 1px solid #dee2e6; font-size: 12px;">${JSON.stringify(alert.data, null, 2)}</pre>
+          ` : ''}
+        </div>
+        <div style="margin-top: 15px; font-size: 12px; color: #6c757d; text-align: center;">
+          量化交易系统风控警报 / Quant Trading System Risk Alert
+        </div>
+      </div>
+    `;
   }
 
   // ============================================
