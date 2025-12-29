@@ -475,8 +475,25 @@ export class MetricsExporter extends EventEmitter {
 
     // 停止 HTTP 服务器 / Stop HTTP server
     if (this.server) {
+      // 关闭超时时间 / Close timeout
+      const closeTimeout = 5000;
+
       await new Promise((resolve) => {
-        this.server.close(resolve);
+        // 设置超时强制关闭 / Set timeout for force close
+        const timeout = setTimeout(() => {
+          this.log('HTTP 服务器关闭超时，强制关闭 / HTTP server close timeout, forcing close', 'warn');
+          // 强制关闭所有连接 / Force close all connections
+          if (this.server) {
+            this.server.closeAllConnections?.();
+          }
+          resolve();
+        }, closeTimeout);
+
+        // 尝试正常关闭 / Try graceful close
+        this.server.close(() => {
+          clearTimeout(timeout);
+          resolve();
+        });
       });
       this.server = null;
     }
@@ -498,6 +515,33 @@ export class MetricsExporter extends EventEmitter {
    * @private
    */
   async _startHttpServer() {
+    // 最大重试次数 / Max retry attempts
+    const maxRetries = 3;
+    // 重试延迟 (毫秒) / Retry delay (ms)
+    const retryDelay = 1000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this._tryStartHttpServer();
+        return; // 成功启动 / Successfully started
+      } catch (error) {
+        // 如果是端口占用错误且还有重试机会 / If port in use and can retry
+        if (error.code === 'EADDRINUSE' && attempt < maxRetries) {
+          this.log(`端口 ${this.config.httpPort} 被占用，${retryDelay}ms 后重试 (${attempt}/${maxRetries}) / Port in use, retrying...`, 'warn');
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  /**
+   * 尝试启动 HTTP 服务器
+   * Try to start HTTP server
+   * @private
+   */
+  async _tryStartHttpServer() {
     return new Promise((resolve, reject) => {
       // 创建 HTTP 服务器 / Create HTTP server
       this.server = http.createServer((req, res) => {
@@ -505,8 +549,9 @@ export class MetricsExporter extends EventEmitter {
         this._handleHttpRequest(req, res);
       });
 
-      // 监听端口 / Listen on port
-      this.server.listen(this.config.httpPort, this.config.httpHost, () => {
+      // 设置地址重用选项，允许端口快速重用 / Set address reuse option
+      // 这可以解决 TIME_WAIT 状态导致的端口占用问题 / This solves port occupation due to TIME_WAIT state
+      this.server.on('listening', () => {
         // 记录日志 / Log
         this.log(`HTTP 服务器已启动，监听端口 ${this.config.httpPort}`, 'info');
         resolve();
@@ -517,7 +562,18 @@ export class MetricsExporter extends EventEmitter {
         // 记录错误 / Log error
         this.log(`HTTP 服务器错误: ${error.message}`, 'error');
         this.stats.errors++;
+        // 清理服务器引用 / Clean up server reference
+        this.server = null;
         reject(error);
+      });
+
+      // 监听端口 / Listen on port
+      // 使用 exclusive: false 允许多个进程监听同一端口 (用于集群模式)
+      // Using exclusive: false allows multiple processes to listen on the same port (for cluster mode)
+      this.server.listen({
+        port: this.config.httpPort,
+        host: this.config.httpHost,
+        exclusive: false,
       });
     });
   }

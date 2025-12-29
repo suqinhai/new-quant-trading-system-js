@@ -152,7 +152,7 @@ function createAppConfig(options) {
 
     wait_ready: true,
     listen_timeout: 30000,
-    kill_timeout: 10000,
+    kill_timeout: 15000,  // 增加到 15 秒以确保 HTTP 服务器完全关闭 / Increased to 15s to ensure HTTP server fully closes
     shutdown_with_message: true,
   };
 }
@@ -335,7 +335,8 @@ STRATEGIES.forEach((strategy, index) => {
   // 影子配置 / Shadow configuration
   // 根据交易对数量动态分配内存 / Dynamically allocate memory based on symbol count
   const symbolCount = strategy.symbols.split(',').length;
-  const shadowMaxMemory = symbolCount > 5 ? '2G' : (symbolCount > 2 ? '1G' : '512M');
+  // 因子策略(15个币种)需要更多内存 / Factor strategy (15 symbols) needs more memory
+  const shadowMaxMemory = symbolCount > 10 ? '4G' : (symbolCount > 5 ? '2G' : (symbolCount > 2 ? '1G' : '512M'));
 
   apps.push(
     createAppConfig({

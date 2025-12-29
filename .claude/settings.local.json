@@ -114,7 +114,8 @@
       "Bash(node --version:*)",
       "Bash(npm --version:*)",
       "Bash(timeout 30 node:*)",
-      "Bash(timeout 45 node:*)"
+      "Bash(timeout 45 node:*)",
+      "Bash(taskkill //F //PID 22272)"
     ]
   }
 }
