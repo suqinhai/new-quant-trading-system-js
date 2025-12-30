@@ -217,6 +217,17 @@ cat > "${NETDATA_CONF_DIR}/netdata.conf" << 'EOF'
     # 启用GZIP压缩
     enable gzip compression = yes
 
+    # 默认使用旧版UI (v1)
+    # 旧版UI更轻量，适合服务器环境
+    default port = 19999
+    web files owner = root
+    web files group = netdata
+
+    # 强制使用旧版dashboard
+    # 访问 http://ip:19999/v1/ 可直接访问旧版
+    # 设置为yes后默认打开旧版
+    prefer old dashboard = yes
+
 #===============================================================================
 # 健康检查配置
 #===============================================================================
