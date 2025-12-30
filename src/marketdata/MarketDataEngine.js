@@ -1235,13 +1235,16 @@ export class MarketDataEngine extends EventEmitter {
 
     console.log(`${this.logPrefix} ${exchange} 正在重新订阅 ${subs.size} 个频道 / Resubscribing to ${subs.size} channels`);
 
-    // 遍历所有订阅 / Iterate all subscriptions
-    for (const subKey of subs) {
+    // 先复制订阅列表，避免在迭代时修改 Set / Copy subscriptions first to avoid modifying Set during iteration
+    const subsArray = Array.from(subs);
+
+    // 清空订阅集合 / Clear subscription set
+    subs.clear();
+
+    // 遍历复制的订阅列表 / Iterate copied subscription list
+    for (const subKey of subsArray) {
       // 解析订阅键 / Parse subscription key
       const [dataType, symbol] = subKey.split(':');
-
-      // 临时移除订阅键以允许重新订阅 / Temporarily remove to allow resubscription
-      subs.delete(subKey);
 
       // 重新订阅 / Resubscribe
       this._subscribeToExchange(exchange, symbol, dataType);
