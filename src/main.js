@@ -1290,6 +1290,55 @@ class TradingSystemRunner extends EventEmitter {
       // Strategies need kline data to calculate technical indicators (like SMA)
       await this.marketDataEngine.subscribe(symbol, ['kline']);
     }
+
+    // 预加载历史 K 线数据 / Preload historical candle data
+    await this._preloadHistoricalCandles(symbols);
+  }
+
+  /**
+   * 预加载历史 K 线数据
+   * Preload historical candle data
+   * @param {Array<string>} symbols - 交易对列表 / Symbol list
+   * @private
+   */
+  async _preloadHistoricalCandles(symbols) {
+    // 如果没有策略，跳过 / If no strategy, skip
+    if (!this.strategy) {
+      return;
+    }
+
+    // 输出日志 / Output log
+    this._log('info', '预加载历史 K 线数据... / Preloading historical candle data...');
+
+    // 获取 K 线时间周期 (默认 1h) / Get kline timeframe (default 1h)
+    const timeframe = this.config?.strategy?.timeframe || '1h';
+
+    // 获取历史数量 (默认 100 根，足够大多数指标计算)
+    // Get history limit (default 100, enough for most indicators)
+    const limit = 100;
+
+    for (const symbol of symbols) {
+      try {
+        // 使用交易所 API 获取历史 K 线 / Use exchange API to fetch historical candles
+        const ohlcv = await this.exchange.fetchOHLCV(symbol, timeframe, undefined, limit);
+
+        if (ohlcv && ohlcv.length > 0) {
+          // 传递给策略初始化历史 / Pass to strategy to initialize history
+          if (this.strategy.initCandleHistory) {
+            this.strategy.initCandleHistory(symbol, ohlcv);
+          }
+
+          this._log('info', `已加载 ${symbol} 历史 K 线: ${ohlcv.length} 根 (${timeframe}) / Loaded historical candles`);
+        } else {
+          this._log('warn', `${symbol} 无历史 K 线数据 / No historical candle data`);
+        }
+      } catch (error) {
+        // 记录错误但继续 / Log error but continue
+        this._log('error', `加载 ${symbol} 历史 K 线失败: ${error.message} / Failed to load historical candles`);
+      }
+    }
+
+    this._log('info', '历史 K 线预加载完成 / Historical candle preloading completed');
   }
 
   // ============================================

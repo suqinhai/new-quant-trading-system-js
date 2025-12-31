@@ -78,6 +78,42 @@ export class BaseStrategy extends EventEmitter {
   }
 
   /**
+   * 初始化 K 线历史数据 - 在启动时由 main.js 调用
+   * Initialize candle history - called by main.js at startup
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {Array} candles - 历史 K 线数据 (CCXT OHLCV 格式) / Historical candle data (CCXT OHLCV format)
+   */
+  initCandleHistory(symbol, candles) {
+    // 初始化历史数组 / Initialize history array
+    if (!this._candleHistory) {
+      this._candleHistory = [];
+    }
+
+    // 将 CCXT OHLCV 格式转换为策略格式并添加到历史
+    // Convert CCXT OHLCV format to strategy format and add to history
+    // CCXT 格式: [timestamp, open, high, low, close, volume]
+    for (const ohlcv of candles) {
+      const candle = {
+        symbol: symbol,
+        timestamp: ohlcv[0],
+        open: ohlcv[1],
+        high: ohlcv[2],
+        low: ohlcv[3],
+        close: ohlcv[4],
+        volume: ohlcv[5],
+      };
+      this._candleHistory.push(candle);
+    }
+
+    // 保留最近 200 根 K 线 / Keep last 200 candles
+    if (this._candleHistory.length > 200) {
+      this._candleHistory = this._candleHistory.slice(-200);
+    }
+
+    this.log(`已加载 ${candles.length} 根历史 K 线 (${symbol}) / Loaded ${candles.length} historical candles`);
+  }
+
+  /**
    * K 线更新事件处理 - 实盘/影子模式下由 main.js 调用
    * Candle update event handler - called by main.js in live/shadow mode
    * @param {Object} data - K 线数据 / Candle data
