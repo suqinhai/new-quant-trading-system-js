@@ -779,6 +779,10 @@ class TradingSystemRunner extends EventEmitter {
       ...this.config.strategy?.[strategyName],
     });
 
+    // 创建交易引擎适配器 (用于影子/实盘模式)
+    // Create trading engine adapter (for shadow/live mode)
+    this._createEngineAdapter();
+
     // 设置交易所 / Set exchange
     if (this.strategy.setExchange) {
       this.strategy.setExchange(this.exchange);
@@ -797,6 +801,117 @@ class TradingSystemRunner extends EventEmitter {
 
     // 输出日志 / Output log
     this._log('info', `策略已加载: ${strategyName}, 交易对: ${symbols.join(', ')} / Strategy loaded`);
+  }
+
+  /**
+   * 创建交易引擎适配器
+   * Create trading engine adapter
+   * @private
+   */
+  _createEngineAdapter() {
+    // 创建虚拟持仓存储 (用于影子模式跟踪持仓)
+    // Create virtual position storage (for shadow mode position tracking)
+    this._virtualPositions = new Map();
+
+    // 创建引擎适配器对象 / Create engine adapter object
+    const engineAdapter = {
+      // 交易所引用 / Exchange references
+      exchanges: this.exchanges,
+
+      // 获取当前价格 / Get current price
+      getCurrentPrice: async (symbol) => {
+        try {
+          const exchangeId = Object.keys(this.exchanges)[0];
+          const exchange = this.exchanges[exchangeId];
+          if (exchange) {
+            const ticker = await exchange.fetchTicker(symbol);
+            return ticker.last || ticker.close;
+          }
+        } catch (error) {
+          this._log('warn', `获取价格失败 / Failed to get price: ${error.message}`);
+        }
+        return null;
+      },
+
+      // 获取持仓 / Get position
+      getPosition: (symbol) => {
+        return this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 };
+      },
+
+      // 获取资金 / Get capital
+      getCapital: () => {
+        return this.config.trading?.initialCapital || 10000;
+      },
+
+      // 获取权益 / Get equity
+      getEquity: () => {
+        return this.config.trading?.initialCapital || 10000;
+      },
+
+      // 买入 / Buy
+      buy: (symbol, amount, options = {}) => {
+        // 发出信号让 main.js 处理 / Emit signal for main.js to handle
+        const signal = {
+          type: 'buy',
+          side: 'buy',
+          symbol,
+          amount,
+          price: options.price,
+          timestamp: Date.now(),
+        };
+        this.strategy.emit('signal', signal);
+
+        // 更新虚拟持仓 / Update virtual position
+        const position = this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 };
+        position.amount += amount;
+        this._virtualPositions.set(symbol, position);
+
+        return signal;
+      },
+
+      // 卖出 / Sell
+      sell: (symbol, amount, options = {}) => {
+        // 发出信号让 main.js 处理 / Emit signal for main.js to handle
+        const signal = {
+          type: 'sell',
+          side: 'sell',
+          symbol,
+          amount,
+          price: options.price,
+          timestamp: Date.now(),
+        };
+        this.strategy.emit('signal', signal);
+
+        // 更新虚拟持仓 / Update virtual position
+        const position = this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 };
+        position.amount -= amount;
+        if (position.amount <= 0) {
+          position.amount = 0;
+        }
+        this._virtualPositions.set(symbol, position);
+
+        return signal;
+      },
+
+      // 按百分比买入 / Buy by percentage
+      buyPercent: (symbol, percent) => {
+        const capital = engineAdapter.getCapital();
+        const amount = (capital * percent / 100);
+        return engineAdapter.buy(symbol, amount);
+      },
+
+      // 平仓 / Close position
+      closePosition: (symbol) => {
+        const position = this._virtualPositions.get(symbol);
+        if (position && position.amount > 0) {
+          return engineAdapter.sell(symbol, position.amount);
+        }
+        return null;
+      },
+    };
+
+    // 设置引擎适配器给策略 / Set engine adapter to strategy
+    this.strategy.engine = engineAdapter;
   }
 
   /**
