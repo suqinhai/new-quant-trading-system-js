@@ -52,7 +52,7 @@ sudo npm install -g pm2
 sudo apt-get install redis-server
 
 # Redis（设置密码）
-echo "requirepass 你的强密码" | sudo tee -a /etc/redis/redis.conf
+echo "requirepass 123456" | sudo tee -a /etc/redis/redis.conf
 
 #重启 Redis 服务
 sudo systemctl restart redis-server
@@ -78,7 +78,7 @@ clickhouse-client --query "SELECT version()"
 
 # 设置解密MASTER_KEY
 nano ~/.bashrc
-export MASTER_KEY='你的主密码'
+export MASTER_KEY='123456'
 source ~/.bashrc
 echo "$MASTER_KEY"
 
