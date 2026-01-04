@@ -25,11 +25,19 @@ export class GridStrategy extends BaseStrategy {
       ...params,
     });
 
-    // 网格上限价格 / Grid upper price
-    this.upperPrice = params.upperPrice || 50000;
+    // 网格宽度百分比 (基于当前价格) / Grid width percentage (based on current price)
+    // 例如 0.1 表示上下各 5%，总范围 10%
+    // e.g., 0.1 means 5% above and below, 10% total range
+    this.gridWidthPercent = params.gridWidthPercent || 0.1;
 
-    // 网格下限价格 / Grid lower price
-    this.lowerPrice = params.lowerPrice || 30000;
+    // 网格上限价格 (将在 onInit 中动态设置) / Grid upper price (will be set dynamically in onInit)
+    this.upperPrice = params.upperPrice || null;
+
+    // 网格下限价格 (将在 onInit 中动态设置) / Grid lower price (will be set dynamically in onInit)
+    this.lowerPrice = params.lowerPrice || null;
+
+    // 是否使用动态价格初始化 / Whether to use dynamic price initialization
+    this.useDynamicPrice = params.useDynamicPrice !== false;
 
     // 网格数量 / Number of grids
     this.gridCount = params.gridCount || 10;
@@ -46,8 +54,8 @@ export class GridStrategy extends BaseStrategy {
     // 已触发的网格 / Triggered grids
     this.triggeredGrids = new Map();
 
-    // 初始化网格 / Initialize grids
-    this._initializeGrids();
+    // 网格是否已初始化 / Whether grids are initialized
+    this._gridsInitialized = false;
   }
 
   /**
@@ -56,6 +64,9 @@ export class GridStrategy extends BaseStrategy {
    * @private
    */
   _initializeGrids() {
+    // 清空现有网格 / Clear existing grids
+    this.grids = [];
+
     // 计算网格间距 / Calculate grid spacing
     const gridSpacing = (this.upperPrice - this.lowerPrice) / this.gridCount;
 
@@ -70,6 +81,9 @@ export class GridStrategy extends BaseStrategy {
         position: 0,                // 该网格持仓 / Grid position
       });
     }
+
+    // 标记网格已初始化 / Mark grids as initialized
+    this._gridsInitialized = true;
   }
 
   /**
@@ -79,9 +93,75 @@ export class GridStrategy extends BaseStrategy {
   async onInit() {
     await super.onInit();
 
+    // 如果启用动态价格且未手动设置上下限，则从交易所获取当前价格
+    // If dynamic price is enabled and limits not manually set, get current price from exchange
+    if (this.useDynamicPrice && (this.upperPrice === null || this.lowerPrice === null)) {
+      await this._initializeDynamicGridRange();
+    } else if (this.upperPrice !== null && this.lowerPrice !== null) {
+      // 使用手动设置的价格范围 / Use manually set price range
+      this._initializeGrids();
+    }
+
     this.log(`网格范围 / Grid Range: ${this.lowerPrice} - ${this.upperPrice}`);
     this.log(`网格数量 / Grid Count: ${this.gridCount}`);
     this.log(`网格间距 / Grid Spacing: ${((this.upperPrice - this.lowerPrice) / this.gridCount).toFixed(2)}`);
+  }
+
+  /**
+   * 动态初始化网格范围 (从交易所获取当前价格)
+   * Dynamically initialize grid range (get current price from exchange)
+   * @private
+   */
+  async _initializeDynamicGridRange() {
+    let currentPrice = null;
+
+    // 方法1: 从历史K线获取最新价格 / Method 1: Get latest price from candle history
+    if (this._candleHistory && this._candleHistory.length > 0) {
+      const lastCandle = this._candleHistory[this._candleHistory.length - 1];
+      currentPrice = lastCandle.close;
+      this.log(`从历史K线获取当前价格 / Got current price from candle history: ${currentPrice}`);
+    }
+
+    // 方法2: 从引擎获取实时价格 / Method 2: Get real-time price from engine
+    if (!currentPrice && this.engine && typeof this.engine.getCurrentPrice === 'function') {
+      try {
+        currentPrice = await this.engine.getCurrentPrice(this.symbol);
+        this.log(`从引擎获取当前价格 / Got current price from engine: ${currentPrice}`);
+      } catch (error) {
+        this.log(`从引擎获取价格失败 / Failed to get price from engine: ${error.message}`, 'warn');
+      }
+    }
+
+    // 方法3: 从交易所直接获取 / Method 3: Get directly from exchange
+    if (!currentPrice && this.engine && this.engine.exchanges) {
+      try {
+        const exchangeId = Object.keys(this.engine.exchanges)[0];
+        const exchange = this.engine.exchanges[exchangeId];
+        if (exchange) {
+          const ticker = await exchange.fetchTicker(this.symbol);
+          currentPrice = ticker.last || ticker.close;
+          this.log(`从交易所 ${exchangeId} 获取当前价格 / Got current price from exchange ${exchangeId}: ${currentPrice}`);
+        }
+      } catch (error) {
+        this.log(`从交易所获取价格失败 / Failed to get price from exchange: ${error.message}`, 'warn');
+      }
+    }
+
+    if (!currentPrice) {
+      this.log('无法获取当前价格，使用默认网格范围 / Cannot get current price, using default grid range', 'error');
+      this.upperPrice = 100000;
+      this.lowerPrice = 90000;
+    } else {
+      // 基于当前价格和百分比计算网格范围
+      // Calculate grid range based on current price and percentage
+      const halfWidth = currentPrice * (this.gridWidthPercent / 2);
+      this.upperPrice = Math.round(currentPrice + halfWidth);
+      this.lowerPrice = Math.round(currentPrice - halfWidth);
+      this.log(`动态网格范围已设置 / Dynamic grid range set: ${this.lowerPrice} - ${this.upperPrice} (当前价格/current price: ${currentPrice})`);
+    }
+
+    // 初始化网格 / Initialize grids
+    this._initializeGrids();
   }
 
   /**
@@ -93,9 +173,16 @@ export class GridStrategy extends BaseStrategy {
   async onTick(candle, history) {
     const currentPrice = candle.close;
 
+    // 检查网格是否已初始化 / Check if grids are initialized
+    if (!this._gridsInitialized || this.grids.length === 0) {
+      this.log(`网格未初始化，跳过 / Grids not initialized, skipping`, 'warn');
+      return;
+    }
+
     // 检查价格是否在网格范围内 / Check if price is within grid range
     if (currentPrice < this.lowerPrice || currentPrice > this.upperPrice) {
-      // 价格超出范围，可以选择发出警告 / Price out of range, optionally warn
+      // 价格超出范围，记录日志 / Price out of range, log warning
+      this.log(`价格 ${currentPrice} 超出网格范围 [${this.lowerPrice}, ${this.upperPrice}] / Price out of grid range`, 'warn');
       return;
     }
 

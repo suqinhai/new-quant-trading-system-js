@@ -275,7 +275,12 @@ export default {
     // 网格策略默认参数 / Grid strategy defaults
     grid: {
       gridCount: 10,
-      gridSpacing: 0.01,
+      // 网格宽度百分比 (基于当前价格)，0.1 表示上下各 5%
+      // Grid width percentage (based on current price), 0.1 means 5% above and below
+      gridWidthPercent: 0.1,
+      // 是否使用动态价格初始化 (从交易所获取当前价格)
+      // Whether to use dynamic price initialization (get current price from exchange)
+      useDynamicPrice: true,
     },
 
     // ============================================
@@ -476,7 +481,8 @@ export default {
         },
         Grid: {
           gridCount: 10,
-          gridSpacing: 0.01,
+          gridWidthPercent: 0.1,
+          useDynamicPrice: true,
         },
         ATRBreakout: {
           atrPeriod: 14,
