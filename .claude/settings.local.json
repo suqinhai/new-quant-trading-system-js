@@ -117,7 +117,9 @@
       "Bash(timeout 45 node:*)",
       "Bash(taskkill //F //PID 22272)",
       "Bash(pm2 show:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(wsl tail:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
