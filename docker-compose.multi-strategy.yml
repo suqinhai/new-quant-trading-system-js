@@ -6,43 +6,6 @@
 # 21 strategies split into 5 Docker instances
 # =============================================================================
 
-version: '3.8'
-
-# =============================================================================
-# x-common: 公共配置模板
-# =============================================================================
-x-common-env: &common-env
-  NODE_ENV: production
-  LOG_LEVEL: info
-  TZ: Asia/Shanghai
-  REDIS_HOST: redis-master
-  REDIS_PORT: 6379
-  CLICKHOUSE_HOST: clickhouse
-  CLICKHOUSE_PORT: 8123
-
-x-common-volumes: &common-volumes
-  - ./config:/app/config:ro
-  - ./.env:/app/.env:ro
-
-x-common-depends: &common-depends
-  redis-master:
-    condition: service_healthy
-  clickhouse:
-    condition: service_healthy
-
-x-common-healthcheck: &common-healthcheck
-  test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 60s
-
-x-common-logging: &common-logging
-  driver: json-file
-  options:
-    max-size: "100m"
-    max-file: "5"
-
 services:
   # ===========================================================================
   # Docker #1: 趋势核心 (低频 / 骨架)
@@ -61,41 +24,46 @@ services:
     container_name: quant-trend-core
     restart: unless-stopped
     ports:
-      - "3001:3000"   # API
-      - "9101:9091"   # Metrics
-      - "8001:8080"   # WebSocket
+      - "3001:3000"
+      - "9101:9091"
+      - "8001:8080"
     volumes:
       - ./logs/trend-core:/app/logs
       - ./data/trend-core:/app/data
       - ./config/strategies/trend-core.json:/app/config/strategy.json:ro
-      <<: *common-volumes
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
     environment:
-      <<: *common-env
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      REDIS_HOST: redis-master
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: trend-core
       INSTANCE_ID: "1"
-      # -----------------------------------------------------------------------
-      # 策略配置 / Strategy Configuration
-      # -----------------------------------------------------------------------
       STRATEGY_NAME: WeightedCombo
       COMBO_STRATEGIES: "SMA,MultiTimeframe,RegimeSwitching,VolatilityRegime"
-      # -----------------------------------------------------------------------
-      # 交易对配置 / Trading Pairs
-      # -----------------------------------------------------------------------
       DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT"
       DEFAULT_TIMEFRAME: "4h"
-      # -----------------------------------------------------------------------
-      # 风控配置 (保守) / Risk Control (Conservative)
-      # -----------------------------------------------------------------------
       MAX_POSITIONS: "4"
       MAX_POSITION_SIZE: "0.25"
       MAX_LEVERAGE: "2"
       MAX_DAILY_LOSS: "0.03"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     depends_on:
-      <<: *common-depends
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     healthcheck:
-      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quant-network
     deploy:
@@ -107,7 +75,10 @@ services:
           memory: 256M
           cpus: '0.25'
     logging:
-      <<: *common-logging
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     labels:
       - "quant.role=trend-core"
       - "quant.frequency=low"
@@ -130,41 +101,46 @@ services:
     container_name: quant-tech-alpha
     restart: unless-stopped
     ports:
-      - "3002:3000"   # API
-      - "9102:9091"   # Metrics
-      - "8002:8080"   # WebSocket
+      - "3002:3000"
+      - "9102:9091"
+      - "8002:8080"
     volumes:
       - ./logs/tech-alpha:/app/logs
       - ./data/tech-alpha:/app/data
       - ./config/strategies/tech-alpha.json:/app/config/strategy.json:ro
-      <<: *common-volumes
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
     environment:
-      <<: *common-env
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      REDIS_HOST: redis-master
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: tech-alpha
       INSTANCE_ID: "2"
-      # -----------------------------------------------------------------------
-      # 策略配置 / Strategy Configuration
-      # -----------------------------------------------------------------------
       STRATEGY_NAME: WeightedCombo
       COMBO_STRATEGIES: "RSI,MACD,BollingerBands,ATRBreakout,BollingerWidth,Adaptive"
-      # -----------------------------------------------------------------------
-      # 交易对配置 / Trading Pairs
-      # -----------------------------------------------------------------------
       DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT"
       DEFAULT_TIMEFRAME: "1h"
-      # -----------------------------------------------------------------------
-      # 风控配置 (中等) / Risk Control (Medium)
-      # -----------------------------------------------------------------------
       MAX_POSITIONS: "6"
       MAX_POSITION_SIZE: "0.15"
       MAX_LEVERAGE: "3"
       MAX_DAILY_LOSS: "0.05"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     depends_on:
-      <<: *common-depends
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     healthcheck:
-      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quant-network
     deploy:
@@ -176,7 +152,10 @@ services:
           memory: 384M
           cpus: '0.5'
     logging:
-      <<: *common-logging
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     labels:
       - "quant.role=tech-alpha"
       - "quant.frequency=medium"
@@ -186,7 +165,7 @@ services:
   # Docker #3: 横截面 / 因子组合
   # Cross-Sectional / Factor Portfolio
   #
-  # 策略: Rotation, MomentumRank, CrossSectional, WeightedCombo
+  # 策略: Rotation, MomentumRank, CrossSectional
   # 特点: 多币种, 低相关, 提高收益曲线平滑度
   # 频率: 3-8次/天
   # ===========================================================================
@@ -199,47 +178,49 @@ services:
     container_name: quant-cross-factor
     restart: unless-stopped
     ports:
-      - "3003:3000"   # API
-      - "9103:9091"   # Metrics
-      - "8003:8080"   # WebSocket
+      - "3003:3000"
+      - "9103:9091"
+      - "8003:8080"
     volumes:
       - ./logs/cross-factor:/app/logs
       - ./data/cross-factor:/app/data
       - ./config/strategies/cross-factor.json:/app/config/strategy.json:ro
-      <<: *common-volumes
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
     environment:
-      <<: *common-env
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      REDIS_HOST: redis-master
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: cross-factor
       INSTANCE_ID: "3"
-      # -----------------------------------------------------------------------
-      # 策略配置 / Strategy Configuration
-      # -----------------------------------------------------------------------
       STRATEGY_NAME: WeightedCombo
       COMBO_STRATEGIES: "Rotation,MomentumRank,CrossSectional"
-      # -----------------------------------------------------------------------
-      # 交易对配置 (多币种) / Trading Pairs (Multi-Asset)
-      # -----------------------------------------------------------------------
       DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,DOGE/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOT/USDT:USDT,LINK/USDT:USDT"
       DEFAULT_TIMEFRAME: "4h"
-      # -----------------------------------------------------------------------
-      # 横截面特有配置 / Cross-Sectional Specific
-      # -----------------------------------------------------------------------
       CROSS_SECTIONAL_TOP_N: "3"
       CROSS_SECTIONAL_BOTTOM_N: "3"
       ROTATION_LOOKBACK: "168"
-      # -----------------------------------------------------------------------
-      # 风控配置 / Risk Control
-      # -----------------------------------------------------------------------
       MAX_POSITIONS: "10"
       MAX_POSITION_SIZE: "0.10"
       MAX_LEVERAGE: "2"
       MAX_DAILY_LOSS: "0.04"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     depends_on:
-      <<: *common-depends
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     healthcheck:
-      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quant-network
     deploy:
@@ -251,7 +232,10 @@ services:
           memory: 384M
           cpus: '0.5'
     logging:
-      <<: *common-logging
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     labels:
       - "quant.role=cross-factor"
       - "quant.frequency=medium"
@@ -274,37 +258,32 @@ services:
     container_name: quant-event-risk
     restart: unless-stopped
     ports:
-      - "3004:3000"   # API
-      - "9104:9091"   # Metrics
-      - "8004:8080"   # WebSocket
+      - "3004:3000"
+      - "9104:9091"
+      - "8004:8080"
     volumes:
       - ./logs/event-risk:/app/logs
       - ./data/event-risk:/app/data
       - ./config/strategies/event-risk.json:/app/config/strategy.json:ro
-      <<: *common-volumes
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
     environment:
-      <<: *common-env
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      REDIS_HOST: redis-master
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: event-risk
       INSTANCE_ID: "4"
-      # -----------------------------------------------------------------------
-      # 策略配置 / Strategy Configuration
-      # -----------------------------------------------------------------------
       STRATEGY_NAME: WeightedCombo
       COMBO_STRATEGIES: "FundingRateExtreme,RiskDriven"
-      # -----------------------------------------------------------------------
-      # 交易对配置 / Trading Pairs
-      # -----------------------------------------------------------------------
       DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT"
       DEFAULT_TIMEFRAME: "1h"
-      # -----------------------------------------------------------------------
-      # 资金费率阈值 / Funding Rate Thresholds
-      # -----------------------------------------------------------------------
       FUNDING_EXTREME_THRESHOLD: "0.001"
       FUNDING_LOOKBACK_HOURS: "24"
-      # -----------------------------------------------------------------------
-      # 风控配置 (严格) / Risk Control (Strict)
-      # -----------------------------------------------------------------------
       MAX_POSITIONS: "4"
       MAX_POSITION_SIZE: "0.15"
       MAX_LEVERAGE: "2"
@@ -312,9 +291,16 @@ services:
       MAX_DRAWDOWN: "0.05"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     depends_on:
-      <<: *common-depends
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     healthcheck:
-      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quant-network
     deploy:
@@ -326,7 +312,10 @@ services:
           memory: 192M
           cpus: '0.25'
     logging:
-      <<: *common-logging
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     labels:
       - "quant.role=event-risk"
       - "quant.frequency=low"
@@ -351,73 +340,66 @@ services:
     container_name: quant-hf-arbitrage
     restart: unless-stopped
     ports:
-      - "3005:3000"   # API
-      - "9105:9091"   # Metrics
-      - "8005:8080"   # WebSocket
+      - "3005:3000"
+      - "9105:9091"
+      - "8005:8080"
     volumes:
       - ./logs/hf-arbitrage:/app/logs
       - ./data/hf-arbitrage:/app/data
       - ./config/strategies/hf-arbitrage.json:/app/config/strategy.json:ro
-      <<: *common-volumes
-      # -----------------------------------------------------------------------
-      # 独立环境变量文件 (包含独立API Key)
-      # Separate env file (with independent API Keys)
-      # -----------------------------------------------------------------------
+      - ./config:/app/config:ro
+      - ./.env:/app/.env:ro
       - ./.env.hf-arbitrage:/app/.env.override:ro
     environment:
-      <<: *common-env
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      REDIS_HOST: redis-master
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: hf-arbitrage
       INSTANCE_ID: "5"
-      # -----------------------------------------------------------------------
-      # 策略配置 / Strategy Configuration
-      # -----------------------------------------------------------------------
       STRATEGY_NAME: WeightedCombo
       COMBO_STRATEGIES: "Grid,OrderFlow,StatisticalArbitrage,CrossExchangeSpread,FundingArb"
-      # -----------------------------------------------------------------------
-      # 交易对配置 / Trading Pairs
-      # -----------------------------------------------------------------------
       DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT"
       DEFAULT_TIMEFRAME: "1m"
-      # -----------------------------------------------------------------------
-      # 独立API配置覆盖 (使用子账户)
-      # Independent API Override (Using Sub-Account)
-      # -----------------------------------------------------------------------
+      # 独立API配置 (使用子账户)
       BINANCE_API_KEY: ${HF_BINANCE_API_KEY:-}
       BINANCE_API_SECRET: ${HF_BINANCE_API_SECRET:-}
       OKX_API_KEY: ${HF_OKX_API_KEY:-}
       OKX_API_SECRET: ${HF_OKX_API_SECRET:-}
       OKX_PASSPHRASE: ${HF_OKX_PASSPHRASE:-}
-      # -----------------------------------------------------------------------
-      # 网格策略配置 / Grid Strategy Config
-      # -----------------------------------------------------------------------
+      # 网格策略配置
       GRID_LEVELS: "20"
       GRID_SPACING: "0.005"
-      # -----------------------------------------------------------------------
-      # 套利配置 / Arbitrage Config
-      # -----------------------------------------------------------------------
+      # 套利配置
       ARB_MIN_SPREAD: "0.001"
       ARB_MAX_SLIPPAGE: "0.0005"
       STAT_ARB_ZSCORE_ENTRY: "2.0"
       STAT_ARB_ZSCORE_EXIT: "0.5"
-      # -----------------------------------------------------------------------
-      # 风控配置 (激进但严控) / Risk Control (Aggressive but Strict)
-      # -----------------------------------------------------------------------
+      # 风控配置
       MAX_POSITIONS: "20"
       MAX_POSITION_SIZE: "0.05"
       MAX_LEVERAGE: "5"
       MAX_DAILY_LOSS: "0.03"
-      # -----------------------------------------------------------------------
-      # 性能优化 / Performance Optimization
-      # -----------------------------------------------------------------------
+      # 性能优化
       WS_PING_INTERVAL: "5000"
       ORDER_TIMEOUT: "3000"
       ENABLE_ORDER_BOOK_CACHE: "true"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     depends_on:
-      <<: *common-depends
+      redis-master:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     healthcheck:
-      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - quant-network
     deploy:
@@ -453,7 +435,7 @@ services:
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
     command: redis-server /usr/local/etc/redis/redis.conf
     environment:
-      - TZ=Asia/Shanghai
+      TZ: Asia/Shanghai
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -484,10 +466,10 @@ services:
       - clickhouse_logs:/var/log/clickhouse-server
       - ./config/clickhouse:/etc/clickhouse-server/config.d:ro
     environment:
-      - TZ=Asia/Shanghai
-      - CLICKHOUSE_DB=quant_trading
-      - CLICKHOUSE_USER=default
-      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      TZ: Asia/Shanghai
+      CLICKHOUSE_DB: quant_trading
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
       interval: 10s
