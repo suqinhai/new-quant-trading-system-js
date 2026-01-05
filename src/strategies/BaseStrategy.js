@@ -123,6 +123,9 @@ export class BaseStrategy extends EventEmitter {
     // 将 K 线数据转换为 onTick 格式并调用
     // Convert candle data to onTick format and call
     try {
+      // 调试日志: 确认 onCandle 被调用 / Debug log: confirm onCandle is called
+      this.log(`[DEBUG] onCandle 收到数据: ${data.symbol}, close=${data.close}`);
+
       // 构建 candle 对象 / Build candle object
       const candle = {
         symbol: data.symbol,

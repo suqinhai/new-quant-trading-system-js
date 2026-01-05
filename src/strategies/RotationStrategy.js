@@ -136,7 +136,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 轮动周期 (毫秒) / Rotation period (ms)
-  rebalancePeriod: 7 * 24 * 60 * 60 * 1000, // 每周
+  rebalancePeriod: 4 * 60 * 60 * 1000, // 每4小时 / Every 4 hours
 
   // 最小排名变化触发轮动 / Min rank change to trigger rotation
   minRankChangeToRotate: 3,

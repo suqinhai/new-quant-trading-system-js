@@ -123,7 +123,7 @@ export class FactorInvestingStrategy extends BaseStrategy {
     this.weightMethod = params.weightMethod || WEIGHT_METHOD.EQUAL;
 
     // 再平衡配置 / Rebalance configuration
-    this.rebalancePeriod = params.rebalancePeriod || 24 * 60 * 60 * 1000; // 默认每天
+    this.rebalancePeriod = params.rebalancePeriod || 1 * 60 * 60 * 1000; // 默认每小时 / Default every hour
     this.lastRebalanceTime = 0;
     this.minRebalanceChange = params.minRebalanceChange || 0.1; // 10% 变化才再平衡
 
@@ -174,12 +174,17 @@ export class FactorInvestingStrategy extends BaseStrategy {
   async onTick(candle, history) {
     const symbol = candle.symbol;
 
+    // 调试日志: 确认 onTick 被调用 / Debug log: confirm onTick is called
+    this.log(`[DEBUG] onTick 收到 K 线: ${symbol}, close=${candle.close}, history=${history?.length || 0}根`);
+
     // 更新资产数据 / Update asset data
     this._updateAssetData(symbol, candle, history);
 
     // 检查是否需要再平衡 / Check if rebalance needed
     const now = Date.now();
-    if (now - this.lastRebalanceTime >= this.rebalancePeriod) {
+    const timeSinceLastRebalance = now - this.lastRebalanceTime;
+    if (timeSinceLastRebalance >= this.rebalancePeriod) {
+      this.log(`[DEBUG] 触发再平衡: 距上次 ${Math.round(timeSinceLastRebalance / 1000 / 60)} 分钟`);
       await this._rebalance();
       this.lastRebalanceTime = now;
     }
