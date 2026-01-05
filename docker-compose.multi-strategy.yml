@@ -45,6 +45,12 @@ services:
       WS_PORT: "8001"
       STRATEGY_CONFIG: "/app/strategies/trend-core.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -96,6 +102,12 @@ services:
       WS_PORT: "8002"
       STRATEGY_CONFIG: "/app/strategies/tech-alpha.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -150,6 +162,12 @@ services:
       WS_PORT: "8003"
       STRATEGY_CONFIG: "/app/strategies/cross-factor.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -204,6 +222,12 @@ services:
       WS_PORT: "8004"
       STRATEGY_CONFIG: "/app/strategies/event-risk.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -275,6 +299,12 @@ services:
       WS_PORT: "8005"
       STRATEGY_CONFIG: "/app/strategies/hf-arbitrage.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         limits:
