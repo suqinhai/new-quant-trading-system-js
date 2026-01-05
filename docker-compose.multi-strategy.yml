@@ -175,8 +175,7 @@ services:
     volumes:
       - ./logs/event-risk:/app/logs
       - ./data/event-risk:/app/data
-      - ./config/strategies/event-risk.json:/app/config/strategy.json:ro
-      - ./config:/app/config:ro
+      - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
     environment:
       NODE_ENV: production
@@ -203,6 +202,7 @@ services:
       PORT: "3004"
       METRICS_PORT: "9104"
       WS_PORT: "8004"
+      STRATEGY_CONFIG: "/app/strategies/event-risk.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     deploy:
       resources:
@@ -230,10 +230,8 @@ services:
     volumes:
       - ./logs/hf-arbitrage:/app/logs
       - ./data/hf-arbitrage:/app/data
-      - ./config/strategies/hf-arbitrage.json:/app/config/strategy.json:ro
-      - ./config:/app/config:ro
+      - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
-      - ./.env.hf-arbitrage:/app/.env.override:ro
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
@@ -275,6 +273,7 @@ services:
       PORT: "3005"
       METRICS_PORT: "9105"
       WS_PORT: "8005"
+      STRATEGY_CONFIG: "/app/strategies/hf-arbitrage.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     deploy:
       resources:
