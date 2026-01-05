@@ -81,12 +81,15 @@ export class BollingerBandsStrategy extends BaseStrategy {
     this.setIndicator('bandwidth', bb.bandwidth);
 
     // 趋势过滤 / Trend filter
+    // 改进：使用中轨与趋势均线比较，而非价格与趋势均线比较
+    // Improved: Compare middle band with trend MA instead of price with trend MA
     let trendFilter = true;
     if (this.useTrendFilter) {
       const trendMA = this._calculateSMA(closes, this.trendPeriod);
       this.setIndicator('trendMA', trendMA);
-      // 只在价格在趋势均线上方时做多 / Only long when price is above trend MA
-      trendFilter = candle.close > trendMA;
+      // 只在中轨在趋势均线附近或上方时做多（允许 2% 容差）
+      // Only long when middle band is near or above trend MA (2% tolerance)
+      trendFilter = bb.middle >= trendMA * 0.98;
     }
 
     // 获取当前持仓 / Get current position
@@ -98,14 +101,19 @@ export class BollingerBandsStrategy extends BaseStrategy {
     this.setIndicator('percentB', percentB);
 
     // 交易逻辑 / Trading logic
-    if (candle.close <= bb.lower && !hasPosition && trendFilter) {
-      // 价格触及下轨，买入 / Price touches lower band, buy
-      this.log(`价格触及下轨 / Price touched lower band @ ${candle.close}, Lower: ${bb.lower.toFixed(2)}`);
+    // 改进：使用 percentB 阈值而非精确触及上下轨
+    // Improved: Use percentB threshold instead of exact band touch
+    const buyThreshold = 0.15;  // 价格在下轨附近 15% 区域 / Price in 15% zone near lower band
+    const sellThreshold = 0.85; // 价格在上轨附近 15% 区域 / Price in 15% zone near upper band
+
+    if (percentB <= buyThreshold && !hasPosition && trendFilter) {
+      // 价格接近下轨，买入 / Price near lower band, buy
+      this.log(`价格触及下轨 / Price touched lower band @ ${candle.close}, Lower: ${bb.lower.toFixed(2)}, %B: ${(percentB * 100).toFixed(1)}%`);
       this.setBuySignal('Price at lower band');
       this.buyPercent(this.symbol, this.positionPercent);
-    } else if (candle.close >= bb.upper && hasPosition) {
-      // 价格触及上轨，卖出 / Price touches upper band, sell
-      this.log(`价格触及上轨 / Price touched upper band @ ${candle.close}, Upper: ${bb.upper.toFixed(2)}`);
+    } else if (percentB >= sellThreshold && hasPosition) {
+      // 价格接近上轨，卖出 / Price near upper band, sell
+      this.log(`价格触及上轨 / Price touched upper band @ ${candle.close}, Upper: ${bb.upper.toFixed(2)}, %B: ${(percentB * 100).toFixed(1)}%`);
       this.setSellSignal('Price at upper band');
       this.closePosition(this.symbol);
     } else if (candle.close >= bb.middle && hasPosition && percentB > 0.5) {
