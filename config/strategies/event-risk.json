@@ -1,0 +1,69 @@
+{
+  "name": "event-risk",
+  "description": "事件驱动与风控策略组合",
+  "version": "1.0.0",
+
+  "combo": {
+    "mode": "weighted",
+    "strategies": [
+      {
+        "name": "FundingRateExtreme",
+        "weight": 0.50,
+        "enabled": true,
+        "params": {
+          "extremeThreshold": 0.001,
+          "lookbackHours": 24,
+          "entryDelay": 5,
+          "holdingPeriod": 8,
+          "fundingFrequency": 8,
+          "minAnnualizedRate": 0.30
+        }
+      },
+      {
+        "name": "RiskDriven",
+        "weight": 0.50,
+        "enabled": true,
+        "params": {
+          "targetVolatility": 0.15,
+          "maxDrawdown": 0.05,
+          "riskBudget": 0.02,
+          "volatilityLookback": 20,
+          "rebalanceThreshold": 0.1,
+          "riskModes": ["target_vol", "risk_parity", "drawdown_control"]
+        }
+      }
+    ]
+  },
+
+  "triggers": {
+    "fundingRateExtreme": {
+      "enabled": true,
+      "threshold": 0.001,
+      "direction": "both"
+    },
+    "volatilitySpike": {
+      "enabled": true,
+      "threshold": 2.0
+    },
+    "drawdownAlert": {
+      "enabled": true,
+      "threshold": 0.03
+    }
+  },
+
+  "execution": {
+    "minSignalStrength": 0.7,
+    "confirmationRequired": 1,
+    "cooldownMinutes": 30,
+    "eventDriven": true
+  },
+
+  "risk": {
+    "maxPositionSize": 0.15,
+    "maxLeverage": 2,
+    "stopLossPercent": 0.02,
+    "takeProfitPercent": 0.03,
+    "maxDailyLoss": 0.02,
+    "maxDrawdown": 0.05
+  }
+}

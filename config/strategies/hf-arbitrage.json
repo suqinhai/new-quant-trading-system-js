@@ -1,0 +1,112 @@
+{
+  "name": "hf-arbitrage",
+  "description": "高频套利策略组合 - 独立账户",
+  "version": "1.0.0",
+
+  "combo": {
+    "mode": "weighted",
+    "strategies": [
+      {
+        "name": "Grid",
+        "weight": 0.25,
+        "enabled": true,
+        "params": {
+          "gridLevels": 20,
+          "gridSpacing": 0.005,
+          "orderSize": 0.01,
+          "priceRange": {
+            "upper": 1.05,
+            "lower": 0.95
+          },
+          "dynamicGrid": true
+        }
+      },
+      {
+        "name": "OrderFlow",
+        "weight": 0.15,
+        "enabled": true,
+        "params": {
+          "depthLevels": 10,
+          "imbalanceThreshold": 0.6,
+          "volumeWindow": 60,
+          "tickSize": 0.01,
+          "minOrderSize": 10000
+        }
+      },
+      {
+        "name": "StatisticalArbitrage",
+        "weight": 0.25,
+        "enabled": true,
+        "params": {
+          "pairs": [
+            ["BTC/USDT:USDT", "ETH/USDT:USDT"]
+          ],
+          "lookbackPeriod": 100,
+          "zScoreEntry": 2.0,
+          "zScoreExit": 0.5,
+          "halfLife": 24,
+          "cointegrationTest": true
+        }
+      },
+      {
+        "name": "CrossExchangeSpread",
+        "weight": 0.20,
+        "enabled": true,
+        "params": {
+          "exchanges": ["binance", "okx"],
+          "minSpread": 0.001,
+          "maxSlippage": 0.0005,
+          "transferCost": 0.0001,
+          "executionDelay": 100,
+          "hedgeRatio": 1.0
+        }
+      },
+      {
+        "name": "FundingArb",
+        "weight": 0.15,
+        "enabled": true,
+        "params": {
+          "minFundingRate": 0.0005,
+          "hedgeMode": "spot_perp",
+          "entryThreshold": 0.0008,
+          "exitThreshold": 0.0002,
+          "maxHoldingPeriod": 72,
+          "autoCompound": true
+        }
+      }
+    ]
+  },
+
+  "performance": {
+    "wsReconnectDelay": 1000,
+    "orderTimeout": 3000,
+    "maxRetries": 3,
+    "batchOrders": true,
+    "useOrderBookCache": true,
+    "cacheExpiry": 100
+  },
+
+  "execution": {
+    "minSignalStrength": 0.4,
+    "confirmationRequired": 1,
+    "cooldownMinutes": 1,
+    "immediateExecution": true
+  },
+
+  "risk": {
+    "maxPositionSize": 0.05,
+    "maxLeverage": 5,
+    "maxOpenOrders": 50,
+    "stopLossPercent": 0.01,
+    "takeProfitPercent": 0.005,
+    "maxDailyTrades": 200,
+    "maxDailyLoss": 0.03
+  },
+
+  "isolation": {
+    "separateAccount": true,
+    "separateApiKeys": true,
+    "noSharedPositions": true,
+    "independentRiskBudget": true
+  }
+}
