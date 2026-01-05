@@ -127,7 +127,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
-  rebalancePeriod: 24 * 60 * 60 * 1000, // 每天
+  rebalancePeriod: 1 * 60 * 60 * 1000, // 每小时 / Every hour
 
   // 是否在排名显著变化时再平衡 / Rebalance on significant rank change
   rebalanceOnRankChange: true,

@@ -149,7 +149,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
-  rebalancePeriod: 8 * 60 * 60 * 1000, // 每8小时
+  rebalancePeriod: 1 * 60 * 60 * 1000, // 每小时 / Every hour
 
   // 费率刷新间隔 (毫秒) / Rate refresh interval (ms)
   rateRefreshInterval: 60 * 1000,  // 每分钟

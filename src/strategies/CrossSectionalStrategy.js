@@ -78,7 +78,7 @@ const DEFAULT_CONFIG = {
   lookbackPeriod: 20,
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
-  rebalancePeriod: 24 * 60 * 60 * 1000, // 默认每天
+  rebalancePeriod: 1 * 60 * 60 * 1000, // 默认每小时 / Default every hour
 
   // ============================================
   // 排名配置 / Ranking Configuration
@@ -1321,6 +1321,10 @@ export class CrossSectionalStrategy extends BaseStrategy {
   async onTick(candle, history) {
     // 更新资产数据 / Update asset data
     const symbol = candle.symbol || this.config.symbols[0];
+
+    // 调试日志 / Debug log
+    this._log('info', `[DEBUG] onTick 收到 K 线: ${symbol}, close=${candle.close}`);
+
     this.assetManager.updateAssetData(symbol, candle);
 
     // 回测模式下的简化处理 / Simplified handling in backtest mode
