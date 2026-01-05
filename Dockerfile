@@ -118,9 +118,9 @@ EXPOSE 9091
 # WebSocket port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+# Health check (检查 node 进程是否运行)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD pgrep -f node || exit 1
 
 # Default command - can be overridden
 CMD ["node", "src/main.js", "shadow"]
