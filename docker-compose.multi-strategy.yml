@@ -429,7 +429,7 @@ services:
     container_name: quant-redis-master
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_master_data:/data
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
