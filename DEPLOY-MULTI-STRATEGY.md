@@ -57,6 +57,8 @@ mkdir -p logs/{trend-core,tech-alpha,cross-factor,event-risk,hf-arbitrage}
 mkdir -p data/{trend-core,tech-alpha,cross-factor,event-risk,hf-arbitrage}
 mkdir -p data/redis-master data/clickhouse logs/clickhouse
 
+chmod -R 777 logs data
+
 # 复制环境变量文件
 cp .env.example .env
 cp .env.hf-arbitrage.example .env.hf-arbitrage
