@@ -18,8 +18,7 @@ services:
     volumes:
       - ./logs/trend-core:/app/logs
       - ./data/trend-core:/app/data
-      - ./config/strategies/trend-core.json:/app/config/strategy.json:ro
-      - ./config:/app/config:ro
+      - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
     environment:
       NODE_ENV: production
@@ -44,6 +43,7 @@ services:
       PORT: "3001"
       METRICS_PORT: "9101"
       WS_PORT: "8001"
+      STRATEGY_CONFIG: "/app/strategies/trend-core.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     deploy:
       resources:
@@ -70,8 +70,7 @@ services:
     volumes:
       - ./logs/tech-alpha:/app/logs
       - ./data/tech-alpha:/app/data
-      - ./config/strategies/tech-alpha.json:/app/config/strategy.json:ro
-      - ./config:/app/config:ro
+      - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
     environment:
       NODE_ENV: production
@@ -95,6 +94,7 @@ services:
       PORT: "3002"
       METRICS_PORT: "9102"
       WS_PORT: "8002"
+      STRATEGY_CONFIG: "/app/strategies/tech-alpha.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     deploy:
       resources:
@@ -121,8 +121,7 @@ services:
     volumes:
       - ./logs/cross-factor:/app/logs
       - ./data/cross-factor:/app/data
-      - ./config/strategies/cross-factor.json:/app/config/strategy.json:ro
-      - ./config:/app/config:ro
+      - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
     environment:
       NODE_ENV: production
@@ -149,6 +148,7 @@ services:
       PORT: "3003"
       METRICS_PORT: "9103"
       WS_PORT: "8003"
+      STRATEGY_CONFIG: "/app/strategies/cross-factor.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     deploy:
       resources:
