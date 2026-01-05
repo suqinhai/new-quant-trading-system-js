@@ -46,11 +46,11 @@ services:
       STRATEGY_CONFIG: "/app/strategies/trend-core.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "pgrep", "-f", "node"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -103,11 +103,11 @@ services:
       STRATEGY_CONFIG: "/app/strategies/tech-alpha.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      test: ["CMD", "pgrep", "-f", "node"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -163,11 +163,11 @@ services:
       STRATEGY_CONFIG: "/app/strategies/cross-factor.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      test: ["CMD", "pgrep", "-f", "node"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -223,11 +223,11 @@ services:
       STRATEGY_CONFIG: "/app/strategies/event-risk.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      test: ["CMD", "pgrep", "-f", "node"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -300,11 +300,11 @@ services:
       STRATEGY_CONFIG: "/app/strategies/hf-arbitrage.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      test: ["CMD", "pgrep", "-f", "node"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     deploy:
       resources:
         limits:
