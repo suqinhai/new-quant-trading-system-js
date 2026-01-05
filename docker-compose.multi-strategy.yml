@@ -1,0 +1,529 @@
+# =============================================================================
+# Docker Compose - 多策略部署配置
+# Multi-Strategy Deployment Configuration
+#
+# 21个策略拆分为5个Docker实例
+# 21 strategies split into 5 Docker instances
+# =============================================================================
+
+version: '3.8'
+
+# =============================================================================
+# x-common: 公共配置模板
+# =============================================================================
+x-common-env: &common-env
+  NODE_ENV: production
+  LOG_LEVEL: info
+  TZ: Asia/Shanghai
+  REDIS_HOST: redis-master
+  REDIS_PORT: 6379
+  CLICKHOUSE_HOST: clickhouse
+  CLICKHOUSE_PORT: 8123
+
+x-common-volumes: &common-volumes
+  - ./config:/app/config:ro
+  - ./.env:/app/.env:ro
+
+x-common-depends: &common-depends
+  redis-master:
+    condition: service_healthy
+  clickhouse:
+    condition: service_healthy
+
+x-common-healthcheck: &common-healthcheck
+  test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s
+
+x-common-logging: &common-logging
+  driver: json-file
+  options:
+    max-size: "100m"
+    max-file: "5"
+
+services:
+  # ===========================================================================
+  # Docker #1: 趋势核心 (低频 / 骨架)
+  # Trend Core - Low Frequency / Framework
+  #
+  # 策略: SMA, MultiTimeframe, RegimeSwitching, VolatilityRegime
+  # 特点: 4H/日线, 交易少/仓位大, 系统稳定器
+  # 频率: 2-4次/天
+  # ===========================================================================
+  quant-trend-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-trend-core
+    restart: unless-stopped
+    ports:
+      - "3001:3000"   # API
+      - "9101:9091"   # Metrics
+      - "8001:8080"   # WebSocket
+    volumes:
+      - ./logs/trend-core:/app/logs
+      - ./data/trend-core:/app/data
+      - ./config/strategies/trend-core.json:/app/config/strategy.json:ro
+      <<: *common-volumes
+    environment:
+      <<: *common-env
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: trend-core
+      INSTANCE_ID: "1"
+      # -----------------------------------------------------------------------
+      # 策略配置 / Strategy Configuration
+      # -----------------------------------------------------------------------
+      STRATEGY_NAME: WeightedCombo
+      COMBO_STRATEGIES: "SMA,MultiTimeframe,RegimeSwitching,VolatilityRegime"
+      # -----------------------------------------------------------------------
+      # 交易对配置 / Trading Pairs
+      # -----------------------------------------------------------------------
+      DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT"
+      DEFAULT_TIMEFRAME: "4h"
+      # -----------------------------------------------------------------------
+      # 风控配置 (保守) / Risk Control (Conservative)
+      # -----------------------------------------------------------------------
+      MAX_POSITIONS: "4"
+      MAX_POSITION_SIZE: "0.25"
+      MAX_LEVERAGE: "2"
+      MAX_DAILY_LOSS: "0.03"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      <<: *common-healthcheck
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      <<: *common-logging
+    labels:
+      - "quant.role=trend-core"
+      - "quant.frequency=low"
+      - "quant.strategies=SMA,MultiTimeframe,RegimeSwitching,VolatilityRegime"
+
+  # ===========================================================================
+  # Docker #2: 技术指标中频 (Alpha)
+  # Technical Indicators - Medium Frequency
+  #
+  # 策略: RSI, MACD, BollingerBands, ATRBreakout, BollingerWidth, Adaptive
+  # 特点: 1H-4H, 信号多, 需独立评估
+  # 频率: 5-15次/天
+  # ===========================================================================
+  quant-tech-alpha:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-tech-alpha
+    restart: unless-stopped
+    ports:
+      - "3002:3000"   # API
+      - "9102:9091"   # Metrics
+      - "8002:8080"   # WebSocket
+    volumes:
+      - ./logs/tech-alpha:/app/logs
+      - ./data/tech-alpha:/app/data
+      - ./config/strategies/tech-alpha.json:/app/config/strategy.json:ro
+      <<: *common-volumes
+    environment:
+      <<: *common-env
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: tech-alpha
+      INSTANCE_ID: "2"
+      # -----------------------------------------------------------------------
+      # 策略配置 / Strategy Configuration
+      # -----------------------------------------------------------------------
+      STRATEGY_NAME: WeightedCombo
+      COMBO_STRATEGIES: "RSI,MACD,BollingerBands,ATRBreakout,BollingerWidth,Adaptive"
+      # -----------------------------------------------------------------------
+      # 交易对配置 / Trading Pairs
+      # -----------------------------------------------------------------------
+      DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT"
+      DEFAULT_TIMEFRAME: "1h"
+      # -----------------------------------------------------------------------
+      # 风控配置 (中等) / Risk Control (Medium)
+      # -----------------------------------------------------------------------
+      MAX_POSITIONS: "6"
+      MAX_POSITION_SIZE: "0.15"
+      MAX_LEVERAGE: "3"
+      MAX_DAILY_LOSS: "0.05"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      <<: *common-healthcheck
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: '1.5'
+        reservations:
+          memory: 384M
+          cpus: '0.5'
+    logging:
+      <<: *common-logging
+    labels:
+      - "quant.role=tech-alpha"
+      - "quant.frequency=medium"
+      - "quant.strategies=RSI,MACD,BollingerBands,ATRBreakout,BollingerWidth,Adaptive"
+
+  # ===========================================================================
+  # Docker #3: 横截面 / 因子组合
+  # Cross-Sectional / Factor Portfolio
+  #
+  # 策略: Rotation, MomentumRank, CrossSectional, WeightedCombo
+  # 特点: 多币种, 低相关, 提高收益曲线平滑度
+  # 频率: 3-8次/天
+  # ===========================================================================
+  quant-cross-factor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-cross-factor
+    restart: unless-stopped
+    ports:
+      - "3003:3000"   # API
+      - "9103:9091"   # Metrics
+      - "8003:8080"   # WebSocket
+    volumes:
+      - ./logs/cross-factor:/app/logs
+      - ./data/cross-factor:/app/data
+      - ./config/strategies/cross-factor.json:/app/config/strategy.json:ro
+      <<: *common-volumes
+    environment:
+      <<: *common-env
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: cross-factor
+      INSTANCE_ID: "3"
+      # -----------------------------------------------------------------------
+      # 策略配置 / Strategy Configuration
+      # -----------------------------------------------------------------------
+      STRATEGY_NAME: WeightedCombo
+      COMBO_STRATEGIES: "Rotation,MomentumRank,CrossSectional"
+      # -----------------------------------------------------------------------
+      # 交易对配置 (多币种) / Trading Pairs (Multi-Asset)
+      # -----------------------------------------------------------------------
+      DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,DOGE/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOT/USDT:USDT,LINK/USDT:USDT"
+      DEFAULT_TIMEFRAME: "4h"
+      # -----------------------------------------------------------------------
+      # 横截面特有配置 / Cross-Sectional Specific
+      # -----------------------------------------------------------------------
+      CROSS_SECTIONAL_TOP_N: "3"
+      CROSS_SECTIONAL_BOTTOM_N: "3"
+      ROTATION_LOOKBACK: "168"
+      # -----------------------------------------------------------------------
+      # 风控配置 / Risk Control
+      # -----------------------------------------------------------------------
+      MAX_POSITIONS: "10"
+      MAX_POSITION_SIZE: "0.10"
+      MAX_LEVERAGE: "2"
+      MAX_DAILY_LOSS: "0.04"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      <<: *common-healthcheck
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: '1.5'
+        reservations:
+          memory: 384M
+          cpus: '0.5'
+    logging:
+      <<: *common-logging
+    labels:
+      - "quant.role=cross-factor"
+      - "quant.frequency=medium"
+      - "quant.strategies=Rotation,MomentumRank,CrossSectional"
+
+  # ===========================================================================
+  # Docker #4: 事件 / 风控 / 特殊信号
+  # Event-Driven / Risk Control / Special Signals
+  #
+  # 策略: FundingRateExtreme, RiskDriven
+  # 特点: 非连续交易, 事件驱动, 辅助收益
+  # 频率: 0-5次/天
+  # ===========================================================================
+  quant-event-risk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-event-risk
+    restart: unless-stopped
+    ports:
+      - "3004:3000"   # API
+      - "9104:9091"   # Metrics
+      - "8004:8080"   # WebSocket
+    volumes:
+      - ./logs/event-risk:/app/logs
+      - ./data/event-risk:/app/data
+      - ./config/strategies/event-risk.json:/app/config/strategy.json:ro
+      <<: *common-volumes
+    environment:
+      <<: *common-env
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: event-risk
+      INSTANCE_ID: "4"
+      # -----------------------------------------------------------------------
+      # 策略配置 / Strategy Configuration
+      # -----------------------------------------------------------------------
+      STRATEGY_NAME: WeightedCombo
+      COMBO_STRATEGIES: "FundingRateExtreme,RiskDriven"
+      # -----------------------------------------------------------------------
+      # 交易对配置 / Trading Pairs
+      # -----------------------------------------------------------------------
+      DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT"
+      DEFAULT_TIMEFRAME: "1h"
+      # -----------------------------------------------------------------------
+      # 资金费率阈值 / Funding Rate Thresholds
+      # -----------------------------------------------------------------------
+      FUNDING_EXTREME_THRESHOLD: "0.001"
+      FUNDING_LOOKBACK_HOURS: "24"
+      # -----------------------------------------------------------------------
+      # 风控配置 (严格) / Risk Control (Strict)
+      # -----------------------------------------------------------------------
+      MAX_POSITIONS: "4"
+      MAX_POSITION_SIZE: "0.15"
+      MAX_LEVERAGE: "2"
+      MAX_DAILY_LOSS: "0.02"
+      MAX_DRAWDOWN: "0.05"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      <<: *common-healthcheck
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '0.75'
+        reservations:
+          memory: 192M
+          cpus: '0.25'
+    logging:
+      <<: *common-logging
+    labels:
+      - "quant.role=event-risk"
+      - "quant.frequency=low"
+      - "quant.strategies=FundingRateExtreme,RiskDriven"
+
+  # ===========================================================================
+  # Docker #5: 高频 / 套利 (独立世界)
+  # High Frequency / Arbitrage (Isolated)
+  #
+  # 策略: Grid, OrderFlow, StatisticalArbitrage, CrossExchangeSpread, FundingArb
+  # 特点: 独立账户/子账户, 独立API Key, 不与其他Docker共仓
+  # 频率: 几十~上百次/天
+  #
+  # ⚠️ 警告: 此实例需要独立的API Key和子账户!
+  # ===========================================================================
+  quant-hf-arbitrage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: quant-trading-system:latest
+    container_name: quant-hf-arbitrage
+    restart: unless-stopped
+    ports:
+      - "3005:3000"   # API
+      - "9105:9091"   # Metrics
+      - "8005:8080"   # WebSocket
+    volumes:
+      - ./logs/hf-arbitrage:/app/logs
+      - ./data/hf-arbitrage:/app/data
+      - ./config/strategies/hf-arbitrage.json:/app/config/strategy.json:ro
+      <<: *common-volumes
+      # -----------------------------------------------------------------------
+      # 独立环境变量文件 (包含独立API Key)
+      # Separate env file (with independent API Keys)
+      # -----------------------------------------------------------------------
+      - ./.env.hf-arbitrage:/app/.env.override:ro
+    environment:
+      <<: *common-env
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: hf-arbitrage
+      INSTANCE_ID: "5"
+      # -----------------------------------------------------------------------
+      # 策略配置 / Strategy Configuration
+      # -----------------------------------------------------------------------
+      STRATEGY_NAME: WeightedCombo
+      COMBO_STRATEGIES: "Grid,OrderFlow,StatisticalArbitrage,CrossExchangeSpread,FundingArb"
+      # -----------------------------------------------------------------------
+      # 交易对配置 / Trading Pairs
+      # -----------------------------------------------------------------------
+      DEFAULT_SYMBOLS: "BTC/USDT:USDT,ETH/USDT:USDT"
+      DEFAULT_TIMEFRAME: "1m"
+      # -----------------------------------------------------------------------
+      # 独立API配置覆盖 (使用子账户)
+      # Independent API Override (Using Sub-Account)
+      # -----------------------------------------------------------------------
+      BINANCE_API_KEY: ${HF_BINANCE_API_KEY:-}
+      BINANCE_API_SECRET: ${HF_BINANCE_API_SECRET:-}
+      OKX_API_KEY: ${HF_OKX_API_KEY:-}
+      OKX_API_SECRET: ${HF_OKX_API_SECRET:-}
+      OKX_PASSPHRASE: ${HF_OKX_PASSPHRASE:-}
+      # -----------------------------------------------------------------------
+      # 网格策略配置 / Grid Strategy Config
+      # -----------------------------------------------------------------------
+      GRID_LEVELS: "20"
+      GRID_SPACING: "0.005"
+      # -----------------------------------------------------------------------
+      # 套利配置 / Arbitrage Config
+      # -----------------------------------------------------------------------
+      ARB_MIN_SPREAD: "0.001"
+      ARB_MAX_SLIPPAGE: "0.0005"
+      STAT_ARB_ZSCORE_ENTRY: "2.0"
+      STAT_ARB_ZSCORE_EXIT: "0.5"
+      # -----------------------------------------------------------------------
+      # 风控配置 (激进但严控) / Risk Control (Aggressive but Strict)
+      # -----------------------------------------------------------------------
+      MAX_POSITIONS: "20"
+      MAX_POSITION_SIZE: "0.05"
+      MAX_LEVERAGE: "5"
+      MAX_DAILY_LOSS: "0.03"
+      # -----------------------------------------------------------------------
+      # 性能优化 / Performance Optimization
+      # -----------------------------------------------------------------------
+      WS_PING_INTERVAL: "5000"
+      ORDER_TIMEOUT: "3000"
+      ENABLE_ORDER_BOOK_CACHE: "true"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
+    depends_on:
+      <<: *common-depends
+    healthcheck:
+      <<: *common-healthcheck
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "10"
+    labels:
+      - "quant.role=hf-arbitrage"
+      - "quant.frequency=high"
+      - "quant.strategies=Grid,OrderFlow,StatisticalArbitrage,CrossExchangeSpread,FundingArb"
+      - "quant.isolated=true"
+
+  # ===========================================================================
+  # Redis Master - 共享缓存
+  # ===========================================================================
+  redis-master:
+    image: redis:7-alpine
+    container_name: quant-redis-master
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_master_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  # ===========================================================================
+  # ClickHouse - 分析型数据库
+  # ===========================================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: quant-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./config/clickhouse:/etc/clickhouse-server/config.d:ro
+    environment:
+      - TZ=Asia/Shanghai
+      - CLICKHOUSE_DB=quant_trading
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - quant-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  quant-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis_master_data:
+    driver: local
+  clickhouse_data:
+    driver: local
+  clickhouse_logs:
+    driver: local

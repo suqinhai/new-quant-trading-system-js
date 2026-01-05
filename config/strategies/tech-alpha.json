@@ -1,0 +1,94 @@
+{
+  "name": "tech-alpha",
+  "description": "技术指标Alpha策略组合 - 中频",
+  "version": "1.0.0",
+
+  "combo": {
+    "mode": "weighted",
+    "strategies": [
+      {
+        "name": "RSI",
+        "weight": 0.20,
+        "enabled": true,
+        "params": {
+          "period": 14,
+          "overbought": 70,
+          "oversold": 30,
+          "timeframe": "1h"
+        }
+      },
+      {
+        "name": "MACD",
+        "weight": 0.20,
+        "enabled": true,
+        "params": {
+          "fastPeriod": 12,
+          "slowPeriod": 26,
+          "signalPeriod": 9,
+          "timeframe": "1h"
+        }
+      },
+      {
+        "name": "BollingerBands",
+        "weight": 0.18,
+        "enabled": true,
+        "params": {
+          "period": 20,
+          "stdDev": 2,
+          "timeframe": "1h"
+        }
+      },
+      {
+        "name": "ATRBreakout",
+        "weight": 0.15,
+        "enabled": true,
+        "params": {
+          "atrPeriod": 14,
+          "atrMultiplier": 2.0,
+          "lookbackPeriod": 20,
+          "timeframe": "4h"
+        }
+      },
+      {
+        "name": "BollingerWidth",
+        "weight": 0.12,
+        "enabled": true,
+        "params": {
+          "period": 20,
+          "stdDev": 2,
+          "squeezeThreshold": 0.04,
+          "expansionThreshold": 0.08,
+          "timeframe": "1h"
+        }
+      },
+      {
+        "name": "Adaptive",
+        "weight": 0.15,
+        "enabled": true,
+        "params": {
+          "adaptationPeriod": 50,
+          "performanceWindow": 20,
+          "parameterBounds": {
+            "rsiPeriod": [7, 21],
+            "macdFast": [8, 15],
+            "macdSlow": [20, 30]
+          }
+        }
+      }
+    ]
+  },
+
+  "execution": {
+    "minSignalStrength": 0.5,
+    "confirmationRequired": 2,
+    "cooldownMinutes": 60
+  },
+
+  "risk": {
+    "maxPositionSize": 0.15,
+    "maxLeverage": 3,
+    "stopLossPercent": 0.02,
+    "takeProfitPercent": 0.04,
+    "trailingStopPercent": 0.015
+  }
+}

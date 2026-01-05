@@ -1,0 +1,67 @@
+{
+  "name": "trend-core",
+  "description": "趋势核心策略组合 - 低频骨架",
+  "version": "1.0.0",
+
+  "combo": {
+    "mode": "weighted",
+    "strategies": [
+      {
+        "name": "SMA",
+        "weight": 0.30,
+        "enabled": true,
+        "params": {
+          "shortPeriod": 20,
+          "longPeriod": 60,
+          "timeframe": "4h"
+        }
+      },
+      {
+        "name": "MultiTimeframe",
+        "weight": 0.30,
+        "enabled": true,
+        "params": {
+          "timeframes": ["1h", "4h", "1d"],
+          "minAlignment": 2,
+          "trendStrengthThreshold": 0.6
+        }
+      },
+      {
+        "name": "RegimeSwitching",
+        "weight": 0.25,
+        "enabled": true,
+        "params": {
+          "lookbackPeriod": 100,
+          "volatilityWindow": 20,
+          "trendThreshold": 0.02,
+          "regimes": ["trending", "ranging", "volatile"]
+        }
+      },
+      {
+        "name": "VolatilityRegime",
+        "weight": 0.15,
+        "enabled": true,
+        "params": {
+          "atrPeriod": 14,
+          "volLookback": 50,
+          "lowVolThreshold": 0.3,
+          "highVolThreshold": 0.7
+        }
+      }
+    ]
+  },
+
+  "execution": {
+    "minSignalStrength": 0.6,
+    "confirmationRequired": 2,
+    "cooldownMinutes": 240
+  },
+
+  "risk": {
+    "maxPositionSize": 0.25,
+    "maxLeverage": 2,
+    "stopLossPercent": 0.03,
+    "takeProfitPercent": 0.06,
+    "trailingStopPercent": 0.02
+  }
+}
