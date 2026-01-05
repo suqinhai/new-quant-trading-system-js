@@ -39,7 +39,7 @@ services:
       TZ: Asia/Shanghai
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: trend-core
@@ -116,7 +116,7 @@ services:
       TZ: Asia/Shanghai
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: tech-alpha
@@ -193,7 +193,7 @@ services:
       TZ: Asia/Shanghai
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: cross-factor
@@ -273,7 +273,7 @@ services:
       TZ: Asia/Shanghai
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: event-risk
@@ -356,7 +356,7 @@ services:
       TZ: Asia/Shanghai
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: hf-arbitrage
