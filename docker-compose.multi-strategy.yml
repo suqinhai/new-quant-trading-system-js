@@ -37,7 +37,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       TZ: Asia/Shanghai
-      REDIS_HOST: redis-master
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: 8123
@@ -114,7 +114,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       TZ: Asia/Shanghai
-      REDIS_HOST: redis-master
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: 8123
@@ -191,7 +191,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       TZ: Asia/Shanghai
-      REDIS_HOST: redis-master
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: 8123
@@ -271,7 +271,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       TZ: Asia/Shanghai
-      REDIS_HOST: redis-master
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: 8123
@@ -354,7 +354,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       TZ: Asia/Shanghai
-      REDIS_HOST: redis-master
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: 8123
