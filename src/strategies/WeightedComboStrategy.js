@@ -331,6 +331,18 @@ export class WeightedComboStrategy extends BaseStrategy {
    * @private
    */
   async _initSubStrategies() {
+    // 创建空操作 engine，防止子策略报 "引擎未设置" 错误
+    // Create noop engine to prevent "Engine not set" errors in sub-strategies
+    const noopEngine = {
+      buy: () => null,
+      sell: () => null,
+      buyPercent: () => null,
+      closePosition: () => null,
+      getPosition: () => null,
+      getEquity: () => 0,
+      getAvailableBalance: () => 0,
+    };
+
     for (const strategyName of Object.keys(this.strategyWeights)) {
       const StrategyClass = STRATEGY_CLASS_MAP[strategyName];
 
@@ -350,8 +362,9 @@ export class WeightedComboStrategy extends BaseStrategy {
 
         const strategy = new StrategyClass(params);
 
-        // 不设置 engine，防止子策略直接下单
-        // strategy.engine = null;
+        // 设置空操作 engine，防止子策略报错但不实际执行交易
+        // Set noop engine to prevent errors but not execute trades
+        strategy.engine = noopEngine;
 
         await strategy.onInit();
 

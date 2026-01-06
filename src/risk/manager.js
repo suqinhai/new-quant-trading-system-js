@@ -1922,6 +1922,82 @@ export class AdvancedRiskManager extends EventEmitter {
   }
 
   /**
+   * 检查订单风险
+   * Check order risk
+   *
+   * @param {Object} order - 订单信息 / Order info
+   * @param {string} order.symbol - 交易对 / Symbol
+   * @param {string} order.side - 方向 (buy/sell) / Side
+   * @param {number} order.amount - 数量 / Amount
+   * @param {number} order.price - 价格 / Price
+   * @returns {Object} 检查结果 / Check result
+   */
+  checkOrder(order) {
+    // 结果对象 / Result object
+    const result = {
+      allowed: true,
+      reasons: [],
+      warnings: [],
+    };
+
+    // 1. 检查交易是否被暂停 / Check if trading is paused
+    if (!this.state.tradingAllowed) {
+      result.allowed = false;
+      result.reasons.push(`交易已暂停: ${this.state.pauseReason || '未知原因'} / Trading paused`);
+      return result;
+    }
+
+    // 2. 检查风险级别 / Check risk level
+    if (this.state.riskLevel === RISK_LEVEL.EMERGENCY) {
+      result.allowed = false;
+      result.reasons.push('风险级别为紧急，禁止交易 / Emergency risk level, trading forbidden');
+      return result;
+    }
+
+    if (this.state.riskLevel === RISK_LEVEL.CRITICAL) {
+      result.allowed = false;
+      result.reasons.push('风险级别为严重，禁止交易 / Critical risk level, trading forbidden');
+      return result;
+    }
+
+    // 3. 检查净值回撤 / Check equity drawdown
+    if (this.config.enableEquityDrawdownMonitor) {
+      const drawdown = this.equityDrawdown.currentDrawdown;
+
+      // 紧急回撤，禁止交易 / Emergency drawdown, forbid trading
+      if (drawdown >= this.config.maxEquityDrawdown) {
+        result.allowed = false;
+        result.reasons.push(`净值回撤超限: ${(drawdown * 100).toFixed(2)}% / Equity drawdown exceeded`);
+        return result;
+      }
+
+      // 警告级别回撤，只警告不拒绝 / Warning level drawdown, warn but don't reject
+      if (drawdown >= this.config.equityDrawdownWarningThreshold) {
+        result.warnings.push(`净值回撤警告: ${(drawdown * 100).toFixed(2)}% / Equity drawdown warning`);
+      }
+    }
+
+    // 4. 检查每日回撤 / Check daily drawdown
+    if (this.dailyEquity.currentDrawdown >= this.config.maxDailyDrawdown) {
+      result.allowed = false;
+      result.reasons.push(`当日回撤超限: ${(this.dailyEquity.currentDrawdown * 100).toFixed(2)}% / Daily drawdown exceeded`);
+      return result;
+    }
+
+    // 5. 危险级别风险，添加警告 / Danger level risk, add warning
+    if (this.state.riskLevel === RISK_LEVEL.DANGER) {
+      result.warnings.push('风险级别为危险，建议谨慎交易 / Danger risk level, trade with caution');
+    }
+
+    // 6. 警告级别风险，添加警告 / Warning level risk, add warning
+    if (this.state.riskLevel === RISK_LEVEL.WARNING) {
+      result.warnings.push('风险级别为警告 / Warning risk level');
+    }
+
+    return result;
+  }
+
+  /**
    * 检查是否允许交易
    * Check if trading is allowed
    *
