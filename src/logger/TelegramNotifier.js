@@ -1031,7 +1031,7 @@ export class TelegramNotifier extends EventEmitter {
     const delay = targetTime.getTime() - now.getTime();
 
     // 记录日志 / Log
-    this.log(`日报将在 ${targetTime.toLocaleString('zh-CN')} 发送 / Daily report scheduled`, 'info');
+    this.log(`日报将在 ${targetTime.toISOString()} 发送 / Daily report scheduled`, 'info');
 
     // 设置定时器 / Set timer
     this.dailyReportTimer = setTimeout(async () => {

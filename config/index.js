@@ -92,6 +92,12 @@ let cachedEncryptedKeys = null;
 let encryptedKeysLoadAttempted = false;
 
 /**
+ * 缓存的配置对象 / Cached configuration object
+ * @type {Object|null}
+ */
+let cachedConfig = null;
+
+/**
  * 加载加密的API密钥
  * Load encrypted API keys
  * @returns {Object|null} 解密后的密钥对象 / Decrypted keys object
@@ -431,6 +437,12 @@ function removeUndefined(obj) {
  * @returns {Object} 合并后的配置 / Merged configuration
  */
 export function loadConfig(customConfig = {}) {
+  // 如果有缓存且无自定义配置，直接返回缓存
+  // If cached and no custom config, return cache directly
+  if (cachedConfig && Object.keys(customConfig).length === 0) {
+    return cachedConfig;
+  }
+
   // 构建环境配置 / Build environment configuration
   const envConfig = removeUndefined(buildEnvConfig());
 
@@ -438,6 +450,12 @@ export function loadConfig(customConfig = {}) {
   // Merge config: default -> env -> custom
   let config = deepMerge(defaultConfig, envConfig);
   config = deepMerge(config, customConfig);
+
+  // 如果没有自定义配置，缓存结果
+  // If no custom config, cache the result
+  if (Object.keys(customConfig).length === 0) {
+    cachedConfig = config;
+  }
 
   return config;
 }
