@@ -54,17 +54,20 @@ const REGIME_STRATEGY_MAP = {
 };
 
 /**
- * 策略类映射
+ * 获取策略类映射
+ * 使用函数形式延迟获取策略类，避免循环依赖问题
  */
-const STRATEGY_CLASS_MAP = {
-  SMA: SMAStrategy,
-  MACD: MACDStrategy,
-  RSI: RSIStrategy,
-  BollingerBands: BollingerBandsStrategy,
-  Grid: GridStrategy,
-  ATRBreakout: ATRBreakoutStrategy,
-  WeightedCombo: WeightedComboStrategy,
-};
+function getStrategyClassMap() {
+  return {
+    SMA: SMAStrategy,
+    MACD: MACDStrategy,
+    RSI: RSIStrategy,
+    BollingerBands: BollingerBandsStrategy,
+    Grid: GridStrategy,
+    ATRBreakout: ATRBreakoutStrategy,
+    WeightedCombo: WeightedComboStrategy,
+  };
+}
 
 /**
  * Regime 切换元策略类
@@ -217,7 +220,7 @@ export class RegimeSwitchingStrategy extends BaseStrategy {
 
     // 实例化策略
     for (const strategyName of allStrategies) {
-      const StrategyClass = STRATEGY_CLASS_MAP[strategyName];
+      const StrategyClass = getStrategyClassMap()[strategyName];
       if (!StrategyClass) {
         this.log(`未知策略类: ${strategyName}`, 'warn');
         continue;

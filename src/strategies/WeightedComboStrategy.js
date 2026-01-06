@@ -49,54 +49,58 @@ import { CrossExchangeSpreadStrategy } from './CrossExchangeSpreadStrategy.js';
 import { StatisticalArbitrageStrategy } from './StatisticalArbitrageStrategy.js';
 
 /**
- * 策略类映射
- * Strategy Class Map
+ * 获取策略类映射
+ * Get Strategy Class Map
  *
- * 包含所有可用的子策略类
- * Contains all available sub-strategy classes
+ * 使用函数形式延迟获取策略类，避免循环依赖问题
+ * Use function to lazily get strategy classes, avoiding circular dependency issues
+ *
+ * @returns {Object} 策略类映射
  */
-const STRATEGY_CLASS_MAP = {
-  // 基础趋势策略 / Basic trend strategies
-  SMA: SMAStrategy,
-  RSI: RSIStrategy,
-  MACD: MACDStrategy,
-  BollingerBands: BollingerBandsStrategy,
-  ATRBreakout: ATRBreakoutStrategy,
+function getStrategyClassMap() {
+  return {
+    // 基础趋势策略 / Basic trend strategies
+    SMA: SMAStrategy,
+    RSI: RSIStrategy,
+    MACD: MACDStrategy,
+    BollingerBands: BollingerBandsStrategy,
+    ATRBreakout: ATRBreakoutStrategy,
 
-  // 资金费率策略 / Funding rate strategies
-  FundingRate: FundingArbStrategy,
-  FundingArb: FundingArbStrategy,
-  FundingRateExtreme: FundingRateExtremeStrategy,
+    // 资金费率策略 / Funding rate strategies
+    FundingRate: FundingArbStrategy,
+    FundingArb: FundingArbStrategy,
+    FundingRateExtreme: FundingRateExtremeStrategy,
 
-  // 波动率策略 / Volatility strategies
-  BollingerWidth: BollingerWidthStrategy,
-  VolatilityRegime: VolatilityRegimeStrategy,
+    // 波动率策略 / Volatility strategies
+    BollingerWidth: BollingerWidthStrategy,
+    VolatilityRegime: VolatilityRegimeStrategy,
 
-  // 网格与订单流策略 / Grid and order flow strategies
-  Grid: GridStrategy,
-  OrderFlow: OrderFlowStrategy,
+    // 网格与订单流策略 / Grid and order flow strategies
+    Grid: GridStrategy,
+    OrderFlow: OrderFlowStrategy,
 
-  // 多周期与自适应策略 / Multi-timeframe and adaptive strategies
-  MultiTimeframe: MultiTimeframeStrategy,
-  MTF: MultiTimeframeStrategy,
-  RegimeSwitching: RegimeSwitchingStrategy,
-  Adaptive: AdaptiveStrategy,
+    // 多周期与自适应策略 / Multi-timeframe and adaptive strategies
+    MultiTimeframe: MultiTimeframeStrategy,
+    MTF: MultiTimeframeStrategy,
+    RegimeSwitching: RegimeSwitchingStrategy,
+    Adaptive: AdaptiveStrategy,
 
-  // 风控驱动策略 / Risk-driven strategies
-  RiskDriven: RiskDrivenStrategy,
+    // 风控驱动策略 / Risk-driven strategies
+    RiskDriven: RiskDrivenStrategy,
 
-  // 横截面策略 / Cross-sectional strategies
-  CrossSectional: CrossSectionalStrategy,
-  MomentumRank: MomentumRankStrategy,
-  Momentum: MomentumRankStrategy,
-  Rotation: RotationStrategy,
+    // 横截面策略 / Cross-sectional strategies
+    CrossSectional: CrossSectionalStrategy,
+    MomentumRank: MomentumRankStrategy,
+    Momentum: MomentumRankStrategy,
+    Rotation: RotationStrategy,
 
-  // 套利策略 / Arbitrage strategies
-  CrossExchangeSpread: CrossExchangeSpreadStrategy,
-  CrossExchange: CrossExchangeSpreadStrategy,
-  StatisticalArbitrage: StatisticalArbitrageStrategy,
-  StatArb: StatisticalArbitrageStrategy,
-};
+    // 套利策略 / Arbitrage strategies
+    CrossExchangeSpread: CrossExchangeSpreadStrategy,
+    CrossExchange: CrossExchangeSpreadStrategy,
+    StatisticalArbitrage: StatisticalArbitrageStrategy,
+    StatArb: StatisticalArbitrageStrategy,
+  };
+}
 
 /**
  * 信号转换器: 将各种策略信号转换为 0-1 得分
@@ -683,7 +687,7 @@ export class WeightedComboStrategy extends BaseStrategy {
     };
 
     for (const strategyName of Object.keys(this.strategyWeights)) {
-      const StrategyClass = STRATEGY_CLASS_MAP[strategyName];
+      const StrategyClass = getStrategyClassMap()[strategyName];
 
       if (!StrategyClass) {
         this.log(`未知策略类型: ${strategyName}`, 'warn');
