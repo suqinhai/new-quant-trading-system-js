@@ -249,6 +249,7 @@ export class MarketDataEngine extends EventEmitter {
     }
 
     console.log(`${this.logPrefix} 正在启动行情引擎... / Starting market data engine...`);
+    console.log(`${this.logPrefix} 配置的交易所列表 / Configured exchanges: [${this.config.exchanges.join(', ')}]`);
 
     try {
       // 1. 初始化 Redis 连接 / Initialize Redis connection
