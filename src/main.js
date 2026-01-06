@@ -685,18 +685,28 @@ class TradingSystemRunner extends EventEmitter {
     this._log('info', `行情引擎将连接以下交易所 / MarketDataEngine will connect to: ${connectedExchanges.join(', ')}`);
 
     // 创建行情引擎 / Create market data engine
-    this.marketDataEngine = new MarketDataEngine(this.exchange, {
+    // 注意: MarketDataEngine 构造函数只接受一个 config 参数
+    // Note: MarketDataEngine constructor only accepts one config parameter
+    this.marketDataEngine = new MarketDataEngine({
       // 是否启用 WebSocket / Enable WebSocket
       enableWebSocket: true,
 
       // 是否启用 Redis 缓存 / Enable Redis cache
       enableRedis: !!this.config.database?.redis?.enabled,
 
-      // Redis URL
-      redisUrl: this.config.database?.redis?.url,
+      // Redis 配置 / Redis configuration
+      redis: this.config.database?.redis?.enabled ? {
+        host: this.config.database?.redis?.host || 'localhost',
+        port: this.config.database?.redis?.port || 6379,
+        password: this.config.database?.redis?.password || null,
+        db: this.config.database?.redis?.db || 0,
+      } : undefined,
 
-      // 传入已配置密钥的交易所列表 / Pass exchanges with configured API keys
+      // 传入已配置密钥的交易所列表 (动态) / Pass exchanges with configured API keys (dynamic)
       exchanges: connectedExchanges,
+
+      // 交易类型 / Trading type
+      tradingType: this.config.trading?.type || 'futures',
     });
   }
 
