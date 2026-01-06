@@ -628,8 +628,12 @@ export class WeightedComboStrategy extends BaseStrategy {
 
   /**
    * 初始化
+   * @param {Map} exchanges - 交易所实例映射 / Exchange instance map
    */
-  async onInit() {
+  async onInit(exchanges) {
+    // 保存交易所引用，供子策略使用 / Save exchanges for sub-strategies
+    this._exchanges = exchanges;
+
     await super.onInit();
 
     // 初始化权重系统
@@ -709,7 +713,8 @@ export class WeightedComboStrategy extends BaseStrategy {
         // Set noop engine to prevent errors but not execute trades
         strategy.engine = noopEngine;
 
-        await strategy.onInit();
+        // 传递交易所引用给子策略 / Pass exchanges to sub-strategy
+        await strategy.onInit(this._exchanges);
 
         this._subStrategies[strategyName] = {
           instance: strategy,
@@ -719,6 +724,28 @@ export class WeightedComboStrategy extends BaseStrategy {
         this.log(`子策略 [${strategyName}] 初始化完成`);
       } catch (error) {
         this.log(`子策略 [${strategyName}] 初始化失败: ${error.message}`, 'error');
+      }
+    }
+  }
+
+  /**
+   * 初始化 K 线历史数据 - 传递给所有子策略
+   * Initialize candle history - pass to all sub-strategies
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {Array} candles - 历史 K 线数据 / Historical candle data
+   */
+  initCandleHistory(symbol, candles) {
+    // 调用父类方法 / Call parent method
+    super.initCandleHistory(symbol, candles);
+
+    // 传递给所有子策略 / Pass to all sub-strategies
+    for (const [name, { instance }] of Object.entries(this._subStrategies)) {
+      if (instance && typeof instance.initCandleHistory === 'function') {
+        try {
+          instance.initCandleHistory(symbol, candles);
+        } catch (error) {
+          this.log(`子策略 [${name}] 初始化历史数据失败: ${error.message}`, 'warn');
+        }
       }
     }
   }
