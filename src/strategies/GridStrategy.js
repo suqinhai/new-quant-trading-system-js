@@ -93,15 +93,61 @@ export class GridStrategy extends BaseStrategy {
   async onInit() {
     await super.onInit();
 
-    // 如果启用动态价格且未手动设置上下限，则从交易所获取当前价格
-    // If dynamic price is enabled and limits not manually set, get current price from exchange
-    if (this.useDynamicPrice && (this.upperPrice === null || this.lowerPrice === null)) {
-      await this._initializeDynamicGridRange();
-    } else if (this.upperPrice !== null && this.lowerPrice !== null) {
-      // 使用手动设置的价格范围 / Use manually set price range
+    // 如果手动设置了上下限，直接初始化网格
+    // If upper/lower limits are manually set, initialize grids directly
+    if (!this.useDynamicPrice && this.upperPrice !== null && this.lowerPrice !== null) {
       this._initializeGrids();
+      this._logGridInfo();
     }
+    // 否则延迟到 initCandleHistory 或 onTick 时初始化
+    // Otherwise delay initialization to initCandleHistory or onTick
+  }
 
+  /**
+   * 初始化 K 线历史数据后回调 - 用于动态初始化网格
+   * Callback after candle history is initialized - for dynamic grid initialization
+   * @param {string} symbol - 交易对 / Trading pair
+   * @param {Array} candles - 历史 K 线数据 / Historical candle data
+   */
+  initCandleHistory(symbol, candles) {
+    // 调用父类方法 / Call parent method
+    super.initCandleHistory(symbol, candles);
+
+    // 如果网格未初始化且使用动态价格，尝试从历史数据初始化
+    // If grids not initialized and using dynamic price, try to initialize from history
+    if (!this._gridsInitialized && this.useDynamicPrice) {
+      this._initializeGridsFromHistory();
+    }
+  }
+
+  /**
+   * 从历史数据初始化网格
+   * Initialize grids from historical data
+   * @private
+   */
+  _initializeGridsFromHistory() {
+    if (this._candleHistory && this._candleHistory.length > 0) {
+      const lastCandle = this._candleHistory[this._candleHistory.length - 1];
+      const currentPrice = lastCandle.close;
+
+      // 基于当前价格和百分比计算网格范围
+      // Calculate grid range based on current price and percentage
+      const halfWidth = currentPrice * (this.gridWidthPercent / 2);
+      this.upperPrice = Math.round(currentPrice + halfWidth);
+      this.lowerPrice = Math.round(currentPrice - halfWidth);
+
+      this.log(`从历史数据初始化网格 / Initializing grid from history: 当前价格=${currentPrice}`);
+      this._initializeGrids();
+      this._logGridInfo();
+    }
+  }
+
+  /**
+   * 输出网格信息日志
+   * Log grid information
+   * @private
+   */
+  _logGridInfo() {
     this.log(`网格范围 / Grid Range: ${this.lowerPrice} - ${this.upperPrice}`);
     this.log(`网格数量 / Grid Count: ${this.gridCount}`);
     this.log(`网格间距 / Grid Spacing: ${((this.upperPrice - this.lowerPrice) / this.gridCount).toFixed(2)}`);
@@ -172,6 +218,18 @@ export class GridStrategy extends BaseStrategy {
    */
   async onTick(candle, history) {
     const currentPrice = candle.close;
+
+    // 备用初始化: 如果网格还未初始化，使用当前价格初始化
+    // Fallback initialization: if grids not initialized, use current price
+    if (!this._gridsInitialized && this.useDynamicPrice) {
+      const halfWidth = currentPrice * (this.gridWidthPercent / 2);
+      this.upperPrice = Math.round(currentPrice + halfWidth);
+      this.lowerPrice = Math.round(currentPrice - halfWidth);
+
+      this.log(`从实时价格初始化网格 / Initializing grid from live price: ${currentPrice}`);
+      this._initializeGrids();
+      this._logGridInfo();
+    }
 
     // 检查网格是否已初始化 / Check if grids are initialized
     if (!this._gridsInitialized || this.grids.length === 0) {
