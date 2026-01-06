@@ -224,19 +224,19 @@ describe('BaseStrategy (Real)', () => {
 
   describe('信号方法', () => {
     it('setBuySignal 应该设置买入信号', () => {
-      const listener = vi.fn();
-      strategy.on('signal', listener);
-
       strategy.setBuySignal('test reason');
 
       expect(strategy.state.signal.type).toBe('buy');
+      expect(strategy.state.signal.side).toBe('buy');
       expect(strategy.state.signal.reason).toBe('test reason');
-      expect(listener).toHaveBeenCalled();
+      // 注意: setBuySignal 不再发出信号事件，只记录状态
+      // 实际交易通过 buy()/buyPercent() 执行
     });
 
     it('setSellSignal 应该设置卖出信号', () => {
       strategy.setSellSignal('sell reason');
       expect(strategy.state.signal.type).toBe('sell');
+      expect(strategy.state.signal.side).toBe('sell');
     });
 
     it('clearSignal 应该清除信号', () => {

@@ -241,31 +241,47 @@ export class BaseStrategy extends EventEmitter {
   /**
    * 设置买入信号
    * Set buy signal
+   *
+   * 注意: 此方法只记录信号状态，不触发交易
+   * 实际交易应通过 buy() / buyPercent() 方法执行
+   * Note: This method only records signal state, does not trigger trade
+   * Actual trade should be executed via buy() / buyPercent() methods
+   *
    * @param {string} reason - 信号原因 / Signal reason
    */
   setBuySignal(reason = '') {
     this.state.lastSignal = this.state.signal;
     this.state.signal = {
       type: 'buy',
+      side: 'buy',
       reason,
       timestamp: Date.now(),
     };
-    this.emit('signal', this.state.signal);
+    // 不再发出信号事件，避免与 buy()/buyPercent() 重复
+    // No longer emit signal event to avoid duplication with buy()/buyPercent()
   }
 
   /**
    * 设置卖出信号
    * Set sell signal
+   *
+   * 注意: 此方法只记录信号状态，不触发交易
+   * 实际交易应通过 sell() / closePosition() 方法执行
+   * Note: This method only records signal state, does not trigger trade
+   * Actual trade should be executed via sell() / closePosition() methods
+   *
    * @param {string} reason - 信号原因 / Signal reason
    */
   setSellSignal(reason = '') {
     this.state.lastSignal = this.state.signal;
     this.state.signal = {
       type: 'sell',
+      side: 'sell',
       reason,
       timestamp: Date.now(),
     };
-    this.emit('signal', this.state.signal);
+    // 不再发出信号事件，避免与 sell()/closePosition() 重复
+    // No longer emit signal event to avoid duplication with sell()/closePosition()
   }
 
   /**
