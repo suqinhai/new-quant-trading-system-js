@@ -20,7 +20,7 @@
 import { BaseStrategy } from './BaseStrategy.js';
 import { SignalWeightingSystem, StrategyStatus } from './SignalWeightingSystem.js';
 
-// 子策略导入
+// 子策略导入 - 基础策略
 import { SMAStrategy } from './SMAStrategy.js';
 import { RSIStrategy } from './RSIStrategy.js';
 import { MACDStrategy } from './MACDStrategy.js';
@@ -28,16 +28,74 @@ import { BollingerBandsStrategy } from './BollingerBandsStrategy.js';
 import { ATRBreakoutStrategy } from './ATRBreakoutStrategy.js';
 import { FundingArbStrategy } from './FundingArbStrategy.js';
 
+// 子策略导入 - 波动率策略
+import { BollingerWidthStrategy } from './BollingerWidthStrategy.js';
+import { VolatilityRegimeStrategy } from './VolatilityRegimeStrategy.js';
+
+// 子策略导入 - 高级策略
+import { GridStrategy } from './GridStrategy.js';
+import { OrderFlowStrategy } from './OrderFlowStrategy.js';
+import { MultiTimeframeStrategy } from './MultiTimeframeStrategy.js';
+import { RegimeSwitchingStrategy } from './RegimeSwitchingStrategy.js';
+import { AdaptiveStrategy } from './AdaptiveStrategy.js';
+import { RiskDrivenStrategy } from './RiskDrivenStrategy.js';
+
+// 子策略导入 - 横截面策略
+import { CrossSectionalStrategy } from './CrossSectionalStrategy.js';
+import { MomentumRankStrategy } from './MomentumRankStrategy.js';
+import { RotationStrategy } from './RotationStrategy.js';
+import { FundingRateExtremeStrategy } from './FundingRateExtremeStrategy.js';
+import { CrossExchangeSpreadStrategy } from './CrossExchangeSpreadStrategy.js';
+import { StatisticalArbitrageStrategy } from './StatisticalArbitrageStrategy.js';
+
 /**
  * 策略类映射
+ * Strategy Class Map
+ *
+ * 包含所有可用的子策略类
+ * Contains all available sub-strategy classes
  */
 const STRATEGY_CLASS_MAP = {
+  // 基础趋势策略 / Basic trend strategies
   SMA: SMAStrategy,
   RSI: RSIStrategy,
   MACD: MACDStrategy,
   BollingerBands: BollingerBandsStrategy,
   ATRBreakout: ATRBreakoutStrategy,
+
+  // 资金费率策略 / Funding rate strategies
   FundingRate: FundingArbStrategy,
+  FundingArb: FundingArbStrategy,
+  FundingRateExtreme: FundingRateExtremeStrategy,
+
+  // 波动率策略 / Volatility strategies
+  BollingerWidth: BollingerWidthStrategy,
+  VolatilityRegime: VolatilityRegimeStrategy,
+
+  // 网格与订单流策略 / Grid and order flow strategies
+  Grid: GridStrategy,
+  OrderFlow: OrderFlowStrategy,
+
+  // 多周期与自适应策略 / Multi-timeframe and adaptive strategies
+  MultiTimeframe: MultiTimeframeStrategy,
+  MTF: MultiTimeframeStrategy,
+  RegimeSwitching: RegimeSwitchingStrategy,
+  Adaptive: AdaptiveStrategy,
+
+  // 风控驱动策略 / Risk-driven strategies
+  RiskDriven: RiskDrivenStrategy,
+
+  // 横截面策略 / Cross-sectional strategies
+  CrossSectional: CrossSectionalStrategy,
+  MomentumRank: MomentumRankStrategy,
+  Momentum: MomentumRankStrategy,
+  Rotation: RotationStrategy,
+
+  // 套利策略 / Arbitrage strategies
+  CrossExchangeSpread: CrossExchangeSpreadStrategy,
+  CrossExchange: CrossExchangeSpreadStrategy,
+  StatisticalArbitrage: StatisticalArbitrageStrategy,
+  StatArb: StatisticalArbitrageStrategy,
 };
 
 /**
@@ -161,6 +219,287 @@ const SignalConverters = {
 
     return Math.max(0, Math.min(1, score));
   },
+
+  /**
+   * 布林带宽度策略信号转换
+   * 带宽收窄 → 即将突破，准备入场
+   */
+  BollingerWidth: (strategy, candle) => {
+    const width = strategy.getIndicator('width');
+    const avgWidth = strategy.getIndicator('avgWidth');
+    const squeeze = strategy.getIndicator('squeeze');
+
+    if (squeeze) return 0.7; // 挤压状态，准备突破
+    if (width !== undefined && avgWidth !== undefined) {
+      // 带宽低于平均值越多，得分越高
+      const ratio = width / avgWidth;
+      if (ratio < 0.8) return 0.75;
+      if (ratio < 1.0) return 0.6;
+    }
+    return 0.5;
+  },
+
+  /**
+   * 波动率状态策略信号转换
+   */
+  VolatilityRegime: (strategy, candle) => {
+    const regime = strategy.getIndicator('regime');
+    const signal = strategy.getSignal();
+
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+
+    // 根据波动率状态调整
+    if (regime === 'low') return 0.6;  // 低波动，可能突破
+    if (regime === 'high') return 0.4; // 高波动，谨慎
+    return 0.5;
+  },
+
+  /**
+   * 网格策略信号转换
+   */
+  Grid: (strategy, candle) => {
+    const gridLevel = strategy.getIndicator('gridLevel');
+    const signal = strategy.getSignal();
+
+    if (signal?.type === 'buy') return 0.75;
+    if (signal?.type === 'sell') return 0.25;
+    return 0.5;
+  },
+
+  /**
+   * 订单流策略信号转换
+   * 基于买卖压力
+   */
+  OrderFlow: (strategy, candle) => {
+    const buyPressure = strategy.getIndicator('buyPressure');
+    const sellPressure = strategy.getIndicator('sellPressure');
+    const imbalance = strategy.getIndicator('imbalance');
+
+    if (imbalance !== undefined) {
+      // imbalance > 0 表示买压大于卖压
+      const score = 0.5 + (imbalance * 0.3);
+      return Math.max(0, Math.min(1, score));
+    }
+
+    if (buyPressure !== undefined && sellPressure !== undefined) {
+      const total = buyPressure + sellPressure;
+      if (total > 0) {
+        return buyPressure / total;
+      }
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.75;
+    if (signal?.type === 'sell') return 0.25;
+    return 0.5;
+  },
+
+  /**
+   * 多周期共振策略信号转换
+   */
+  MultiTimeframe: (strategy, candle) => {
+    const alignment = strategy.getIndicator('alignment');
+    const strength = strategy.getIndicator('strength');
+
+    if (alignment !== undefined) {
+      // alignment: 1 = 全部看多, -1 = 全部看空, 0 = 混合
+      const score = (alignment + 1) / 2;
+      // 结合强度调整
+      if (strength !== undefined) {
+        return score * 0.7 + strength * 0.3;
+      }
+      return score;
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * Regime 切换策略信号转换
+   */
+  RegimeSwitching: (strategy, candle) => {
+    const regime = strategy.getIndicator('regime');
+    const confidence = strategy.getIndicator('confidence') || 0.5;
+
+    // 根据市场状态调整
+    if (regime === 'trending_up') return 0.5 + (confidence * 0.4);
+    if (regime === 'trending_down') return 0.5 - (confidence * 0.4);
+    if (regime === 'ranging') return 0.5;
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.75;
+    if (signal?.type === 'sell') return 0.25;
+    return 0.5;
+  },
+
+  /**
+   * 自适应策略信号转换
+   */
+  Adaptive: (strategy, candle) => {
+    const adaptiveScore = strategy.getIndicator('adaptiveScore');
+    if (adaptiveScore !== undefined) {
+      return Math.max(0, Math.min(1, adaptiveScore));
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * 风控驱动策略信号转换
+   */
+  RiskDriven: (strategy, candle) => {
+    const riskScore = strategy.getIndicator('riskScore');
+    const signal = strategy.getSignal();
+
+    // 风险分数越低越好
+    if (riskScore !== undefined) {
+      const safetyScore = 1 - riskScore;
+      if (signal?.type === 'buy') return 0.5 + (safetyScore * 0.4);
+      if (signal?.type === 'sell') return 0.5 - (safetyScore * 0.4);
+      return 0.5;
+    }
+
+    if (signal?.type === 'buy') return 0.7;
+    if (signal?.type === 'sell') return 0.3;
+    return 0.5;
+  },
+
+  /**
+   * 横截面策略信号转换
+   */
+  CrossSectional: (strategy, candle) => {
+    const rank = strategy.getIndicator('rank');
+    const totalAssets = strategy.getIndicator('totalAssets') || 10;
+
+    if (rank !== undefined && totalAssets > 0) {
+      // rank 1 = 最强 (买入), rank = totalAssets = 最弱 (卖出)
+      const score = 1 - ((rank - 1) / (totalAssets - 1));
+      return Math.max(0, Math.min(1, score));
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * 动量排名策略信号转换
+   */
+  MomentumRank: (strategy, candle) => {
+    const momentum = strategy.getIndicator('momentum');
+    const rank = strategy.getIndicator('rank');
+
+    if (momentum !== undefined) {
+      // 正动量 → 看多, 负动量 → 看空
+      const score = 1 / (1 + Math.exp(-momentum * 10));
+      return score;
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * 轮动策略信号转换
+   */
+  Rotation: (strategy, candle) => {
+    const strength = strategy.getIndicator('strength');
+    const isLeader = strategy.getIndicator('isLeader');
+
+    if (isLeader) return 0.85;
+    if (strength !== undefined) {
+      // strength 通常在 -1 到 1 之间
+      return (strength + 1) / 2;
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * 资金费率极值策略信号转换
+   */
+  FundingRateExtreme: (strategy, candle) => {
+    const fundingRate = strategy.getIndicator('fundingRate');
+    const isExtreme = strategy.getIndicator('isExtreme');
+    const extremeType = strategy.getIndicator('extremeType');
+
+    if (isExtreme) {
+      // 极端负费率 → 强烈看多, 极端正费率 → 强烈看空
+      if (extremeType === 'negative') return 0.9;
+      if (extremeType === 'positive') return 0.1;
+    }
+
+    if (fundingRate !== undefined) {
+      const normalized = -fundingRate * 1000;
+      return 1 / (1 + Math.exp(-normalized));
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  /**
+   * 跨交易所价差策略信号转换
+   */
+  CrossExchangeSpread: (strategy, candle) => {
+    const spread = strategy.getIndicator('spread');
+    const threshold = strategy.getIndicator('threshold') || 0.001;
+
+    if (spread !== undefined) {
+      // 价差超过阈值 → 套利机会
+      if (Math.abs(spread) > threshold) {
+        return spread > 0 ? 0.8 : 0.2;
+      }
+    }
+
+    const signal = strategy.getSignal();
+    if (signal?.type === 'buy') return 0.75;
+    if (signal?.type === 'sell') return 0.25;
+    return 0.5;
+  },
+
+  /**
+   * 统计套利策略信号转换
+   */
+  StatisticalArbitrage: (strategy, candle) => {
+    const zscore = strategy.getIndicator('zscore');
+    const signal = strategy.getSignal();
+
+    if (zscore !== undefined) {
+      // z-score > 2 → 做空, z-score < -2 → 做多
+      if (zscore < -2) return 0.85;
+      if (zscore > 2) return 0.15;
+      // 线性插值
+      const score = 0.5 - (zscore / 4) * 0.35;
+      return Math.max(0.15, Math.min(0.85, score));
+    }
+
+    if (signal?.type === 'buy') return 0.8;
+    if (signal?.type === 'sell') return 0.2;
+    return 0.5;
+  },
+
+  // 别名映射到相同的转换器
+  FundingArb: (strategy, candle) => SignalConverters.FundingRate(strategy, candle),
+  MTF: (strategy, candle) => SignalConverters.MultiTimeframe(strategy, candle),
+  Momentum: (strategy, candle) => SignalConverters.MomentumRank(strategy, candle),
+  CrossExchange: (strategy, candle) => SignalConverters.CrossExchangeSpread(strategy, candle),
+  StatArb: (strategy, candle) => SignalConverters.StatisticalArbitrage(strategy, candle),
 
   /**
    * 默认转换器: 基于策略信号状态

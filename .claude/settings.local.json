@@ -119,7 +119,8 @@
       "Bash(pm2 show:*)",
       "Bash(dir:*)",
       "Bash(wsl tail:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(echo:*)"
     ]
   }
 }
