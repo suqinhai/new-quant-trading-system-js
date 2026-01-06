@@ -196,12 +196,74 @@ function getExchangeKey(exchange, keyName, envKey) {
 }
 
 /**
+ * 解析 COMBO_STRATEGIES 环境变量为策略权重对象
+ * Parse COMBO_STRATEGIES env var to strategy weights object
+ * @param {string} comboStr - 逗号分隔的策略列表 / Comma-separated strategy list
+ * @returns {Object|undefined} 策略权重对象 / Strategy weights object
+ */
+function parseComboStrategies(comboStr) {
+  if (!comboStr) {
+    return undefined;
+  }
+
+  // 解析策略列表 / Parse strategy list
+  const strategies = comboStr.split(',').map(s => s.trim()).filter(s => s);
+
+  if (strategies.length === 0) {
+    return undefined;
+  }
+
+  // 计算平均权重 / Calculate average weight
+  const weight = 1 / strategies.length;
+
+  // 构建权重对象 / Build weights object
+  const weights = {};
+  for (const strategy of strategies) {
+    weights[strategy] = weight;
+  }
+
+  console.log(`[Config] 解析 COMBO_STRATEGIES: ${comboStr} -> ${JSON.stringify(weights)}`);
+  return weights;
+}
+
+/**
  * 构建环境配置
  * Build environment configuration
  * @returns {Object} 环境配置 / Environment configuration
  */
 function buildEnvConfig() {
+  // 解析策略权重 / Parse strategy weights
+  const comboStrategies = getEnv('COMBO_STRATEGIES');
+  const strategyWeights = parseComboStrategies(comboStrategies);
+
   return {
+    // 策略配置 / Strategy configuration
+    strategy: {
+      // WeightedCombo 策略配置 / WeightedCombo strategy config
+      // 注意: 键名必须与策略类名匹配 (大小写敏感)
+      // Note: Key name must match strategy class name (case sensitive)
+      WeightedCombo: strategyWeights ? {
+        // 策略权重 / Strategy weights
+        strategyWeights,
+        // 默认时间周期 / Default timeframe
+        defaultTimeframe: getEnv('DEFAULT_TIMEFRAME'),
+        // 买入阈值 / Buy threshold
+        buyThreshold: getEnvNumber('BUY_THRESHOLD'),
+        // 卖出阈值 / Sell threshold
+        sellThreshold: getEnvNumber('SELL_THRESHOLD'),
+        // 最大持仓数 / Max positions
+        maxPositions: getEnvNumber('MAX_POSITIONS'),
+        // 是否使用追踪止损 / Use trailing stop
+        useTrailingStop: getEnvBool('USE_TRAILING_STOP'),
+        // 追踪止损百分比 / Trailing stop percent
+        trailingStopPercent: getEnvNumber('TRAILING_STOP_PERCENT'),
+        // 止损百分比 / Stop loss percent
+        stopLossPercent: getEnvNumber('STOP_LOSS_PERCENT'),
+        // 止盈百分比 / Take profit percent
+        takeProfitPercent: getEnvNumber('TAKE_PROFIT_PERCENT'),
+      } : undefined,
+    },
+
     // 交易所配置 / Exchange configuration
     exchange: {
       default: getEnv('DEFAULT_EXCHANGE', 'binance'),
