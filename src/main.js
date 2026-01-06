@@ -677,6 +677,13 @@ class TradingSystemRunner extends EventEmitter {
     // 输出日志 / Output log
     this._log('info', '初始化行情引擎... / Initializing market data engine...');
 
+    // 获取已连接的交易所列表 (基于已配置密钥的交易所)
+    // Get connected exchanges list (based on exchanges with configured API keys)
+    const connectedExchanges = Array.from(this.exchanges.keys());
+
+    // 输出连接的交易所 / Output connected exchanges
+    this._log('info', `行情引擎将连接以下交易所 / MarketDataEngine will connect to: ${connectedExchanges.join(', ')}`);
+
     // 创建行情引擎 / Create market data engine
     this.marketDataEngine = new MarketDataEngine(this.exchange, {
       // 是否启用 WebSocket / Enable WebSocket
@@ -687,6 +694,9 @@ class TradingSystemRunner extends EventEmitter {
 
       // Redis URL
       redisUrl: this.config.database?.redis?.url,
+
+      // 传入已配置密钥的交易所列表 / Pass exchanges with configured API keys
+      exchanges: connectedExchanges,
     });
   }
 
