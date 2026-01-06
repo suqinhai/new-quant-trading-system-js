@@ -1,0 +1,83 @@
+# =============================================================================
+# Docker Compose - 单策略部署配置 (使用宿主机Redis/ClickHouse)
+# Single-Strategy Deployment Configuration (Using Host Redis/ClickHouse)
+#
+# 运行单个策略实例，适合测试或小规模部署
+# Run a single strategy instance, suitable for testing or small-scale deployment
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # 单策略实例 / Single Strategy Instance
+  # ===========================================================================
+  quant-single:
+    image: quant-trading-system:latest
+    container_name: quant-single
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./logs/single:/app/logs
+      - ./data/single:/app/data
+      - ./config/strategies:/app/strategies:ro
+      - ./.env:/app/.env:ro
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      # 加密密钥主密码 (从宿主机环境变量传入) / Master key for decryption (from host env)
+      MASTER_KEY: ${MASTER_KEY}
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      CLICKHOUSE_HOST: 127.0.0.1
+      CLICKHOUSE_PORT: 8123
+      RUN_MODE: ${RUN_MODE:-shadow}
+      INSTANCE_NAME: single
+      INSTANCE_ID: "1"
+      # =========================================================================
+      # 策略配置 (根据需要修改) / Strategy Configuration (modify as needed)
+      # =========================================================================
+      # 单策略模式: 直接指定策略名 / Single strategy mode: specify strategy name directly
+      STRATEGY_NAME: ${STRATEGY_NAME:-SMA}
+      # 或使用组合模式: WeightedCombo + COMBO_STRATEGIES
+      # Or use combo mode: WeightedCombo + COMBO_STRATEGIES
+      # STRATEGY_NAME: WeightedCombo
+      # COMBO_STRATEGIES: "SMA,RSI,MACD"
+      # =========================================================================
+      # 交易对配置 / Trading Pairs Configuration
+      # =========================================================================
+      DEFAULT_SYMBOLS: ${DEFAULT_SYMBOLS:-BTC/USDT:USDT,ETH/USDT:USDT}
+      DEFAULT_TIMEFRAME: ${DEFAULT_TIMEFRAME:-1h}
+      # =========================================================================
+      # 风控配置 / Risk Control Configuration
+      # =========================================================================
+      MAX_POSITIONS: ${MAX_POSITIONS:-4}
+      MAX_POSITION_SIZE: ${MAX_POSITION_SIZE:-0.25}
+      MAX_LEVERAGE: ${MAX_LEVERAGE:-2}
+      MAX_DAILY_LOSS: ${MAX_DAILY_LOSS:-0.03}
+      # =========================================================================
+      # 端口配置 / Port Configuration
+      # =========================================================================
+      PORT: "3000"
+      METRICS_PORT: "9100"
+      WS_PORT: "8000"
+      STRATEGY_CONFIG: "/app/strategies/single.json"
+    command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "${STRATEGY_NAME:-SMA}"]
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "node"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    labels:
+      - "quant.role=single"
+      - "quant.frequency=medium"
