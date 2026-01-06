@@ -1438,9 +1438,9 @@ class TradingSystemRunner extends EventEmitter {
     // 获取 K 线时间周期 (默认 1h) / Get kline timeframe (default 1h)
     const timeframe = this.config?.strategy?.timeframe || '1h';
 
-    // 获取历史数量 (默认 100 根，足够大多数指标计算)
-    // Get history limit (default 100, enough for most indicators)
-    const limit = 100;
+    // 获取历史数量 (默认 200 根，足够复杂策略如协整检验、多周期策略)
+    // Get history limit (default 200, enough for complex strategies like cointegration, multi-timeframe)
+    const limit = 200;
 
     for (const symbol of symbols) {
       try {

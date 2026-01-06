@@ -2857,7 +2857,7 @@ export class MarketDataEngine extends EventEmitter {
     // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
     this.emit('candle', {
       ...candle,
-      history: klineCache.slice(-100), // 附带最近100根K线历史 / Attach last 100 candles history
+      history: klineCache.slice(-200), // 附带最近200根K线历史 / Attach last 200 candles history
     });
   }
 
