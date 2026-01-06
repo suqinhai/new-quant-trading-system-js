@@ -384,12 +384,11 @@ export class PnLLogger extends EventEmitter {
     }
 
     // 创建多目标日志器 / Create multi-destination logger
-    // 同时写入文件和控制台 / Write to both file and console
+    // 只写入文件，控制台输出由 main.js 的 _log 方法处理，避免重复
+    // Only write to file, console output handled by main.js _log method to avoid duplication
     const multiStream = pino.multistream([
       // 文件流 / File stream
       { stream: stream },
-      // 控制台流 (仅系统日志) / Console stream (system logs only)
-      ...(type === 'system' ? [{ stream: process.stdout }] : []),
     ]);
 
     // 返回 pino 日志器 / Return pino logger
