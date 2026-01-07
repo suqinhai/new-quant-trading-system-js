@@ -42,10 +42,10 @@ services:
       MAX_POSITION_SIZE: "0.25"
       MAX_LEVERAGE: "2"
       MAX_DAILY_LOSS: "0.03"
-      # host模式下需要指定不同端口
-      PORT: "3001"
-      METRICS_PORT: "9101"
-      WS_PORT: "8001"
+      # host模式下需要指定不同端口 (多策略专用端口段: PORT 2000+, METRICS 4000+, WS 6000+)
+      PORT: "2001"
+      METRICS_PORT: "4001"
+      WS_PORT: "6001"
       STRATEGY_CONFIG: "/app/strategies/trend-core.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
@@ -103,9 +103,9 @@ services:
       MAX_POSITION_SIZE: "0.15"
       MAX_LEVERAGE: "3"
       MAX_DAILY_LOSS: "0.05"
-      PORT: "3002"
-      METRICS_PORT: "9102"
-      WS_PORT: "8002"
+      PORT: "2002"
+      METRICS_PORT: "4002"
+      WS_PORT: "6002"
       STRATEGY_CONFIG: "/app/strategies/tech-alpha.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
@@ -166,9 +166,9 @@ services:
       MAX_POSITION_SIZE: "0.10"
       MAX_LEVERAGE: "2"
       MAX_DAILY_LOSS: "0.04"
-      PORT: "3003"
-      METRICS_PORT: "9103"
-      WS_PORT: "8003"
+      PORT: "2003"
+      METRICS_PORT: "4003"
+      WS_PORT: "6003"
       STRATEGY_CONFIG: "/app/strategies/cross-factor.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
@@ -229,9 +229,9 @@ services:
       MAX_LEVERAGE: "2"
       MAX_DAILY_LOSS: "0.02"
       MAX_DRAWDOWN: "0.05"
-      PORT: "3004"
-      METRICS_PORT: "9104"
-      WS_PORT: "8004"
+      PORT: "2004"
+      METRICS_PORT: "4004"
+      WS_PORT: "6004"
       STRATEGY_CONFIG: "/app/strategies/event-risk.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
@@ -303,9 +303,9 @@ services:
       WS_PING_INTERVAL: "5000"
       ORDER_TIMEOUT: "3000"
       ENABLE_ORDER_BOOK_CACHE: "true"
-      PORT: "3005"
-      METRICS_PORT: "9105"
-      WS_PORT: "8005"
+      PORT: "2005"
+      METRICS_PORT: "4005"
+      WS_PORT: "6005"
       STRATEGY_CONFIG: "/app/strategies/hf-arbitrage.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "WeightedCombo"]
     healthcheck:
