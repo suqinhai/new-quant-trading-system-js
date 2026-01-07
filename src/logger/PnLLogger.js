@@ -131,7 +131,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // PnL 记录间隔 (毫秒) / PnL logging interval (ms)
-  pnlInterval: 1000,  // 1秒 / 1 second
+  pnlInterval: 600000,  // 10分钟 / 10 minutes
 
   // 持仓记录间隔 (毫秒) / Position logging interval (ms)
   positionInterval: 5000,  // 5秒 / 5 seconds
@@ -334,6 +334,9 @@ export class PnLLogger extends EventEmitter {
     const pinoOptions = {
       // 日志级别 / Log level
       level: this.config.level,
+
+      // 消息字段名 (统一为 message) / Message key (unified as message)
+      messageKey: 'message',
 
       // 基础字段 / Base fields
       base: {
@@ -838,6 +841,156 @@ export class PnLLogger extends EventEmitter {
 
     // 记录到交易日志 / Log to trade log
     this.loggers.trade.info(orderData, `order_${action}`);
+  }
+
+  // ============================================
+  // 信号日志方法 / Signal Logging Methods
+  // ============================================
+
+  /**
+   * 记录策略信号
+   * Log strategy signal
+   *
+   * @param {Object} signal - 信号数据 / Signal data
+   */
+  logSignal(signal) {
+    // 构建信号日志数据 / Build signal log data
+    const signalData = {
+      // 记录类型 / Record type
+      type: LOG_TYPE.SIGNAL,
+
+      // 时间戳 / Timestamp
+      timestamp: Date.now(),
+
+      // 策略名称 / Strategy name
+      strategy: signal.strategy || 'unknown',
+
+      // 交易对 / Symbol
+      symbol: signal.symbol,
+
+      // 信号类型 (buy/sell/hold) / Signal type
+      signalType: signal.type || signal.side,
+
+      // 信号强度 (可选) / Signal strength (optional)
+      strength: signal.strength,
+
+      // 信号原因 / Signal reason
+      reason: signal.reason,
+
+      // 当前价格 / Current price
+      price: signal.price,
+
+      // 建议数量 / Suggested amount
+      amount: signal.amount,
+
+      // 指标数据 (可选) / Indicator data (optional)
+      indicators: signal.indicators,
+
+      // 额外信息 / Extra info
+      extra: signal.extra,
+    };
+
+    // 记录到交易日志 / Log to trade log
+    this.loggers.trade.info(signalData, 'strategy_signal');
+
+    // 发出信号记录事件 / Emit signal logged event
+    this.emit('signalLogged', signalData);
+  }
+
+  // ============================================
+  // 行情数据日志方法 / Market Data Logging Methods
+  // ============================================
+
+  /**
+   * 记录行情数据快照
+   * Log market data snapshot
+   *
+   * @param {Object} data - 行情数据 / Market data
+   */
+  logMarketData(data) {
+    // 构建行情日志数据 / Build market data log
+    const marketData = {
+      // 记录类型 / Record type
+      type: 'market_data',
+
+      // 时间戳 / Timestamp
+      timestamp: Date.now(),
+
+      // 交易对 / Symbol
+      symbol: data.symbol,
+
+      // 数据类型 (ticker/candle/orderbook/fundingRate) / Data type
+      dataType: data.dataType,
+
+      // 交易所 / Exchange
+      exchange: data.exchange,
+
+      // 价格信息 / Price info
+      price: data.price || data.close || data.last,
+
+      // 成交量 (如果有) / Volume (if available)
+      volume: data.volume,
+
+      // 买卖价 (如果有) / Bid/Ask (if available)
+      bid: data.bid,
+      ask: data.ask,
+
+      // K 线数据 (如果有) / Candle data (if available)
+      open: data.open,
+      high: data.high,
+      low: data.low,
+      close: data.close,
+
+      // 资金费率 (如果有) / Funding rate (if available)
+      fundingRate: data.fundingRate,
+
+      // 额外信息 / Extra info
+      extra: data.extra,
+    };
+
+    // 记录到系统日志 / Log to system log
+    this.loggers.system.info(marketData, 'market_data_update');
+  }
+
+  /**
+   * 记录行情统计摘要
+   * Log market data statistics summary
+   *
+   * @param {Object} stats - 统计数据 / Statistics data
+   */
+  logMarketDataStats(stats) {
+    // 构建统计日志数据 / Build stats log data
+    const statsData = {
+      // 记录类型 / Record type
+      type: 'market_stats',
+
+      // 时间戳 / Timestamp
+      timestamp: Date.now(),
+
+      // 统计时间范围 / Stats time range
+      period: stats.period || '1m',
+
+      // Ticker 更新计数 / Ticker update count
+      tickerCount: stats.tickerCount || 0,
+
+      // K 线更新计数 / Candle update count
+      candleCount: stats.candleCount || 0,
+
+      // 订单簿更新计数 / Orderbook update count
+      orderbookCount: stats.orderbookCount || 0,
+
+      // 资金费率更新计数 / Funding rate update count
+      fundingRateCount: stats.fundingRateCount || 0,
+
+      // 交易对列表 / Symbol list
+      symbols: stats.symbols || [],
+
+      // 交易所列表 / Exchange list
+      exchanges: stats.exchanges || [],
+    };
+
+    // 记录到系统日志 / Log to system log
+    this.loggers.system.info(statsData, 'market_data_stats');
   }
 
   // ============================================
