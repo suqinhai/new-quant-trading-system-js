@@ -17,6 +17,7 @@ ACTION=${1:-up}
 
 STRATEGIES=(
     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
+    OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
 )
 
 # 端口基数 (单策略专用端口段)
