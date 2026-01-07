@@ -132,6 +132,9 @@ export class BaseExchange extends EventEmitter {
         console.log(`[${this.name}] 沙盒模式已在创建时配置 / Sandbox mode configured during creation`);
       }
 
+      // 2.5 执行 API 预检查 (验证 IP 白名单和 API 权限) / Execute API preflight check (verify IP whitelist and API permissions)
+      await this._preflightCheck();
+
       // 3. 加载市场信息 (带重试) / Load market info (with retry)
       await this._executeWithRetry(async () => {
         // 获取所有交易对信息 / Fetch all trading pair info
@@ -141,36 +144,16 @@ export class BaseExchange extends EventEmitter {
       // 4. 缓存精度信息 / Cache precision info
       this._cachePrecisions();
 
-      // 5. 验证 API 连接 (带重试) / Verify API connection (with retry)
-      // 只在非沙盒模式 或 明确要求验证时才验证 API / Only verify API in non-sandbox mode or when explicitly requested
-      // 沙盒/测试网的 API 密钥通常与主网不同 / Sandbox/testnet API keys are usually different from mainnet
-      const shouldVerifyApi = this.config.apiKey && this.config.secret && !this.config.skipApiVerification;
-      if (shouldVerifyApi) {
-        try {
-          await this._executeWithRetry(async () => {
-            // 获取账户余额来验证连接 / Fetch balance to verify connection
-            await this.exchange.fetchBalance();
-          }, '验证 API 连接 / Verify API connection');
-        } catch (apiError) {
-          // 如果是沙盒模式且 API 验证失败，发出警告但不阻止连接 / If sandbox mode and API verification fails, warn but don't block
-          if (this.config.sandbox) {
-            console.warn(`[${this.name}] ⚠ API 验证失败，但沙盒模式将继续 / API verification failed, but sandbox mode will continue`);
-            console.warn(`[${this.name}]   注意：部分功能可能受限 / Note: Some features may be limited`);
-            console.warn(`[${this.name}]   提示：如需完整功能，请使用测试网专用 API 密钥 / Tip: Use testnet-specific API keys for full functionality`);
-          } else {
-            // 非沙盒模式，继续抛出错误 / Non-sandbox mode, continue to throw error
-            throw apiError;
-          }
-        }
-      }
+      // 注意：API 验证已在步骤 2.5 的 _preflightCheck() 中完成
+      // Note: API verification is already done in step 2.5 _preflightCheck()
 
-      // 6. 更新连接状态 / Update connection status
+      // 5. 更新连接状态 / Update connection status
       this.connected = true;
 
-      // 7. 发出连接成功事件 / Emit connected event
+      // 6. 发出连接成功事件 / Emit connected event
       this.emit('connected', { exchange: this.name });
 
-      // 8. 记录日志 / Log
+      // 7. 记录日志 / Log
       console.log(`[${this.name}] ✓ 连接成功，加载了 ${Object.keys(this.markets).length} 个交易对`);
       console.log(`[${this.name}] ✓ Connected, loaded ${Object.keys(this.markets).length} markets`);
 
@@ -683,6 +666,149 @@ export class BaseExchange extends EventEmitter {
   _createExchange() {
     // 抛出错误，提示子类必须实现 / Throw error, subclass must implement
     throw new Error('子类必须实现 _createExchange 方法 / Subclass must implement _createExchange');
+  }
+
+  // ============================================
+  // 私有方法 - 预检查 / Private Methods - Preflight Check
+  // ============================================
+
+  /**
+   * API 预检查 - 在加载市场信息前验证 IP 白名单和 API 权限
+   * API Preflight Check - Verify IP whitelist and API permissions before loading markets
+   *
+   * 这个方法会在连接交易所时首先执行，用于提前发现：
+   * This method runs first when connecting to exchange, to detect early:
+   * - IP 是否在交易所白名单中 / Whether IP is in exchange whitelist
+   * - API 密钥是否有效 / Whether API key is valid
+   * - API 密钥权限是否足够 / Whether API key has sufficient permissions
+   *
+   * @returns {Promise<Object>} 检查结果 / Check result
+   * @private
+   */
+  async _preflightCheck() {
+    console.log(`[${this.name}] 🔍 执行 API 预检查... / Running API preflight check...`);
+
+    const result = {
+      networkOk: false,
+      apiKeyOk: false,
+      ipAllowed: false,
+      serverTime: null,
+      serverIp: null,
+      error: null,
+    };
+
+    try {
+      // 步骤 1: 检查网络连通性 - 获取服务器时间（公开 API，不需要认证）
+      // Step 1: Check network connectivity - fetch server time (public API, no auth required)
+      console.log(`[${this.name}] 🌐 检查网络连通性... / Checking network connectivity...`);
+
+      let serverTime;
+      if (this.exchange.has['fetchTime']) {
+        serverTime = await this.exchange.fetchTime();
+      } else {
+        // 如果不支持 fetchTime，尝试获取 ticker（也是公开 API）
+        // If fetchTime not supported, try fetchTicker (also public API)
+        serverTime = Date.now();
+      }
+
+      result.networkOk = true;
+      result.serverTime = serverTime;
+      console.log(`[${this.name}] ✓ 网络连通性正常 / Network connectivity OK`);
+      console.log(`[${this.name}]   服务器时间 / Server time: ${new Date(serverTime).toISOString()}`);
+
+      // 步骤 2: 检查 API 密钥和 IP 白名单（需要认证的 API）
+      // Step 2: Check API key and IP whitelist (authenticated API)
+      if (this.config.apiKey && this.config.secret) {
+        console.log(`[${this.name}] 🔑 验证 API 密钥和 IP 白名单... / Verifying API key and IP whitelist...`);
+
+        // 尝试获取账户余额来验证 API 密钥和 IP
+        // Try to fetch balance to verify API key and IP
+        await this.exchange.fetchBalance();
+
+        result.apiKeyOk = true;
+        result.ipAllowed = true;
+        console.log(`[${this.name}] ✓ API 密钥有效 / API key valid`);
+        console.log(`[${this.name}] ✓ IP 地址已在白名单中 / IP address is whitelisted`);
+      } else {
+        console.log(`[${this.name}] ⚠ 未配置 API 密钥，跳过认证检查 / No API key configured, skipping auth check`);
+        console.log(`[${this.name}]   提示：部分功能可能受限 / Note: Some features may be limited`);
+      }
+
+      console.log(`[${this.name}] ✅ API 预检查通过 / API preflight check passed`);
+
+    } catch (error) {
+      result.error = error;
+
+      // 分析错误类型并给出具体的错误信息
+      // Analyze error type and provide specific error message
+      if (error instanceof ccxt.AuthenticationError) {
+        result.networkOk = true; // 网络是通的，只是认证失败 / Network is OK, just auth failed
+        console.error(`[${this.name}] ❌ API 预检查失败: API 密钥无效或权限不足`);
+        console.error(`[${this.name}] ❌ Preflight check failed: Invalid API key or insufficient permissions`);
+        console.error(`[${this.name}]   错误码 / Error code: ${error.code || 'N/A'}`);
+        console.error(`[${this.name}]   错误信息 / Error message: ${error.message}`);
+        console.error(`[${this.name}]   解决方案 / Solution:`);
+        console.error(`[${this.name}]   1. 检查 API 密钥是否正确 / Check if API key is correct`);
+        console.error(`[${this.name}]   2. 检查 API 密钥是否过期 / Check if API key has expired`);
+        console.error(`[${this.name}]   3. 检查 API 密钥是否有期货交易权限 / Check if API key has futures trading permission`);
+
+      } else if (error instanceof ccxt.PermissionDenied) {
+        result.networkOk = true;
+        console.error(`[${this.name}] ❌ API 预检查失败: IP 地址不在白名单中`);
+        console.error(`[${this.name}] ❌ Preflight check failed: IP address not in whitelist`);
+        console.error(`[${this.name}]   错误码 / Error code: ${error.code || '50110'}`);
+        console.error(`[${this.name}]   错误信息 / Error message: ${error.message}`);
+
+        // 尝试从错误信息中提取 IP 地址
+        // Try to extract IP address from error message
+        const ipMatch = error.message.match(/IP\s+(\d+\.\d+\.\d+\.\d+)/i);
+        if (ipMatch) {
+          result.serverIp = ipMatch[1];
+          console.error(`[${this.name}]   ┌─────────────────────────────────────────────┐`);
+          console.error(`[${this.name}]   │  当前服务器 IP / Current Server IP:         │`);
+          console.error(`[${this.name}]   │  >>> ${ipMatch[1].padEnd(37)} <<<  │`);
+          console.error(`[${this.name}]   └─────────────────────────────────────────────┘`);
+        }
+
+        console.error(`[${this.name}]   解决方案 / Solution:`);
+        console.error(`[${this.name}]   1. 登录交易所，进入 API 管理页面`);
+        console.error(`[${this.name}]      Log in to exchange, go to API management page`);
+        console.error(`[${this.name}]   2. 将上述 IP 地址添加到 API 密钥的 IP 白名单中`);
+        console.error(`[${this.name}]      Add the above IP address to API key's IP whitelist`);
+        console.error(`[${this.name}]   3. 保存设置后重新启动系统`);
+        console.error(`[${this.name}]      Save settings and restart the system`);
+
+      } else if (error instanceof ccxt.NetworkError || error instanceof ccxt.RequestTimeout) {
+        console.error(`[${this.name}] ❌ API 预检查失败: 网络连接失败`);
+        console.error(`[${this.name}] ❌ Preflight check failed: Network connection failed`);
+        console.error(`[${this.name}]   错误信息 / Error message: ${error.message}`);
+        console.error(`[${this.name}]   解决方案 / Solution:`);
+        console.error(`[${this.name}]   1. 检查网络连接 / Check network connection`);
+        console.error(`[${this.name}]   2. 检查是否需要配置代理 / Check if proxy is needed`);
+        console.error(`[${this.name}]   3. 检查交易所是否可访问 / Check if exchange is accessible`);
+
+      } else {
+        console.error(`[${this.name}] ❌ API 预检查失败: 未知错误`);
+        console.error(`[${this.name}] ❌ Preflight check failed: Unknown error`);
+        console.error(`[${this.name}]   错误类型 / Error type: ${error.name || 'Unknown'}`);
+        console.error(`[${this.name}]   错误信息 / Error message: ${error.message}`);
+      }
+
+      // 沙盒模式下，只发出警告但不阻止连接
+      // In sandbox mode, only warn but don't block connection
+      if (this.config.sandbox) {
+        console.warn(`[${this.name}] ⚠ 沙盒模式: API 预检查失败，但将继续连接`);
+        console.warn(`[${this.name}] ⚠ Sandbox mode: Preflight check failed, but will continue`);
+        console.warn(`[${this.name}]   注意：部分功能可能受限 / Note: Some features may be limited`);
+        return result;
+      }
+
+      // 非沙盒模式，抛出错误阻止连接继续
+      // Non-sandbox mode, throw error to prevent connection from continuing
+      throw error;
+    }
+
+    return result;
   }
 
   // ============================================

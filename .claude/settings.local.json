@@ -120,7 +120,8 @@
       "Bash(dir:*)",
       "Bash(wsl tail:*)",
       "Bash(powershell:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(dir \"C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\" /s /b)"
     ]
   }
 }
