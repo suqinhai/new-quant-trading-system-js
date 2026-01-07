@@ -7,18 +7,20 @@
 ACTION=${1:-up}
 
 # 策略列表 (根据需要增删)
-
-
-# STRATEGIES=(SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage Adaptive RiskDriven FundingArb BollingerBands MomentumRank Rotation FundingRateExtreme CrossSectional Grid RegimeSwitching SignalWeighting)
-
 STRATEGIES=(
     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
+    OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
+    Adaptive RiskDriven FundingArb BollingerBands MomentumRank
+    Rotation FundingRateExtreme CrossSectional Grid RegimeSwitching
+    SignalWeighting
 )
 
-# 端口基数 (每个策略递增)
-BASE_PORT=3000
-BASE_METRICS=9100
-BASE_WS=8000
+# 端口基数 (单策略专用端口段)
+# 单策略 PORT: 1000+, METRICS: 3000+, WS: 5000+
+# 多策略 PORT: 2000+, METRICS: 4000+, WS: 6000+
+BASE_PORT=1000
+BASE_METRICS=3000
+BASE_WS=5000
 
 for i in "${!STRATEGIES[@]}"; do
     s="${STRATEGIES[$i]}"
