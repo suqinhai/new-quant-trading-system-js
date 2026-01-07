@@ -12,12 +12,12 @@ services:
   # ===========================================================================
   quant-single:
     image: quant-trading-system:latest
-    container_name: quant-single
+    container_name: quant-${STRATEGY_NAME:-SMA}
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./logs/single:/app/logs
-      - ./data/single:/app/data
+      - ./logs/${STRATEGY_NAME:-SMA}:/app/logs
+      - ./data/${STRATEGY_NAME:-SMA}:/app/data
       - ./config/strategies:/app/strategies:ro
       - ./.env:/app/.env:ro
     environment:
@@ -55,11 +55,11 @@ services:
       MAX_LEVERAGE: ${MAX_LEVERAGE:-2}
       MAX_DAILY_LOSS: ${MAX_DAILY_LOSS:-0.03}
       # =========================================================================
-      # 端口配置 / Port Configuration
+      # 端口配置 / Port Configuration (使用环境变量避免冲突)
       # =========================================================================
-      PORT: "3000"
-      METRICS_PORT: "9100"
-      WS_PORT: "8000"
+      PORT: "${PORT:-3000}"
+      METRICS_PORT: "${METRICS_PORT:-9100}"
+      WS_PORT: "${WS_PORT:-8000}"
       STRATEGY_CONFIG: "/app/strategies/single.json"
     command: ["node", "src/main.js", "${RUN_MODE:-shadow}", "--strategy", "${STRATEGY_NAME:-SMA}"]
     healthcheck:
