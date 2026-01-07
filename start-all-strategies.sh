@@ -7,6 +7,10 @@
 ACTION=${1:-up}
 
 # 策略列表 (根据需要增删)
+
+
+# STRATEGIES=(SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage Adaptive RiskDriven FundingArb BollingerBands MomentumRank Rotation FundingRateExtreme CrossSectional Grid RegimeSwitching SignalWeighting)
+
 STRATEGIES=(
     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
     OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
