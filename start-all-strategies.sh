@@ -32,17 +32,17 @@ for i in "${!STRATEGIES[@]}"; do
         up)
             echo "[$i] Starting $s on ports $PORT/$METRICS_PORT/$WS_PORT"
             STRATEGY_NAME=$s PORT=$PORT METRICS_PORT=$METRICS_PORT WS_PORT=$WS_PORT \
-                docker compose -f docker compose.single-strategy.yml -p "quant-$s" up -d
+                docker compose -f docker-compose.single-strategy.yml -p "quant-$s" up -d
             ;;
         down)
             echo "[$i] Stopping $s"
-            docker compose -f docker compose.single-strategy.yml -p "quant-$s" down
+            docker compose -f docker-compose.single-strategy.yml -p "quant-$s" down
             ;;
         restart)
             echo "[$i] Restarting $s"
-            docker compose -f docker compose.single-strategy.yml -p "quant-$s" down
+            docker compose -f docker-compose.single-strategy.yml -p "quant-$s" down
             STRATEGY_NAME=$s PORT=$PORT METRICS_PORT=$METRICS_PORT WS_PORT=$WS_PORT \
-                docker compose -f docker compose.single-strategy.yml -p "quant-$s" up -d
+                docker compose -f docker-compose.single-strategy.yml -p "quant-$s" up -d
             ;;
         logs)
             echo "=== Logs for $s ==="
