@@ -1477,13 +1477,26 @@ class TradingSystemRunner extends EventEmitter {
    * @private
    */
   async _subscribeMarketData() {
-    // 获取交易对 / Get symbols
-    const symbols = this.options.symbols.length > 0
+    // 获取基础交易对 / Get base symbols
+    const baseSymbols = this.options.symbols.length > 0
       ? this.options.symbols
       : DEFAULT_OPTIONS.symbols;
 
+    // 获取策略所需的额外交易对 / Get additional symbols required by strategy
+    let strategySymbols = [];
+    if (this.strategy && typeof this.strategy.getRequiredSymbols === 'function') {
+      strategySymbols = this.strategy.getRequiredSymbols();
+    }
+
+    // 合并并去重 / Merge and deduplicate
+    const symbolSet = new Set([...baseSymbols, ...strategySymbols]);
+    const symbols = Array.from(symbolSet);
+
     // 输出日志 / Output log
     this._log('info', `订阅行情: ${symbols.join(', ')} / Subscribing market data`);
+    if (strategySymbols.length > 0) {
+      this._log('info', `策略额外需要的交易对: ${strategySymbols.join(', ')} / Strategy required symbols`);
+    }
 
     // 遍历订阅 / Iterate and subscribe
     for (const symbol of symbols) {

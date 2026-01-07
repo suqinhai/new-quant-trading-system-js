@@ -977,6 +977,19 @@ export class StatisticalArbitrageStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的所有交易对 (覆盖基类方法)
+   * Get all symbols required by the strategy (override base class)
+   *
+   * 统计套利策略需要订阅所有配对中的交易对
+   * Statistical arbitrage strategy needs to subscribe all symbols in pairs
+   *
+   * @returns {Array<string>} 交易对列表 / Symbol list
+   */
+  getRequiredSymbols() {
+    return this._getAllSymbols();
+  }
+
+  /**
    * 更新配对统计信息
    */
   async _updatePairs() {

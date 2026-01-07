@@ -404,6 +404,21 @@ export class BaseStrategy extends EventEmitter {
     return this.engine.getEquity();
   }
 
+  /**
+   * 获取策略所需的所有交易对
+   * Get all symbols required by the strategy
+   *
+   * 子类可覆盖此方法以声明额外需要订阅的交易对
+   * Subclasses can override this method to declare additional symbols to subscribe
+   *
+   * @returns {Array<string>} 交易对列表 / Symbol list
+   */
+  getRequiredSymbols() {
+    // 默认返回空数组，由 main.js 合并策略参数中的 symbols
+    // Default returns empty array, main.js will merge with symbols from strategy params
+    return [];
+  }
+
   // ============================================
   // 辅助方法 / Helper Methods
   // ============================================

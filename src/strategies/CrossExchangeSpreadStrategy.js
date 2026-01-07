@@ -73,10 +73,12 @@ const DEFAULT_CONFIG = {
   ],
 
   // 监控的交易所 / Exchanges to monitor
+  // 注意: 需要与系统实际连接的交易所保持一致
+  // Note: Should match exchanges actually connected by the system
   exchanges: [
     SUPPORTED_EXCHANGES.BINANCE,
-    SUPPORTED_EXCHANGES.BYBIT,
     SUPPORTED_EXCHANGES.OKX,
+    SUPPORTED_EXCHANGES.GATE,
   ],
 
   // 价差类型 / Spread type
