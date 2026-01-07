@@ -14,7 +14,6 @@ ACTION=${1:-up}
 STRATEGIES=(
     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
     OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
-    Adaptive RiskDriven FundingArb BollingerBands
 )
 
 # 端口基数 (每个策略递增)
