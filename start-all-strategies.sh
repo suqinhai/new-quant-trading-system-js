@@ -45,10 +45,10 @@ for i in "${!STRATEGIES[@]}"; do
             ;;
         logs)
             echo "=== Logs for $s ==="
-            docker logs --tail 20 "quant-$s_lower" 2>/dev/null
+            docker compose -f docker-compose.single-strategy.yml -p "quant-$s_lower" logs --tail 20
             ;;
         ps)
-            docker ps --filter "name=quant-$s_lower" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            docker compose -f docker-compose.single-strategy.yml -p "quant-$s_lower" ps
             ;;
         *)
             echo "Usage: $0 [up|down|restart|logs|ps]"

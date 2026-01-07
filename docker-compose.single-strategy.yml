@@ -31,8 +31,10 @@ services:
       CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
       RUN_MODE: ${RUN_MODE:-shadow}
-      INSTANCE_NAME: single
+      INSTANCE_NAME: ${STRATEGY_NAME:-SMA}
       INSTANCE_ID: "1"
+      # 服务名称 (用于 Telegram 通知显示) / Service name (for Telegram notifications)
+      SERVICE_NAME: ${STRATEGY_NAME:-SMA}
       # =========================================================================
       # 策略配置 (根据需要修改) / Strategy Configuration (modify as needed)
       # =========================================================================
