@@ -419,6 +419,28 @@ export class BaseStrategy extends EventEmitter {
     return [];
   }
 
+  /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   *
+   * 可用类型 / Available types:
+   * - 'ticker': 实时价格 / Real-time price
+   * - 'depth': 深度/订单簿 / Order book
+   * - 'trade': 成交数据 / Trade data
+   * - 'fundingRate': 资金费率 / Funding rate
+   * - 'kline': K线数据 / Candlestick data
+   *
+   * 子类应覆盖此方法以声明实际需要的数据类型
+   * Subclasses should override this method to declare required data types
+   *
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 默认返回所有类型以保持向后兼容
+    // Default returns all types for backward compatibility
+    return ['ticker', 'depth', 'trade', 'fundingRate', 'kline'];
+  }
+
   // ============================================
   // 辅助方法 / Helper Methods
   // ============================================

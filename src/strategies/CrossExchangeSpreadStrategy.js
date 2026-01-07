@@ -672,6 +672,16 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 跨交易所价差策略只需要 Ticker 数据 / Cross-exchange spread only needs ticker
+    return ['ticker'];
+  }
+
+  /**
    * 初始化策略
    * Initialize strategy
    *

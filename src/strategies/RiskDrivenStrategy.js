@@ -811,6 +811,16 @@ export class RiskDrivenStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 风控驱动策略需要 K 线和 Ticker 数据 / Risk-driven strategy needs kline and ticker
+    return ['kline', 'ticker'];
+  }
+
+  /**
    * 初始化
    */
   async onInit() {

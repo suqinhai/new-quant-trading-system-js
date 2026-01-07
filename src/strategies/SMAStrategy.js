@@ -46,6 +46,16 @@ export class SMAStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // SMA 策略只需要 K 线数据计算均线 / SMA strategy only needs kline for MA calculation
+    return ['kline'];
+  }
+
+  /**
    * 初始化
    * Initialization
    */

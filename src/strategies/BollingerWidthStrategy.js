@@ -66,6 +66,16 @@ export class BollingerWidthStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // Bollinger Width 策略只需要 K 线数据 / Bollinger Width strategy only needs kline
+    return ['kline'];
+  }
+
+  /**
    * 初始化
    */
   async onInit() {

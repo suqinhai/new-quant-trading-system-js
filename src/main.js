@@ -1492,34 +1492,31 @@ class TradingSystemRunner extends EventEmitter {
     const symbolSet = new Set([...baseSymbols, ...strategySymbols]);
     const symbols = Array.from(symbolSet);
 
+    // 获取策略所需的数据类型 / Get data types required by strategy
+    let requiredDataTypes = ['ticker', 'depth', 'trade', 'fundingRate', 'kline']; // 默认全部 / Default all
+    if (this.strategy && typeof this.strategy.getRequiredDataTypes === 'function') {
+      requiredDataTypes = this.strategy.getRequiredDataTypes();
+    }
+
     // 输出日志 / Output log
     this._log('info', `订阅行情: ${symbols.join(', ')} / Subscribing market data`);
+    this._log('info', `数据类型: ${requiredDataTypes.join(', ')} / Data types`);
     if (strategySymbols.length > 0) {
       this._log('info', `策略额外需要的交易对: ${strategySymbols.join(', ')} / Strategy required symbols`);
     }
 
     // 遍历订阅 / Iterate and subscribe
     for (const symbol of symbols) {
-      // 订阅 ticker / Subscribe ticker
-      await this.marketDataEngine.subscribe(symbol, ['ticker']);
-
-      // 订阅深度数据 / Subscribe depth (order book)
-      await this.marketDataEngine.subscribe(symbol, ['depth']);
-
-      // 订阅成交数据 / Subscribe trades
-      await this.marketDataEngine.subscribe(symbol, ['trade']);
-
-      // 订阅资金费率 / Subscribe funding rate
-      await this.marketDataEngine.subscribe(symbol, ['fundingRate']);
-
-      // 订阅K线数据 / Subscribe kline (candlestick) data
-      // 策略需要K线数据来计算技术指标 (如SMA)
-      // Strategies need kline data to calculate technical indicators (like SMA)
-      await this.marketDataEngine.subscribe(symbol, ['kline']);
+      // 按策略需求订阅数据类型 / Subscribe based on strategy requirements
+      for (const dataType of requiredDataTypes) {
+        await this.marketDataEngine.subscribe(symbol, [dataType]);
+      }
     }
 
-    // 预加载历史 K 线数据 / Preload historical candle data
-    await this._preloadHistoricalCandles(symbols);
+    // 预加载历史 K 线数据 (仅当策略需要 kline 时) / Preload historical candle data (only if kline required)
+    if (requiredDataTypes.includes('kline')) {
+      await this._preloadHistoricalCandles(symbols);
+    }
   }
 
   /**
