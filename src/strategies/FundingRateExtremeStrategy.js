@@ -513,6 +513,16 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 资金费率极值策略需要 Ticker 和资金费率数据 / Funding rate extreme needs ticker and funding rate
+    return ['ticker', 'fundingRate'];
+  }
+
+  /**
    * 初始化策略
    * Initialize strategy
    */

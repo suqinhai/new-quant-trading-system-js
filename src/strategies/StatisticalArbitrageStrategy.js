@@ -895,6 +895,16 @@ export class StatisticalArbitrageStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 统计套利策略需要 Ticker 和 K 线数据 / Statistical arbitrage needs ticker and kline
+    return ['ticker', 'kline'];
+  }
+
+  /**
    * 初始化策略
    */
   async onInit() {

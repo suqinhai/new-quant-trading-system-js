@@ -59,6 +59,16 @@ export class GridStrategy extends BaseStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 网格策略需要实时价格 / Grid strategy needs real-time ticker
+    return ['ticker'];
+  }
+
+  /**
    * 初始化网格
    * Initialize grids
    * @private

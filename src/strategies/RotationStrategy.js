@@ -256,6 +256,16 @@ export class RotationStrategy extends CrossSectionalStrategy {
   }
 
   /**
+   * 获取策略所需的数据类型
+   * Get data types required by the strategy
+   * @returns {Array<string>} 数据类型列表 / Data type list
+   */
+  getRequiredDataTypes() {
+    // 轮动策略只需要 K 线数据 / Rotation strategy only needs kline
+    return ['kline'];
+  }
+
+  /**
    * 初始化策略
    * Initialize strategy
    */
