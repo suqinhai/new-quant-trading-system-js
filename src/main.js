@@ -388,6 +388,23 @@ class TradingSystemRunner extends EventEmitter {
 
     // 是否正在关闭 / Whether shutting down
     this.isShuttingDown = false;
+
+    // ============================================
+    // 行情统计计数器 / Market Data Statistics Counters
+    // ============================================
+
+    // 行情更新计数 / Market data update counts
+    this._marketDataStats = {
+      tickerCount: 0,
+      candleCount: 0,
+      orderbookCount: 0,
+      fundingRateCount: 0,
+      symbols: new Set(),
+      exchanges: new Set(),
+    };
+
+    // 行情统计定时器 / Market data stats timer
+    this._marketDataStatsTimer = null;
   }
 
   // ============================================
@@ -1067,6 +1084,11 @@ class TradingSystemRunner extends EventEmitter {
 
     // Ticker 更新事件 / Ticker update event
     this.marketDataEngine.on('ticker', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.tickerCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTicker) {
         this.strategy.onTicker(data);
@@ -1075,6 +1097,11 @@ class TradingSystemRunner extends EventEmitter {
 
     // K 线更新事件 / Candle update event
     this.marketDataEngine.on('candle', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.candleCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onCandle) {
         this.strategy.onCandle(data);
@@ -1083,6 +1110,11 @@ class TradingSystemRunner extends EventEmitter {
 
     // 订单簿更新事件 / Order book update event
     this.marketDataEngine.on('orderbook', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.orderbookCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onOrderBook) {
         this.strategy.onOrderBook(data);
@@ -1091,6 +1123,11 @@ class TradingSystemRunner extends EventEmitter {
 
     // 资金费率更新事件 / Funding rate update event
     this.marketDataEngine.on('fundingRate', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.fundingRateCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onFundingRate) {
         this.strategy.onFundingRate(data);
@@ -1105,6 +1142,40 @@ class TradingSystemRunner extends EventEmitter {
       // 增加错误计数 / Increment error count
       this.errorCount++;
     });
+
+    // 启动行情统计定时记录 (每分钟) / Start market data stats logging (every minute)
+    this._marketDataStatsTimer = setInterval(() => {
+      this._logMarketDataStats();
+    }, 60000);
+  }
+
+  /**
+   * 记录行情数据统计
+   * Log market data statistics
+   * @private
+   */
+  _logMarketDataStats() {
+    // 如果没有日志模块，跳过 / If no logger module, skip
+    if (!this.loggerModule || !this.loggerModule.pnlLogger) {
+      return;
+    }
+
+    // 记录统计 / Log stats
+    this.loggerModule.pnlLogger.logMarketDataStats({
+      period: '1m',
+      tickerCount: this._marketDataStats.tickerCount,
+      candleCount: this._marketDataStats.candleCount,
+      orderbookCount: this._marketDataStats.orderbookCount,
+      fundingRateCount: this._marketDataStats.fundingRateCount,
+      symbols: Array.from(this._marketDataStats.symbols),
+      exchanges: Array.from(this._marketDataStats.exchanges),
+    });
+
+    // 重置计数器 / Reset counters
+    this._marketDataStats.tickerCount = 0;
+    this._marketDataStats.candleCount = 0;
+    this._marketDataStats.orderbookCount = 0;
+    this._marketDataStats.fundingRateCount = 0;
   }
 
   /**
@@ -1125,6 +1196,14 @@ class TradingSystemRunner extends EventEmitter {
 
       // 增加信号计数 / Increment signal count
       this.signalCount++;
+
+      // 记录信号到日志文件 / Log signal to file
+      if (this.loggerModule && this.loggerModule.pnlLogger) {
+        this.loggerModule.pnlLogger.logSignal({
+          ...signal,
+          strategy: this.options.strategy || 'unknown',
+        });
+      }
 
       // 处理信号 / Handle signal
       await this._handleSignal(signal);
@@ -1635,6 +1714,12 @@ class TradingSystemRunner extends EventEmitter {
       if (this.marketDataEngine) {
         this._log('info', '停止行情引擎... / Stopping market data engine...');
         this.marketDataEngine.stop();
+      }
+
+      // 3.5 清理行情统计定时器 / Clear market data stats timer
+      if (this._marketDataStatsTimer) {
+        clearInterval(this._marketDataStatsTimer);
+        this._marketDataStatsTimer = null;
       }
 
       // 4. 停止风控管理器 / Stop risk manager
