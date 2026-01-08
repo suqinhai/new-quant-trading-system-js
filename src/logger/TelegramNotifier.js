@@ -273,6 +273,11 @@ export class TelegramNotifier extends EventEmitter {
    * Initialize notifier
    */
   async init() {
+    // 如果已经初始化，跳过 / If already initialized, skip
+    if (this.initialized) {
+      return;
+    }
+
     // 尝试从加密存储获取凭证 / Try to get credentials from encrypted storage
     await this._loadCredentials();
 
