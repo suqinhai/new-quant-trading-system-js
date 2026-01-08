@@ -1,21 +1,22 @@
 #!/bin/bash
 # =============================================================================
-# 智能启动脚本 - 支持共享行情服务
-# Smart Start Script - With Shared Market Data Service Support
+# 智能启动脚本 - 支持共享行情服务和通知服务
+# Smart Start Script - With Shared Market Data and Notification Service Support
 #
 # 功能 / Features:
 # 1. 自动检测共享行情服务是否已在运行
-# 2. 如果未运行，自动启动共享行情服务
-# 3. 等待行情服务就绪后再启动策略容器
+# 2. 自动检测共享通知服务是否已在运行
+# 3. 如果未运行，自动启动相应服务
+# 4. 等待服务就绪后再启动策略容器
 #
 # 使用方法 / Usage:
 #   ./scripts/start-with-shared-market.sh [single|multi] [options]
 #
 # 示例 / Examples:
-#   # 启动多策略 (共享行情模式)
+#   # 启动多策略 (共享行情+通知模式)
 #   ./scripts/start-with-shared-market.sh multi
 #
-#   # 启动单策略 (共享行情模式)
+#   # 启动单策略 (共享行情+通知模式)
 #   STRATEGY_NAME=SMA ./scripts/start-with-shared-market.sh single
 #
 #   # 强制重启行情服务
@@ -23,6 +24,12 @@
 #
 #   # 仅启动行情服务
 #   ./scripts/start-with-shared-market.sh market-only
+#
+#   # 仅启动通知服务
+#   ./scripts/start-with-shared-market.sh notification-only
+#
+#   # 启动所有共享服务
+#   ./scripts/start-with-shared-market.sh services-only
 # =============================================================================
 
 set -e
@@ -67,22 +74,28 @@ show_help() {
     echo "  $0 [mode] [options]"
     echo ""
     echo "模式 / Modes:"
-    echo "  single         启动单策略 (需要设置 STRATEGY_NAME 环境变量)"
-    echo "  multi          启动多策略 (5个策略容器)"
-    echo "  market-only    仅启动行情服务"
-    echo "  stop           停止所有服务"
-    echo "  status         查看服务状态"
+    echo "  single            启动单策略 (需要设置 STRATEGY_NAME 环境变量)"
+    echo "  multi             启动多策略 (5个策略容器)"
+    echo "  market-only       仅启动行情服务"
+    echo "  notification-only 仅启动通知服务"
+    echo "  services-only     启动所有共享服务 (行情+通知)"
+    echo "  stop              停止所有服务"
+    echo "  status            查看服务状态"
     echo ""
     echo "选项 / Options:"
-    echo "  --force-restart-market    强制重启行情服务"
-    echo "  --no-market               不使用共享行情 (独立模式)"
-    echo "  --detach, -d              后台运行"
-    echo "  --help, -h                显示帮助"
+    echo "  --force-restart-market       强制重启行情服务"
+    echo "  --force-restart-notification 强制重启通知服务"
+    echo "  --no-market                  不使用共享行情 (独立模式)"
+    echo "  --no-notification            不使用共享通知 (独立模式)"
+    echo "  --detach, -d                 后台运行"
+    echo "  --help, -h                   显示帮助"
     echo ""
     echo "环境变量 / Environment Variables:"
     echo "  STRATEGY_NAME             单策略模式时的策略名称"
     echo "  RUN_MODE                  运行模式 (shadow/live)"
     echo "  MARKET_DATA_EXCHANGES     行情服务的交易所列表"
+    echo "  TELEGRAM_BOT_TOKEN        Telegram Bot Token"
+    echo "  TELEGRAM_CHAT_ID          Telegram Chat ID"
     echo ""
     echo "示例 / Examples:"
     echo "  # 启动多策略"
@@ -93,6 +106,12 @@ show_help() {
     echo ""
     echo "  # 仅启动行情服务"
     echo "  $0 market-only"
+    echo ""
+    echo "  # 仅启动通知服务"
+    echo "  $0 notification-only"
+    echo ""
+    echo "  # 启动所有共享服务"
+    echo "  $0 services-only"
     echo ""
     echo "  # 停止所有服务"
     echo "  $0 stop"
@@ -193,17 +212,96 @@ stop_market_data_service() {
     fi
 }
 
+# 检查通知服务是否运行 / Check if notification service is running
+check_notification_service() {
+    log_info "检查共享通知服务状态... / Checking shared notification service status..."
+
+    # 方法1: 检查 Docker 容器
+    if docker ps --format '{{.Names}}' | grep -q "quant-notification"; then
+        log_success "通知服务容器正在运行 / Notification service container is running"
+        return 0
+    fi
+
+    # 方法2: 检查 Redis 心跳
+    if command -v redis-cli &> /dev/null; then
+        local heartbeat=$(redis-cli -h ${REDIS_HOST:-127.0.0.1} -p ${REDIS_PORT:-6379} GET "notification:service:heartbeat" 2>/dev/null)
+        if [ -n "$heartbeat" ]; then
+            # 解析时间戳，检查是否在 30 秒内
+            local timestamp=$(echo "$heartbeat" | grep -o '"timestamp":[0-9]*' | grep -o '[0-9]*')
+            local now=$(date +%s%3N)
+            local age=$((now - timestamp))
+
+            if [ "$age" -lt 30000 ]; then
+                log_success "通知服务心跳正常 (${age}ms ago) / Notification service heartbeat OK"
+                return 0
+            else
+                log_warn "通知服务心跳过期 (${age}ms ago) / Notification service heartbeat expired"
+                return 1
+            fi
+        fi
+    fi
+
+    log_warn "通知服务未运行 / Notification service is not running"
+    return 1
+}
+
+# 启动通知服务 / Start notification service
+start_notification_service() {
+    local compose_file=$1
+
+    log_info "启动共享通知服务... / Starting shared notification service..."
+
+    # 使用 profile 启动通知服务
+    docker compose -f "$compose_file" --profile notification up -d notification-service
+
+    # 等待服务就绪
+    log_info "等待通知服务就绪... / Waiting for notification service to be ready..."
+
+    local max_wait=60
+    local waited=0
+
+    while [ $waited -lt $max_wait ]; do
+        if check_notification_service; then
+            log_success "通知服务已就绪 / Notification service is ready"
+            return 0
+        fi
+
+        sleep 2
+        waited=$((waited + 2))
+        echo -n "."
+    done
+
+    echo ""
+    log_error "通知服务启动超时 / Notification service startup timeout"
+    return 1
+}
+
+# 停止通知服务 / Stop notification service
+stop_notification_service() {
+    log_info "停止共享通知服务... / Stopping shared notification service..."
+
+    if docker ps --format '{{.Names}}' | grep -q "quant-notification"; then
+        docker stop quant-notification
+        docker rm quant-notification 2>/dev/null || true
+        log_success "通知服务已停止 / Notification service stopped"
+    else
+        log_info "通知服务未运行 / Notification service is not running"
+    fi
+}
+
 # 启动策略容器 / Start strategy containers
 start_strategies() {
     local compose_file=$1
     local use_shared_market=$2
+    local use_shared_notification=$3
 
     log_info "启动策略容器... / Starting strategy containers..."
 
     # 设置环境变量
     export USE_SHARED_MARKET_DATA="$use_shared_market"
+    export USE_SHARED_NOTIFICATION="$use_shared_notification"
 
-    # 启动策略容器 (不包括 market-data profile)
+    # 启动策略容器 (不包括 market-data 和 notification profiles)
     docker compose -f "$compose_file" up -d
 
     log_success "策略容器已启动 / Strategy containers started"
@@ -215,12 +313,12 @@ stop_all() {
 
     # 停止单策略
     if [ -f "docker-compose.single-strategy.yml" ]; then
-        docker compose -f docker-compose.single-strategy.yml --profile market-data down 2>/dev/null || true
+        docker compose -f docker-compose.single-strategy.yml --profile market-data --profile notification down 2>/dev/null || true
     fi
 
     # 停止多策略
     if [ -f "docker-compose.multi-strategy.yml" ]; then
-        docker compose -f docker-compose.multi-strategy.yml --profile market-data down 2>/dev/null || true
+        docker compose -f docker-compose.multi-strategy.yml --profile market-data --profile notification down 2>/dev/null || true
     fi
 
     log_success "所有服务已停止 / All services stopped"
@@ -246,6 +344,19 @@ show_status() {
     fi
 
     echo ""
+    echo "=== 通知服务心跳 / Notification Service Heartbeat ==="
+    if command -v redis-cli &> /dev/null; then
+        local notification_heartbeat=$(redis-cli -h ${REDIS_HOST:-127.0.0.1} -p ${REDIS_PORT:-6379} GET "notification:service:heartbeat" 2>/dev/null)
+        if [ -n "$notification_heartbeat" ]; then
+            echo "$notification_heartbeat" | python3 -m json.tool 2>/dev/null || echo "$notification_heartbeat"
+        else
+            echo "无心跳数据 / No heartbeat data"
+        fi
+    else
+        echo "redis-cli 未安装 / redis-cli not installed"
+    fi
+
+    echo ""
 }
 
 # 主函数 / Main function
@@ -254,7 +365,9 @@ main() {
 
     local mode="${1:-multi}"
     local force_restart_market=false
+    local force_restart_notification=false
     local use_shared_market=true
+    local use_shared_notification=true
     local detach=true
 
     # 解析参数 / Parse arguments
@@ -265,8 +378,16 @@ main() {
                 force_restart_market=true
                 shift
                 ;;
+            --force-restart-notification)
+                force_restart_notification=true
+                shift
+                ;;
             --no-market)
                 use_shared_market=false
+                shift
+                ;;
+            --no-notification)
+                use_shared_notification=false
                 shift
                 ;;
             -d|--detach)
@@ -308,7 +429,18 @@ main() {
                 fi
             fi
 
-            start_strategies "$compose_file" "$use_shared_market"
+            if [ "$use_shared_notification" = true ]; then
+                # 检查通知服务
+                if [ "$force_restart_notification" = true ]; then
+                    stop_notification_service
+                fi
+
+                if ! check_notification_service; then
+                    start_notification_service "$compose_file"
+                fi
+            fi
+
+            start_strategies "$compose_file" "$use_shared_market" "$use_shared_notification"
             ;;
 
         multi)
@@ -327,7 +459,18 @@ main() {
                 fi
             fi
 
-            start_strategies "$compose_file" "$use_shared_market"
+            if [ "$use_shared_notification" = true ]; then
+                # 检查通知服务
+                if [ "$force_restart_notification" = true ]; then
+                    stop_notification_service
+                fi
+
+                if ! check_notification_service; then
+                    start_notification_service "$compose_file"
+                fi
+            fi
+
+            start_strategies "$compose_file" "$use_shared_market" "$use_shared_notification"
             ;;
 
         market-only)
@@ -344,6 +487,50 @@ main() {
             fi
 
             start_market_data_service "$compose_file"
+            ;;
+
+        notification-only)
+            log_info "模式: 仅通知服务 / Mode: Notification service only"
+
+            # 优先使用 multi 的配置
+            local compose_file="docker-compose.multi-strategy.yml"
+            if [ ! -f "$compose_file" ]; then
+                compose_file="docker-compose.single-strategy.yml"
+            fi
+
+            if [ "$force_restart_notification" = true ]; then
+                stop_notification_service
+            fi
+
+            start_notification_service "$compose_file"
+            ;;
+
+        services-only)
+            log_info "模式: 启动所有共享服务 / Mode: Start all shared services"
+
+            # 优先使用 multi 的配置
+            local compose_file="docker-compose.multi-strategy.yml"
+            if [ ! -f "$compose_file" ]; then
+                compose_file="docker-compose.single-strategy.yml"
+            fi
+
+            # 启动行情服务
+            if [ "$force_restart_market" = true ]; then
+                stop_market_data_service
+            fi
+
+            if ! check_market_data_service; then
+                start_market_data_service "$compose_file"
+            fi
+
+            # 启动通知服务
+            if [ "$force_restart_notification" = true ]; then
+                stop_notification_service
+            fi
+
+            if ! check_notification_service; then
+                start_notification_service "$compose_file"
+            fi
             ;;
 
         stop)
