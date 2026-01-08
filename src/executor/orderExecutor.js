@@ -769,6 +769,78 @@ export class SmartOrderExecutor extends EventEmitter {
   // ============================================
 
   /**
+   * 执行订单 (统一入口方法)
+   * Execute order (unified entry method)
+   *
+   * 根据订单类型自动路由到相应的执行方法
+   * Automatically routes to appropriate execution method based on order type
+   *
+   * @param {Object} params - 订单参数 / Order parameters
+   * @param {string} params.exchangeId - 交易所 ID / Exchange ID
+   * @param {string} params.symbol - 交易对 / Symbol
+   * @param {string} params.side - 方向 (buy/sell) / Side
+   * @param {number} params.amount - 数量 / Amount
+   * @param {number} params.price - 价格 (限价单必需) / Price (required for limit)
+   * @param {string} params.type - 订单类型 (market/limit) / Order type
+   * @param {boolean} params.reduceOnly - 是否 reduce-only / Whether reduce-only
+   * @returns {Promise<Object>} 订单结果 / Order result
+   */
+  async executeOrder(params) {
+    // 解构参数 / Destructure parameters
+    const { type = 'market', ...orderParams } = params;
+
+    // 链路日志: 执行器收到订单请求 / Chain log: Executor received order request
+    this.log(
+      `[链路] 执行器收到订单: ${params.exchangeId} ${params.symbol} ${params.side} ` +
+      `数量=${params.amount} 类型=${type} / Executor received order`,
+      'info'
+    );
+
+    try {
+      let result;
+
+      // 根据订单类型路由 / Route based on order type
+      if (type === 'market') {
+        // 市价单 / Market order
+        result = await this.executeMarketOrder(orderParams);
+      } else {
+        // 限价单 / Limit order
+        result = await this.executeSmartLimitOrder(orderParams);
+      }
+
+      // 链路日志: 订单执行完成 / Chain log: Order execution completed
+      if (result.success) {
+        this.log(
+          `[链路] 订单执行完成: ${params.symbol} ${params.side} ` +
+          `成交=${result.orderInfo?.filledAmount || result.exchangeOrder?.filled || 0} ` +
+          `均价=${result.orderInfo?.avgPrice || result.exchangeOrder?.average || 'N/A'} / Order completed`,
+          'info'
+        );
+      }
+
+      // 返回结果 / Return result
+      return {
+        success: result.success || false,
+        orderId: result.orderInfo?.exchangeOrderId || result.exchangeOrder?.id,
+        ...result,
+      };
+
+    } catch (error) {
+      // 链路日志: 订单执行异常 / Chain log: Order execution exception
+      this.log(
+        `[链路] 订单执行异常: ${params.symbol} ${params.side} 错误=${error.message} / Order exception`,
+        'error'
+      );
+
+      return {
+        success: false,
+        error: error.message,
+        params,
+      };
+    }
+  }
+
+  /**
    * 执行智能限价单
    * Execute smart limit order
    *
@@ -785,6 +857,13 @@ export class SmartOrderExecutor extends EventEmitter {
    * @returns {Promise<Object>} 订单结果 / Order result
    */
   async executeSmartLimitOrder(params) {
+    // 链路日志: 执行限价单 / Chain log: Executing limit order
+    this.log(
+      `[链路] 执行限价单: ${params.exchangeId} ${params.symbol} ${params.side} ` +
+      `数量=${params.amount} 价格=${params.price} / Executing limit order`,
+      'info'
+    );
+
     // 解构参数 / Destructure parameters
     const {
       exchangeId,                                      // 交易所 ID / Exchange ID
@@ -906,6 +985,13 @@ export class SmartOrderExecutor extends EventEmitter {
    * @returns {Promise<Object>} 订单结果 / Order result
    */
   async executeMarketOrder(params) {
+    // 链路日志: 执行市价单 / Chain log: Executing market order
+    this.log(
+      `[链路] 执行市价单: ${params.exchangeId} ${params.symbol} ${params.side} ` +
+      `数量=${params.amount} reduceOnly=${params.reduceOnly || false} / Executing market order`,
+      'info'
+    );
+
     // 解构参数 / Destructure parameters
     const {
       exchangeId,                       // 交易所 ID / Exchange ID
@@ -982,6 +1068,13 @@ export class SmartOrderExecutor extends EventEmitter {
    * @private
    */
   async _executeOrderWithRetry(orderInfo) {
+    // 链路日志: 开始执行订单 (带重试) / Chain log: Start order execution with retry
+    this.log(
+      `[链路] 开始执行订单(带重试): ${orderInfo.exchangeId} ${orderInfo.symbol} ${orderInfo.side} ` +
+      `数量=${orderInfo.amount} 价格=${orderInfo.currentPrice} / Starting order with retry`,
+      'info'
+    );
+
     // 获取交易所实例 / Get exchange instance
     const exchange = this.exchanges.get(orderInfo.exchangeId);
 
@@ -1007,14 +1100,12 @@ export class SmartOrderExecutor extends EventEmitter {
         // 构建订单参数 / Build order parameters
         const orderParams = this._buildOrderParams(orderInfo);
 
-        // 记录日志 / Log
-        if (this.config.verbose) {
-          this.log(
-            `提交订单 / Submitting order: ${orderInfo.symbol} ${orderInfo.side} ` +
-            `${orderInfo.amount} @ ${orderInfo.currentPrice}`,
-            'info'
-          );
-        }
+        // 链路日志: 提交订单到交易所 / Chain log: Submitting order to exchange
+        this.log(
+          `[链路] 提交订单到交易所: ${orderInfo.symbol} ${orderInfo.side} ` +
+          `数量=${orderInfo.amount} 价格=${orderInfo.currentPrice} 重试=${orderInfo.resubmitCount} / Submitting to exchange`,
+          'info'
+        );
 
         // 提交订单到交易所 / Submit order to exchange
         const exchangeOrder = await exchange.createOrder(
@@ -1111,10 +1202,10 @@ export class SmartOrderExecutor extends EventEmitter {
    * @private
    */
   async _executeDryRunOrder(orderInfo) {
-    // 记录日志 / Log
+    // 链路日志: DryRun 模拟订单 / Chain log: DryRun simulating order
     this.log(
-      `[DryRun] 模拟订单 / Simulating order: ${orderInfo.symbol} ${orderInfo.side} ` +
-      `${orderInfo.amount} @ ${orderInfo.currentPrice}`,
+      `[链路][DryRun] 模拟订单: ${orderInfo.symbol} ${orderInfo.side} ` +
+      `数量=${orderInfo.amount} 价格=${orderInfo.currentPrice} / Simulating order`,
       'info'
     );
 
@@ -1169,10 +1260,10 @@ export class SmartOrderExecutor extends EventEmitter {
     // 发出成交事件 / Emit filled event
     this.emit('orderFilled', { orderInfo, exchangeOrder: simulatedExchangeOrder });
 
-    // 记录日志 / Log
+    // 链路日志: DryRun 模拟成交 / Chain log: DryRun simulated fill
     this.log(
-      `[DryRun] 模拟成交 / Simulated fill: ${orderInfo.symbol} ${orderInfo.side} ` +
-      `${orderInfo.amount} @ ${simulatedPrice.toFixed(2)}`,
+      `[链路][DryRun] 模拟成交: ${orderInfo.symbol} ${orderInfo.side} ` +
+      `数量=${orderInfo.amount} 均价=${simulatedPrice.toFixed(2)} / Simulated fill`,
       'info'
     );
 
@@ -1194,6 +1285,13 @@ export class SmartOrderExecutor extends EventEmitter {
    * @private
    */
   async _executeMarketOrderDirect(orderInfo) {
+    // 链路日志: 直接执行市价单 / Chain log: Execute market order directly
+    this.log(
+      `[链路] 直接执行市价单: ${orderInfo.exchangeId} ${orderInfo.symbol} ${orderInfo.side} ` +
+      `数量=${orderInfo.amount} / Direct market order execution`,
+      'info'
+    );
+
     // 获取交易所 / Get exchange
     const exchange = this.exchanges.get(orderInfo.exchangeId);
 
@@ -1255,6 +1353,13 @@ export class SmartOrderExecutor extends EventEmitter {
 
         // 发出成交事件 / Emit filled event
         this.emit('orderFilled', { orderInfo, exchangeOrder });
+
+        // 链路日志: 市价单成交 / Chain log: Market order filled
+        this.log(
+          `[链路] 市价单成交: ${orderInfo.symbol} ${orderInfo.side} ` +
+          `成交=${orderInfo.filledAmount} 均价=${orderInfo.avgPrice} / Market order filled`,
+          'info'
+        );
 
         // 返回结果 / Return result
         return {

@@ -248,8 +248,8 @@ export class MarketDataEngine extends EventEmitter {
       return;
     }
 
-    console.log(`${this.logPrefix} 正在启动行情引擎... / Starting market data engine...`);
-    console.log(`${this.logPrefix} 配置的交易所列表 / Configured exchanges: [${this.config.exchanges.join(', ')}]`);
+    console.log(`${this.logPrefix} [链路] 正在启动行情引擎... / Starting market data engine...`);
+    console.log(`${this.logPrefix} [链路] 配置的交易所列表 / Configured exchanges: [${this.config.exchanges.join(', ')}]`);
 
     try {
       // 1. 初始化 Redis 连接 / Initialize Redis connection
@@ -345,7 +345,7 @@ export class MarketDataEngine extends EventEmitter {
       }
     }
 
-    console.log(`${this.logPrefix} 订阅 / Subscribing: ${symbol} [${dataTypes.join(', ')}] on [${targetExchanges.join(', ')}]`);
+    console.log(`${this.logPrefix} [链路] 订阅行情: ${symbol} 类型=[${dataTypes.join(', ')}] 交易所=[${targetExchanges.join(', ')}] / Subscribing market data`);
 
     // 在每个交易所订阅 / Subscribe on each exchange
     for (const exchange of targetExchanges) {
@@ -2704,6 +2704,12 @@ export class MarketDataEngine extends EventEmitter {
     // 发布到 Redis Channel / Publish to Redis Channel
     this._publishToChannel(DATA_TYPES.TICKER, ticker);
 
+    // 链路日志: 发出 ticker 事件 / Chain log: Emit ticker event
+    // 注: 仅调试时启用，避免日志过多 / Note: Only enable for debugging to avoid log flood
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.log(`${this.logPrefix} [链路] 发出ticker事件: ${ticker.exchange}:${ticker.symbol} 价格=${ticker.last}`);
+    }
+
     // 发出事件 / Emit event
     this.emit('ticker', ticker);
   }
@@ -2806,6 +2812,12 @@ export class MarketDataEngine extends EventEmitter {
     // 发布到 Redis Channel / Publish to Redis Channel
     this._publishToChannel(DATA_TYPES.FUNDING_RATE, fundingRate);
 
+    // 链路日志: 发出资金费率事件 / Chain log: Emit funding rate event
+    console.log(
+      `${this.logPrefix} [链路] 发出fundingRate事件: ${fundingRate.exchange}:${fundingRate.symbol} ` +
+      `费率=${fundingRate.fundingRate} / Emitting fundingRate event`
+    );
+
     // 发出事件 / Emit event
     this.emit('fundingRate', fundingRate);
   }
@@ -2854,6 +2866,12 @@ export class MarketDataEngine extends EventEmitter {
 
     // 发布到 Redis Channel / Publish to Redis Channel
     this._publishToChannel(DATA_TYPES.KLINE, candle);
+
+    // 链路日志: 发出 candle 事件 / Chain log: Emit candle event
+    console.log(
+      `${this.logPrefix} [链路] 发出candle事件: ${candle.exchange}:${candle.symbol} ` +
+      `close=${candle.close} isClosed=${candle.isClosed} / Emitting candle event`
+    );
 
     // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
     this.emit('candle', {

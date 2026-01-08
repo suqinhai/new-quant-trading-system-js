@@ -319,6 +319,8 @@ export class BaseStrategy extends EventEmitter {
       console.error(`[${this.name}] 引擎未设置 / Engine not set`);
       return null;
     }
+    // 链路日志: 策略发出买入信号 / Chain log: Strategy emits buy signal
+    this.log(`[链路] 策略发出买入信号: ${symbol} 数量=${amount} / Strategy buy signal`, 'info');
     return this.engine.buy(symbol, amount, options);
   }
 
@@ -335,6 +337,8 @@ export class BaseStrategy extends EventEmitter {
       console.error(`[${this.name}] 引擎未设置 / Engine not set`);
       return null;
     }
+    // 链路日志: 策略发出卖出信号 / Chain log: Strategy emits sell signal
+    this.log(`[链路] 策略发出卖出信号: ${symbol} 数量=${amount} / Strategy sell signal`, 'info');
     return this.engine.sell(symbol, amount, options);
   }
 
@@ -350,6 +354,8 @@ export class BaseStrategy extends EventEmitter {
       console.error(`[${this.name}] 引擎未设置 / Engine not set`);
       return null;
     }
+    // 链路日志: 策略发出按比例买入信号 / Chain log: Strategy emits buyPercent signal
+    this.log(`[链路] 策略发出买入信号(按比例): ${symbol} 比例=${percent}% / Strategy buyPercent signal`, 'info');
     return this.engine.buyPercent(symbol, percent);
   }
 
@@ -364,6 +370,8 @@ export class BaseStrategy extends EventEmitter {
       console.error(`[${this.name}] 引擎未设置 / Engine not set`);
       return null;
     }
+    // 链路日志: 策略发出平仓信号 / Chain log: Strategy emits close position signal
+    this.log(`[链路] 策略发出平仓信号: ${symbol} / Strategy closePosition signal`, 'info');
     return this.engine.closePosition(symbol);
   }
 

@@ -938,6 +938,9 @@ class TradingSystemRunner extends EventEmitter {
 
       // 买入 / Buy
       buy: (symbol, amount, options = {}) => {
+        // 链路日志: 引擎适配器收到买入请求 / Chain log: Engine adapter received buy request
+        this._log('info', `[链路] 引擎适配器收到买入: ${symbol} 数量=${amount} / Engine adapter buy`);
+
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = {
           type: 'buy',
@@ -959,6 +962,9 @@ class TradingSystemRunner extends EventEmitter {
 
       // 卖出 / Sell
       sell: (symbol, amount, options = {}) => {
+        // 链路日志: 引擎适配器收到卖出请求 / Chain log: Engine adapter received sell request
+        this._log('info', `[链路] 引擎适配器收到卖出: ${symbol} 数量=${amount} / Engine adapter sell`);
+
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = {
           type: 'sell',
@@ -983,6 +989,9 @@ class TradingSystemRunner extends EventEmitter {
 
       // 按百分比买入 / Buy by percentage
       buyPercent: (symbol, percent) => {
+        // 链路日志: 引擎适配器收到按比例买入请求 / Chain log: Engine adapter received buyPercent request
+        this._log('info', `[链路] 引擎适配器收到按比例买入: ${symbol} 比例=${percent}% / Engine adapter buyPercent`);
+
         const capital = engineAdapter.getCapital();
         const amount = (capital * percent / 100);
         return engineAdapter.buy(symbol, amount);
@@ -990,6 +999,9 @@ class TradingSystemRunner extends EventEmitter {
 
       // 平仓 / Close position
       closePosition: (symbol) => {
+        // 链路日志: 引擎适配器收到平仓请求 / Chain log: Engine adapter received closePosition request
+        this._log('info', `[链路] 引擎适配器收到平仓: ${symbol} / Engine adapter closePosition`);
+
         const position = this._virtualPositions.get(symbol);
         if (position && position.amount > 0) {
           return engineAdapter.sell(symbol, position.amount);
@@ -1242,8 +1254,8 @@ class TradingSystemRunner extends EventEmitter {
 
     // 信号事件 / Signal event
     this.strategy.on('signal', async (signal) => {
-      // 输出日志 / Output log
-      this._log('info', `收到信号: ${signal.symbol} ${signal.side} / Received signal`);
+      // 链路日志: 系统收到策略信号 / Chain log: System received strategy signal
+      this._log('info', `[链路] 系统收到策略信号: ${signal.symbol} ${signal.side} 数量=${signal.amount} / System received signal`);
 
       // 增加信号计数 / Increment signal count
       this.signalCount++;
@@ -1321,8 +1333,8 @@ class TradingSystemRunner extends EventEmitter {
 
     // 订单成交事件 / Order filled event
     this.executor.on('orderFilled', (order) => {
-      // 输出日志 / Output log
-      this._log('info', `订单成交: ${order.symbol} ${order.side} ${order.amount} @ ${order.price} / Order filled`);
+      // 链路日志: 订单成交 / Chain log: Order filled
+      this._log('info', `[链路] 订单成交: ${order.symbol} ${order.side} ${order.amount} @ ${order.price} / Order filled`);
 
       // 增加订单计数 / Increment order count
       this.orderCount++;
@@ -1336,8 +1348,8 @@ class TradingSystemRunner extends EventEmitter {
 
     // 订单失败事件 / Order failed event
     this.executor.on('orderFailed', (data) => {
-      // 输出错误日志 / Output error log
-      this._log('error', `订单失败: ${data.error} / Order failed`);
+      // 链路日志: 订单失败 / Chain log: Order failed
+      this._log('error', `[链路] 订单失败: ${data.error} ${data.order?.symbol || ''} ${data.order?.side || ''} / Order failed`);
 
       // 增加错误计数 / Increment error count
       this.errorCount++;
@@ -1629,8 +1641,14 @@ class TradingSystemRunner extends EventEmitter {
    */
   async _handleSignal(signal) {
     try {
+      // 链路日志: 开始处理信号 / Chain log: Start handling signal
+      this._log('info', `[链路] 开始处理信号: ${signal.symbol} ${signal.side} / Start handling signal`);
+
       // 1. 风控检查 / Risk check
       if (this.riskManager) {
+        // 链路日志: 进入风控检查 / Chain log: Entering risk check
+        this._log('info', `[链路] 进入风控检查: ${signal.symbol} ${signal.side} 数量=${signal.amount} / Entering risk check`);
+
         // 获取检查结果 / Get check result
         const riskCheck = this.riskManager.checkOrder({
           symbol: signal.symbol,
@@ -1641,8 +1659,8 @@ class TradingSystemRunner extends EventEmitter {
 
         // 如果风控拒绝 / If risk rejected
         if (!riskCheck.allowed) {
-          // 输出警告日志 / Output warning log
-          this._log('warn', `风控拒绝信号: ${riskCheck.reason} / Risk rejected signal`);
+          // 链路日志: 风控拒绝 / Chain log: Risk rejected
+          this._log('warn', `[链路] 风控拒绝信号: ${riskCheck.reason} / Risk rejected signal`);
 
           // 发出信号拒绝事件 / Emit signal rejected event
           this.emit('signalRejected', { signal, reason: riskCheck.reason });
@@ -1650,6 +1668,9 @@ class TradingSystemRunner extends EventEmitter {
           // 返回 / Return
           return;
         }
+
+        // 链路日志: 风控通过 / Chain log: Risk check passed
+        this._log('info', `[链路] 风控检查通过: ${signal.symbol} ${signal.side} / Risk check passed`);
       }
 
       // 2. 执行订单 / Execute order
@@ -1667,23 +1688,31 @@ class TradingSystemRunner extends EventEmitter {
           type: signal.orderType || 'market',
         };
 
+        // 链路日志: 提交订单到执行器 / Chain log: Submitting order to executor
+        this._log('info', `[链路] 提交订单到执行器: ${exchangeId} ${signal.symbol} ${signal.side} 数量=${signal.amount} 类型=${orderParams.type} / Submitting order to executor`);
+
         // 执行订单 / Execute order
         const result = await this.executor.executeOrder(orderParams);
 
         // 输出日志 / Output log
         if (result.success) {
-          this._log('info', `订单执行成功: ${result.orderId} / Order executed successfully`);
+          // 链路日志: 订单执行成功 / Chain log: Order executed successfully
+          this._log('info', `[链路] 订单执行成功: orderId=${result.orderId} ${signal.symbol} ${signal.side} / Order executed successfully`);
         } else {
-          this._log('error', `订单执行失败: ${result.error} / Order execution failed`);
+          // 链路日志: 订单执行失败 / Chain log: Order execution failed
+          this._log('error', `[链路] 订单执行失败: ${result.error} ${signal.symbol} ${signal.side} / Order execution failed`);
         }
 
         // 发出订单执行事件 / Emit order executed event
         this.emit('orderExecuted', { signal, result });
+      } else {
+        // 链路日志: 无执行器 / Chain log: No executor
+        this._log('warn', `[链路] 无订单执行器，信号未执行 / No executor, signal not executed`);
       }
 
     } catch (error) {
-      // 输出错误日志 / Output error log
-      this._log('error', `信号处理失败: ${error.message} / Signal handling failed`);
+      // 链路日志: 信号处理异常 / Chain log: Signal handling exception
+      this._log('error', `[链路] 信号处理异常: ${error.message} / Signal handling exception`);
 
       // 增加错误计数 / Increment error count
       this.errorCount++;
