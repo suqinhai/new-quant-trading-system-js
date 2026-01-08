@@ -585,6 +585,16 @@ class TradingSystemRunner extends EventEmitter {
     // 初始化交易所映射 / Initialize exchanges map
     this.exchanges = new Map();
 
+    // 检查是否使用共享行情模式 / Check if using shared market data mode
+    // 共享模式下跳过 API 预检查和市场信息加载（由 market-data 服务统一处理）
+    // In shared mode, skip API preflight and market loading (handled by market-data service)
+    const useSharedMarketData = process.env.USE_SHARED_MARKET_DATA === 'true' ||
+                                 this.config.marketData?.useShared === true;
+
+    if (useSharedMarketData) {
+      this._log('info', '共享行情模式: 策略容器使用轻量连接 (跳过API预检查) / Shared mode: Using lightweight connection');
+    }
+
     // 获取主交易所名称 / Get primary exchange name
     const primaryExchangeName = this.options.exchange || this.config.exchange?.default || 'binance';
 
@@ -660,8 +670,15 @@ class TradingSystemRunner extends EventEmitter {
 
         const exchange = ExchangeFactory.create(exchangeName, exchangeOptions);
 
-        // 连接交易所并加载市场信息 / Connect exchange and load market info
-        await exchange.connect();
+        // 连接交易所 / Connect exchange
+        // 共享模式: 轻量连接 (跳过预检查和市场加载，由 market-data 服务处理)
+        // 非共享模式: 完整连接 (执行预检查和市场加载)
+        // Shared mode: lightweight connect (skip preflight and market loading)
+        // Non-shared mode: full connect (with preflight and market loading)
+        await exchange.connect({
+          skipPreflight: useSharedMarketData,
+          loadMarkets: !useSharedMarketData,
+        });
 
         // 保存到映射 / Save to map
         this.exchanges.set(exchangeName, exchange);
