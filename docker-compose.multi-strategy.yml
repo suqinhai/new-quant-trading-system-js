@@ -67,6 +67,57 @@ services:
       - "quant.shared=true"
 
   # ===========================================================================
+  # 共享通知服务 (可选) / Shared Notification Service (Optional)
+  # 使用 --profile notification 启动此服务
+  # Use --profile notification to start this service
+  # ===========================================================================
+  notification-service:
+    image: quant-trading-system:latest
+    container_name: quant-notification
+    restart: unless-stopped
+    network_mode: host
+    profiles:
+      - notification
+    volumes:
+      - ./logs/notification:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      MASTER_KEY: ${MASTER_KEY}
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      # Telegram 配置 / Telegram configuration
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-true}
+      # 限流配置 / Rate limit configuration
+      RATE_LIMIT_PER_SECOND: ${RATE_LIMIT_PER_SECOND:-1}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-20}
+      MAX_QUEUE_LENGTH: ${MAX_QUEUE_LENGTH:-100}
+    command: ["node", "src/services/notification-service.js"]
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1'}); r.get('notification:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      - "quant.role=notification"
+      - "quant.shared=true"
+
+  # ===========================================================================
   # Docker #1: 趋势核心 (低频 / 骨架)
   # ===========================================================================
   quant-trend-core:
@@ -91,6 +142,8 @@ services:
       CLICKHOUSE_PORT: 8123
       # 共享行情模式 / Shared market data mode
       USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
+      # 共享通知模式 / Shared notification mode
+      USE_SHARED_NOTIFICATION: ${USE_SHARED_NOTIFICATION:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: trend-core
       INSTANCE_ID: "1"
@@ -154,6 +207,8 @@ services:
       CLICKHOUSE_PORT: 8123
       # 共享行情模式 / Shared market data mode
       USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
+      # 共享通知模式 / Shared notification mode
+      USE_SHARED_NOTIFICATION: ${USE_SHARED_NOTIFICATION:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: tech-alpha
       INSTANCE_ID: "2"
@@ -216,6 +271,8 @@ services:
       CLICKHOUSE_PORT: 8123
       # 共享行情模式 / Shared market data mode
       USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
+      # 共享通知模式 / Shared notification mode
+      USE_SHARED_NOTIFICATION: ${USE_SHARED_NOTIFICATION:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: cross-factor
       INSTANCE_ID: "3"
@@ -281,6 +338,8 @@ services:
       CLICKHOUSE_PORT: 8123
       # 共享行情模式 / Shared market data mode
       USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
+      # 共享通知模式 / Shared notification mode
+      USE_SHARED_NOTIFICATION: ${USE_SHARED_NOTIFICATION:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: event-risk
       INSTANCE_ID: "4"
@@ -347,6 +406,8 @@ services:
       CLICKHOUSE_PORT: 8123
       # 共享行情模式 / Shared market data mode
       USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
+      # 共享通知模式 / Shared notification mode
+      USE_SHARED_NOTIFICATION: ${USE_SHARED_NOTIFICATION:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: hf-arbitrage
       INSTANCE_ID: "5"
