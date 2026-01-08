@@ -102,11 +102,21 @@ export class BaseExchange extends EventEmitter {
   /**
    * 连接交易所 (包含初始化和验证)
    * Connect to exchange (includes initialization and verification)
+   *
+   * @param {Object} options - 连接选项 / Connection options
+   * @param {boolean} options.loadMarkets - 是否加载市场信息 (默认: true) / Whether to load markets (default: true)
+   * @param {boolean} options.skipPreflight - 是否跳过预检查 (默认: false) / Whether to skip preflight (default: false)
    * @returns {Promise<boolean>} 连接结果 / Connection result
    */
-  async connect() {
+  async connect(options = {}) {
+    // 解析选项 / Parse options
+    const { loadMarkets = true, skipPreflight = false } = options;
+
     // 记录日志 / Log
     console.log(`[${this.name}] 正在连接交易所... / Connecting to exchange...`);
+    if (!loadMarkets) {
+      console.log(`[${this.name}] 轻量模式：跳过加载市场信息 / Lightweight mode: Skip loading markets`);
+    }
 
     // 调试：打印配置信息 / Debug: print config info
     console.log(`[${this.name}] 配置信息 / Config info:`, {
@@ -115,6 +125,7 @@ export class BaseExchange extends EventEmitter {
       hasPassword: !!this.config.password,
       sandbox: this.config.sandbox,
       defaultType: this.config.defaultType,
+      loadMarkets,
     });
 
     try {
@@ -133,16 +144,26 @@ export class BaseExchange extends EventEmitter {
       }
 
       // 2.5 执行 API 预检查 (验证 IP 白名单和 API 权限) / Execute API preflight check (verify IP whitelist and API permissions)
-      await this._preflightCheck();
+      if (!skipPreflight) {
+        await this._preflightCheck();
+      }
 
-      // 3. 加载市场信息 (带重试) / Load market info (with retry)
-      await this._executeWithRetry(async () => {
-        // 获取所有交易对信息 / Fetch all trading pair info
-        this.markets = await this.exchange.loadMarkets();
-      }, '加载市场信息 / Load markets');
+      // 3. 加载市场信息 (如果需要) / Load market info (if needed)
+      if (loadMarkets) {
+        await this._executeWithRetry(async () => {
+          // 获取所有交易对信息 / Fetch all trading pair info
+          this.markets = await this.exchange.loadMarkets();
+        }, '加载市场信息 / Load markets');
 
-      // 4. 缓存精度信息 / Cache precision info
-      this._cachePrecisions();
+        // 4. 缓存精度信息 / Cache precision info
+        this._cachePrecisions();
+
+        console.log(`[${this.name}] ✓ 加载了 ${Object.keys(this.markets).length} 个交易对 / Loaded ${Object.keys(this.markets).length} markets`);
+      } else {
+        // 轻量模式：不加载市场信息 / Lightweight mode: don't load markets
+        this.markets = {};
+        console.log(`[${this.name}] ✓ 轻量模式连接成功 / Lightweight mode connected`);
+      }
 
       // 注意：API 验证已在步骤 2.5 的 _preflightCheck() 中完成
       // Note: API verification is already done in step 2.5 _preflightCheck()
@@ -151,11 +172,10 @@ export class BaseExchange extends EventEmitter {
       this.connected = true;
 
       // 6. 发出连接成功事件 / Emit connected event
-      this.emit('connected', { exchange: this.name });
+      this.emit('connected', { exchange: this.name, lightweight: !loadMarkets });
 
       // 7. 记录日志 / Log
-      console.log(`[${this.name}] ✓ 连接成功，加载了 ${Object.keys(this.markets).length} 个交易对`);
-      console.log(`[${this.name}] ✓ Connected, loaded ${Object.keys(this.markets).length} markets`);
+      console.log(`[${this.name}] ✓ 连接成功 / Connected successfully`);
 
       // 返回连接结果 / Return connection result
       return true;

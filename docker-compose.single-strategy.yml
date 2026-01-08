@@ -4,9 +4,68 @@
 #
 # 运行单个策略实例，适合测试或小规模部署
 # Run a single strategy instance, suitable for testing or small-scale deployment
+#
+# 使用方法 / Usage:
+#   # 独立模式 (容器自己连接行情) / Independent mode
+#   STRATEGY_NAME=SMA docker compose -f docker-compose.single-strategy.yml up -d
+#
+#   # 共享行情模式 (推荐) / Shared market data mode (recommended)
+#   USE_SHARED_MARKET_DATA=true STRATEGY_NAME=SMA docker compose -f docker-compose.single-strategy.yml --profile market-data up -d
+#
+#   # 如果行情服务已在其他地方运行 / If market data service is already running elsewhere
+#   USE_SHARED_MARKET_DATA=true STRATEGY_NAME=SMA docker compose -f docker-compose.single-strategy.yml up -d
 # =============================================================================
 
 services:
+  # ===========================================================================
+  # 共享行情服务 (可选) / Shared Market Data Service (Optional)
+  # 使用 --profile market-data 启动此服务
+  # Use --profile market-data to start this service
+  # ===========================================================================
+  market-data-service:
+    image: quant-trading-system:latest
+    container_name: quant-market-data
+    restart: unless-stopped
+    network_mode: host
+    profiles:
+      - market-data
+    volumes:
+      - ./logs/market-data:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TZ: Asia/Shanghai
+      MASTER_KEY: ${MASTER_KEY}
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      # 行情服务配置 / Market data service configuration
+      MARKET_DATA_EXCHANGES: ${MARKET_DATA_EXCHANGES:-binance,okx,bybit}
+      TRADING_TYPE: ${TRADING_TYPE:-futures}
+      SUBSCRIBE_ALL: ${SUBSCRIBE_ALL:-true}
+      # 如果指定交易对则只订阅指定的 / If symbols specified, only subscribe to those
+      MARKET_DATA_SYMBOLS: ${MARKET_DATA_SYMBOLS:-}
+    command: ["node", "src/services/market-data-service.js"]
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1'}); r.get('market:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "10"
+    labels:
+      - "quant.role=market-data"
+      - "quant.shared=true"
+
   # ===========================================================================
   # 单策略实例 / Single Strategy Instance
   # ===========================================================================
@@ -30,6 +89,8 @@ services:
       REDIS_PORT: 6379
       CLICKHOUSE_HOST: 127.0.0.1
       CLICKHOUSE_PORT: 8123
+      # 共享行情模式 / Shared market data mode
+      USE_SHARED_MARKET_DATA: ${USE_SHARED_MARKET_DATA:-false}
       RUN_MODE: ${RUN_MODE:-shadow}
       INSTANCE_NAME: ${STRATEGY_NAME:-SMA}
       INSTANCE_ID: "1"
