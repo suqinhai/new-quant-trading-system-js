@@ -63,6 +63,9 @@ import createLoggerModule from './logger/index.js';
 // 导入回测引擎 / Import backtest engine
 import { BacktestEngine, BacktestRunner } from './backtest/index.js';
 
+// 导入行情订阅器 (用于共享行情服务模式) / Import market data subscriber (for shared market data service mode)
+import { MarketDataSubscriber } from './services/index.js';
+
 // ============================================
 // 常量定义 / Constants Definition
 // ============================================
@@ -694,6 +697,54 @@ class TradingSystemRunner extends EventEmitter {
     // 输出日志 / Output log
     this._log('info', '初始化行情引擎... / Initializing market data engine...');
 
+    // 检查是否使用共享行情服务 / Check if using shared market data service
+    const useSharedMarketData = process.env.USE_SHARED_MARKET_DATA === 'true' ||
+                                 this.config.marketData?.useShared === true;
+
+    if (useSharedMarketData) {
+      // 使用共享行情服务模式 / Use shared market data service mode
+      this._log('info', '使用共享行情服务模式 / Using shared market data service mode');
+
+      // 创建行情订阅器 / Create market data subscriber
+      this.marketDataSubscriber = new MarketDataSubscriber({
+        redis: {
+          host: this.config.database?.redis?.host || process.env.REDIS_HOST || 'localhost',
+          port: this.config.database?.redis?.port || parseInt(process.env.REDIS_PORT || '6379', 10),
+          password: this.config.database?.redis?.password || process.env.REDIS_PASSWORD || null,
+          db: this.config.database?.redis?.db || parseInt(process.env.REDIS_DB || '0', 10),
+        },
+      });
+
+      // 连接到 Redis / Connect to Redis
+      await this.marketDataSubscriber.connect();
+
+      // 检查行情服务是否在线 / Check if market data service is online
+      const serviceAlive = await this.marketDataSubscriber.checkServiceStatus();
+      if (!serviceAlive) {
+        this._log('warn', '⚠️ 共享行情服务离线，等待连接... / Shared market data service offline, waiting...');
+      } else {
+        this._log('info', '✓ 共享行情服务在线 / Shared market data service online');
+      }
+
+      // 订阅行情服务离线/在线事件 / Subscribe to service offline/online events
+      this.marketDataSubscriber.on('serviceOffline', () => {
+        this._log('warn', '⚠️ 共享行情服务离线 / Shared market data service offline');
+        this.emit('marketDataServiceOffline');
+      });
+
+      this.marketDataSubscriber.on('serviceOnline', () => {
+        this._log('info', '✓ 共享行情服务恢复 / Shared market data service restored');
+        this.emit('marketDataServiceOnline');
+      });
+
+      // 设置 marketDataEngine 为 null (使用订阅器替代)
+      // Set marketDataEngine to null (using subscriber instead)
+      this.marketDataEngine = null;
+
+      return;
+    }
+
+    // 原有逻辑：独立创建行情引擎 / Original logic: Create independent market data engine
     // 获取已连接的交易所列表 (基于已配置密钥的交易所)
     // Get connected exchanges list (based on exchanges with configured API keys)
     const connectedExchanges = Array.from(this.exchanges.keys());
