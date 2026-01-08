@@ -135,6 +135,17 @@ const DEFAULT_CONFIG = {
     maxLen: 10000,            // 最大流长度 / Maximum stream length
     trimApprox: true,         // 近似裁剪 / Approximate trimming
   },
+  // WebSocket 连接池配置 / WebSocket connection pool configuration
+  connectionPool: {
+    maxSubscriptionsPerConnection: 100,  // 每个连接的最大订阅数 / Max subscriptions per connection
+    useCombinedStream: true,             // 是否使用 Binance Combined Stream / Use Binance Combined Stream
+  },
+  // 数据超时配置 / Data timeout configuration
+  dataTimeout: {
+    enabled: true,            // 是否启用数据超时检测 / Enable data timeout detection
+    timeout: 30000,           // 无数据超时毫秒 / No data timeout in milliseconds
+    checkInterval: 5000,      // 检查间隔毫秒 / Check interval in milliseconds
+  },
 };
 
 /**
@@ -170,6 +181,10 @@ export class MarketDataEngine extends EventEmitter {
       heartbeat: { ...DEFAULT_CONFIG.heartbeat, ...config.heartbeat },
       // 流配置 / Stream configuration
       stream: { ...DEFAULT_CONFIG.stream, ...config.stream },
+      // 连接池配置 / Connection pool configuration
+      connectionPool: { ...DEFAULT_CONFIG.connectionPool, ...config.connectionPool },
+      // 数据超时配置 / Data timeout configuration
+      dataTimeout: { ...DEFAULT_CONFIG.dataTimeout, ...config.dataTimeout },
       // 启用的交易所 / Enabled exchanges
       exchanges: config.exchanges || ['binance', 'bybit', 'okx'],
       // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
@@ -180,8 +195,13 @@ export class MarketDataEngine extends EventEmitter {
     // 内部状态 / Internal State
     // ============================================
 
-    // WebSocket 连接映射 { exchange: WebSocket } / WebSocket connection map
+    // WebSocket 连接映射 { exchange: WebSocket } (单连接模式) / WebSocket connection map (single connection mode)
+    // 或 { exchange: Map<connectionId, WebSocket> } (连接池模式) / Or connection pool mode
     this.connections = new Map();
+
+    // 连接池映射 { exchange: Map<connectionId, { ws, subscriptions: Set, lastDataTime }> }
+    // Connection pool map for exchanges that need multiple connections
+    this.connectionPools = new Map();
 
     // 连接状态映射 { exchange: { connected, reconnecting, attempt } } / Connection status map
     this.connectionStatus = new Map();
@@ -189,8 +209,21 @@ export class MarketDataEngine extends EventEmitter {
     // 订阅映射 { exchange: Set<subscriptionKey> } / Subscription map
     this.subscriptions = new Map();
 
-    // 心跳定时器映射 { exchange: timer } / Heartbeat timer map
+    // 订阅到连接的映射 { exchange: Map<subscriptionKey, connectionId> }
+    // Maps subscriptions to their connection IDs
+    this.subscriptionToConnection = new Map();
+
+    // 心跳定时器映射 { exchange: timer } 或 { exchange: Map<connectionId, timer> }
+    // Heartbeat timer map
     this.heartbeatTimers = new Map();
+
+    // 数据超时检测定时器映射 { exchange: timer } 或 { exchange: Map<connectionId, timer> }
+    // Data timeout check timer map
+    this.dataTimeoutTimers = new Map();
+
+    // 最后数据接收时间映射 { exchange: timestamp } 或 { exchange: Map<connectionId, timestamp> }
+    // Last data received time map
+    this.lastDataTime = new Map();
 
     // 时间同步数据 { exchange: { offset, lastSync } } / Time sync data
     this.timeSync = new Map();
@@ -539,6 +572,15 @@ export class MarketDataEngine extends EventEmitter {
       // 初始化订阅集合 / Initialize subscription set
       this.subscriptions.set(exchange, new Set());
 
+      // 初始化订阅到连接的映射 / Initialize subscription to connection mapping
+      this.subscriptionToConnection.set(exchange, new Map());
+
+      // 初始化连接池 / Initialize connection pool
+      this.connectionPools.set(exchange, new Map());
+
+      // 初始化最后数据接收时间 / Initialize last data received time
+      this.lastDataTime.set(exchange, new Map());
+
       // 初始化时间同步数据 / Initialize time sync data
       this.timeSync.set(exchange, {
         offset: 0,              // 时间偏移毫秒 / Time offset in milliseconds
@@ -660,7 +702,27 @@ export class MarketDataEngine extends EventEmitter {
   async _disconnectAllExchanges() {
     console.log(`${this.logPrefix} 正在断开所有交易所连接... / Disconnecting from all exchanges...`);
 
-    // 遍历所有连接 / Iterate all connections
+    // 遍历所有连接池 / Iterate all connection pools
+    for (const [exchange, pool] of this.connectionPools) {
+      // 停止所有数据超时检测 / Stop all data timeout checks
+      this._stopDataTimeoutCheck(exchange);
+
+      // 遍历连接池中的所有连接 / Iterate all connections in the pool
+      for (const [connectionId, connInfo] of pool) {
+        // 停止心跳 / Stop heartbeat
+        this._stopHeartbeatForConnection(exchange, connectionId);
+
+        // 关闭连接 / Close connection
+        if (connInfo.ws && connInfo.ws.readyState === WebSocket.OPEN) {
+          connInfo.ws.close(1000, 'Client disconnect');
+        }
+      }
+
+      // 清空连接池 / Clear connection pool
+      pool.clear();
+    }
+
+    // 遍历旧的单连接映射 (向后兼容) / Iterate old single connection map (backward compatibility)
     for (const [exchange, ws] of this.connections) {
       // 停止心跳 / Stop heartbeat
       this._stopHeartbeat(exchange);
@@ -680,6 +742,379 @@ export class MarketDataEngine extends EventEmitter {
 
     // 清空连接映射 / Clear connections map
     this.connections.clear();
+  }
+
+  // ============================================
+  // 私有方法 - Binance Combined Stream / Private Methods - Binance Combined Stream
+  // ============================================
+
+  /**
+   * 生成唯一的连接 ID
+   * Generate unique connection ID
+   *
+   * @returns {string} 连接 ID / Connection ID
+   * @private
+   */
+  _generateConnectionId() {
+    return `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * 获取 Binance 的 Combined Stream URL
+   * Get Binance Combined Stream URL
+   *
+   * @param {Array<string>} streams - 流名称数组 / Stream name array
+   * @returns {string} Combined Stream URL
+   * @private
+   */
+  _getBinanceCombinedStreamUrl(streams) {
+    const tradingType = this.config.tradingType;
+    const baseUrl = tradingType === 'spot'
+      ? 'wss://stream.binance.com:9443/stream'
+      : 'wss://fstream.binance.com/stream';
+
+    // 如果没有流，返回基础 URL / If no streams, return base URL
+    if (!streams || streams.length === 0) {
+      return baseUrl;
+    }
+
+    // 构建 Combined Stream URL / Build Combined Stream URL
+    return `${baseUrl}?streams=${streams.join('/')}`;
+  }
+
+  /**
+   * 将订阅键转换为 Binance 流名称
+   * Convert subscription key to Binance stream name
+   *
+   * @param {string} subKey - 订阅键 (格式: dataType:symbol) / Subscription key (format: dataType:symbol)
+   * @returns {string} Binance 流名称 / Binance stream name
+   * @private
+   */
+  _subscriptionKeyToBinanceStream(subKey) {
+    const [dataType, symbol] = subKey.split(':');
+    const binanceSymbol = symbol.replace('/', '').toLowerCase();
+
+    switch (dataType) {
+      case DATA_TYPES.TICKER:
+        return `${binanceSymbol}@ticker`;
+      case DATA_TYPES.DEPTH:
+        return `${binanceSymbol}@depth20@100ms`;
+      case DATA_TYPES.TRADE:
+        return `${binanceSymbol}@trade`;
+      case DATA_TYPES.FUNDING_RATE:
+        return `${binanceSymbol}@markPrice@1s`;
+      case DATA_TYPES.KLINE:
+        return `${binanceSymbol}@kline_1h`;
+      default:
+        return `${binanceSymbol}@ticker`;
+    }
+  }
+
+  /**
+   * 为 Binance 创建新的 Combined Stream 连接
+   * Create new Combined Stream connection for Binance
+   *
+   * @param {Array<string>} subscriptionKeys - 订阅键数组 / Subscription key array
+   * @returns {Promise<string>} 连接 ID / Connection ID
+   * @private
+   */
+  async _createBinanceCombinedStreamConnection(subscriptionKeys = []) {
+    const exchange = 'binance';
+    const connectionId = this._generateConnectionId();
+
+    // 转换订阅键为流名称 / Convert subscription keys to stream names
+    const streams = subscriptionKeys.map(key => this._subscriptionKeyToBinanceStream(key));
+
+    // 获取 Combined Stream URL / Get Combined Stream URL
+    const wsUrl = this._getBinanceCombinedStreamUrl(streams);
+
+    console.log(`${this.logPrefix} Binance 创建 Combined Stream 连接 / Creating Combined Stream connection: ${connectionId}, streams: ${streams.length}`);
+
+    return new Promise((resolve, reject) => {
+      try {
+        const ws = new WebSocket(wsUrl);
+
+        ws.on('open', () => {
+          console.log(`${this.logPrefix} Binance Combined Stream 连接成功 / Connected: ${connectionId}`);
+
+          // 创建连接信息对象 / Create connection info object
+          const connInfo = {
+            ws,
+            subscriptions: new Set(subscriptionKeys),
+            lastDataTime: Date.now(),
+            connectionId,
+          };
+
+          // 存储到连接池 / Store in connection pool
+          const pool = this.connectionPools.get(exchange);
+          pool.set(connectionId, connInfo);
+
+          // 更新订阅到连接的映射 / Update subscription to connection mapping
+          const subToConn = this.subscriptionToConnection.get(exchange);
+          for (const subKey of subscriptionKeys) {
+            subToConn.set(subKey, connectionId);
+          }
+
+          // 更新最后数据时间 / Update last data time
+          const lastDataTimeMap = this.lastDataTime.get(exchange);
+          lastDataTimeMap.set(connectionId, Date.now());
+
+          // 更新连接状态 / Update connection status
+          const status = this.connectionStatus.get(exchange);
+          status.connected = true;
+          status.reconnecting = false;
+          status.attempt = 0;
+
+          // 启动心跳 / Start heartbeat
+          this._startHeartbeatForConnection(exchange, connectionId);
+
+          // 启动数据超时检测 / Start data timeout check
+          this._startDataTimeoutCheck(exchange, connectionId);
+
+          resolve(connectionId);
+        });
+
+        ws.on('message', (data) => {
+          // 更新最后数据接收时间 / Update last data received time
+          const lastDataTimeMap = this.lastDataTime.get(exchange);
+          if (lastDataTimeMap) {
+            lastDataTimeMap.set(connectionId, Date.now());
+          }
+
+          // 处理消息 / Handle message
+          this._handleBinanceCombinedStreamMessage(connectionId, data);
+        });
+
+        ws.on('error', (error) => {
+          console.error(`${this.logPrefix} Binance Combined Stream 错误 / Error [${connectionId}]:`, error.message);
+          this.stats.errors++;
+          this.emit('error', { exchange, connectionId, error });
+        });
+
+        ws.on('close', (code, reason) => {
+          console.log(`${this.logPrefix} Binance Combined Stream 关闭 / Closed [${connectionId}] - Code: ${code}`);
+
+          // 停止心跳 / Stop heartbeat
+          this._stopHeartbeatForConnection(exchange, connectionId);
+
+          // 停止数据超时检测 / Stop data timeout check
+          this._stopDataTimeoutCheckForConnection(exchange, connectionId);
+
+          // 从连接池移除 / Remove from connection pool
+          const pool = this.connectionPools.get(exchange);
+          const connInfo = pool.get(connectionId);
+
+          if (connInfo) {
+            // 获取此连接的所有订阅 / Get all subscriptions for this connection
+            const subscriptionsToReconnect = Array.from(connInfo.subscriptions);
+            pool.delete(connectionId);
+
+            // 从订阅到连接映射中移除 / Remove from subscription to connection mapping
+            const subToConn = this.subscriptionToConnection.get(exchange);
+            for (const subKey of subscriptionsToReconnect) {
+              subToConn.delete(subKey);
+            }
+
+            // 如果有订阅需要重连，则尝试重连 / If there are subscriptions to reconnect, attempt reconnection
+            if (this.running && this.config.reconnect.enabled && subscriptionsToReconnect.length > 0) {
+              this._attemptBinanceCombinedStreamReconnect(subscriptionsToReconnect);
+            }
+          }
+
+          // 检查是否还有活跃连接 / Check if there are still active connections
+          if (pool.size === 0) {
+            const status = this.connectionStatus.get(exchange);
+            status.connected = false;
+          }
+
+          this.emit('disconnected', { exchange, connectionId, code, reason: reason.toString() });
+        });
+
+        ws.on('pong', () => {
+          const lastDataTimeMap = this.lastDataTime.get(exchange);
+          if (lastDataTimeMap) {
+            lastDataTimeMap.set(connectionId, Date.now());
+          }
+        });
+
+      } catch (error) {
+        console.error(`${this.logPrefix} 创建 Binance Combined Stream 失败 / Failed to create Combined Stream:`, error.message);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * 处理 Binance Combined Stream 消息
+   * Handle Binance Combined Stream message
+   *
+   * @param {string} connectionId - 连接 ID / Connection ID
+   * @param {Buffer|string} rawData - 原始消息数据 / Raw message data
+   * @private
+   */
+  _handleBinanceCombinedStreamMessage(connectionId, rawData) {
+    try {
+      const message = JSON.parse(rawData.toString());
+
+      // Combined Stream 消息格式: { stream: "btcusdt@ticker", data: {...} }
+      if (message.stream && message.data) {
+        // 转换为标准消息格式并处理 / Convert to standard message format and process
+        this._handleMessage('binance', JSON.stringify(message.data));
+      } else {
+        // 非数据消息 (如订阅确认) / Non-data message (e.g., subscription confirmation)
+        this._handleMessage('binance', rawData);
+      }
+    } catch (error) {
+      console.error(`${this.logPrefix} 解析 Binance Combined Stream 消息失败 / Failed to parse Combined Stream message:`, error.message);
+    }
+  }
+
+  /**
+   * 尝试重连 Binance Combined Stream
+   * Attempt to reconnect Binance Combined Stream
+   *
+   * @param {Array<string>} subscriptionKeys - 需要重新订阅的订阅键 / Subscription keys to resubscribe
+   * @private
+   */
+  async _attemptBinanceCombinedStreamReconnect(subscriptionKeys) {
+    const exchange = 'binance';
+    const status = this.connectionStatus.get(exchange);
+
+    // 计算延迟 / Calculate delay
+    const delay = Math.min(
+      this.config.reconnect.baseDelay * Math.pow(2, status.attempt),
+      this.config.reconnect.maxDelay
+    );
+
+    console.log(`${this.logPrefix} Binance Combined Stream 将在 ${delay}ms 后重连 / Will reconnect in ${delay}ms, subscriptions: ${subscriptionKeys.length}`);
+
+    setTimeout(async () => {
+      if (!this.running) return;
+
+      try {
+        // 按配置的最大订阅数分组 / Group by configured max subscriptions
+        const maxSubs = this.config.connectionPool.maxSubscriptionsPerConnection;
+        const chunks = [];
+        for (let i = 0; i < subscriptionKeys.length; i += maxSubs) {
+          chunks.push(subscriptionKeys.slice(i, i + maxSubs));
+        }
+
+        // 为每个分组创建新连接 / Create new connection for each chunk
+        for (const chunk of chunks) {
+          await this._createBinanceCombinedStreamConnection(chunk);
+        }
+
+        status.attempt = 0;
+      } catch (error) {
+        status.attempt++;
+        if (status.attempt < this.config.reconnect.maxAttempts) {
+          this._attemptBinanceCombinedStreamReconnect(subscriptionKeys);
+        } else {
+          console.error(`${this.logPrefix} Binance Combined Stream 重连失败，已达最大重试次数 / Reconnect failed, max attempts reached`);
+        }
+      }
+    }, delay);
+  }
+
+  /**
+   * 获取或创建 Binance 连接用于新订阅
+   * Get or create Binance connection for new subscription
+   *
+   * @param {string} subKey - 订阅键 / Subscription key
+   * @returns {Promise<string>} 连接 ID / Connection ID
+   * @private
+   */
+  async _getOrCreateBinanceConnection(subKey) {
+    const exchange = 'binance';
+    const pool = this.connectionPools.get(exchange);
+    const maxSubs = this.config.connectionPool.maxSubscriptionsPerConnection;
+
+    // 查找有空余容量的连接 / Find connection with available capacity
+    for (const [connectionId, connInfo] of pool) {
+      if (connInfo.subscriptions.size < maxSubs) {
+        return connectionId;
+      }
+    }
+
+    // 没有可用连接，创建新连接 / No available connection, create new one
+    return await this._createBinanceCombinedStreamConnection([]);
+  }
+
+  /**
+   * 向 Binance 连接添加订阅
+   * Add subscription to Binance connection
+   *
+   * @param {string} connectionId - 连接 ID / Connection ID
+   * @param {string} subKey - 订阅键 / Subscription key
+   * @private
+   */
+  _addSubscriptionToBinanceConnection(connectionId, subKey) {
+    const exchange = 'binance';
+    const pool = this.connectionPools.get(exchange);
+    const connInfo = pool.get(connectionId);
+
+    if (!connInfo || !connInfo.ws || connInfo.ws.readyState !== WebSocket.OPEN) {
+      console.warn(`${this.logPrefix} Binance 连接不可用 / Connection not available: ${connectionId}`);
+      return false;
+    }
+
+    // 添加到连接的订阅集合 / Add to connection's subscription set
+    connInfo.subscriptions.add(subKey);
+
+    // 更新订阅到连接的映射 / Update subscription to connection mapping
+    const subToConn = this.subscriptionToConnection.get(exchange);
+    subToConn.set(subKey, connectionId);
+
+    // 发送订阅消息 / Send subscription message
+    const stream = this._subscriptionKeyToBinanceStream(subKey);
+    const message = {
+      method: 'SUBSCRIBE',
+      params: [stream],
+      id: Date.now(),
+    };
+    connInfo.ws.send(JSON.stringify(message));
+
+    console.log(`${this.logPrefix} Binance 已订阅 / Subscribed [${connectionId}]: ${subKey}`);
+    return true;
+  }
+
+  /**
+   * 从 Binance 连接移除订阅
+   * Remove subscription from Binance connection
+   *
+   * @param {string} subKey - 订阅键 / Subscription key
+   * @private
+   */
+  _removeSubscriptionFromBinanceConnection(subKey) {
+    const exchange = 'binance';
+    const subToConn = this.subscriptionToConnection.get(exchange);
+    const connectionId = subToConn.get(subKey);
+
+    if (!connectionId) return;
+
+    const pool = this.connectionPools.get(exchange);
+    const connInfo = pool.get(connectionId);
+
+    if (connInfo) {
+      // 从连接的订阅集合移除 / Remove from connection's subscription set
+      connInfo.subscriptions.delete(subKey);
+
+      // 发送取消订阅消息 / Send unsubscribe message
+      if (connInfo.ws && connInfo.ws.readyState === WebSocket.OPEN) {
+        const stream = this._subscriptionKeyToBinanceStream(subKey);
+        const message = {
+          method: 'UNSUBSCRIBE',
+          params: [stream],
+          id: Date.now(),
+        };
+        connInfo.ws.send(JSON.stringify(message));
+      }
+
+      console.log(`${this.logPrefix} Binance 已取消订阅 / Unsubscribed [${connectionId}]: ${subKey}`);
+    }
+
+    // 从映射中移除 / Remove from mapping
+    subToConn.delete(subKey);
   }
 
   /**
@@ -730,11 +1165,17 @@ export class MarketDataEngine extends EventEmitter {
           status.reconnecting = false;
           status.attempt = 0;
 
+          // 初始化最后数据时间 / Initialize last data time
+          this._updateLastDataTime(exchange);
+
           // 同步时间 / Sync time
           this._syncTime(exchange);
 
           // 启动心跳 / Start heartbeat
           this._startHeartbeat(exchange);
+
+          // 启动数据超时检测 / Start data timeout check
+          this._startDataTimeoutCheck(exchange);
 
           // 重新订阅 / Resubscribe
           this._resubscribe(exchange);
@@ -748,6 +1189,9 @@ export class MarketDataEngine extends EventEmitter {
 
         // 接收消息事件 / Message received event
         ws.on('message', (data) => {
+          // 更新最后数据接收时间 / Update last data received time
+          this._updateLastDataTime(exchange);
+
           // 处理消息 / Handle message
           this._handleMessage(exchange, data);
         });
@@ -780,6 +1224,9 @@ export class MarketDataEngine extends EventEmitter {
           // 停止心跳 / Stop heartbeat
           this._stopHeartbeat(exchange);
 
+          // 停止数据超时检测 / Stop data timeout check
+          this._stopDataTimeoutCheck(exchange);
+
           // 从连接映射中移除 / Remove from connections map
           this.connections.delete(exchange);
 
@@ -794,6 +1241,9 @@ export class MarketDataEngine extends EventEmitter {
 
         // Pong 事件 (心跳响应) / Pong event (heartbeat response)
         ws.on('pong', () => {
+          // 更新最后数据时间 / Update last data time
+          this._updateLastDataTime(exchange);
+
           // 更新时间同步 / Update time sync
           const sync = this.timeSync.get(exchange);
           if (sync) {
@@ -1130,11 +1580,216 @@ export class MarketDataEngine extends EventEmitter {
   _clearAllHeartbeats() {
     // 遍历所有定时器 / Iterate all timers
     for (const [exchange, timer] of this.heartbeatTimers) {
-      clearInterval(timer);
+      if (timer instanceof Map) {
+        // 连接池模式 / Connection pool mode
+        for (const [, t] of timer) {
+          clearInterval(t);
+        }
+      } else {
+        clearInterval(timer);
+      }
     }
 
     // 清空映射 / Clear map
     this.heartbeatTimers.clear();
+  }
+
+  /**
+   * 为连接池中的特定连接启动心跳
+   * Start heartbeat for specific connection in pool
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {string} connectionId - 连接 ID / Connection ID
+   * @private
+   */
+  _startHeartbeatForConnection(exchange, connectionId) {
+    if (!this.config.heartbeat.enabled) return;
+
+    const pool = this.connectionPools.get(exchange);
+    const connInfo = pool?.get(connectionId);
+    if (!connInfo || !connInfo.ws) return;
+
+    // 获取或创建心跳定时器映射 / Get or create heartbeat timer map
+    let timerMap = this.heartbeatTimers.get(exchange);
+    if (!(timerMap instanceof Map)) {
+      timerMap = new Map();
+      this.heartbeatTimers.set(exchange, timerMap);
+    }
+
+    // 停止现有心跳 / Stop existing heartbeat
+    const existingTimer = timerMap.get(connectionId);
+    if (existingTimer) {
+      clearInterval(existingTimer);
+    }
+
+    const heartbeatInterval = this.config.heartbeat.interval;
+
+    const timer = setInterval(() => {
+      if (connInfo.ws && connInfo.ws.readyState === WebSocket.OPEN) {
+        // Binance 使用 WebSocket ping / Binance uses WebSocket ping
+        connInfo.ws.ping();
+      }
+    }, heartbeatInterval);
+
+    timerMap.set(connectionId, timer);
+  }
+
+  /**
+   * 停止连接池中特定连接的心跳
+   * Stop heartbeat for specific connection in pool
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {string} connectionId - 连接 ID / Connection ID
+   * @private
+   */
+  _stopHeartbeatForConnection(exchange, connectionId) {
+    const timerMap = this.heartbeatTimers.get(exchange);
+    if (timerMap instanceof Map) {
+      const timer = timerMap.get(connectionId);
+      if (timer) {
+        clearInterval(timer);
+        timerMap.delete(connectionId);
+      }
+    }
+  }
+
+  // ============================================
+  // 私有方法 - 数据超时检测 / Private Methods - Data Timeout Detection
+  // ============================================
+
+  /**
+   * 启动数据超时检测
+   * Start data timeout check
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {string} connectionId - 连接 ID (可选，用于连接池模式) / Connection ID (optional, for connection pool mode)
+   * @private
+   */
+  _startDataTimeoutCheck(exchange, connectionId = null) {
+    if (!this.config.dataTimeout.enabled) return;
+
+    const checkInterval = this.config.dataTimeout.checkInterval;
+    const timeout = this.config.dataTimeout.timeout;
+
+    // 获取或创建数据超时定时器映射 / Get or create data timeout timer map
+    let timerMap = this.dataTimeoutTimers.get(exchange);
+    if (!timerMap) {
+      timerMap = new Map();
+      this.dataTimeoutTimers.set(exchange, timerMap);
+    }
+
+    const timerId = connectionId || 'default';
+
+    // 停止现有检测 / Stop existing check
+    const existingTimer = timerMap.get(timerId);
+    if (existingTimer) {
+      clearInterval(existingTimer);
+    }
+
+    const timer = setInterval(() => {
+      this._checkDataTimeout(exchange, connectionId);
+    }, checkInterval);
+
+    timerMap.set(timerId, timer);
+
+    console.log(`${this.logPrefix} ${exchange} 数据超时检测已启动 / Data timeout check started${connectionId ? ` [${connectionId}]` : ''}`);
+  }
+
+  /**
+   * 停止数据超时检测
+   * Stop data timeout check
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @private
+   */
+  _stopDataTimeoutCheck(exchange) {
+    const timerMap = this.dataTimeoutTimers.get(exchange);
+    if (timerMap) {
+      for (const [, timer] of timerMap) {
+        clearInterval(timer);
+      }
+      timerMap.clear();
+    }
+  }
+
+  /**
+   * 停止特定连接的数据超时检测
+   * Stop data timeout check for specific connection
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {string} connectionId - 连接 ID / Connection ID
+   * @private
+   */
+  _stopDataTimeoutCheckForConnection(exchange, connectionId) {
+    const timerMap = this.dataTimeoutTimers.get(exchange);
+    if (timerMap) {
+      const timer = timerMap.get(connectionId);
+      if (timer) {
+        clearInterval(timer);
+        timerMap.delete(connectionId);
+      }
+    }
+  }
+
+  /**
+   * 检查数据超时并触发重连
+   * Check data timeout and trigger reconnection
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @param {string} connectionId - 连接 ID (可选) / Connection ID (optional)
+   * @private
+   */
+  _checkDataTimeout(exchange, connectionId = null) {
+    const timeout = this.config.dataTimeout.timeout;
+    const now = Date.now();
+
+    if (connectionId) {
+      // 连接池模式 / Connection pool mode
+      const lastDataTimeMap = this.lastDataTime.get(exchange);
+      const lastTime = lastDataTimeMap?.get(connectionId);
+
+      if (lastTime && (now - lastTime) > timeout) {
+        console.warn(`${this.logPrefix} ${exchange} [${connectionId}] 数据超时 (${now - lastTime}ms)，触发重连 / Data timeout, triggering reconnection`);
+
+        // 获取连接信息 / Get connection info
+        const pool = this.connectionPools.get(exchange);
+        const connInfo = pool?.get(connectionId);
+
+        if (connInfo && connInfo.ws) {
+          // 关闭连接触发重连 / Close connection to trigger reconnection
+          connInfo.ws.close(4000, 'Data timeout');
+        }
+      }
+    } else {
+      // 单连接模式 / Single connection mode
+      const lastTimeMap = this.lastDataTime.get(exchange);
+      const lastTime = lastTimeMap?.get('default') || 0;
+
+      if (lastTime && (now - lastTime) > timeout) {
+        console.warn(`${this.logPrefix} ${exchange} 数据超时 (${now - lastTime}ms)，触发重连 / Data timeout, triggering reconnection`);
+
+        const ws = this.connections.get(exchange);
+        if (ws) {
+          ws.close(4000, 'Data timeout');
+        }
+      }
+    }
+  }
+
+  /**
+   * 更新最后数据接收时间 (用于单连接模式)
+   * Update last data received time (for single connection mode)
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @private
+   */
+  _updateLastDataTime(exchange) {
+    let lastDataTimeMap = this.lastDataTime.get(exchange);
+    if (!lastDataTimeMap) {
+      lastDataTimeMap = new Map();
+      this.lastDataTime.set(exchange, lastDataTimeMap);
+    }
+    lastDataTimeMap.set('default', Date.now());
   }
 
   // ============================================
@@ -1151,13 +1806,6 @@ export class MarketDataEngine extends EventEmitter {
    * @private
    */
   async _subscribeToExchange(exchange, symbol, dataType) {
-    // 获取 WebSocket 连接 / Get WebSocket connection
-    const ws = this.connections.get(exchange);
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      console.warn(`${this.logPrefix} ${exchange} 未连接，跳过订阅 / Not connected, skipping subscription`);
-      return;
-    }
-
     // 构建订阅键 / Build subscription key
     const subKey = `${dataType}:${symbol}`;
 
@@ -1166,6 +1814,30 @@ export class MarketDataEngine extends EventEmitter {
 
     // 如果已订阅，跳过 / If already subscribed, skip
     if (subs.has(subKey)) {
+      return;
+    }
+
+    // Binance 使用 Combined Stream 连接池 / Binance uses Combined Stream connection pool
+    if (exchange === 'binance' && this.config.connectionPool.useCombinedStream) {
+      try {
+        // 获取或创建连接 / Get or create connection
+        const connectionId = await this._getOrCreateBinanceConnection(subKey);
+
+        // 添加订阅到连接 / Add subscription to connection
+        if (this._addSubscriptionToBinanceConnection(connectionId, subKey)) {
+          // 添加到全局订阅集合 / Add to global subscription set
+          subs.add(subKey);
+        }
+      } catch (error) {
+        console.error(`${this.logPrefix} Binance 订阅失败 / Subscription failed: ${subKey}`, error.message);
+      }
+      return;
+    }
+
+    // 其他交易所使用单连接模式 / Other exchanges use single connection mode
+    const ws = this.connections.get(exchange);
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.warn(`${this.logPrefix} ${exchange} 未连接，跳过订阅 / Not connected, skipping subscription`);
       return;
     }
 
@@ -1191,12 +1863,6 @@ export class MarketDataEngine extends EventEmitter {
    * @private
    */
   async _unsubscribeFromExchange(exchange, symbol, dataType) {
-    // 获取 WebSocket 连接 / Get WebSocket connection
-    const ws = this.connections.get(exchange);
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
-
     // 构建订阅键 / Build subscription key
     const subKey = `${dataType}:${symbol}`;
 
@@ -1210,6 +1876,18 @@ export class MarketDataEngine extends EventEmitter {
 
     // 从订阅集合移除 / Remove from subscription set
     subs.delete(subKey);
+
+    // Binance 使用 Combined Stream 连接池 / Binance uses Combined Stream connection pool
+    if (exchange === 'binance' && this.config.connectionPool.useCombinedStream) {
+      this._removeSubscriptionFromBinanceConnection(subKey);
+      return;
+    }
+
+    // 其他交易所使用单连接模式 / Other exchanges use single connection mode
+    const ws = this.connections.get(exchange);
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
 
     // 构建取消订阅消息 / Build unsubscribe message
     const message = this._buildUnsubscribeMessage(exchange, symbol, dataType);
