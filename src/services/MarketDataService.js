@@ -429,7 +429,8 @@ export class MarketDataService extends EventEmitter {
     try {
       // 构建频道名 / Build channel name
       const exchange = data.exchange || 'unknown';
-      const symbol = data.symbol || 'unknown';
+      // 标准化交易对格式，移除 :USDT 后缀 / Normalize symbol format, remove :USDT suffix
+      const symbol = (data.symbol || 'unknown').replace(/:USDT$/, '');
       const channel = `${REDIS_KEYS[dataType.toUpperCase()]}:${exchange}:${symbol}`;
 
       // 添加时间戳 / Add timestamp

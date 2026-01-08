@@ -1792,6 +1792,24 @@ export class MarketDataEngine extends EventEmitter {
     lastDataTimeMap.set('default', Date.now());
   }
 
+  /**
+   * 标准化交易对格式
+   * Normalize symbol format
+   *
+   * 移除永续合约的 :USDT 后缀，确保订阅键与数据键格式一致
+   * Remove :USDT suffix for perpetual contracts to ensure subscription key matches data key format
+   *
+   * @param {string} symbol - 交易对 / Trading pair (e.g., BTC/USDT:USDT or BTC/USDT)
+   * @returns {string} 标准化的交易对 / Normalized symbol (e.g., BTC/USDT)
+   * @private
+   */
+  _normalizeSymbol(symbol) {
+    // 移除永续合约的 :USDT 后缀 / Remove perpetual contract :USDT suffix
+    // BTC/USDT:USDT -> BTC/USDT
+    // ETH/USDT:USDT -> ETH/USDT
+    return symbol.replace(/:USDT$/, '');
+  }
+
   // ============================================
   // 私有方法 - 订阅 / Private Methods - Subscription
   // ============================================
@@ -1806,8 +1824,12 @@ export class MarketDataEngine extends EventEmitter {
    * @private
    */
   async _subscribeToExchange(exchange, symbol, dataType) {
+    // 标准化交易对格式 / Normalize symbol format
+    // 确保订阅键与数据键格式一致 / Ensure subscription key matches data key format
+    const normalizedSymbol = this._normalizeSymbol(symbol);
+
     // 构建订阅键 / Build subscription key
-    const subKey = `${dataType}:${symbol}`;
+    const subKey = `${dataType}:${normalizedSymbol}`;
 
     // 获取订阅集合 / Get subscription set
     const subs = this.subscriptions.get(exchange);
@@ -1863,8 +1885,12 @@ export class MarketDataEngine extends EventEmitter {
    * @private
    */
   async _unsubscribeFromExchange(exchange, symbol, dataType) {
+    // 标准化交易对格式 / Normalize symbol format
+    // 确保订阅键与数据键格式一致 / Ensure subscription key matches data key format
+    const normalizedSymbol = this._normalizeSymbol(symbol);
+
     // 构建订阅键 / Build subscription key
-    const subKey = `${dataType}:${symbol}`;
+    const subKey = `${dataType}:${normalizedSymbol}`;
 
     // 获取订阅集合 / Get subscription set
     const subs = this.subscriptions.get(exchange);

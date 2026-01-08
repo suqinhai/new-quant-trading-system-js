@@ -377,7 +377,22 @@ export class MarketDataSubscriber extends EventEmitter {
    */
   _buildChannel(exchange, symbol, dataType) {
     const prefix = REDIS_KEYS[dataType.toUpperCase()] || REDIS_KEYS.TICKER;
-    return `${prefix}:${exchange}:${symbol}`;
+    // 标准化交易对格式，移除 :USDT 后缀 / Normalize symbol format, remove :USDT suffix
+    const normalizedSymbol = this._normalizeSymbol(symbol);
+    return `${prefix}:${exchange}:${normalizedSymbol}`;
+  }
+
+  /**
+   * 标准化交易对格式
+   * Normalize symbol format
+   *
+   * @param {string} symbol - 交易对 / Trading pair (e.g., BTC/USDT:USDT or BTC/USDT)
+   * @returns {string} 标准化的交易对 / Normalized symbol (e.g., BTC/USDT)
+   * @private
+   */
+  _normalizeSymbol(symbol) {
+    // 移除永续合约的 :USDT 后缀 / Remove perpetual contract :USDT suffix
+    return symbol.replace(/:USDT$/, '');
   }
 
   /**
