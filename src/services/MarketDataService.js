@@ -18,6 +18,40 @@ import { MarketDataEngine } from '../marketdata/MarketDataEngine.js';
 // 导入交易所工厂 / Import exchange factory
 import { ExchangeFactory } from '../exchange/ExchangeFactory.js';
 
+// 导入配置加载器 / Import configuration loader
+import { loadConfig } from '../../config/index.js';
+
+/**
+ * 获取已配置 API 密钥的交易所列表
+ * Get list of exchanges with configured API keys
+ * @returns {string[]} 已配置的交易所列表 / List of configured exchanges
+ */
+function getConfiguredExchanges() {
+  const config = loadConfig();
+  const exchangeConfig = config.exchange || {};
+  const configuredExchanges = [];
+
+  // 支持的交易所列表 / Supported exchanges list
+  const supportedExchanges = ['binance', 'okx', 'gate', 'bybit', 'bitget', 'kucoin', 'kraken', 'deribit'];
+
+  for (const exchange of supportedExchanges) {
+    const exchangeSettings = exchangeConfig[exchange];
+    // 检查是否配置了 apiKey / Check if apiKey is configured
+    if (exchangeSettings && exchangeSettings.apiKey) {
+      configuredExchanges.push(exchange);
+    }
+  }
+
+  // 如果没有配置任何交易所，返回默认列表 / If no exchange configured, return default list
+  if (configuredExchanges.length === 0) {
+    console.warn('[MarketDataService] 未检测到已配置的交易所，使用默认列表 / No configured exchanges detected, using defaults');
+    return ['binance'];
+  }
+
+  console.log(`[MarketDataService] 检测到已配置的交易所 / Detected configured exchanges: ${configuredExchanges.join(', ')}`);
+  return configuredExchanges;
+}
+
 /**
  * Redis 键前缀配置
  * Redis key prefix configuration
@@ -51,8 +85,11 @@ const DEFAULT_CONFIG = {
     db: parseInt(process.env.REDIS_DB || '0', 10),
   },
 
-  // 交易所列表 / Exchange list
-  exchanges: (process.env.MARKET_DATA_EXCHANGES || 'binance,okx,bybit').split(','),
+  // 交易所列表 (优先环境变量，否则动态获取已配置的交易所)
+  // Exchange list (prefer env var, otherwise dynamically get configured exchanges)
+  exchanges: process.env.MARKET_DATA_EXCHANGES
+    ? process.env.MARKET_DATA_EXCHANGES.split(',')
+    : getConfiguredExchanges(),
 
   // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
   tradingType: process.env.TRADING_TYPE || 'swap',
