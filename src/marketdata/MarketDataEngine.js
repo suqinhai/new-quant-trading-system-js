@@ -3571,11 +3571,13 @@ export class MarketDataEngine extends EventEmitter {
     // 发布到 Redis Channel / Publish to Redis Channel
     this._publishToChannel(DATA_TYPES.KLINE, candle);
 
-    // 链路日志: 发出 candle 事件 / Chain log: Emit candle event
-    console.log(
-      `${this.logPrefix} [链路] 发出candle事件: ${candle.exchange}:${candle.symbol} ` +
-      `close=${candle.close} isClosed=${candle.isClosed} / Emitting candle event`
-    );
+    // 链路日志: 仅在 K 线闭合时记录 (减少日志量) / Chain log: Only log when candle is closed (reduce log volume)
+    if (candle.isClosed) {
+      console.log(
+        `${this.logPrefix} [链路] K线闭合: ${candle.exchange}:${candle.symbol} ` +
+        `close=${candle.close} / Candle closed`
+      );
+    }
 
     // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
     this.emit('candle', {
