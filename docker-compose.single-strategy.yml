@@ -39,6 +39,7 @@ services:
       MASTER_KEY: ${MASTER_KEY}
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       # 行情服务配置 / Market data service configuration
       MARKET_DATA_EXCHANGES: ${MARKET_DATA_EXCHANGES:-binance,okx,bybit}
       TRADING_TYPE: ${TRADING_TYPE:-futures}
@@ -47,7 +48,7 @@ services:
       MARKET_DATA_SYMBOLS: ${MARKET_DATA_SYMBOLS:-}
     command: ["node", "src/services/market-data-service.js"]
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1'}); r.get('market:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1',password:process.env.REDIS_PASSWORD||undefined}); r.get('market:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -88,6 +89,7 @@ services:
       MASTER_KEY: ${MASTER_KEY}
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       # Telegram 配置 / Telegram configuration
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
@@ -98,7 +100,7 @@ services:
       MAX_QUEUE_LENGTH: ${MAX_QUEUE_LENGTH:-100}
     command: ["node", "src/services/notification-service.js"]
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1'}); r.get('notification:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"const Redis = require('ioredis'); const r = new Redis({host:'127.0.0.1',password:process.env.REDIS_PASSWORD||undefined}); r.get('notification:service:heartbeat').then(v => process.exit(v ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 3

@@ -1540,6 +1540,9 @@ class TradingSystemRunner extends EventEmitter {
    * @private
    */
   async _subscribeMarketData() {
+    // 检查是否使用共享行情模式 / Check if using shared market data mode
+    const useSharedMarketData = this.marketDataSubscriber && !this.marketDataEngine;
+
     // 获取基础交易对 / Get base symbols
     const baseSymbols = this.options.symbols.length > 0
       ? this.options.symbols
@@ -1566,6 +1569,40 @@ class TradingSystemRunner extends EventEmitter {
     this._log('info', `数据类型: ${requiredDataTypes.join(', ')} / Data types`);
     if (strategySymbols.length > 0) {
       this._log('info', `策略额外需要的交易对: ${strategySymbols.join(', ')} / Strategy required symbols`);
+    }
+
+    // 共享行情模式：使用 MarketDataSubscriber / Shared mode: use MarketDataSubscriber
+    if (useSharedMarketData) {
+      this._log('info', '使用共享行情订阅器 / Using shared market data subscriber');
+
+      // 获取已连接的交易所列表 / Get connected exchanges
+      const connectedExchanges = Array.from(this.exchanges.keys());
+
+      // 遍历订阅 / Iterate and subscribe
+      for (const symbol of symbols) {
+        for (const dataType of requiredDataTypes) {
+          // 为每个交易所订阅 / Subscribe for each exchange
+          for (const exchange of connectedExchanges) {
+            try {
+              await this.marketDataSubscriber.subscribe(exchange, symbol, [dataType]);
+            } catch (err) {
+              this._log('warn', `订阅失败 ${exchange}:${symbol}:${dataType}: ${err.message} / Subscribe failed`);
+            }
+          }
+        }
+      }
+
+      // 预加载历史 K 线数据 (共享模式暂不支持) / Preload historical candles (not supported in shared mode)
+      if (requiredDataTypes.includes('kline')) {
+        this._log('info', '共享行情模式下跳过历史数据预加载 / Skipping historical data preload in shared mode');
+      }
+
+      return;
+    }
+
+    // 独立模式：使用 MarketDataEngine / Independent mode: use MarketDataEngine
+    if (!this.marketDataEngine) {
+      throw new Error('MarketDataEngine 未初始化 / MarketDataEngine not initialized');
     }
 
     // 遍历订阅 / Iterate and subscribe
