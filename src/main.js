@@ -1592,9 +1592,9 @@ class TradingSystemRunner extends EventEmitter {
         }
       }
 
-      // 预加载历史 K 线数据 (共享模式暂不支持) / Preload historical candles (not supported in shared mode)
+      // 预加载历史 K 线数据 (共享模式也需要预加载) / Preload historical candles (also needed in shared mode)
       if (requiredDataTypes.includes('kline')) {
-        this._log('info', '共享行情模式下跳过历史数据预加载 / Skipping historical data preload in shared mode');
+        await this._preloadHistoricalCandles(symbols);
       }
 
       return;
