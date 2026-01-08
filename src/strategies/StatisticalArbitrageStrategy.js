@@ -71,10 +71,11 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 候选配对列表 (可动态发现或手动指定)
+  // 注意: 永续合约需要使用 :USDT 后缀格式
   candidatePairs: [
-    { assetA: 'BTC/USDT', assetB: 'ETH/USDT' },
-    { assetA: 'ETH/USDT', assetB: 'BNB/USDT' },
-    { assetA: 'SOL/USDT', assetB: 'AVAX/USDT' },
+    { assetA: 'BTC/USDT:USDT', assetB: 'ETH/USDT:USDT' },
+    { assetA: 'ETH/USDT:USDT', assetB: 'BNB/USDT:USDT' },
+    { assetA: 'SOL/USDT:USDT', assetB: 'AVAX/USDT:USDT' },
   ],
 
   // 最大同时持有配对数
