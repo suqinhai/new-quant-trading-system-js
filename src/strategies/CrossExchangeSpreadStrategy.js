@@ -67,9 +67,10 @@ const DEFAULT_CONFIG = {
   name: 'CrossExchangeSpreadStrategy',
 
   // 监控的交易对列表 / Symbols to monitor
+  // 注意: 永续合约需要使用 :USDT 后缀格式
   symbols: [
-    'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
-    'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT',
+    'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'SOL/USDT:USDT', 'XRP/USDT:USDT',
+    'ADA/USDT:USDT', 'AVAX/USDT:USDT', 'DOGE/USDT:USDT', 'DOT/USDT:USDT', 'MATIC/USDT:USDT',
   ],
 
   // 监控的交易所 / Exchanges to monitor
