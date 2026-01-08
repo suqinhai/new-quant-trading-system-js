@@ -2121,9 +2121,9 @@ export class FundingArbStrategy extends BaseStrategy {
         const amount = positionSize / currentPrice;
 
         if (side === 'long') {
-          this.buy(candle.symbol || 'BTC/USDT', amount);
+          this.buy(candle.symbol || 'BTC/USDT:USDT', amount);
         } else {
-          this.sell(candle.symbol || 'BTC/USDT', amount);
+          this.sell(candle.symbol || 'BTC/USDT:USDT', amount);
         }
 
         // 记录状态 / Record state
