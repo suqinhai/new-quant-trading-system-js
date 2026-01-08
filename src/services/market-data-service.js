@@ -12,7 +12,7 @@
  *   REDIS_PASSWORD - Redis 密码
  *   REDIS_DB - Redis 数据库 (默认: 0)
  *   MARKET_DATA_EXCHANGES - 交易所列表 (默认: binance,okx,bybit)
- *   TRADING_TYPE - 交易类型 (默认: futures)
+ *   TRADING_TYPE - 交易类型 (默认: swap)
  *   MARKET_DATA_SYMBOLS - 指定订阅的交易对 (可选，逗号分隔)
  *   SUBSCRIBE_ALL - 是否订阅所有交易对 (默认: true)
  */
@@ -73,7 +73,7 @@ function printHelp() {
   --symbols <list>        交易对列表 (逗号分隔) / Symbol list (comma separated)
                           默认: 订阅所有
   --trading-type <type>   交易类型 / Trading type
-                          默认: futures
+                          默认: swap
   --redis-host <host>     Redis 主机 / Redis host
                           默认: localhost
   --redis-port <port>     Redis 端口 / Redis port

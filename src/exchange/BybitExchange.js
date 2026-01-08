@@ -41,20 +41,13 @@ export class BybitExchange extends BaseExchange {
    * @protected
    */
   _createExchange() {
-    // 创建并返回 CCXT Bybit 实例 / Create and return CCXT Bybit instance
-    return new ccxt.bybit({
-      // API 认证信息 / API authentication
-      apiKey: this.config.apiKey,         // API 密钥 / API key
-      secret: this.config.secret,         // API 密钥 / API secret
-
+    // 构建配置对象，只在有值时添加 apiKey/secret / Build config object, only add apiKey/secret if they have values
+    const exchangeConfig = {
       // 是否启用速率限制 / Whether to enable rate limiting
       enableRateLimit: this.config.enableRateLimit,
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
       timeout: this.config.timeout,
-
-      // 代理设置 / Proxy settings
-      proxy: this.config.proxy,
 
       // 配置选项 / Configuration options
       options: {
@@ -75,7 +68,23 @@ export class BybitExchange extends BaseExchange {
         // 合并额外选项 / Merge additional options
         ...this.config.options,
       },
-    });
+    };
+
+    // 只在有 API 密钥时添加认证信息 / Only add auth info when API key exists
+    if (this.config.apiKey) {
+      exchangeConfig.apiKey = this.config.apiKey;
+    }
+    if (this.config.secret) {
+      exchangeConfig.secret = this.config.secret;
+    }
+
+    // 只在有代理设置时添加 / Only add proxy if set
+    if (this.config.proxy) {
+      exchangeConfig.proxy = this.config.proxy;
+    }
+
+    // 创建并返回 CCXT Bybit 实例 / Create and return CCXT Bybit instance
+    return new ccxt.bybit(exchangeConfig);
   }
 
   // ============================================

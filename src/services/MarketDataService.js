@@ -54,8 +54,8 @@ const DEFAULT_CONFIG = {
   // 交易所列表 / Exchange list
   exchanges: (process.env.MARKET_DATA_EXCHANGES || 'binance,okx,bybit').split(','),
 
-  // 交易类型 / Trading type
-  tradingType: process.env.TRADING_TYPE || 'futures',
+  // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
+  tradingType: process.env.TRADING_TYPE || 'swap',
 
   // 心跳间隔 (毫秒) / Heartbeat interval (ms)
   heartbeatInterval: 5000,
@@ -430,7 +430,7 @@ export class MarketDataService extends EventEmitter {
     if (this.config.symbols.length > 0) {
       for (const exchange of this.config.exchanges) {
         for (const symbol of this.config.symbols) {
-          await this.marketDataEngine.subscribe(exchange, symbol, ['ticker', 'depth']);
+          await this.marketDataEngine.subscribe(symbol, ['ticker', 'depth'], [exchange]);
         }
       }
       console.log(`${this.logPrefix} 已订阅 ${this.config.symbols.length} 个指定交易对 / Subscribed to ${this.config.symbols.length} specified symbols`);
@@ -462,7 +462,7 @@ export class MarketDataService extends EventEmitter {
 
           // 订阅 ticker 和 depth / Subscribe to ticker and depth
           for (const symbol of symbols.slice(0, 100)) { // 限制前 100 个 / Limit to first 100
-            await this.marketDataEngine.subscribe(exchange, symbol, ['ticker']);
+            await this.marketDataEngine.subscribe(symbol, ['ticker'], [exchange]);
           }
 
         } catch (error) {
@@ -519,10 +519,10 @@ export class MarketDataService extends EventEmitter {
         const { action, exchange, symbol, dataTypes } = request;
 
         if (action === 'subscribe') {
-          await this.marketDataEngine.subscribe(exchange, symbol, dataTypes || ['ticker']);
+          await this.marketDataEngine.subscribe(symbol, dataTypes || ['ticker'], [exchange]);
           console.log(`${this.logPrefix} 动态订阅 / Dynamic subscribe: ${exchange}:${symbol}`);
         } else if (action === 'unsubscribe') {
-          await this.marketDataEngine.unsubscribe(exchange, symbol, dataTypes || ['ticker']);
+          await this.marketDataEngine.unsubscribe(symbol, dataTypes || ['ticker'], [exchange]);
           console.log(`${this.logPrefix} 取消订阅 / Unsubscribe: ${exchange}:${symbol}`);
         }
       } catch (error) {

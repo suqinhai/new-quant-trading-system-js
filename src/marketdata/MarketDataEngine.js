@@ -172,8 +172,8 @@ export class MarketDataEngine extends EventEmitter {
       stream: { ...DEFAULT_CONFIG.stream, ...config.stream },
       // 启用的交易所 / Enabled exchanges
       exchanges: config.exchanges || ['binance', 'bybit', 'okx'],
-      // 交易类型 / Trading type
-      tradingType: config.tradingType || 'futures',
+      // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
+      tradingType: config.tradingType || 'swap',
     };
 
     // ============================================
