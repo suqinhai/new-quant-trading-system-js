@@ -54,10 +54,11 @@ const DEFAULT_CONFIG = {
   name: 'MomentumRankStrategy',
 
   // 监控的交易对列表 / Symbols to monitor
+  // 注意: 永续合约需要使用 :USDT 后缀格式
   symbols: [
-    'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
-    'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT',
-    'LINK/USDT', 'UNI/USDT', 'ATOM/USDT', 'LTC/USDT', 'ETC/USDT',
+    'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'SOL/USDT:USDT', 'XRP/USDT:USDT',
+    'ADA/USDT:USDT', 'AVAX/USDT:USDT', 'DOGE/USDT:USDT', 'DOT/USDT:USDT', 'MATIC/USDT:USDT',
+    'LINK/USDT:USDT', 'UNI/USDT:USDT', 'ATOM/USDT:USDT', 'LTC/USDT:USDT', 'ETC/USDT:USDT',
   ],
 
   // ============================================
