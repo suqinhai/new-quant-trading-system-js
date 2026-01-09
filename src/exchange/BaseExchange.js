@@ -287,8 +287,11 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 检查交易所是否支持 / Check if exchange supports this
     if (!this.exchange.has['fetchFundingRate']) {
@@ -298,7 +301,7 @@ export class BaseExchange extends EventEmitter {
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => {
       // 调用 CCXT 获取资金费率 / Call CCXT to fetch funding rate
-      const fundingRate = await this.exchange.fetchFundingRate(symbol);
+      const fundingRate = await this.exchange.fetchFundingRate(validSymbol);
 
       // 返回统一格式 / Return unified format
       return {
@@ -350,21 +353,24 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 验证订单参数 / Validate order parameters
     this._validateOrderParams(side, type, amount, price);
 
     // 调整数量精度 / Adjust amount precision
-    const adjustedAmount = this._adjustPrecision(symbol, 'amount', amount);
+    const adjustedAmount = this._adjustPrecision(validSymbol, 'amount', amount);
 
     // 调整价格精度 (如果有价格) / Adjust price precision (if price exists)
-    const adjustedPrice = price ? this._adjustPrecision(symbol, 'price', price) : undefined;
+    const adjustedPrice = price ? this._adjustPrecision(validSymbol, 'price', price) : undefined;
 
     // 记录日志 / Log
     console.log(`[${this.name}] 创建订单 / Creating order:`, {
-      symbol,
+      symbol: validSymbol,
       side,
       type,
       amount: adjustedAmount,
@@ -376,7 +382,7 @@ export class BaseExchange extends EventEmitter {
     return this._executeWithRetry(async () => {
       // 调用 CCXT 创建订单 / Call CCXT to create order
       const order = await this.exchange.createOrder(
-        symbol,           // 交易对 / Symbol
+        validSymbol,      // 交易对 / Symbol
         type,             // 订单类型 / Order type
         side,             // 买卖方向 / Side
         adjustedAmount,   // 数量 / Amount
@@ -395,7 +401,7 @@ export class BaseExchange extends EventEmitter {
 
       // 返回统一格式订单 / Return unified order
       return unifiedOrder;
-    }, `创建订单 / Create order: ${symbol} ${side} ${type}`);
+    }, `创建订单 / Create order: ${validSymbol} ${side} ${type}`);
   }
 
   /**
@@ -408,17 +414,20 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 记录日志 / Log
-    console.log(`[${this.name}] 取消所有订单 / Canceling all orders: ${symbol}`);
+    console.log(`[${this.name}] 取消所有订单 / Canceling all orders: ${validSymbol}`);
 
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => {
       // 结果对象 / Result object
       const result = {
-        symbol,                     // 交易对 / Symbol
+        symbol: validSymbol,            // 交易对 / Symbol
         exchange: this.name,        // 交易所 / Exchange
         canceledCount: 0,           // 取消数量 / Canceled count
         failedCount: 0,             // 失败数量 / Failed count
@@ -429,7 +438,7 @@ export class BaseExchange extends EventEmitter {
       // 检查交易所是否原生支持批量取消 / Check if exchange natively supports batch cancel
       if (this.exchange.has['cancelAllOrders']) {
         // 直接调用批量取消 API / Call batch cancel API directly
-        const response = await this.exchange.cancelAllOrders(symbol);
+        const response = await this.exchange.cancelAllOrders(validSymbol);
 
         // 更新结果 / Update result
         result.canceledCount = Array.isArray(response) ? response.length : 1;
@@ -440,13 +449,13 @@ export class BaseExchange extends EventEmitter {
         // 不支持批量取消，逐个取消 / Batch cancel not supported, cancel one by one
 
         // 先获取所有未完成订单 / First fetch all open orders
-        const openOrders = await this.exchange.fetchOpenOrders(symbol);
+        const openOrders = await this.exchange.fetchOpenOrders(validSymbol);
 
         // 逐个取消订单 / Cancel orders one by one
         for (const order of openOrders) {
           try {
             // 取消单个订单 / Cancel single order
-            await this.exchange.cancelOrder(order.id, symbol);
+            await this.exchange.cancelOrder(order.id, validSymbol);
 
             // 成功计数 / Success count
             result.canceledCount++;
@@ -574,14 +583,17 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => {
       // 调用 CCXT 获取 K 线 / Call CCXT to fetch OHLCV
-      return await this.exchange.fetchOHLCV(symbol, timeframe, since, limit);
-    }, `获取 K 线 / Fetch OHLCV: ${symbol} ${timeframe}`);
+      return await this.exchange.fetchOHLCV(validSymbol, timeframe, since, limit);
+    }, `获取 K 线 / Fetch OHLCV: ${validSymbol} ${timeframe}`);
   }
 
   /**
@@ -594,14 +606,17 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => {
       // 调用 CCXT 获取行情 / Call CCXT to fetch ticker
-      return await this.exchange.fetchTicker(symbol);
-    }, `获取行情 / Fetch ticker: ${symbol}`);
+      return await this.exchange.fetchTicker(validSymbol);
+    }, `获取行情 / Fetch ticker: ${validSymbol}`);
   }
 
   /**
@@ -615,8 +630,11 @@ export class BaseExchange extends EventEmitter {
     // 确保已连接 / Ensure connected
     this._ensureConnected();
 
+    // 获取有效的交易对格式 (自动转换) / Get valid symbol format (auto convert)
+    const validSymbol = this._getValidSymbol(symbol);
+
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(validSymbol);
 
     // 检查交易所是否支持 / Check if exchange supports this
     if (!this.exchange.has['setLeverage']) {
@@ -626,10 +644,10 @@ export class BaseExchange extends EventEmitter {
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => {
       // 调用 CCXT 设置杠杆 / Call CCXT to set leverage
-      const result = await this.exchange.setLeverage(leverage, symbol);
+      const result = await this.exchange.setLeverage(leverage, validSymbol);
 
       // 记录日志 / Log
-      console.log(`[${this.name}] ✓ 杠杆已设置 / Leverage set: ${symbol} ${leverage}x`);
+      console.log(`[${this.name}] ✓ 杠杆已设置 / Leverage set: ${validSymbol} ${leverage}x`);
 
       return result;
     }, `设置杠杆 / Set leverage: ${symbol} ${leverage}x`);
@@ -1323,13 +1341,84 @@ export class BaseExchange extends EventEmitter {
    * @private
    */
   _validateSymbol(symbol) {
-    // 检查交易对是否存在 / Check if symbol exists
-    if (!this.markets[symbol]) {
-      throw this._createError(
-        'INVALID_SYMBOL',
-        `[${this.name}] 无效的交易对 / Invalid symbol: ${symbol}`
-      );
+    // 先尝试直接匹配 / Try direct match first
+    if (this.markets[symbol]) {
+      return;
     }
+
+    // 尝试自动转换格式后匹配 / Try match after auto format conversion
+    const convertedSymbol = this._convertSymbolFormat(symbol);
+    if (convertedSymbol && this.markets[convertedSymbol]) {
+      return;
+    }
+
+    // 都无法匹配，抛出错误 / Neither matched, throw error
+    throw this._createError(
+      'INVALID_SYMBOL',
+      `[${this.name}] 无效的交易对 / Invalid symbol: ${symbol}`
+    );
+  }
+
+  /**
+   * 转换交易对格式 (自动匹配现货/永续格式)
+   * Convert symbol format (auto match spot/perpetual format)
+   *
+   * 例如 / Examples:
+   * - BTC/USDT -> BTC/USDT:USDT (如果 swap 市场存在 / if swap market exists)
+   * - BTC/USDT:USDT -> BTC/USDT (如果 spot 市场存在 / if spot market exists)
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @returns {string|null} 转换后的交易对或 null / Converted symbol or null
+   * @private
+   */
+  _convertSymbolFormat(symbol) {
+    if (!symbol) return null;
+
+    // 如果是永续格式 (包含 :)，尝试转换为现货格式
+    // If perpetual format (contains :), try converting to spot format
+    if (symbol.includes(':')) {
+      const spotSymbol = symbol.split(':')[0];
+      if (this.markets[spotSymbol]) {
+        return spotSymbol;
+      }
+    } else {
+      // 如果是现货格式，尝试转换为永续格式
+      // If spot format, try converting to perpetual format
+      // 尝试常见的永续合约后缀 / Try common perpetual suffixes
+      const perpSuffixes = [':USDT', ':USD', ':BUSD'];
+      for (const suffix of perpSuffixes) {
+        const perpSymbol = symbol + suffix;
+        if (this.markets[perpSymbol]) {
+          return perpSymbol;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 获取有效的交易对 (自动格式转换)
+   * Get valid symbol (with auto format conversion)
+   *
+   * @param {string} symbol - 交易对 / Trading pair
+   * @returns {string} 有效的交易对 / Valid symbol
+   * @private
+   */
+  _getValidSymbol(symbol) {
+    // 直接匹配 / Direct match
+    if (this.markets[symbol]) {
+      return symbol;
+    }
+
+    // 尝试转换格式 / Try format conversion
+    const convertedSymbol = this._convertSymbolFormat(symbol);
+    if (convertedSymbol && this.markets[convertedSymbol]) {
+      return convertedSymbol;
+    }
+
+    // 返回原始格式 (让后续验证报错) / Return original (let validation throw error)
+    return symbol;
   }
 
   /**
