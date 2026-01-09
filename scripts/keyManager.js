@@ -132,6 +132,11 @@ function readEnvKeys() {
     binance: {},
     okx: {},
     bybit: {},
+    gate: {},
+    bitget: {},
+    kucoin: {},
+    kraken: {},
+    deribit: {},
     telegram: {},
     email: {},
   };
@@ -178,6 +183,44 @@ function readEnvKeys() {
         break;
       case 'BYBIT_TESTNET':
         keys.bybit.testnet = value === 'true';
+        break;
+      case 'GATE_API_KEY':
+        keys.gate.apiKey = value;
+        break;
+      case 'GATE_API_SECRET':
+        keys.gate.secret = value;
+        break;
+      case 'BITGET_API_KEY':
+        keys.bitget.apiKey = value;
+        break;
+      case 'BITGET_API_SECRET':
+        keys.bitget.secret = value;
+        break;
+      case 'BITGET_PASSPHRASE':
+        keys.bitget.passphrase = value;
+        break;
+      case 'KUCOIN_API_KEY':
+        keys.kucoin.apiKey = value;
+        break;
+      case 'KUCOIN_API_SECRET':
+        keys.kucoin.secret = value;
+        break;
+      case 'KUCOIN_PASSPHRASE':
+        keys.kucoin.passphrase = value;
+        break;
+      case 'KRAKEN_API_KEY':
+        keys.kraken.apiKey = value;
+        break;
+      case 'KRAKEN_API_SECRET':
+      case 'KRAKEN_SECRET':
+        keys.kraken.secret = value;
+        break;
+      case 'DERIBIT_API_KEY':
+        keys.deribit.apiKey = value;
+        break;
+      case 'DERIBIT_API_SECRET':
+      case 'DERIBIT_SECRET':
+        keys.deribit.secret = value;
         break;
       case 'TELEGRAM_BOT_TOKEN':
         keys.telegram.botToken = value;
@@ -243,6 +286,28 @@ async function cmdEncrypt() {
         bybit: {
           apiKey: await question(rl, 'Bybit API Key: '),
           secret: await question(rl, 'Bybit Secret: ', true),
+        },
+        gate: {
+          apiKey: await question(rl, 'Gate API Key: '),
+          secret: await question(rl, 'Gate Secret: ', true),
+        },
+        bitget: {
+          apiKey: await question(rl, 'Bitget API Key: '),
+          secret: await question(rl, 'Bitget Secret: ', true),
+          passphrase: await question(rl, 'Bitget Passphrase: ', true),
+        },
+        kucoin: {
+          apiKey: await question(rl, 'Kucoin API Key: '),
+          secret: await question(rl, 'Kucoin Secret: ', true),
+          passphrase: await question(rl, 'Kucoin Passphrase: ', true),
+        },
+        kraken: {
+          apiKey: await question(rl, 'Kraken API Key: '),
+          secret: await question(rl, 'Kraken Secret: ', true),
+        },
+        deribit: {
+          apiKey: await question(rl, 'Deribit API Key: '),
+          secret: await question(rl, 'Deribit Secret: ', true),
         },
       };
     }
