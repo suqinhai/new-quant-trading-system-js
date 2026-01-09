@@ -41,7 +41,8 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       # 行情服务配置 / Market data service configuration
-      MARKET_DATA_EXCHANGES: ${MARKET_DATA_EXCHANGES:-binance,okx,bybit}
+      # 留空则自动检测已配置API密钥的交易所 / Leave empty to auto-detect exchanges with configured API keys
+      MARKET_DATA_EXCHANGES: ${MARKET_DATA_EXCHANGES:-}
       TRADING_TYPE: ${TRADING_TYPE:-futures}
       SUBSCRIBE_ALL: ${SUBSCRIBE_ALL:-true}
       # 如果指定交易对则只订阅指定的 / If symbols specified, only subscribe to those
