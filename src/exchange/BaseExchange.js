@@ -1341,6 +1341,11 @@ export class BaseExchange extends EventEmitter {
    * @private
    */
   _validateSymbol(symbol) {
+    // 轻量模式下跳过验证 / Skip validation in lightweight mode
+    if (Object.keys(this.markets).length === 0) {
+      return;
+    }
+
     // 先尝试直接匹配 / Try direct match first
     if (this.markets[symbol]) {
       return;
@@ -1374,16 +1379,38 @@ export class BaseExchange extends EventEmitter {
   _convertSymbolFormat(symbol) {
     if (!symbol) return null;
 
+    // 轻量模式下使用 defaultType 进行格式转换 / In lightweight mode, use defaultType for format conversion
+    const isLightweight = Object.keys(this.markets).length === 0;
+
     // 如果是永续格式 (包含 :)，尝试转换为现货格式
     // If perpetual format (contains :), try converting to spot format
     if (symbol.includes(':')) {
       const spotSymbol = symbol.split(':')[0];
+      if (isLightweight) {
+        // 轻量模式下，如果 defaultType 是 spot，直接返回现货格式
+        // In lightweight mode, if defaultType is spot, return spot format
+        if (this.config.defaultType === 'spot') {
+          return spotSymbol;
+        }
+        return null; // 保持永续格式 / Keep perpetual format
+      }
       if (this.markets[spotSymbol]) {
         return spotSymbol;
       }
     } else {
       // 如果是现货格式，尝试转换为永续格式
       // If spot format, try converting to perpetual format
+
+      if (isLightweight) {
+        // 轻量模式下，如果 defaultType 是 swap/future，添加永续后缀
+        // In lightweight mode, if defaultType is swap/future, add perpetual suffix
+        if (this.config.defaultType === 'swap' || this.config.defaultType === 'future') {
+          // 根据交易所选择正确的后缀 / Choose correct suffix based on exchange
+          return symbol + ':USDT';
+        }
+        return null; // 保持现货格式 / Keep spot format
+      }
+
       // 尝试常见的永续合约后缀 / Try common perpetual suffixes
       const perpSuffixes = [':USDT', ':USD', ':BUSD'];
       for (const suffix of perpSuffixes) {
@@ -1406,6 +1433,29 @@ export class BaseExchange extends EventEmitter {
    * @private
    */
   _getValidSymbol(symbol) {
+    // 轻量模式特殊处理 / Special handling for lightweight mode
+    const isLightweight = Object.keys(this.markets).length === 0;
+
+    if (isLightweight) {
+      // 轻量模式下，根据 defaultType 和符号格式决定
+      // In lightweight mode, decide based on defaultType and symbol format
+      if (this.config.defaultType === 'swap' || this.config.defaultType === 'future') {
+        // 永续合约模式 / Perpetual mode
+        if (!symbol.includes(':')) {
+          // 现货格式，转为永续 / Spot format, convert to perpetual
+          return symbol + ':USDT';
+        }
+      } else if (this.config.defaultType === 'spot') {
+        // 现货模式 / Spot mode
+        if (symbol.includes(':')) {
+          // 永续格式，转为现货 / Perpetual format, convert to spot
+          return symbol.split(':')[0];
+        }
+      }
+      return symbol;
+    }
+
+    // 非轻量模式，检查市场映射 / Non-lightweight mode, check market mapping
     // 直接匹配 / Direct match
     if (this.markets[symbol]) {
       return symbol;
