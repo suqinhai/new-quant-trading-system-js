@@ -246,6 +246,7 @@ export class MarketDataEngine extends EventEmitter {
       depths: new Map(),      // { symbol: depth } 深度缓存 / Depth cache
       fundingRates: new Map(), // { symbol: fundingRate } 资金费率缓存 / Funding rate cache
       klines: new Map(),      // { symbol: kline[] } K线缓存 / Kline cache
+      lastEmittedFundingRates: new Map(), // { cacheKey: fundingRate } 最后发出的资金费率 / Last emitted funding rates for deduplication
     };
 
     // 统计信息 / Statistics
@@ -3510,6 +3511,13 @@ export class MarketDataEngine extends EventEmitter {
     const cacheKey = `${exchange}:${fundingRate.symbol}`;
     this.cache.fundingRates.set(cacheKey, fundingRate);
 
+    // 去重检查: 如果资金费率没有变化，跳过发送 / Dedup check: skip if funding rate hasn't changed
+    const lastEmitted = this.cache.lastEmittedFundingRates.get(cacheKey);
+    if (lastEmitted && lastEmitted.fundingRate === fundingRate.fundingRate && lastEmitted.nextFundingTime === fundingRate.nextFundingTime) {
+      // 费率和下次结算时间都没变，跳过发送 / Rate and next funding time unchanged, skip emit
+      return;
+    }
+
     // 存储到 Redis Hash / Store to Redis Hash
     this._storeToRedisHash(REDIS_KEYS.FUNDING_HASH, cacheKey, fundingRate);
 
@@ -3521,6 +3529,12 @@ export class MarketDataEngine extends EventEmitter {
       `${this.logPrefix} [链路] 发出fundingRate事件: ${fundingRate.exchange}:${fundingRate.symbol} ` +
       `费率=${fundingRate.fundingRate} / Emitting fundingRate event`
     );
+
+    // 更新最后发出的资金费率缓存 / Update last emitted funding rate cache
+    this.cache.lastEmittedFundingRates.set(cacheKey, {
+      fundingRate: fundingRate.fundingRate,
+      nextFundingTime: fundingRate.nextFundingTime,
+    });
 
     // 发出事件 / Emit event
     this.emit('fundingRate', fundingRate);
