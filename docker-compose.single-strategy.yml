@@ -129,6 +129,12 @@ services:
     container_name: quant-${STRATEGY_NAME:-SMA}
     restart: unless-stopped
     network_mode: host
+    # 共享行情模式下等待行情服务就绪 / Wait for market data service in shared mode
+    # 仅当使用 --profile market-data 启动时生效 / Only effective when using --profile market-data
+    depends_on:
+      market-data-service:
+        condition: service_healthy
+        required: false
     volumes:
       - ./logs/${STRATEGY_NAME:-SMA}:/app/logs
       - ./data/${STRATEGY_NAME:-SMA}:/app/data
