@@ -25,6 +25,8 @@ const REDIS_KEYS = {
   SERVICE_STATUS: 'market:service:status',
   SERVICE_HEARTBEAT: 'market:service:heartbeat',
   SUBSCRIBE_REQUEST: 'market:subscribe:request',
+  // 统一发布频道 (与 MarketDataEngine 一致) / Unified publish channel (consistent with MarketDataEngine)
+  UNIFIED_CHANNEL: 'market_data',
 };
 
 /**
@@ -173,6 +175,11 @@ export class MarketDataSubscriber extends EventEmitter {
       console.log(`${this.logPrefix} Redis 正在重连... / Redis reconnecting...`);
     });
 
+    // 订阅统一频道 (MarketDataEngine 发布到此频道)
+    // Subscribe to unified channel (MarketDataEngine publishes to this channel)
+    await this.redisSub.subscribe(REDIS_KEYS.UNIFIED_CHANNEL);
+    console.log(`${this.logPrefix} 已订阅统一频道 / Subscribed to unified channel: ${REDIS_KEYS.UNIFIED_CHANNEL}`);
+
     this.connected = true;
 
     // 启动心跳检查 / Start heartbeat check
@@ -244,10 +251,8 @@ export class MarketDataSubscriber extends EventEmitter {
         continue;
       }
 
-      // 订阅频道 / Subscribe to channel
-      await this.redisSub.subscribe(channel);
-
-      // 记录订阅 / Record subscription
+      // 记录订阅过滤器 (统一频道已在 connect 时订阅，这里只记录过滤条件)
+      // Record subscription filter (unified channel already subscribed in connect, only record filter here)
       this.subscriptions.set(channel, { exchange, symbol, dataType });
 
       console.log(`${this.logPrefix} 已订阅 / Subscribed: ${channel}`);
@@ -280,10 +285,7 @@ export class MarketDataSubscriber extends EventEmitter {
         continue;
       }
 
-      // 取消订阅 / Unsubscribe
-      await this.redisSub.unsubscribe(channel);
-
-      // 移除记录 / Remove record
+      // 移除订阅过滤器记录 / Remove subscription filter record
       this.subscriptions.delete(channel);
 
       console.log(`${this.logPrefix} 已取消订阅 / Unsubscribed: ${channel}`);
@@ -406,13 +408,43 @@ export class MarketDataSubscriber extends EventEmitter {
   _handleMessage(channel, message) {
     try {
       // 解析消息 / Parse message
-      const data = JSON.parse(message);
+      const parsed = JSON.parse(message);
 
       // 更新统计 / Update stats
       this.stats.messagesReceived++;
       this.stats.lastMessageAt = Date.now();
 
-      // 解析数据类型 / Parse data type
+      // 处理统一频道消息 / Handle unified channel message
+      // 格式: { type: 'kline', data: {...}, timestamp: ... }
+      if (channel === REDIS_KEYS.UNIFIED_CHANNEL) {
+        const { type: dataType, data } = parsed;
+
+        if (!dataType || !data) {
+          return;
+        }
+
+        // 检查是否订阅了该数据 / Check if subscribed to this data
+        const filterKey = this._buildChannel(data.exchange, data.symbol, dataType);
+        if (!this.subscriptions.has(filterKey)) {
+          return; // 未订阅，跳过 / Not subscribed, skip
+        }
+
+        // 更新对应统计 / Update corresponding stats
+        const statsKey = `${dataType}sReceived`;
+        if (this.stats[statsKey] !== undefined) {
+          this.stats[statsKey]++;
+        }
+
+        // 发射事件 / Emit event
+        this.emit(dataType, data);
+
+        // 发射通用事件 / Emit generic event
+        this.emit('data', { type: dataType, data });
+
+        return;
+      }
+
+      // 处理旧的分散频道消息 (兼容模式) / Handle old separate channel message (compatibility mode)
       const parts = channel.split(':');
       const dataType = parts[1]; // ticker, depth, trade, funding, kline
 
@@ -422,10 +454,10 @@ export class MarketDataSubscriber extends EventEmitter {
       }
 
       // 发射事件 / Emit event
-      this.emit(dataType, data);
+      this.emit(dataType, parsed);
 
       // 发射通用事件 / Emit generic event
-      this.emit('data', { type: dataType, data });
+      this.emit('data', { type: dataType, data: parsed });
 
     } catch (error) {
       console.error(`${this.logPrefix} 解析消息失败 / Failed to parse message:`, error.message);
