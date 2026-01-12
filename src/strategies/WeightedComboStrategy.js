@@ -556,11 +556,11 @@ export class WeightedComboStrategy extends BaseStrategy {
       MACD: 0.4,
     };
 
-    // 交易阈值: 总分 >= threshold 买入
-    this.buyThreshold = params.buyThreshold || 0.7;
+    // 交易阈值: 总分 >= threshold 买入 (降低阈值以增加信号触发机会)
+    this.buyThreshold = params.buyThreshold || 0.55;
 
-    // 卖出阈值: 总分 <= threshold 卖出
-    this.sellThreshold = params.sellThreshold || 0.3;
+    // 卖出阈值: 总分 <= threshold 卖出 (提高阈值以增加信号触发机会)
+    this.sellThreshold = params.sellThreshold || 0.45;
 
     // ============================================
     // 子策略参数
@@ -861,6 +861,14 @@ export class WeightedComboStrategy extends BaseStrategy {
     const signalSummary = Object.entries(signals)
       .map(([name, data]) => `${name}:${data.rawScore.toFixed(2)}`)
       .join(', ');
+
+    // 调试日志: 每个tick输出当前得分 (每分钟输出一次，避免日志过多)
+    const now = Date.now();
+    if (!this._lastScoreLogTime || now - this._lastScoreLogTime >= 60000) {
+      this._lastScoreLogTime = now;
+      const positionStatus = hasPosition ? '持仓中' : '空仓';
+      this.log(`[得分] ${score.toFixed(3)} | 买入>${this.buyThreshold} 卖出<${this.sellThreshold} | ${positionStatus} | ${signalSummary}`);
+    }
 
     if (action === 'buy' && !hasPosition) {
       this.log(`📈 买入信号 | 总分: ${score.toFixed(3)} >= ${this.buyThreshold}`);
