@@ -1349,17 +1349,34 @@ class TradingSystemRunner extends EventEmitter {
     }
 
     // 订单成交事件 / Order filled event
-    this.executor.on('orderFilled', (order) => {
+    this.executor.on('orderFilled', (data) => {
+      // 提取订单信息 (执行器发出的是 { orderInfo, exchangeOrder })
+      // Extract order info (executor emits { orderInfo, exchangeOrder })
+      const orderInfo = data.orderInfo || data;
+      const exchangeOrder = data.exchangeOrder;
+
+      // 构建交易对象供日志和通知使用 / Build trade object for logging and notifications
+      const trade = {
+        symbol: orderInfo.symbol,
+        side: orderInfo.side,
+        amount: orderInfo.filledAmount || orderInfo.amount,
+        price: orderInfo.avgPrice || orderInfo.currentPrice,
+        pnl: orderInfo.pnl,
+        timestamp: orderInfo.updatedAt || Date.now(),
+        orderId: orderInfo.exchangeOrderId || orderInfo.clientOrderId,
+        dryRun: exchangeOrder?.info?.dryRun || false,
+      };
+
       // 链路日志: 订单成交 / Chain log: Order filled
-      this._log('info', `[链路] 订单成交: ${order.symbol} ${order.side} ${order.amount} @ ${order.price} / Order filled`);
+      this._log('info', `[链路] 订单成交: ${trade.symbol} ${trade.side} ${trade.amount} @ ${trade.price} / Order filled`);
 
       // 增加订单计数 / Increment order count
       this.orderCount++;
 
       // 记录到日志模块 / Log to logger module
       if (this.loggerModule) {
-        this.loggerModule.pnlLogger.logTrade(order);
-        this.loggerModule.telegramNotifier.sendTradeNotification(order, this.mode);
+        this.loggerModule.pnlLogger.logTrade(trade);
+        this.loggerModule.telegramNotifier.sendTradeNotification(trade, this.mode);
       }
     });
 
