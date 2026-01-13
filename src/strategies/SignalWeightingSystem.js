@@ -50,10 +50,10 @@ export class SignalWeightingSystem extends EventEmitter {
     // ============================================
 
     // 交易阈值: 总分 >= threshold 才执行交易 (降低阈值增加触发机会)
-    this.threshold = config.threshold || 0.75;
+    this.threshold = config.threshold || 0.95;
 
     // 卖出阈值: 总分 <= sellThreshold 触发卖出 (提高阈值增加触发机会)
-    this.sellThreshold = config.sellThreshold || 0.25;
+    this.sellThreshold = config.sellThreshold || 0.15;
 
     // ============================================
     // 权重配置
