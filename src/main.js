@@ -1157,6 +1157,12 @@ class TradingSystemRunner extends EventEmitter {
    * @private
    */
   _bindMarketDataEvents() {
+    // 共享行情模式: 使用 marketDataSubscriber / Shared mode: use marketDataSubscriber
+    if (this.marketDataSubscriber && !this.marketDataEngine) {
+      this._bindSharedMarketDataEvents();
+      return;
+    }
+
     // 如果没有行情引擎，跳过 / If no market data engine, skip
     if (!this.marketDataEngine) {
       return;
@@ -1218,6 +1224,105 @@ class TradingSystemRunner extends EventEmitter {
     this.marketDataEngine.on('error', (error) => {
       // 输出错误日志 / Output error log
       this._log('error', `行情错误: ${error.message} / Market data error`);
+
+      // 增加错误计数 / Increment error count
+      this.errorCount++;
+    });
+
+    // 启动行情统计定时记录 (每分钟) / Start market data stats logging (every minute)
+    this._marketDataStatsTimer = setInterval(() => {
+      this._logMarketDataStats();
+    }, 60000);
+  }
+
+  /**
+   * 绑定共享行情模式事件
+   * Bind shared market data mode events
+   * @private
+   */
+  _bindSharedMarketDataEvents() {
+    if (!this.marketDataSubscriber) {
+      return;
+    }
+
+    this._log('info', '绑定共享行情事件监听器 / Binding shared market data event listeners');
+
+    // Ticker 更新事件 / Ticker update event
+    this.marketDataSubscriber.on('ticker', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.tickerCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 传递给策略 / Pass to strategy
+      if (this.strategy && this.strategy.onTicker) {
+        this.strategy.onTicker(data);
+      }
+    });
+
+    // K 线更新事件 / Kline update event
+    // 注意: MarketDataSubscriber 发出 'kline' 事件, 策略期望 'candle' 格式
+    // Note: MarketDataSubscriber emits 'kline' event, strategy expects 'candle' format
+    this.marketDataSubscriber.on('kline', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.candleCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 只处理已闭合的 K 线 / Only process closed candles
+      if (data.isClosed) {
+        this._log('debug', `[共享行情] 收到闭合K线: ${data.exchange}:${data.symbol} close=${data.close} / Received closed kline`);
+      }
+
+      // 传递给策略 / Pass to strategy
+      if (this.strategy && this.strategy.onCandle) {
+        this.strategy.onCandle(data);
+      }
+    });
+
+    // 深度数据事件 / Depth update event
+    this.marketDataSubscriber.on('depth', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.orderbookCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 传递给策略 / Pass to strategy
+      if (this.strategy && this.strategy.onOrderBook) {
+        this.strategy.onOrderBook(data);
+      }
+    });
+
+    // 成交数据事件 / Trade update event
+    this.marketDataSubscriber.on('trade', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.tradeCount = (this._marketDataStats.tradeCount || 0) + 1;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 传递给策略 / Pass to strategy
+      if (this.strategy && this.strategy.onTrade) {
+        this.strategy.onTrade(data);
+      }
+    });
+
+    // 资金费率更新事件 / Funding rate update event
+    this.marketDataSubscriber.on('funding', (data) => {
+      // 更新统计 / Update stats
+      this._marketDataStats.fundingRateCount++;
+      if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
+      if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 传递给策略 / Pass to strategy
+      if (this.strategy && this.strategy.onFundingRate) {
+        this.strategy.onFundingRate(data);
+      }
+    });
+
+    // 错误事件 / Error event
+    this.marketDataSubscriber.on('error', (error) => {
+      // 输出错误日志 / Output error log
+      this._log('error', `共享行情错误: ${error.message} / Shared market data error`);
 
       // 增加错误计数 / Increment error count
       this.errorCount++;
