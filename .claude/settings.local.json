@@ -123,7 +123,9 @@
       "Bash(echo:*)",
       "Bash(dir \"C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\" /s /b)",
       "Bash(tar:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(xargs basename:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
