@@ -918,10 +918,25 @@ class TradingSystemRunner extends EventEmitter {
     // Create virtual position storage (for shadow mode position tracking)
     this._virtualPositions = new Map();
 
+    // 创建价格缓存 (用于同步获取最新价格) / Create price cache (for sync price access)
+    this._lastPrices = new Map();
+
     // 创建引擎适配器对象 / Create engine adapter object
     const engineAdapter = {
       // 交易所引用 / Exchange references
       exchanges: this.exchanges,
+
+      // 更新最新价格缓存 / Update last price cache
+      updatePrice: (symbol, price) => {
+        if (price && !isNaN(price)) {
+          this._lastPrices.set(symbol, price);
+        }
+      },
+
+      // 获取缓存的最新价格 (同步) / Get cached last price (sync)
+      getLastPrice: (symbol) => {
+        return this._lastPrices.get(symbol) || 0;
+      },
 
       // 获取当前价格 / Get current price
       getCurrentPrice: async (symbol) => {
@@ -958,13 +973,17 @@ class TradingSystemRunner extends EventEmitter {
         // 链路日志: 引擎适配器收到买入请求 / Chain log: Engine adapter received buy request
         this._log('info', `[链路] 引擎适配器收到买入: ${symbol} 数量=${amount} / Engine adapter buy`);
 
+        // 获取价格: 优先使用传入的价格, 否则使用缓存的最新价格
+        // Get price: prefer passed price, otherwise use cached last price
+        const price = options.price || engineAdapter.getLastPrice(symbol);
+
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = {
           type: 'buy',
           side: 'buy',
           symbol,
           amount,
-          price: options.price,
+          price,
           timestamp: Date.now(),
         };
         this.strategy.emit('signal', signal);
@@ -982,13 +1001,17 @@ class TradingSystemRunner extends EventEmitter {
         // 链路日志: 引擎适配器收到卖出请求 / Chain log: Engine adapter received sell request
         this._log('info', `[链路] 引擎适配器收到卖出: ${symbol} 数量=${amount} / Engine adapter sell`);
 
+        // 获取价格: 优先使用传入的价格, 否则使用缓存的最新价格
+        // Get price: prefer passed price, otherwise use cached last price
+        const price = options.price || engineAdapter.getLastPrice(symbol);
+
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = {
           type: 'sell',
           side: 'sell',
           symbol,
           amount,
-          price: options.price,
+          price,
           timestamp: Date.now(),
         };
         this.strategy.emit('signal', signal);
@@ -1175,6 +1198,11 @@ class TradingSystemRunner extends EventEmitter {
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
 
+      // 更新价格缓存 / Update price cache
+      if (data.symbol && (data.last || data.close)) {
+        this._lastPrices?.set(data.symbol, data.last || data.close);
+      }
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTicker) {
         this.strategy.onTicker(data);
@@ -1187,6 +1215,11 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.candleCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 更新价格缓存 / Update price cache
+      if (data.symbol && data.close) {
+        this._lastPrices?.set(data.symbol, data.close);
+      }
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onCandle) {
@@ -1254,6 +1287,11 @@ class TradingSystemRunner extends EventEmitter {
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
 
+      // 更新价格缓存 / Update price cache
+      if (data.symbol && (data.last || data.close)) {
+        this._lastPrices?.set(data.symbol, data.last || data.close);
+      }
+
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTicker) {
         this.strategy.onTicker(data);
@@ -1268,6 +1306,11 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.candleCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+
+      // 更新价格缓存 / Update price cache
+      if (data.symbol && data.close) {
+        this._lastPrices?.set(data.symbol, data.close);
+      }
 
       // 只处理已闭合的 K 线 / Only process closed candles
       if (data.isClosed) {
