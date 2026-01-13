@@ -999,6 +999,7 @@ export class SmartOrderExecutor extends EventEmitter {
       symbol,                           // 交易对 / Symbol
       side,                             // 方向 / Side
       amount,                           // 数量 / Amount
+      price = 0,                        // 当前价格 (用于 dryRun 模式) / Current price (for dryRun mode)
       reduceOnly = false,               // 是否 reduce-only / Whether reduce-only
       options = {},                     // 额外选项 / Extra options
     } = params;
@@ -1015,6 +1016,7 @@ export class SmartOrderExecutor extends EventEmitter {
       symbol,
       side,
       amount,
+      currentPrice: price,              // 当前价格 (用于 dryRun 模式) / Current price (for dryRun mode)
       type: ORDER_TYPE.MARKET,
       reduceOnly,
       status: ORDER_STATUS.PENDING,
