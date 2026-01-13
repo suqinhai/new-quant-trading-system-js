@@ -1075,17 +1075,18 @@ export class SmartOrderExecutor extends EventEmitter {
       'info'
     );
 
+    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
+    // 注意: dryRun 模式不需要真实的交易所连接 / Note: dryRun mode doesn't need real exchange connection
+    if (this.config.dryRun) {
+      return await this._executeDryRunOrder(orderInfo);
+    }
+
     // 获取交易所实例 / Get exchange instance
     const exchange = this.exchanges.get(orderInfo.exchangeId);
 
     // 验证交易所存在 / Validate exchange exists
     if (!exchange) {
       throw new Error(`交易所不存在 / Exchange not found: ${orderInfo.exchangeId}`);
-    }
-
-    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
-    if (this.config.dryRun) {
-      return await this._executeDryRunOrder(orderInfo);
     }
 
     // 重试循环 / Retry loop
@@ -1292,18 +1293,19 @@ export class SmartOrderExecutor extends EventEmitter {
       'info'
     );
 
+    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
+    // 注意: dryRun 模式不需要真实的交易所连接 / Note: dryRun mode doesn't need real exchange connection
+    if (this.config.dryRun) {
+      // 市价单设置类型为 MARKET / Set type to MARKET for market orders
+      orderInfo.type = ORDER_TYPE.MARKET;
+      return await this._executeDryRunOrder(orderInfo);
+    }
+
     // 获取交易所 / Get exchange
     const exchange = this.exchanges.get(orderInfo.exchangeId);
 
     if (!exchange) {
       throw new Error(`交易所不存在 / Exchange not found: ${orderInfo.exchangeId}`);
-    }
-
-    // DryRun 模式: 模拟成交，不真实下单 / DryRun mode: simulate fill, no real order
-    if (this.config.dryRun) {
-      // 市价单设置类型为 MARKET / Set type to MARKET for market orders
-      orderInfo.type = ORDER_TYPE.MARKET;
-      return await this._executeDryRunOrder(orderInfo);
     }
 
     // 重试循环 / Retry loop

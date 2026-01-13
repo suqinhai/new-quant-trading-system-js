@@ -125,7 +125,9 @@
       "Bash(tar:*)",
       "Bash(docker compose:*)",
       "Bash(xargs basename:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\\\\docker-logs\\\\trend-core.log'' -Tail 100\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\46745\\\\Desktop\\\\pro\\\\new-quant-trading-system-js\\\\docker-logs\\\\RSI.log'' -Tail 50\")"
     ]
   }
 }
