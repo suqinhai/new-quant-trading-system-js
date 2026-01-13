@@ -556,11 +556,11 @@ export class WeightedComboStrategy extends BaseStrategy {
       MACD: 0.4,
     };
 
-    // 交易阈值: 总分 >= threshold 买入 (降低阈值以增加信号触发机会)
-    this.buyThreshold = params.buyThreshold || 0.55;
+    // 交易阈值: 总分 >= threshold 买入 (提高阈值减少触发机会)
+    this.buyThreshold = params.buyThreshold || 0.95;
 
-    // 卖出阈值: 总分 <= threshold 卖出 (提高阈值以增加信号触发机会)
-    this.sellThreshold = params.sellThreshold || 0.45;
+    // 卖出阈值: 总分 <= threshold 卖出 (降低阈值减少触发机会)
+    this.sellThreshold = params.sellThreshold || 0.15;
 
     // ============================================
     // 子策略参数
