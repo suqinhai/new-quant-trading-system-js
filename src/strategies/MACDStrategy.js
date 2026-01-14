@@ -1,5 +1,5 @@
 /**
- * MACD 趋势策略 (MACD Strategy)
+ * MACD 趋势策略(MACD Strategy)
  * MACD + EMA200 Trend Filter
  *
  * 基于 MACD 指标的趋势跟踪策略，配合 EMA200 趋势过滤
