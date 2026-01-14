@@ -10,7 +10,7 @@
 import { BaseStrategy } from './BaseStrategy.js';
 
 // 导入技术指标 / Import technical indicators
-import { MACD, EMA } from 'technicalindicators';
+import { MACD, EMA, ATR } from 'technicalindicators';
 
 /**
  * MACD 策略类
@@ -39,13 +39,19 @@ export class MACDStrategy extends BaseStrategy {
     // 交易参数 / Trading parameters
     this.symbol = params.symbol || 'BTC/USDT';
     this.positionPercent = params.positionPercent || 50;
-    this.stopLossPercent = params.stopLossPercent || 3;
+
+    // ATR 动态止损参数 / ATR dynamic stop loss parameters
+    this.atrPeriod = params.atrPeriod || 14;
+    this.atrMultiplier = params.atrMultiplier || 2;
 
     // Histogram 最小阈值 (防假突破) / Min histogram threshold (anti-whipsaw)
     this.minHistogramRatio = params.minHistogramRatio || 0.0001;
 
     // 上一次 Histogram / Previous histogram
     this.prevHistogram = null;
+
+    // ATR 动态止损价格 / ATR dynamic stop loss price
+    this.stopLossPrice = null;
   }
 
   /**
@@ -65,10 +71,10 @@ export class MACDStrategy extends BaseStrategy {
     await super.onInit();
 
     this.log(
-      `MACD 参数: ${this.fastPeriod}/${this.slowPeriod}/${this.signalPeriod}, EMA${this.trendPeriod}, 止损=${this.stopLossPercent}%`
+      `MACD 参数: ${this.fastPeriod}/${this.slowPeriod}/${this.signalPeriod}, EMA${this.trendPeriod}, ATR${this.atrPeriod}x${this.atrMultiplier}`
     );
     this.log(
-      `MACD Params: ${this.fastPeriod}/${this.slowPeriod}/${this.signalPeriod}, EMA${this.trendPeriod}, StopLoss=${this.stopLossPercent}%`
+      `MACD Params: ${this.fastPeriod}/${this.slowPeriod}/${this.signalPeriod}, EMA${this.trendPeriod}, ATR${this.atrPeriod}x${this.atrMultiplier}`
     );
   }
 
@@ -80,10 +86,11 @@ export class MACDStrategy extends BaseStrategy {
    */
   async onTick(candle, history) {
     // 确保有足够的数据 / Ensure enough data
-    // EMA200 需要 trendPeriod，MACD 需要 slowPeriod + signalPeriod
+    // EMA200 需要 trendPeriod，MACD 需要 slowPeriod + signalPeriod，ATR 需要 atrPeriod
     const minLength = Math.max(
       this.trendPeriod,
-      this.slowPeriod + this.signalPeriod
+      this.slowPeriod + this.signalPeriod,
+      this.atrPeriod
     ) + 1;
 
     if (history.length < minLength) {
@@ -92,6 +99,17 @@ export class MACDStrategy extends BaseStrategy {
 
     // 提取收盘价数组 / Extract close prices array
     const closes = history.map(h => h.close);
+    const highs = history.map(h => h.high);
+    const lows = history.map(h => h.low);
+
+    // === ATR 计算 / ATR Calculation ===
+    const atrResult = ATR.calculate({
+      period: this.atrPeriod,
+      high: highs,
+      low: lows,
+      close: closes,
+    });
+    const atr = atrResult.at(-1);
 
     // === EMA200 趋势线 / EMA200 Trend Line ===
     const ema200Result = EMA.calculate({
@@ -120,20 +138,22 @@ export class MACDStrategy extends BaseStrategy {
     this.setIndicator('DEA', dea);
     this.setIndicator('Histogram', histogram);
     this.setIndicator('EMA200', ema200);
+    this.setIndicator('ATR', atr);
 
     // 获取当前持仓 / Get current position
     const position = this.getPosition(this.symbol);
     const hasPosition = position && position.amount > 0;
 
-    // === 止损检查 / Stop Loss Check ===
-    if (hasPosition) {
-      const loss =
-        ((candle.close - position.entryPrice) / position.entryPrice) * 100;
-      if (loss <= -this.stopLossPercent) {
-        this.log(`止损触发 ${loss.toFixed(2)}% / Stop Loss Triggered`);
-        this.setSellSignal('Stop Loss');
+    // === ATR 动态止损检查 / ATR Dynamic Stop Loss Check ===
+    if (hasPosition && this.stopLossPrice !== null) {
+      if (candle.close <= this.stopLossPrice) {
+        const loss =
+          ((candle.close - position.entryPrice) / position.entryPrice) * 100;
+        this.log(`ATR 止损触发 @ ${candle.close} (止损价: ${this.stopLossPrice.toFixed(2)}, 亏损: ${loss.toFixed(2)}%) / ATR Stop Loss Triggered`);
+        this.setSellSignal('ATR Stop Loss');
         this.closePosition(this.symbol);
         this.prevHistogram = null;
+        this.stopLossPrice = null;
         return;
       }
     }
@@ -161,16 +181,19 @@ export class MACDStrategy extends BaseStrategy {
     // === 交易逻辑 / Trading Logic ===
     // 入场: 金叉 + 趋势向上 + 有效交叉 / Entry: golden cross + uptrend + valid cross
     if (goldenCross && trendUp && validCross && !hasPosition) {
-      this.log(`MACD 金叉做多 @ ${candle.close} / MACD Golden Cross Long`);
+      // 设置 ATR 动态止损价 / Set ATR dynamic stop loss price
+      this.stopLossPrice = candle.close - atr * this.atrMultiplier;
+      this.log(`MACD 金叉做多 @ ${candle.close}, ATR止损价: ${this.stopLossPrice.toFixed(2)} / MACD Golden Cross Long`);
       this.setBuySignal('MACD Golden Cross');
       this.buyPercent(this.symbol, this.positionPercent);
     }
 
-    // 出场: 死叉 / Exit: death cross
-    if (deathCross && hasPosition) {
-      this.log(`MACD 死叉平仓 @ ${candle.close} / MACD Death Cross Exit`);
-      this.setSellSignal('MACD Death Cross');
+    // 出场: 死叉 + 跌破 EMA200 (趋势确认) / Exit: death cross + below EMA200 (trend confirmation)
+    if (deathCross && !trendUp && hasPosition) {
+      this.log(`MACD 死叉 + 跌破EMA200 平仓 @ ${candle.close} / MACD Death Cross + Below EMA200 Exit`);
+      this.setSellSignal('MACD Death Cross + Trend');
       this.closePosition(this.symbol);
+      this.stopLossPrice = null;
     }
 
     // 更新上一次 Histogram / Update previous histogram
