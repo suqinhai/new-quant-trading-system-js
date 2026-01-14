@@ -1,9 +1,9 @@
 /**
- * RSI 策略
- * RSI Strategy
+ * RSI 策略 (增强版)
+ * RSI Strategy (Enhanced)
  *
- * 基于相对强弱指标 (RSI) 的超买超卖策略
- * Overbought/oversold strategy based on Relative Strength Index
+ * RSI 回归 + EMA200 趋势过滤 + ATR 动态止损
+ * RSI mean reversion + EMA200 trend filter + ATR dynamic stop loss
  */
 
 // 导入基类 / Import base class
@@ -25,14 +25,17 @@ export class RSIStrategy extends BaseStrategy {
       ...params,
     });
 
-    // RSI 周期 / RSI period
+    // === RSI 参数 / RSI Parameters ===
     this.period = params.period || 14;
+    this.oversold = params.oversold || 40;
+    this.overbought = params.overbought || 60;
 
-    // 超买阈值 / Overbought threshold
-    this.overbought = params.overbought || 70;
+    // === 趋势参数 / Trend Parameters ===
+    this.emaPeriod = params.emaPeriod || 200;
 
-    // 超卖阈值 / Oversold threshold
-    this.oversold = params.oversold || 30;
+    // === ATR 动态止损 / ATR Dynamic Stop Loss ===
+    this.atrPeriod = params.atrPeriod || 14;
+    this.atrStopMult = params.atrStopMult || 2;
 
     // 交易对 / Trading pair
     this.symbol = params.symbol || 'BTC/USDT';
@@ -40,8 +43,15 @@ export class RSIStrategy extends BaseStrategy {
     // 仓位百分比 / Position percentage
     this.positionPercent = params.positionPercent || 95;
 
-    // RSI 值缓存 / RSI values cache
+    // === 状态 / State ===
+    this.entryPrice = null;
     this.rsiValues = [];
+
+    // === Wilder 指标缓存 / Wilder Indicator Cache ===
+    this.prevAvgGain = null;
+    this.prevAvgLoss = null;
+    this.prevATR = null;
+    this.prevEMA = null;
   }
 
   /**
@@ -50,7 +60,6 @@ export class RSIStrategy extends BaseStrategy {
    * @returns {Array<string>} 数据类型列表 / Data type list
    */
   getRequiredDataTypes() {
-    // RSI 策略只需要 K 线数据计算 RSI / RSI strategy only needs kline for RSI calculation
     return ['kline'];
   }
 
@@ -61,8 +70,9 @@ export class RSIStrategy extends BaseStrategy {
   async onInit() {
     await super.onInit();
 
-    this.log(`参数: 周期=${this.period}, 超买=${this.overbought}, 超卖=${this.oversold}`);
-    this.log(`Params: period=${this.period}, overbought=${this.overbought}, oversold=${this.oversold}`);
+    this.log(`RSI 参数: 周期=${this.period}, 超卖=${this.oversold}, 超买=${this.overbought}`);
+    this.log(`趋势参数: EMA周期=${this.emaPeriod}`);
+    this.log(`止损参数: ATR周期=${this.atrPeriod}, ATR倍数=${this.atrStopMult}`);
   }
 
   /**
@@ -72,107 +82,209 @@ export class RSIStrategy extends BaseStrategy {
    * @param {Array} history - 历史数据 / Historical data
    */
   async onTick(candle, history) {
-    // 确保有足够的数据 / Ensure enough data
-    if (history.length < this.period + 1) {
-      return;  // 数据不足，跳过 / Not enough data, skip
+    // 确保有足够的数据 (需要 EMA200) / Ensure enough data for EMA200
+    if (history.length < this.emaPeriod + 1) {
+      return;
     }
 
     // 提取收盘价数组 / Extract close prices array
     const closes = history.map(h => h.close);
 
+    // ============================================
+    // 计算指标 / Calculate indicators
+    // ============================================
+
     // 计算 RSI / Calculate RSI
     const rsi = this._calculateRSI(closes);
+    if (rsi === null) return;
 
-    // 如果 RSI 计算失败，跳过 / If RSI calculation failed, skip
-    if (rsi === null) {
-      return;
+    // 计算 EMA200 / Calculate EMA200
+    const ema200 = this._calculateEMA(closes, this.emaPeriod);
+    if (ema200 === null) return;
+
+    // 计算 ATR / Calculate ATR
+    const atr = this._calculateATR(history);
+    if (atr === null) return;
+
+    // 保存指标值 / Save indicator values
+    this.setIndicator('rsi', rsi);
+    this.setIndicator('ema200', ema200);
+    this.setIndicator('atr', atr);
+
+    // RSI 缓存 / RSI cache
+    this.rsiValues.push(rsi);
+    if (this.rsiValues.length > 100) {
+      this.rsiValues.shift();
     }
 
-    // 保存指标值 / Save indicator value
-    this.setIndicator('rsi', rsi);
-    this.rsiValues.push(rsi);
+    // 获取上一个 RSI 值 / Get previous RSI value
+    const prevRsi = this.rsiValues.length > 1 ? this.rsiValues.at(-2) : null;
+    if (prevRsi === null) return;
 
     // 获取当前持仓 / Get current position
     const position = this.getPosition(this.symbol);
     const hasPosition = position && position.amount > 0;
 
-    // 获取上一个 RSI 值 / Get previous RSI value
-    const prevRsi = this.rsiValues.length > 1 ? this.rsiValues[this.rsiValues.length - 2] : null;
+    // ============================================
+    // 入场信号: RSI 回归 / Entry signal: RSI recovery
+    // ============================================
+    const longSignal = prevRsi < this.oversold && rsi >= this.oversold;
 
-    // 如果没有上一个值，跳过 / If no previous value, skip
-    if (prevRsi === null) {
-      return;
+    if (longSignal && candle.close > ema200 && !hasPosition) {
+      this.log(`RSI 回归买入信号 / RSI Recovery Buy: RSI=${rsi.toFixed(2)}, EMA200=${ema200.toFixed(2)}, Price=${candle.close}`);
+      this.setBuySignal(`RSI Recovery (${rsi.toFixed(2)})`);
+      this.entryPrice = candle.close;
+      this.buyPercent(this.symbol, this.positionPercent);
+      return; // 入场后本根 K 线不再检查退出
     }
 
-    // 检测从超卖区域回升 / Detect recovery from oversold
-    const oversoldRecovery = prevRsi < this.oversold && rsi >= this.oversold;
+    // ============================================
+    // 退出逻辑 (三层职责) / Exit logic (3 layers)
+    // ============================================
+    if (hasPosition && this.entryPrice !== null) {
+      // 1. ATR 动态止损 (风控优先) / ATR stop loss (risk first)
+      const stopPrice = this.entryPrice - atr * this.atrStopMult;
+      const stopLoss = candle.close <= stopPrice;
 
-    // 检测进入超买区域 / Detect entering overbought
-    const enteringOverbought = prevRsi < this.overbought && rsi >= this.overbought;
+      // 2. 动能退出: RSI 从超买回落 / Momentum exit: RSI decline from overbought
+      const exitByMomentum = prevRsi > this.overbought && rsi <= this.overbought;
 
-    // 检测从超买区域下跌 / Detect decline from overbought
-    const overboughtDecline = prevRsi > this.overbought && rsi <= this.overbought;
+      // 3. 趋势退出: 跌破 EMA200 / Trend exit: break below EMA200
+      const trendBroken = candle.close < ema200;
 
-    // 交易逻辑 / Trading logic
-    if (rsi <= this.oversold && !hasPosition) {
-      // RSI 超卖，买入信号 / RSI oversold, buy signal
-      this.log(`RSI 超卖信号 / RSI Oversold Signal: RSI=${rsi.toFixed(2)} @ ${candle.close}`);
-      this.setBuySignal(`RSI Oversold (${rsi.toFixed(2)})`);
-      this.buyPercent(this.symbol, this.positionPercent);
-    } else if (rsi >= this.overbought && hasPosition) {
-      // RSI 超买，卖出信号 / RSI overbought, sell signal
-      this.log(`RSI 超买信号 / RSI Overbought Signal: RSI=${rsi.toFixed(2)} @ ${candle.close}`);
-      this.setSellSignal(`RSI Overbought (${rsi.toFixed(2)})`);
-      this.closePosition(this.symbol);
+      if (stopLoss) {
+        this.log(`ATR 止损触发 / ATR Stop Loss: 止损价=${stopPrice.toFixed(2)}, 当前价=${candle.close}`);
+        this.setSellSignal('ATR Stop Loss');
+        this.closePosition(this.symbol);
+        this.entryPrice = null;
+      } else if (exitByMomentum) {
+        this.log(`RSI 动能退出 / RSI Momentum Exit: RSI=${rsi.toFixed(2)}`);
+        this.setSellSignal(`RSI Overbought Exit (${rsi.toFixed(2)})`);
+        this.closePosition(this.symbol);
+        this.entryPrice = null;
+      } else if (trendBroken) {
+        this.log(`趋势反转退出 / Trend Broken Exit: Price=${candle.close} < EMA200=${ema200.toFixed(2)}`);
+        this.setSellSignal('Trend Broken (Below EMA200)');
+        this.closePosition(this.symbol);
+        this.entryPrice = null;
+      }
     }
   }
 
   /**
-   * 计算 RSI
-   * Calculate RSI
+   * 计算 Wilder RSI (与 TradingView / TA-Lib 一致)
+   * Calculate Wilder RSI (consistent with TradingView / TA-Lib)
    * @private
    */
   _calculateRSI(closes) {
-    // 确保有足够的数据 / Ensure enough data
     if (closes.length < this.period + 1) {
       return null;
     }
 
-    // 计算价格变化 / Calculate price changes
-    const changes = [];
-    for (let i = 1; i < closes.length; i++) {
-      changes.push(closes[i] - closes[i - 1]);
-    }
+    // 当前价格变化 / Current price change
+    const change = closes.at(-1) - closes.at(-2);
+    const gain = Math.max(change, 0);
+    const loss = Math.max(-change, 0);
 
-    // 获取最近 period 个变化 / Get last period changes
-    const recentChanges = changes.slice(-this.period);
+    if (this.prevAvgGain === null) {
+      // 初始化（只发生一次）/ Initialize (only once)
+      let gains = 0;
+      let losses = 0;
 
-    // 分离涨跌 / Separate gains and losses
-    let gains = 0;
-    let losses = 0;
-
-    for (const change of recentChanges) {
-      if (change > 0) {
-        gains += change;
-      } else {
-        losses += Math.abs(change);
+      for (let i = closes.length - this.period; i < closes.length; i++) {
+        const diff = closes[i] - closes[i - 1];
+        if (diff > 0) {
+          gains += diff;
+        } else {
+          losses += Math.abs(diff);
+        }
       }
-    }
 
-    // 计算平均涨跌 / Calculate average gains/losses
-    const avgGain = gains / this.period;
-    const avgLoss = losses / this.period;
+      this.prevAvgGain = gains / this.period;
+      this.prevAvgLoss = losses / this.period;
+    } else {
+      // Wilder 平滑 / Wilder smoothing
+      this.prevAvgGain = (this.prevAvgGain * (this.period - 1) + gain) / this.period;
+      this.prevAvgLoss = (this.prevAvgLoss * (this.period - 1) + loss) / this.period;
+    }
 
     // 防止除以零 / Prevent division by zero
-    if (avgLoss === 0) {
+    if (this.prevAvgLoss === 0) {
       return 100;
     }
 
     // 计算 RS 和 RSI / Calculate RS and RSI
-    const rs = avgGain / avgLoss;
-    const rsi = 100 - (100 / (1 + rs));
+    const rs = this.prevAvgGain / this.prevAvgLoss;
+    return 100 - 100 / (1 + rs);
+  }
 
-    return rsi;
+  /**
+   * 计算 EMA (递推式，高性能)
+   * Calculate EMA (recursive, high performance)
+   * @private
+   */
+  _calculateEMA(data, period) {
+    if (data.length < period) {
+      return null;
+    }
+
+    const price = data.at(-1);
+    const multiplier = 2 / (period + 1);
+
+    if (this.prevEMA === null) {
+      // 初始化：使用 SMA / Initialize with SMA
+      this.prevEMA = data.slice(-period).reduce((a, b) => a + b, 0) / period;
+    } else {
+      // 递推计算 / Recursive calculation
+      this.prevEMA = (price - this.prevEMA) * multiplier + this.prevEMA;
+    }
+
+    return this.prevEMA;
+  }
+
+  /**
+   * 计算 Wilder ATR (递推式，响应更快)
+   * Calculate Wilder ATR (recursive, faster response)
+   * @private
+   */
+  _calculateATR(history) {
+    if (history.length < 2) {
+      return null;
+    }
+
+    const curr = history.at(-1);
+    const prev = history.at(-2);
+
+    // 计算当前 True Range / Calculate current True Range
+    const tr = Math.max(
+      curr.high - curr.low,
+      Math.abs(curr.high - prev.close),
+      Math.abs(curr.low - prev.close)
+    );
+
+    if (this.prevATR === null) {
+      // 初始化：需要足够数据 / Initialize: need enough data
+      if (history.length < this.atrPeriod + 1) {
+        return null;
+      }
+
+      let sumTR = 0;
+      for (let i = history.length - this.atrPeriod; i < history.length; i++) {
+        const h = history[i];
+        const p = history[i - 1];
+        sumTR += Math.max(
+          h.high - h.low,
+          Math.abs(h.high - p.close),
+          Math.abs(h.low - p.close)
+        );
+      }
+      this.prevATR = sumTR / this.atrPeriod;
+    } else {
+      // Wilder 平滑 / Wilder smoothing
+      this.prevATR = (this.prevATR * (this.atrPeriod - 1) + tr) / this.atrPeriod;
+    }
+
+    return this.prevATR;
   }
 }
 
