@@ -45,14 +45,23 @@ export class BollingerWidthStrategy extends BaseStrategy {
     // 交易对 / Trading pair
     this.symbol = params.symbol || 'BTC/USDT';
 
-    // 仓位百分比 / Position percentage
-    this.positionPercent = params.positionPercent || 95;
+    // 仓位百分比 / Position percentage (降低默认风险)
+    this.positionPercent = params.positionPercent || 60;
 
     // 动量周期 / Momentum period
     this.momentumPeriod = params.momentumPeriod || 12;
 
     // 使用动量确认 / Use momentum confirmation
     this.useMomentumConfirm = params.useMomentumConfirm !== false;
+
+    // 使用成交量确认 / Use volume confirmation
+    this.useVolumeConfirm = params.useVolumeConfirm !== false;
+
+    // 成交量周期 / Volume MA period
+    this.volumePeriod = params.volumePeriod || 20;
+
+    // 成交量倍数阈值 / Volume spike threshold
+    this.volumeThreshold = params.volumeThreshold || 1.3;
 
     // 止损倍数 (ATR) / Stop loss multiplier (ATR)
     this.stopLossMultiplier = params.stopLossMultiplier || 2.0;
@@ -63,6 +72,8 @@ export class BollingerWidthStrategy extends BaseStrategy {
     this._squeezeStartIndex = null;
     this._entryPrice = null;
     this._stopLoss = null;
+    this._highestPrice = null; // 追踪最高价用于止盈
+    this._touchedUpperBand = false; // 是否触及过上轨
   }
 
   /**
@@ -112,6 +123,7 @@ export class BollingerWidthStrategy extends BaseStrategy {
     if (kcValues.length < 2) return;
 
     const currentKC = getLatest(kcValues);
+    const prevKC = kcValues[kcValues.length - 2];
 
     // ATR
     const atrValues = ATR(history, 14);
@@ -132,6 +144,14 @@ export class BollingerWidthStrategy extends BaseStrategy {
 
     // Squeeze 检测 (BB 在 KC 内部) / Squeeze detection
     const squeeze = currentBB.lower > currentKC.lower && currentBB.upper < currentKC.upper;
+    // 计算前一根 K 线的 squeeze 状态 (修复时间错位问题)
+    const prevSqueeze = prevBB.lower > prevKC.lower && prevBB.upper < prevKC.upper;
+
+    // 成交量分析 / Volume analysis
+    const volumes = history.map(h => h.volume);
+    const volumeMA = this._calculateSMA(volumes, this.volumePeriod);
+    const currentVolume = candle.volume;
+    const volumeSpike = currentVolume > volumeMA * this.volumeThreshold;
 
     // 计算动量 / Calculate momentum
     const momentum = this._calculateMomentum(closes, this.momentumPeriod);
@@ -145,6 +165,12 @@ export class BollingerWidthStrategy extends BaseStrategy {
     this.setIndicator('bbUpper', currentBB.upper);
     this.setIndicator('bbLower', currentBB.lower);
     this.setIndicator('bbMiddle', currentBB.middle);
+    this.setIndicator('volumeSpike', volumeSpike);
+
+    // 冷启动保护: 带宽历史不足时不交易 / Cold start protection
+    if (this._bandwidthHistory.length < this.bandwidthLookback * 0.7) {
+      return;
+    }
 
     // 获取持仓 / Get position
     const position = this.getPosition(this.symbol);
@@ -154,6 +180,7 @@ export class BollingerWidthStrategy extends BaseStrategy {
     if (!hasPosition) {
       this._handleEntry(candle, {
         squeeze,
+        prevSqueeze,
         bandwidthPercentile,
         bandwidth,
         prevBandwidth,
@@ -161,6 +188,7 @@ export class BollingerWidthStrategy extends BaseStrategy {
         prevMomentum,
         currentBB,
         currentATR,
+        volumeSpike,
       });
     } else {
       this._handleExit(candle, {
@@ -187,40 +215,46 @@ export class BollingerWidthStrategy extends BaseStrategy {
    * @private
    */
   _handleEntry(candle, indicators) {
-    const { squeeze, bandwidthPercentile, bandwidth, prevBandwidth, momentum, prevMomentum, currentBB, currentATR } = indicators;
+    const { squeeze, prevSqueeze, bandwidthPercentile, bandwidth, prevBandwidth, momentum, prevMomentum, currentBB, currentATR, volumeSpike } = indicators;
 
-    // 条件1: 刚从挤压状态释放 / Just released from squeeze
-    const squeezeRelease = this._inSqueeze && !squeeze;
+    // 前置过滤: 必须处于低波动状态 / Must be in low volatility state
+    const isLowVolatility = bandwidthPercentile <= this.squeezeThreshold;
+    if (!isLowVolatility) {
+      return;
+    }
 
-    // 条件2: 带宽开始扩张 / Bandwidth expanding
-    const bandwidthExpanding = bandwidth > prevBandwidth * 1.1; // 扩张 10%
+    // 条件1: 刚从挤压状态释放 (使用 prevSqueeze 修复时间错位) / Just released from squeeze
+    const squeezeRelease = prevSqueeze && !squeeze;
+
+    // 条件2: 带宽扩张 (增强条件: 扩张 15% 且连续上升) / Bandwidth expanding
+    const prevBandwidth2 = this._bandwidthHistory.length >= 3
+      ? this._bandwidthHistory[this._bandwidthHistory.length - 3]
+      : prevBandwidth;
+    const bandwidthExpanding = bandwidth > prevBandwidth * 1.15 && prevBandwidth > prevBandwidth2;
 
     // 条件3: 动量确认 / Momentum confirmation
     const momentumBullish = !this.useMomentumConfirm || (momentum > 0 && momentum > prevMomentum);
-    const momentumBearish = !this.useMomentumConfirm || (momentum < 0 && momentum < prevMomentum);
 
     // 条件4: 价格位置 / Price position
     const priceAboveMiddle = candle.close > currentBB.middle;
-    const priceBelowMiddle = candle.close < currentBB.middle;
+
+    // 条件5: 成交量确认 / Volume confirmation
+    const volumeConfirmed = !this.useVolumeConfirm || volumeSpike;
 
     // 向上突破信号 / Bullish breakout signal
-    if ((squeezeRelease || bandwidthExpanding) && momentumBullish && priceAboveMiddle) {
-      this.log(`挤压突破做多! 带宽=${bandwidth.toFixed(2)}%, 动量=${momentum.toFixed(2)}`);
+    if ((squeezeRelease || bandwidthExpanding) && momentumBullish && priceAboveMiddle && volumeConfirmed) {
+      this.log(`挤压突破做多! 带宽=${bandwidth.toFixed(2)}%, 百分位=${bandwidthPercentile.toFixed(0)}%, 动量=${momentum.toFixed(2)}, 成交量确认=${volumeSpike}`);
 
       this._entryPrice = candle.close;
       this._stopLoss = candle.close - this.stopLossMultiplier * currentATR;
+      this._highestPrice = candle.close;
+      this._touchedUpperBand = false;
 
       this.setState('direction', 'long');
       this.setState('entryBandwidth', bandwidth);
 
-      this.setBuySignal(`Squeeze Breakout UP, Bandwidth: ${bandwidth.toFixed(1)}%`);
+      this.setBuySignal(`Squeeze Breakout UP, Bandwidth: ${bandwidth.toFixed(1)}%, Percentile: ${bandwidthPercentile.toFixed(0)}%`);
       this.buyPercent(this.symbol, this.positionPercent);
-    }
-
-    // 向下突破信号 (记录) / Bearish breakout signal (log only)
-    if ((squeezeRelease || bandwidthExpanding) && momentumBearish && priceBelowMiddle) {
-      this.log(`挤压向下突破信号 (记录), 带宽=${bandwidth.toFixed(2)}%, 动量=${momentum.toFixed(2)}`);
-      this.setIndicator('shortSignal', true);
     }
   }
 
@@ -234,6 +268,21 @@ export class BollingerWidthStrategy extends BaseStrategy {
 
     if (direction !== 'long') return;
 
+    // 更新最高价追踪 / Update highest price tracking
+    if (candle.high > this._highestPrice) {
+      this._highestPrice = candle.high;
+      // 移动止损: 当价格创新高时，提高止损位 / Trailing stop
+      const newStopLoss = this._highestPrice - this.stopLossMultiplier * currentATR;
+      if (newStopLoss > this._stopLoss) {
+        this._stopLoss = newStopLoss;
+      }
+    }
+
+    // 检查是否触及过上轨 / Check if touched upper band
+    if (candle.high >= currentBB.upper) {
+      this._touchedUpperBand = true;
+    }
+
     // 止损检查 / Stop loss check
     if (candle.close <= this._stopLoss) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
@@ -245,12 +294,12 @@ export class BollingerWidthStrategy extends BaseStrategy {
       return;
     }
 
-    // 触及上轨止盈 / Take profit at upper band
-    if (candle.close >= currentBB.upper) {
+    // 改进的止盈逻辑: 触及上轨后回落确认 / Improved TP: exit after touching upper band and pulling back
+    if (this._touchedUpperBand && candle.close < currentBB.upper) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
-      this.log(`触及上轨止盈, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
+      this.log(`触及上轨后回落止盈, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
 
-      this.setSellSignal(`Upper Band TP @ ${candle.close.toFixed(2)}`);
+      this.setSellSignal(`Upper Band Pullback TP @ ${candle.close.toFixed(2)}`);
       this.closePosition(this.symbol);
       this._resetState();
       return;
@@ -298,12 +347,26 @@ export class BollingerWidthStrategy extends BaseStrategy {
   }
 
   /**
+   * 计算简单移动平均
+   * @private
+   */
+  _calculateSMA(values, period) {
+    if (values.length < period) return values[values.length - 1] || 0;
+    const recent = values.slice(-period);
+    return recent.reduce((a, b) => a + b, 0) / period;
+  }
+
+  /**
    * 重置状态
    * @private
    */
   _resetState() {
     this._entryPrice = null;
     this._stopLoss = null;
+    this._highestPrice = null;
+    this._touchedUpperBand = false;
+    this._inSqueeze = false;
+    this._squeezeStartIndex = null;
     this.setState('direction', null);
     this.setState('entryBandwidth', null);
   }
