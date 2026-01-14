@@ -1334,7 +1334,7 @@ export class CrossSectionalStrategy extends BaseStrategy {
     const symbol = candle.symbol || this.config.symbols[0];
 
     // 调试日志 / Debug log
-    this._log('info', `[DEBUG] onTick 收到 K 线: ${symbol}, close=${candle.close}`);
+    this.log(`[DEBUG] onTick 收到 K 线: ${symbol}, close=${candle.close}`, 'info');
 
     this.assetManager.updateAssetData(symbol, candle);
 
