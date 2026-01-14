@@ -28,7 +28,7 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     this.atrPeriod = params.atrPeriod || 14;
 
     // ATR 通道倍数 / ATR channel multiplier
-    this.atrMultiplier = params.atrMultiplier || 2.0;
+    this.atrMultiplier = params.atrMultiplier || 1.8;
 
     // 基准线周期 (EMA) / Baseline period (EMA)
     this.baselinePeriod = params.baselinePeriod || 20;
@@ -46,7 +46,7 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     this.useTrailingStop = params.useTrailingStop !== false;
 
     // 跟踪止损 ATR 倍数 / Trailing stop ATR multiplier
-    this.trailingMultiplier = params.trailingMultiplier || 2.0;
+    this.trailingMultiplier = params.trailingMultiplier || 2.5;
 
     // 突破确认 K 线数 / Breakout confirmation candles
     this.confirmationCandles = params.confirmationCandles || 1;
@@ -58,10 +58,10 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     this.atrSmaPeriod = params.atrSmaPeriod || 5;
 
     // 利润回吐保护 ATR 倍数 / Profit drawdown protection ATR multiplier
-    this.profitProtectionMultiplier = params.profitProtectionMultiplier || 1.2;
+    this.profitProtectionMultiplier = params.profitProtectionMultiplier || 1.8;
 
     // 时间止损 K 线数 / Time stop candles
-    this.timeStopCandles = params.timeStopCandles || 20;
+    this.timeStopCandles = params.timeStopCandles || 30;
 
     // 最小 ATR 波动率比例 (CTA 绝对波动过滤) / Minimum ATR ratio filter
     this.minAtrRatio = params.minAtrRatio || 0.004;
@@ -127,10 +127,11 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     const atrSmaValues = SMA(atrValues, this.atrSmaPeriod);
     const atrSma = atrSmaValues.length > 0 ? getLatest(atrSmaValues) : currentATR;
 
-    // 使用「上一根 EMA」作为突破基准（专业做法，避免当根 K 线影响）
-    // Use previous EMA as breakout baseline (professional approach, avoids current candle influence)
-    const upperBand = prevEMA + this.atrMultiplier * currentATR;
-    const lowerBand = prevEMA - this.atrMultiplier * currentATR;
+    // 使用「上一根 EMA + 上一根 ATR」作为突破基准（标准 CTA 做法）
+    // Use previous EMA + previous ATR as breakout baseline (standard CTA approach)
+    // 避免当根大波动 K 线同时放大 EMA 和 ATR，导致通道被推远
+    const upperBand = prevEMA + this.atrMultiplier * prevATR;
+    const lowerBand = prevEMA - this.atrMultiplier * prevATR;
 
     // 计算 ATR 变化率 (波动率扩张检测) / ATR rate of change
     const atrChange = (currentATR - prevATR) / prevATR;
@@ -165,7 +166,7 @@ export class ATRBreakoutStrategy extends BaseStrategy {
       this._handleEntry(candle, history, upperBand, lowerBand, currentATR, volatilityExpanding);
     } else {
       // 有仓位，管理止损 / Has position, manage stop loss
-      this._handleExit(candle, currentATR, currentEMA);
+      this._handleExit(candle, currentATR, currentEMA, prevEMA);
     }
   }
 
@@ -222,7 +223,7 @@ export class ATRBreakoutStrategy extends BaseStrategy {
    * 处理出场逻辑
    * @private
    */
-  _handleExit(candle, atr, ema) {
+  _handleExit(candle, atr, ema, prevEMA) {
     const direction = this.getState('direction');
     const entryATR = this.getState('entryATR') || atr;
 
@@ -260,11 +261,13 @@ export class ATRBreakoutStrategy extends BaseStrategy {
         return;
       }
 
-      // 2. 利润回吐保护 / Profit drawdown protection
+      // 2. 利润回吐保护（延迟启用，避免趋势初期被掐掉）
+      // Profit drawdown protection (delayed activation to avoid cutting early trend)
       const drawdownFromHigh = this._highestSinceEntry - candle.close;
       const profitDrawdownThreshold = entryATR * this.profitProtectionMultiplier;
 
       if (
+        barsSinceEntry > 5 && // 延迟 5 根 K 线后才启用
         this._highestSinceEntry > this._entryPrice && // 曾经盈利
         drawdownFromHigh > profitDrawdownThreshold
       ) {
@@ -291,15 +294,32 @@ export class ATRBreakoutStrategy extends BaseStrategy {
         return;
       }
 
-      // 4. 跌破均线且亏损，保守出场 / Below EMA and losing, conservative exit
-      if (candle.close < ema && candle.close < this._entryPrice) {
+      // 4. 趋势失败确认出场（EMA 拐头 + 价格跌破 EMA）
+      // Trend failure exit (EMA turning down + price below EMA)
+      if (
+        barsSinceEntry > 5 &&
+        candle.close < ema &&
+        ema < prevEMA // EMA 已经拐头向下
+      ) {
         const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
-        this.log(`跌破均线出场, 价格=${candle.close.toFixed(2)}, EMA=${ema.toFixed(2)}, PnL=${pnl}%`);
+        this.log(`趋势失败确认出场, 价格=${candle.close.toFixed(2)}, EMA=${ema.toFixed(2)}, prevEMA=${prevEMA.toFixed(2)}, PnL=${pnl}%`);
 
-        this.setSellSignal(`Below EMA Exit @ ${candle.close.toFixed(2)}`);
+        this.setSellSignal(`Trend Failure @ ${candle.close.toFixed(2)}`);
         this.closePosition(this.symbol);
         this._resetState();
         return;
+      }
+
+      // 5. 趋势确认后加仓（一次性）
+      // Add position after trend confirmation (one-time)
+      if (
+        barsSinceEntry === 3 &&
+        candle.close > this._entryPrice + entryATR &&
+        !this.getState('added')
+      ) {
+        this.log(`趋势确认，加仓 30%! 当前价=${candle.close.toFixed(2)}, 入场价=${this._entryPrice.toFixed(2)}`);
+        this.buyPercent(this.symbol, 30);
+        this.setState('added', true);
       }
 
       // 保存当前止损位 / Save current stop level
@@ -321,6 +341,7 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     this.setState('direction', null);
     this.setState('entryATR', null);
     this.setState('barsSinceEntry', null);
+    this.setState('added', null);
   }
 }
 
