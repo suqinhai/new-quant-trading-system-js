@@ -33,7 +33,7 @@ log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 # )
 
 STRATEGIES=(
-    BollingerWidth
+    SMA RSI MACD BollingerWidth
 )
 
 # 端口基数 (单策略专用端口段)
