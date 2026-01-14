@@ -51,6 +51,13 @@ export class BollingerWidthStrategy extends BaseStrategy {
     // 动量周期 / Momentum period
     this.momentumPeriod = params.momentumPeriod || 12;
 
+    // 动量类型: 'slope' (斜率型，对爆发响应快) 或 'mean' (均值型，适合震荡)
+    // Momentum type: 'slope' for fast response, 'mean' for range-bound
+    this.momentumType = params.momentumType || 'slope';
+
+    // 斜率动量回看周期 / Slope momentum lookback
+    this.slopeLookback = params.slopeLookback || 3;
+
     // 使用动量确认 / Use momentum confirmation
     this.useMomentumConfirm = params.useMomentumConfirm !== false;
 
@@ -68,6 +75,7 @@ export class BollingerWidthStrategy extends BaseStrategy {
 
     // 内部状态
     this._bandwidthHistory = [];
+    // _inSqueeze 当前仅用于日志，保留供将来扩展（如 squeeze 持续时间过滤、squeeze 强度建模）
     this._inSqueeze = false;
     this._squeezeStartIndex = null;
     this._entryPrice = null;
@@ -151,7 +159,10 @@ export class BollingerWidthStrategy extends BaseStrategy {
     const volumes = history.map(h => h.volume);
     const volumeMA = this._calculateSMA(volumes, this.volumePeriod);
     const currentVolume = candle.volume;
-    const volumeSpike = currentVolume > volumeMA * this.volumeThreshold;
+    // 冷启动防御: 数据不足时默认放行，避免误判
+    const volumeSpike = volumes.length < this.volumePeriod
+      ? true  // 冷启动期间放行
+      : currentVolume > volumeMA * this.volumeThreshold;
 
     // 计算动量 / Calculate momentum
     const momentum = this._calculateMomentum(closes, this.momentumPeriod);
@@ -227,10 +238,11 @@ export class BollingerWidthStrategy extends BaseStrategy {
     const squeezeRelease = prevSqueeze && !squeeze;
 
     // 条件2: 带宽扩张 (增强条件: 扩张 15% 且连续上升) / Bandwidth expanding
-    const prevBandwidth2 = this._bandwidthHistory.length >= 3
-      ? this._bandwidthHistory[this._bandwidthHistory.length - 3]
-      : prevBandwidth;
-    const bandwidthExpanding = bandwidth > prevBandwidth * 1.15 && prevBandwidth > prevBandwidth2;
+    // 统一从 _bandwidthHistory 获取，确保时间轴对齐
+    const len = this._bandwidthHistory.length;
+    const bw_t1 = len >= 2 ? this._bandwidthHistory[len - 2] : bandwidth;
+    const bw_t2 = len >= 3 ? this._bandwidthHistory[len - 3] : bw_t1;
+    const bandwidthExpanding = bandwidth > bw_t1 * 1.15 && bw_t1 > bw_t2;
 
     // 条件3: 动量确认 / Momentum confirmation
     const momentumBullish = !this.useMomentumConfirm || (momentum > 0 && momentum > prevMomentum);
@@ -283,23 +295,24 @@ export class BollingerWidthStrategy extends BaseStrategy {
       this._touchedUpperBand = true;
     }
 
+    // 优先处理趋势型止盈 (避免与止损竞态，让统计归因更准确)
+    // Prioritize trend-based TP to avoid race condition with stop loss
+    if (this._touchedUpperBand && candle.close < currentBB.upper) {
+      const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
+      this.log(`触及上轨后回落止盈, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
+
+      this.setSellSignal(`Upper Band Pullback TP @ ${candle.close.toFixed(2)}`);
+      this.closePosition(this.symbol);
+      this._resetState();
+      return;
+    }
+
     // 止损检查 / Stop loss check
     if (candle.close <= this._stopLoss) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
       this.log(`止损触发, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
 
       this.setSellSignal(`Stop Loss @ ${candle.close.toFixed(2)}`);
-      this.closePosition(this.symbol);
-      this._resetState();
-      return;
-    }
-
-    // 改进的止盈逻辑: 触及上轨后回落确认 / Improved TP: exit after touching upper band and pulling back
-    if (this._touchedUpperBand && candle.close < currentBB.upper) {
-      const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
-      this.log(`触及上轨后回落止盈, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
-
-      this.setSellSignal(`Upper Band Pullback TP @ ${candle.close.toFixed(2)}`);
       this.closePosition(this.symbol);
       this._resetState();
       return;
@@ -317,18 +330,30 @@ export class BollingerWidthStrategy extends BaseStrategy {
   }
 
   /**
-   * 计算动量 (价格与SMA的差值)
+   * 计算动量
    * @private
+   * @param {Array} closes - 收盘价数组
+   * @param {number} period - 周期 (用于均值型动量)
+   * @returns {number} 动量值
    */
   _calculateMomentum(closes, period) {
-    if (closes.length < period) return 0;
+    if (closes.length < Math.max(period, this.slopeLookback + 1)) return 0;
 
-    const recent = closes.slice(-period);
-    const sma = recent.reduce((a, b) => a + b, 0) / period;
-    const currentPrice = closes[closes.length - 1];
-
-    // 标准化动量
-    return ((currentPrice - sma) / sma) * 100;
+    if (this.momentumType === 'slope') {
+      // 斜率动量: 对 squeeze 爆发响应更快
+      // Slope momentum: faster response to squeeze breakout
+      const currentPrice = closes[closes.length - 1];
+      const pastPrice = closes[closes.length - 1 - this.slopeLookback];
+      // 标准化为百分比变化
+      return ((currentPrice - pastPrice) / pastPrice) * 100;
+    } else {
+      // 均值型动量: 适合震荡市场
+      // Mean-reversion momentum: good for range-bound markets
+      const recent = closes.slice(-period);
+      const sma = recent.reduce((a, b) => a + b, 0) / period;
+      const currentPrice = closes[closes.length - 1];
+      return ((currentPrice - sma) / sma) * 100;
+    }
   }
 
   /**
