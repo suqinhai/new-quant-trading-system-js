@@ -63,6 +63,9 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     // 时间止损 K 线数 / Time stop candles
     this.timeStopCandles = params.timeStopCandles || 20;
 
+    // 最小 ATR 波动率比例 (CTA 绝对波动过滤) / Minimum ATR ratio filter
+    this.minAtrRatio = params.minAtrRatio || 0.004;
+
     // 内部状态 / Internal state
     this._breakoutHigh = null;
     this._breakoutLow = null;
@@ -117,30 +120,40 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     // 获取当前值 / Get current values
     const currentATR = getLatest(atrValues);
     const currentEMA = getLatest(emaValues);
+    const prevEMA = emaValues[emaValues.length - 2];
     const prevATR = atrValues[atrValues.length - 2];
 
     // 计算 ATR 的 SMA 用于波动率扩张判断 / Calculate ATR SMA for volatility expansion
     const atrSmaValues = SMA(atrValues, this.atrSmaPeriod);
     const atrSma = atrSmaValues.length > 0 ? getLatest(atrSmaValues) : currentATR;
 
-    // 计算动态通道 / Calculate dynamic channel
-    const upperBand = currentEMA + this.atrMultiplier * currentATR;
-    const lowerBand = currentEMA - this.atrMultiplier * currentATR;
+    // 使用「上一根 EMA」作为突破基准（专业做法，避免当根 K 线影响）
+    // Use previous EMA as breakout baseline (professional approach, avoids current candle influence)
+    const upperBand = prevEMA + this.atrMultiplier * currentATR;
+    const lowerBand = prevEMA - this.atrMultiplier * currentATR;
 
     // 计算 ATR 变化率 (波动率扩张检测) / ATR rate of change
     const atrChange = (currentATR - prevATR) / prevATR;
 
-    // 波动率扩张确认：ATR 变化超过阈值 且 ATR 高于其 SMA
-    // Volatility expansion: ATR change > threshold AND ATR > ATR SMA
-    const volatilityExpanding = atrChange > this.atrExpansionThreshold && currentATR > atrSma;
+    // ATR 相对价格的比例（绝对波动过滤）/ ATR ratio to price (absolute volatility filter)
+    const atrRatio = currentATR / candle.close;
+
+    // 波动率扩张确认：ATR 变化超过阈值 且 ATR 高于其 SMA 且 绝对波动足够
+    // Volatility expansion: ATR change > threshold AND ATR > ATR SMA AND sufficient absolute volatility
+    const volatilityExpanding =
+      atrChange > this.atrExpansionThreshold &&
+      currentATR > atrSma &&
+      atrRatio > this.minAtrRatio;
 
     // 保存指标 / Save indicators
     this.setIndicator('ATR', currentATR);
     this.setIndicator('EMA', currentEMA);
+    this.setIndicator('prevEMA', prevEMA);
     this.setIndicator('upperBand', upperBand);
     this.setIndicator('lowerBand', lowerBand);
     this.setIndicator('atrChange', atrChange);
     this.setIndicator('atrSma', atrSma);
+    this.setIndicator('atrRatio', atrRatio);
     this.setIndicator('volatilityExpanding', volatilityExpanding);
 
     // 获取持仓 / Get position
@@ -169,13 +182,17 @@ export class ATRBreakoutStrategy extends BaseStrategy {
     // True N-candle confirmation: previous N candles inside channel, current breaks out
     const prevCandles = recentCandles.slice(0, -1); // 不包含当前 K 线
 
-    // 向上突破确认：前 N 根收盘价都在上轨下方，当前收盘价突破上轨
-    // Upward breakout: previous N closes below upper band, current closes above
-    const confirmedUp = prevCandles.every(c => c.close < upperBand) && candle.close > upperBand;
+    // 向上突破确认：前 N 根收盘价都在上轨下方，当前收盘价或最高价突破上轨
+    // Upward breakout: previous N closes below upper band, current close OR high breaks above
+    const confirmedUp =
+      prevCandles.every(c => c.close < upperBand) &&
+      (candle.close > upperBand || candle.high > upperBand);
 
-    // 向下突破确认：前 N 根收盘价都在下轨上方，当前收盘价突破下轨
-    // Downward breakout: previous N closes above lower band, current closes below
-    const confirmedDown = prevCandles.every(c => c.close > lowerBand) && candle.close < lowerBand;
+    // 向下突破确认：前 N 根收盘价都在下轨上方，当前收盘价或最低价突破下轨
+    // Downward breakout: previous N closes above lower band, current close OR low breaks below
+    const confirmedDown =
+      prevCandles.every(c => c.close > lowerBand) &&
+      (candle.close < lowerBand || candle.low < lowerBand);
 
     if (confirmedUp && volatilityExpanding) {
       // 向上突破，做多 / Upward breakout, go long
