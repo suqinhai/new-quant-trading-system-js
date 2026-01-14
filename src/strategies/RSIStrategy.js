@@ -37,11 +37,11 @@ export class RSIStrategy extends BaseStrategy {
     this.atrPeriod = params.atrPeriod || 14;
     this.atrStopMult = params.atrStopMult || 2;
 
-    // 交易对 / Trading pair
+    // 交易对 / Trading pair (由框架注入或配置)
     this.symbol = params.symbol || 'BTC/USDT';
 
-    // 仓位百分比 / Position percentage
-    this.positionPercent = params.positionPercent || 95;
+    // 仓位百分比 / Position percentage (留 buffer 给手续费/滑点)
+    this.positionPercent = params.positionPercent ?? 85;
 
     // === 状态 / State ===
     this.entryPrice = null;
@@ -146,8 +146,12 @@ export class RSIStrategy extends BaseStrategy {
       const stopPrice = this.entryPrice - atr * this.atrStopMult;
       const stopLoss = candle.close <= stopPrice;
 
-      // 2. 动能退出: RSI 从超买回落 / Momentum exit: RSI decline from overbought
-      const exitByMomentum = prevRsi > this.overbought && rsi <= this.overbought;
+      // 2. 动能退出: RSI 从超买回落 + 价格确认衰竭
+      // Momentum exit: RSI decline from overbought + price confirms weakness
+      const exitByMomentum =
+        prevRsi > this.overbought &&
+        rsi <= this.overbought &&
+        candle.close < ema200 + atr * 0.5;
 
       // 3. 趋势退出: 跌破 EMA200 / Trend exit: break below EMA200
       const trendBroken = candle.close < ema200;
@@ -156,19 +160,32 @@ export class RSIStrategy extends BaseStrategy {
         this.log(`ATR 止损触发 / ATR Stop Loss: 止损价=${stopPrice.toFixed(2)}, 当前价=${candle.close}`);
         this.setSellSignal('ATR Stop Loss');
         this.closePosition(this.symbol);
-        this.entryPrice = null;
+        this._resetMomentumState();
       } else if (exitByMomentum) {
         this.log(`RSI 动能退出 / RSI Momentum Exit: RSI=${rsi.toFixed(2)}`);
         this.setSellSignal(`RSI Overbought Exit (${rsi.toFixed(2)})`);
         this.closePosition(this.symbol);
-        this.entryPrice = null;
+        this._resetMomentumState();
       } else if (trendBroken) {
         this.log(`趋势反转退出 / Trend Broken Exit: Price=${candle.close} < EMA200=${ema200.toFixed(2)}`);
         this.setSellSignal('Trend Broken (Below EMA200)');
         this.closePosition(this.symbol);
-        this.entryPrice = null;
+        this._resetMomentumState();
       }
     }
+  }
+
+  /**
+   * 重置动量状态 (平仓后调用，防跨行情污染)
+   * Reset momentum state (called after close, prevent cross-trade contamination)
+   * @private
+   */
+  _resetMomentumState() {
+    this.entryPrice = null;
+    this.prevAvgGain = null;
+    this.prevAvgLoss = null;
+    this.prevATR = null;
+    // EMA 不重置，趋势是连续的 / EMA not reset, trend is continuous
   }
 
   /**
