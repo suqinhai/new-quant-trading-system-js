@@ -27,14 +27,14 @@ log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 #     SignalWeighting
 # )
 
-# STRATEGIES=(
-#     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
-#     OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
-# )
-
 STRATEGIES=(
     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
+    OrderFlow MultiTimeframe CrossExchangeSpread StatisticalArbitrage
 )
+
+# STRATEGIES=(
+#     SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
+# )
 
 # 端口基数 (单策略专用端口段)
 # 单策略 PORT: 1000+, METRICS: 3000+, WS: 5000+
