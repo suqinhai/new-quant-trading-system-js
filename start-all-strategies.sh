@@ -33,7 +33,7 @@ log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 # )
 
 STRATEGIES=(
-    SMA RSI MACD ATRBreakout BollingerWidth
+    SMA RSI MACD ATRBreakout BollingerWidth VolatilityRegime
 )
 
 # 端口基数 (单策略专用端口段)
