@@ -277,7 +277,7 @@ npm run bench:executor    # 执行器基准
 |------|------|
 | **运行时** | Node.js 20+ |
 | **交易所接入** | CCXT 4.2.0 |
-| **数据存储** | SQLite, Redis, ClickHouse |
+| **数据存储** | Redis, ClickHouse |
 | **实时通信** | WebSocket (ws), Socket.io |
 | **API 框架** | Express 4.18 |
 | **精确计算** | Decimal.js |
@@ -295,7 +295,7 @@ npm run bench:executor    # 执行器基准
 |------|------|
 | **后端** | Go 1.21+, Gin 框架 |
 | **前端** | React 18+, TypeScript 5.0+ |
-| **数据库** | SQLite |
+| **数据库** | N/A |
 | **UI 框架** | TailwindCSS |
 | **图表** | Recharts |
 | **技术指标** | TA-Lib |

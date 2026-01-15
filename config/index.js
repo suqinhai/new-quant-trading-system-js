@@ -367,12 +367,6 @@ function buildEnvConfig() {
 
     // 数据库配置 / Database configuration
     database: {
-      type: getEnv('DB_TYPE', 'sqlite'),
-      host: getEnv('DB_HOST'),
-      port: getEnvNumber('DB_PORT'),
-      name: getEnv('DB_NAME'),
-      user: getEnvDecrypted('DB_USER'),
-      password: getEnvDecrypted('DB_PASSWORD'),
       redis: {
         enabled: !!getEnv('REDIS_URL'),
         url: getEnvDecrypted('REDIS_URL'),

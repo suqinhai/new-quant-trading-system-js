@@ -2,8 +2,7 @@
  * Redis 数据库管理器
  * Redis Database Manager
  *
- * 提供与 SQLite DatabaseManager 兼容的接口
- * Provides interface compatible with SQLite DatabaseManager
+ * Provides a database-manager-like interface for Redis
  *
  * @module src/database/RedisDatabaseManager
  */
@@ -80,7 +79,6 @@ class RedisDatabaseManager extends EventEmitter {
 
   // ============================================
   // 订单操作 Order Operations
-  // (兼容 DatabaseManager 接口)
   // ============================================
 
   /**

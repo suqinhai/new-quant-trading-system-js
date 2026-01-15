@@ -113,9 +113,14 @@ class ConfigManager extends EventEmitter {
 
     // 数据库配置 Schema
     this.registerSchema('database', z.object({
-      type: z.enum(['sqlite', 'memory']).default('sqlite'),
-      path: z.string().default('./data/trading.db'),
-      autoSaveInterval: z.number().positive().default(30000),
+      redis: z.object({
+        enabled: z.boolean().default(false),
+        host: z.string().optional(),
+        port: z.number().optional(),
+        password: z.string().optional(),
+        db: z.number().optional(),
+        url: z.string().optional(),
+      }).optional(),
     }));
 
     // 备份配置 Schema
