@@ -241,6 +241,26 @@ function buildEnvConfig() {
   // 解析策略权重 / Parse strategy weights
   const comboStrategies = getEnv('COMBO_STRATEGIES');
   const strategyWeights = parseComboStrategies(comboStrategies);
+  const hasRedisEnv = Boolean(
+    process.env.REDIS_URL ||
+    process.env.REDIS_HOST ||
+    process.env.REDIS_PORT ||
+    process.env.REDIS_PASSWORD ||
+    process.env.REDIS_DB
+  );
+  const redisHost = getEnv('REDIS_HOST');
+  const redisPort = getEnvNumber('REDIS_PORT', undefined);
+  const redisDb = getEnvNumber('REDIS_DB', undefined);
+  const redisKeyPrefix = getEnv('REDIS_PREFIX');
+  const redisPassword = getEnvDecrypted('REDIS_PASSWORD');
+  const redisUrl = getEnvDecrypted('REDIS_URL');
+  let redisUrlResolved = redisUrl;
+  if (!redisUrlResolved && redisHost) {
+    const port = redisPort || 6379;
+    redisUrlResolved = redisPassword
+      ? `redis://:${redisPassword}@${redisHost}:${port}`
+      : `redis://${redisHost}:${port}`;
+  }
 
   return {
     // 策略配置 / Strategy configuration
@@ -368,9 +388,13 @@ function buildEnvConfig() {
     // 数据库配置 / Database configuration
     database: {
       redis: {
-        enabled: !!getEnv('REDIS_URL'),
-        url: getEnvDecrypted('REDIS_URL'),
-        password: getEnvDecrypted('REDIS_PASSWORD'),
+        enabled: hasRedisEnv,
+        url: redisUrlResolved,
+        host: redisHost,
+        port: redisPort,
+        db: redisDb,
+        keyPrefix: redisKeyPrefix,
+        password: redisPassword,
       },
     },
 

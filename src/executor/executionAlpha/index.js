@@ -13,6 +13,9 @@
  * 5. 自适应执行策略 / Adaptive execution strategy
  */
 
+import { ExecutionAlphaEngine } from './ExecutionAlphaEngine.js';
+import { OrderBookAnalyzer } from './OrderBookAnalyzer.js';
+
 // ============================================
 // 核心引擎导出 / Core Engine Export
 // ============================================
@@ -106,7 +109,6 @@ export {
  * @returns {ExecutionAlphaEngine} 引擎实例 / Engine instance
  */
 export function createExecutionAlphaEngine(config = {}) {
-  const { ExecutionAlphaEngine } = require('./ExecutionAlphaEngine.js');
   return new ExecutionAlphaEngine(config);
 }
 
@@ -121,7 +123,6 @@ export function createExecutionAlphaEngine(config = {}) {
  * @returns {Object} 分析结果 / Analysis result
  */
 export function quickAnalyze(orderBook, symbol, side, size) {
-  const { OrderBookAnalyzer } = require('./OrderBookAnalyzer.js');
   const analyzer = new OrderBookAnalyzer();
 
   const depthAnalysis = analyzer.analyzeDepth(orderBook, symbol);

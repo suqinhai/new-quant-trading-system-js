@@ -575,7 +575,8 @@ class RedisDatabaseManager extends EventEmitter {
     // 添加到时间索引 / Add to time index
     await this.redis.zAdd(
       this.redis.key(KEY_PREFIX.CANDLE, 'idx', candle.exchange, candle.symbol, candle.timeframe),
-      { score: candle.timestamp, value: key }
+      candle.timestamp,
+      key
     );
 
     return { changes: 1 };
