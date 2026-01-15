@@ -95,7 +95,6 @@ src/
 │   ├── orderExecutor.js   # 智能执行器
 │   └── ExchangeFailover.js # 故障转移
 ├── database/              # 数据库层
-│   ├── DatabaseManager.js # 本地存储 (预留)
 │   ├── redis/             # Redis 模块 (主存储)
 │   └── clickhouse/        # ClickHouse 模块 (归档)
 ├── logger/                # 日志告警

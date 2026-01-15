@@ -1601,24 +1601,13 @@ export default {
   },
 
   // ============================================
-  // 数据库配置 / Database Configuration
+  // Storage Configuration (Redis only)
   // ============================================
   database: {
-    // 数据库类型: 'sqlite' | 'mysql' | 'postgresql' | 'mongodb'
-    type: 'sqlite',
-
-    // SQLite 配置 / SQLite configuration
-    sqlite: {
-      filename: 'data/trading.db',
-    },
-
-    // MySQL/PostgreSQL 配置 / MySQL/PostgreSQL configuration
-    // (从环境变量读取 / Read from env)
-
-    // Redis 配置 / Redis configuration
+    // Redis configuration
     redis: {
       enabled: false,
-      // 其他配置从环境变量读取 / Other config from env
+      // Other config from env
     },
   },
 
