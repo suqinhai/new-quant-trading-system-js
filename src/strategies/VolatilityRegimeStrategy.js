@@ -175,6 +175,8 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
       this._regimeCandidateCount = 0;
     }
 
+    const entryRegime = this._regimeCandidate || this._currentRegime;
+
     // 移动平均�?/ Moving averages
     const fastMAValues = EMA(closes, this.fastMAPeriod);
     const fastMA = getLatest(fastMAValues);
@@ -192,18 +194,26 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
 
     // 趋势方向 / Trend direction
     const trendUp = fastMA > slowMA && pdi > mdi;
+    const maDeadCross = fastMA < slowMA;
+    const diReversal = pdi < mdi;
     const strongTrend = adxValue > this.adxThreshold;
 
     const atrBreakoutHigh = this._getAtrBreakoutHigh(history);
     const atrBreakout =
       atrBreakoutHigh !== null &&
       candle.close > atrBreakoutHigh + prevATR * this.atrBreakoutMultiplier;
+    const lowBreakoutTriggered =
+      atrBreakoutHigh !== null &&
+      candle.high > atrBreakoutHigh + prevATR * this.atrBreakoutMultiplier;
+    const lowBreakoutConfirmed = atrBreakoutHigh !== null && candle.close > atrBreakoutHigh;
+    const lowBreakout = lowBreakoutTriggered && lowBreakoutConfirmed;
 
     // 保存指标 / Save indicators
     this.setIndicator('ATR', currentATR);
     this.setIndicator('normalizedATR', normalizedATR);
     this.setIndicator('volPercentile', volPercentile);
     this.setIndicator('regime', this._currentRegime);
+    this.setIndicator('entryRegime', entryRegime);
     this.setIndicator('fastMA', fastMA);
     this.setIndicator('prevFastMA', prevFastMA);
     this.setIndicator('emaSlope', emaSlope);
@@ -211,6 +221,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     this.setIndicator('ADX', adxValue);
     this.setIndicator('atrBreakoutHigh', atrBreakoutHigh);
     this.setIndicator('atrBreakout', atrBreakout);
+    this.setIndicator('lowBreakout', lowBreakout);
 
     // 检�?Regime 变化 / Detect regime change
     if (this._currentRegime !== this._prevRegime) {
@@ -225,7 +236,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     // 根据不同 Regime 执行策略 / Execute strategy based on regime
     if (!hasPosition) {
       this._handleEntry(candle, {
-        regime: this._currentRegime,
+        regime: entryRegime,
         volPercentile,
         trendUp,
         strongTrend,
@@ -233,6 +244,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
         emaSlope,
         emaSlopeUp,
         atrBreakout,
+        lowBreakout,
         fastMA,
         slowMA,
       });
@@ -240,8 +252,8 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
       this._handleExit(candle, {
         regime: this._currentRegime,
         currentATR,
-        trendUp,
-        strongTrend,
+        maDeadCross,
+        diReversal,
       });
     }
   }
@@ -275,6 +287,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
       currentATR,
       emaSlopeUp,
       atrBreakout,
+      lowBreakout,
     } = indicators;
 
     // No entry in extreme volatility when disabled.
@@ -295,7 +308,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
       positionPercent *= 0.3;
     }
 
-    if (regime === VolatilityRegime.LOW && atrBreakout && trendUp && emaSlopeUp) {
+    if (regime === VolatilityRegime.LOW && lowBreakout && trendUp && emaSlopeUp) {
       signal = true;
       reason = 'Low volatility breakout entry';
     }
@@ -349,7 +362,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
    * @private
    */
   _handleExit(candle, indicators) {
-    const { regime, currentATR, trendUp, strongTrend } = indicators;
+    const { regime, currentATR, maDeadCross, diReversal } = indicators;
     const direction = this.getState('direction');
 
     if (direction !== 'long') return;
@@ -395,12 +408,12 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
       return;
     }
 
-    // 趋势反转出场 / Trend reversal exit
-    if (!trendUp && !strongTrend) {
+    // 趋势反转出场 / MA/DI reversal exit
+    if (maDeadCross || diReversal) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
-      this.log(`趋势反转出场, PnL=${pnl}%`);
+      this.log(`MA/DI reversal exit, PnL=${pnl}%`);
 
-      this.setSellSignal(`Trend Reversal @ ${candle.close.toFixed(2)}`);
+      this.setSellSignal(`MA/DI Reversal @ ${candle.close.toFixed(2)}`);
       this.closePosition(this.symbol);
       this._resetState();
     }
