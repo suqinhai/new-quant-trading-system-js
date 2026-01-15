@@ -9,6 +9,8 @@
  */
 
 import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * 关闭阶段
@@ -278,7 +280,6 @@ class StatePersistence {
    * @private
    */
   _ensureDir() {
-    const fs = require('fs');
     if (!fs.existsSync(this.config.stateDir)) {
       fs.mkdirSync(this.config.stateDir, { recursive: true });
     }
@@ -343,9 +344,6 @@ class StatePersistence {
    * @param {string} key - 状态键
    */
   save(key) {
-    const fs = require('fs');
-    const path = require('path');
-
     const entry = this.state.get(key);
     if (!entry) return false;
 
@@ -389,9 +387,6 @@ class StatePersistence {
    * @param {string} key - 状态键
    */
   load(key) {
-    const fs = require('fs');
-    const path = require('path');
-
     const filename = path.join(this.config.stateDir, `${key}.json`);
 
     try {
@@ -416,9 +411,6 @@ class StatePersistence {
    * 加载所有状态
    */
   loadAll() {
-    const fs = require('fs');
-    const path = require('path');
-
     const loaded = [];
     const failed = [];
 

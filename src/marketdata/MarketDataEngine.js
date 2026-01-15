@@ -175,6 +175,7 @@ export class MarketDataEngine extends EventEmitter {
     this.config = {
       // Redis 配置 / Redis configuration
       redis: { ...DEFAULT_CONFIG.redis, ...config.redis },
+      enableRedis: config.enableRedis ?? true,
       // 重连配置 / Reconnection configuration
       reconnect: { ...DEFAULT_CONFIG.reconnect, ...config.reconnect },
       // 心跳配置 / Heartbeat configuration
@@ -287,7 +288,11 @@ export class MarketDataEngine extends EventEmitter {
 
     try {
       // 1. 初始化 Redis 连接 / Initialize Redis connection
-      await this._initializeRedis();
+      if (this.config.enableRedis) {
+        await this._initializeRedis();
+      } else {
+        console.log(`${this.logPrefix} Redis 已禁用 / Redis disabled`);
+      }
 
       // 2. 连接所有交易所 WebSocket / Connect to all exchange WebSockets
       await this._connectAllExchanges();
@@ -340,7 +345,9 @@ export class MarketDataEngine extends EventEmitter {
     await this._disconnectAllExchanges();
 
     // 2. 关闭 Redis 连接 / Close Redis connections
-    await this._closeRedis();
+    if (this.config.enableRedis) {
+      await this._closeRedis();
+    }
 
     // 3. 清理心跳定时器 / Clear heartbeat timers
     this._clearAllHeartbeats();
