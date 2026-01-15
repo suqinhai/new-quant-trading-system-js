@@ -777,17 +777,20 @@ export class MarketDataEngine extends EventEmitter {
    */
   _getBinanceCombinedStreamUrl(streams) {
     const tradingType = this.config.tradingType;
-    const baseUrl = tradingType === 'spot'
+    const streamBaseUrl = tradingType === 'spot'
       ? 'wss://stream.binance.com:9443/stream'
       : 'wss://fstream.binance.com/stream';
+    const wsBaseUrl = tradingType === 'spot'
+      ? 'wss://stream.binance.com:9443/ws'
+      : 'wss://fstream.binance.com/ws';
 
-    // 如果没有流，返回基础 URL / If no streams, return base URL
+    // 如果没有流，返回基础 URL / If no streams, return WS base URL
     if (!streams || streams.length === 0) {
-      return baseUrl;
+      return wsBaseUrl;
     }
 
     // 构建 Combined Stream URL / Build Combined Stream URL
-    return `${baseUrl}?streams=${streams.join('/')}`;
+    return `${streamBaseUrl}?streams=${streams.join('/')}`;
   }
 
   /**
@@ -1045,7 +1048,7 @@ export class MarketDataEngine extends EventEmitter {
     }
 
     // 没有可用连接，创建新连接 / No available connection, create new one
-    return await this._createBinanceCombinedStreamConnection([]);
+    return await this._createBinanceCombinedStreamConnection([subKey]);
   }
 
   /**
@@ -1062,18 +1065,24 @@ export class MarketDataEngine extends EventEmitter {
     const connInfo = pool.get(connectionId);
 
     if (!connInfo || !connInfo.ws || connInfo.ws.readyState !== WebSocket.OPEN) {
-      console.warn(`${this.logPrefix} Binance 连接不可用 / Connection not available: ${connectionId}`);
+      console.warn(`${this.logPrefix} Binance connection not available: ${connectionId}`);
       return false;
     }
 
-    // 添加到连接的订阅集合 / Add to connection's subscription set
+    if (connInfo.subscriptions.has(subKey)) {
+      const subToConn = this.subscriptionToConnection.get(exchange);
+      subToConn.set(subKey, connectionId);
+      return true;
+    }
+
+    // Add to connection's subscription set
     connInfo.subscriptions.add(subKey);
 
-    // 更新订阅到连接的映射 / Update subscription to connection mapping
+    // Update subscription to connection mapping
     const subToConn = this.subscriptionToConnection.get(exchange);
     subToConn.set(subKey, connectionId);
 
-    // 发送订阅消息 / Send subscription message
+    // Send subscription message
     const stream = this._subscriptionKeyToBinanceStream(subKey);
     const message = {
       method: 'SUBSCRIBE',
@@ -1082,7 +1091,7 @@ export class MarketDataEngine extends EventEmitter {
     };
     connInfo.ws.send(JSON.stringify(message));
 
-    console.log(`${this.logPrefix} Binance 已订阅 / Subscribed [${connectionId}]: ${subKey}`);
+    console.log(`${this.logPrefix} Binance subscribed [${connectionId}]: ${subKey}`);
     return true;
   }
 

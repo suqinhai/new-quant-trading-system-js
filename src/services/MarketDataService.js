@@ -197,16 +197,16 @@ export class MarketDataService extends EventEmitter {
       // 3. 绑定事件处理 / Bind event handlers
       this._bindEventHandlers();
 
-      // 4. 启动行情引擎 / Start market data engine
+      // 4. Start market data engine
       await this.marketDataEngine.start();
 
-      // 5. 订阅交易对 / Subscribe to symbols
-      await this._subscribeSymbols();
-
-      // 6. 启动心跳 / Start heartbeat
+      // 5. Start heartbeat
       this._startHeartbeat();
 
-      // 7. 启动订阅请求监听 / Start subscription request listener
+      // 6. Subscribe to symbols
+      await this._subscribeSymbols();
+
+      // 7. Start subscription request listener
       await this._startSubscriptionListener();
 
       // 更新状态 / Update status
@@ -517,7 +517,7 @@ export class MarketDataService extends EventEmitter {
    * @private
    */
   _startHeartbeat() {
-    this.heartbeatTimer = setInterval(async () => {
+    const publishHeartbeat = async () => {
       try {
         const status = this.getStatus();
         await this.redis.set(
@@ -529,12 +529,17 @@ export class MarketDataService extends EventEmitter {
             stats: status.stats,
           }),
           'EX',
-          30 // 30秒过期 / 30 seconds expiry
+          30 // 30s expiry / 30 seconds expiry
         );
       } catch (error) {
-        console.error(`${this.logPrefix} 心跳更新失败 / Heartbeat update failed:`, error.message);
+        console.error(`${this.logPrefix} Heartbeat update failed:`, error.message);
       }
-    }, this.config.heartbeatInterval);
+    };
+
+    // Publish an initial heartbeat to avoid startup gaps.
+    publishHeartbeat();
+
+    this.heartbeatTimer = setInterval(publishHeartbeat, this.config.heartbeatInterval);
   }
 
   /**
