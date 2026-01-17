@@ -69,10 +69,10 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 监控的交易对列表 / Symbols to monitor
-  // 注意: 永续合约需要使用 :USDT 后缀格式
+  // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
   symbols: [
-    'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'SOL/USDT:USDT', 'XRP/USDT:USDT',
-    'ADA/USDT:USDT', 'AVAX/USDT:USDT', 'DOGE/USDT:USDT', 'DOT/USDT:USDT', 'MATIC/USDT:USDT',
+    'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
+    'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT',
   ],
 
   // 回看周期 (K线数量) / Lookback period (number of candles)

@@ -346,7 +346,7 @@ function buildEnvConfig() {
         secret: getExchangeKey('kraken', 'secret', 'KRAKEN_SECRET') ||
                 getExchangeKey('kraken', 'secret', 'KRAKEN_API_SECRET'),
         sandbox: getEnvBool('KRAKEN_SANDBOX') || getEnvBool('KRAKEN_TESTNET'),
-        defaultType: getEnv('KRAKEN_DEFAULT_TYPE', 'spot'),
+        defaultType: getEnv('KRAKEN_DEFAULT_TYPE', 'swap'),
       },
     },
 

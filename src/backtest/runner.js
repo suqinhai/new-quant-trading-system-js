@@ -293,7 +293,7 @@ if (isMainModule) {
   // 配置 / Configuration
   const config = {
     strategy: getArg(['--strategy', '-s']),
-    symbol: getArg(['--symbol']) || 'BTC/USDT:USDT',
+    symbol: getArg(['--symbol']) || 'BTC/USDT',
     timeframe: getArg(['--timeframe']) || '1h',
     startDate: getArg(['--start']) || process.env.BACKTEST_START_DATE,
     endDate: getArg(['--end']) || process.env.BACKTEST_END_DATE,

@@ -254,7 +254,7 @@ const strategy = new RotationStrategy({
 import { FundingRateExtremeStrategy, EXTREME_DETECTION, FUNDING_FREQUENCY } from './strategies/FundingRateExtremeStrategy.js';
 
 const strategy = new FundingRateExtremeStrategy({
-  symbols: ['BTC/USDT:USDT', 'ETH/USDT:USDT', ...],
+  symbols: ['BTC/USDT', 'ETH/USDT', ...],
 
   // 费率配置
   fundingFrequency: FUNDING_FREQUENCY.EIGHT_HOURLY, // hourly, 8h, 4h
@@ -280,7 +280,7 @@ const strategy = new FundingRateExtremeStrategy({
 
 // 处理费率更新
 strategy.onFundingRate({
-  symbol: 'BTC/USDT:USDT',
+  symbol: 'BTC/USDT',
   fundingRate: 0.0002,
   fundingRatePredicted: 0.00018,
   fundingTimestamp: Date.now() + 8 * 3600000,

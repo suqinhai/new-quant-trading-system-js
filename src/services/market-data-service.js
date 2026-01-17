@@ -95,7 +95,7 @@ function printHelp() {
   node src/services/market-data-service.js
 
   # 指定交易所和交易对
-  node src/services/market-data-service.js --exchanges binance,okx --symbols BTC/USDT:USDT,ETH/USDT:USDT
+  node src/services/market-data-service.js --exchanges binance,okx --symbols BTC/USDT,ETH/USDT
 
   # 使用环境变量
   MARKET_DATA_EXCHANGES=binance,okx REDIS_HOST=192.168.1.100 node src/services/market-data-service.js

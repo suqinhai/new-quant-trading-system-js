@@ -83,7 +83,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 监控的交易对列表 / Symbols to monitor
-  symbols: ['BTC/USDT:USDT', 'ETH/USDT:USDT'],
+  symbols: ['BTC/USDT', 'ETH/USDT'],
 
   // ============================================
   // 套利阈值配置 / Arbitrage Threshold Configuration
@@ -2121,9 +2121,9 @@ export class FundingArbStrategy extends BaseStrategy {
         const amount = positionSize / currentPrice;
 
         if (side === 'long') {
-          this.buy(candle.symbol || 'BTC/USDT:USDT', amount);
+          this.buy(candle.symbol || 'BTC/USDT', amount);
         } else {
-          this.sell(candle.symbol || 'BTC/USDT:USDT', amount);
+          this.sell(candle.symbol || 'BTC/USDT', amount);
         }
 
         // 记录状态 / Record state

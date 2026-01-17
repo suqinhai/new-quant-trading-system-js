@@ -171,7 +171,7 @@ services:
       # =========================================================================
       # 交易对配置 / Trading Pairs Configuration
       # =========================================================================
-      DEFAULT_SYMBOLS: ${DEFAULT_SYMBOLS:-BTC/USDT:USDT,ETH/USDT:USDT}
+      DEFAULT_SYMBOLS: ${DEFAULT_SYMBOLS:-BTC/USDT,ETH/USDT}
       DEFAULT_TIMEFRAME: ${DEFAULT_TIMEFRAME:-1h}
       # =========================================================================
       # 风控配置 / Risk Control Configuration

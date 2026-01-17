@@ -1615,7 +1615,6 @@ export class AdvancedRiskManager extends EventEmitter {
 
     // 添加 BTC (用于急跌检测) / Add BTC (for crash detection)
     symbols.add('BTC/USDT');
-    symbols.add('BTC/USDT:USDT');
 
     // 获取第一个交易所实例 / Get first exchange instance
     const [, exchange] = this.exchanges.entries().next().value || [];

@@ -180,136 +180,136 @@ const STRATEGIES = [
   {
     id: 'funding',
     name: 'FundingArb',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '资金费率套利 / Funding Rate Arbitrage',
   },
   {
     id: 'grid',
     name: 'Grid',
-    symbols: 'BTC/USDT:USDT',
+    symbols: 'BTC/USDT',
     description: '网格交易 / Grid Trading',
   },
   {
     id: 'sma',
     name: 'SMA',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '简单移动平均 / Simple Moving Average',
   },
   {
     id: 'rsi',
     name: 'RSI',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '相对强弱指标 / Relative Strength Index',
   },
   {
     id: 'macd',
     name: 'MACD',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: 'MACD 指标策略 / MACD Indicator Strategy',
   },
   {
     id: 'bb',
     name: 'BollingerBands',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '布林带策略 / Bollinger Bands Strategy',
   },
   // 波动率策略 / Volatility Strategies
   {
     id: 'atr',
     name: 'ATRBreakout',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: 'ATR 波动突破 / ATR Volatility Breakout',
   },
   {
     id: 'bbwidth',
     name: 'BollingerWidth',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '布林宽度挤压 / Bollinger Width Squeeze',
   },
   {
     id: 'regime',
     name: 'VolatilityRegime',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '波动率 Regime / Volatility Regime Switch',
   },
   // 订单流策略 / Order Flow Strategy
   {
     id: 'orderflow',
     name: 'OrderFlow',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '订单流/成交行为策略 / Order Flow / Trade Behavior Strategy',
   },
   // 多周期共振策略 / Multi-Timeframe Resonance Strategy
   {
     id: 'mtf',
     name: 'MultiTimeframe',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '多周期共振策略 (1H趋势+15M回调+5M入场) / Multi-Timeframe Resonance Strategy',
   },
   // 加权组合策略 / Weighted Combo Strategy
   {
     id: 'combo',
     name: 'WeightedCombo',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '加权组合策略 (SMA+RSI+MACD打分) / Weighted Combo Strategy (Signal Scoring)',
   },
   // 横截面策略 / Cross-Sectional Strategies
   {
     id: 'crosssectional',
     name: 'CrossSectional',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,AVAX/USDT,DOGE/USDT,DOT/USDT,MATIC/USDT',
     description: '横截面策略 (多币种排名轮动) / Cross-Sectional Strategy (Multi-Asset Ranking Rotation)',
   },
   {
     id: 'momentumrank',
     name: 'MomentumRank',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,AVAX/USDT,DOGE/USDT,DOT/USDT,MATIC/USDT',
     description: '动量排名策略 / Momentum Ranking Strategy',
   },
   {
     id: 'rotation',
     name: 'Rotation',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,AVAX/USDT,DOGE/USDT,DOT/USDT,MATIC/USDT',
     description: '板块轮动策略 / Sector Rotation Strategy',
   },
   {
     id: 'fundingextreme',
     name: 'FundingRateExtreme',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,AVAX/USDT,DOGE/USDT,DOT/USDT,MATIC/USDT',
     description: '资金费率极值策略 / Funding Rate Extreme Strategy',
   },
   {
     id: 'crossexchange',
     name: 'CrossExchangeSpread',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT',
     description: '跨交易所价差策略 / Cross-Exchange Spread Strategy',
   },
   // 统计套利策略 / Statistical Arbitrage Strategy
   {
     id: 'statarb',
     name: 'StatisticalArbitrage',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,AVAX/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,AVAX/USDT',
     description: '统计套利策略 (配对交易/协整/跨所套利/期现基差) / Statistical Arbitrage Strategy',
   },
   // 风控驱动策略 / Risk-Driven Strategy
   {
     id: 'riskdriven',
     name: 'RiskDriven',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '风控驱动策略 (目标波动率/最大回撤/波动突破/风险平价) / Risk-Driven Strategy',
   },
   // 自适应参数策略 / Adaptive Strategy
   {
     id: 'adaptive',
     name: 'Adaptive',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT',
     description: '自适应参数策略 (SMA/RSI/BB 参数随市场状态动态调整) / Adaptive Strategy',
   },
   // 因子投资策略 / Factor Investing Strategy
   {
     id: 'factors',
     name: 'FactorInvesting',
-    symbols: 'BTC/USDT:USDT,ETH/USDT:USDT,BNB/USDT:USDT,SOL/USDT:USDT,XRP/USDT:USDT,ADA/USDT:USDT,AVAX/USDT:USDT,DOGE/USDT:USDT,DOT/USDT:USDT,MATIC/USDT:USDT,LINK/USDT:USDT,UNI/USDT:USDT,ATOM/USDT:USDT,LTC/USDT:USDT,FIL/USDT:USDT',
+    symbols: 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,AVAX/USDT,DOGE/USDT,DOT/USDT,MATIC/USDT,LINK/USDT,UNI/USDT,ATOM/USDT,LTC/USDT,FIL/USDT',
     description: '因子投资策略 (动量/波动率/资金流/换手率) / Factor Investing Strategy',
   },
 ];

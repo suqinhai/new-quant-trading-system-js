@@ -163,11 +163,11 @@
         </el-form-item>
         <el-form-item label="交易对" prop="symbol">
           <el-select v-model="formData.symbol" placeholder="请选择交易对" filterable style="width: 100%">
-            <el-option label="BTC/USDT" value="BTC/USDT:USDT" />
-            <el-option label="ETH/USDT" value="ETH/USDT:USDT" />
-            <el-option label="BNB/USDT" value="BNB/USDT:USDT" />
-            <el-option label="SOL/USDT" value="SOL/USDT:USDT" />
-            <el-option label="XRP/USDT" value="XRP/USDT:USDT" />
+            <el-option label="BTC/USDT" value="BTC/USDT" />
+            <el-option label="ETH/USDT" value="ETH/USDT" />
+            <el-option label="BNB/USDT" value="BNB/USDT" />
+            <el-option label="SOL/USDT" value="SOL/USDT" />
+            <el-option label="XRP/USDT" value="XRP/USDT" />
           </el-select>
         </el-form-item>
         <el-form-item label="交易所" prop="exchange">
@@ -377,7 +377,7 @@ const submitting = ref(false)
 const formData = reactive({
   name: '',
   type: 'SMA',
-  symbol: 'BTC/USDT:USDT',
+  symbol: 'BTC/USDT',
   exchange: 'binance',
   initialCapital: 10000,
   params: {
@@ -459,7 +459,7 @@ const resetForm = () => {
     id: undefined,
     name: '',
     type: 'SMA',
-    symbol: 'BTC/USDT:USDT',
+    symbol: 'BTC/USDT',
     exchange: 'binance',
     initialCapital: 10000,
     params: {

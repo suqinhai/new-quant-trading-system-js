@@ -29,7 +29,7 @@ export default {
       enableRateLimit: true,
 
       // 默认交易类型: 'spot' | 'future' | 'swap'
-      defaultType: 'spot',
+      defaultType: 'swap',
 
       // 选项 / Options
       options: {
@@ -56,7 +56,7 @@ export default {
       enableRateLimit: true,
 
       // 默认交易类型: 'spot' | 'swap' | 'future'
-      defaultType: 'spot',
+      defaultType: 'swap',
     },
 
     // Gate.io 配置 / Gate.io configuration
@@ -74,7 +74,7 @@ export default {
       enableRateLimit: true,
 
       // 默认交易类型: 'spot' | 'swap' | 'future'
-      defaultType: 'spot',
+      defaultType: 'swap',
 
       // 选项 / Options
       options: {
@@ -124,7 +124,7 @@ export default {
       enableRateLimit: true,
 
       // 默认交易类型: 'spot' | 'swap' | 'future'
-      defaultType: 'spot',
+      defaultType: 'swap',
 
       // 选项 / Options
       options: {
@@ -150,7 +150,7 @@ export default {
 
       // 默认交易类型: 'spot' | 'swap' | 'future'
       // KuCoin 支持现货和合约交易 / KuCoin supports spot and futures trading
-      defaultType: 'spot',
+      defaultType: 'swap',
 
       // 选项 / Options
       options: {
@@ -176,7 +176,7 @@ export default {
 
       // 默认交易类型: 'spot' | 'swap' | 'future'
       // Kraken 支持现货和合约交易 / Kraken supports spot and futures trading
-      defaultType: 'spot',
+      defaultType: 'swap',
 
       // 选项 / Options
       options: {

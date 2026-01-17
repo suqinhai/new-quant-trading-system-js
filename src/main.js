@@ -107,7 +107,7 @@ const DEFAULT_OPTIONS = {
   strategy: 'FundingArb',           // 默认策略 / Default strategy
 
   // 交易对配置 / Symbol configuration
-  symbols: ['BTC/USDT:USDT'],       // 默认交易对 / Default symbols
+  symbols: ['BTC/USDT'],       // 默认交易对 / Default symbols
 
   // 回测配置 / Backtest configuration
   startDate: null,                   // 开始日期 / Start date
@@ -272,7 +272,7 @@ function showHelp() {
                                        RegimeSwitching, OrderFlow
 
   --symbol, --symbols <s>   交易对 (逗号分隔) / Symbols (comma separated)
-                            例如 / Example: BTC/USDT:USDT,ETH/USDT:USDT
+                            例如 / Example: BTC/USDT,ETH/USDT
 
   --exchange, -e <name>     交易所名称 / Exchange name
                             可选: binance, okx, bybit
@@ -297,7 +297,7 @@ function showHelp() {
   node src/main.js backtest --strategy FundingArb --start 2024-01-01 --end 2024-06-01
 
   # 影子模式运行 Grid 策略
-  node src/main.js shadow --strategy Grid --symbols BTC/USDT:USDT
+  node src/main.js shadow --strategy Grid --symbols BTC/USDT
 
   # 实盘运行
   node src/main.js live --strategy FundingArb
