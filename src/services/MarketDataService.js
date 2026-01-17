@@ -63,6 +63,7 @@ const REDIS_KEYS = {
   TRADE: 'market:trade',
   FUNDING: 'market:funding',
   KLINE: 'market:kline',
+  UNIFIED_CHANNEL: 'market_data',
 
   // 服务状态键 / Service status key
   SERVICE_STATUS: 'market:service:status',
@@ -395,7 +396,7 @@ export class MarketDataService extends EventEmitter {
 
     // 处理 funding rate 数据 / Handle funding rate data
     this.marketDataEngine.on('fundingRate', (funding) => {
-      this._publishMarketData('funding', funding);
+      this._publishMarketData('fundingRate', funding);
     });
 
     // 处理 kline 数据 / Handle kline data
@@ -427,11 +428,17 @@ export class MarketDataService extends EventEmitter {
    */
   async _publishMarketData(dataType, data) {
     try {
+      const normalizedType = dataType === 'fundingRate' ? 'funding' : dataType;
+      const channelPrefix = REDIS_KEYS[normalizedType.toUpperCase()];
+      if (!channelPrefix) {
+        console.error(`${this.logPrefix} Unknown data type for publish: ${dataType}`);
+        return;
+      }
       // 构建频道名 / Build channel name
       const exchange = data.exchange || 'unknown';
       // 标准化交易对格式，移除 :USDT 后缀 / Normalize symbol format, remove :USDT suffix
       const symbol = (data.symbol || 'unknown').replace(/:USDT$/, '');
-      const channel = `${REDIS_KEYS[dataType.toUpperCase()]}:${exchange}:${symbol}`;
+      const channel = `${channelPrefix}:${exchange}:${symbol}`;
 
       // 添加时间戳 / Add timestamp
       const message = JSON.stringify({
@@ -442,12 +449,22 @@ export class MarketDataService extends EventEmitter {
       // 发布到 Redis / Publish to Redis
       await this.redisPub.publish(channel, message);
 
+      const unifiedMessage = JSON.stringify({
+        type: dataType === 'funding' ? 'fundingRate' : dataType,
+        data,
+        timestamp: Date.now(),
+      });
+      await this.redisPub.publish(REDIS_KEYS.UNIFIED_CHANNEL, unifiedMessage);
+
       // 同时发布到通用频道 (用于广播) / Also publish to general channel (for broadcast)
-      const generalChannel = `${REDIS_KEYS[dataType.toUpperCase()]}:${exchange}:*`;
+      const generalChannel = `${channelPrefix}:${exchange}:*`;
       // await this.redisPub.publish(generalChannel, message);
 
       // 更新统计 / Update stats
-      this.stats[`${dataType}sPublished`]++;
+      const statsKey = `${normalizedType}sPublished`;
+      if (this.stats[statsKey] !== undefined) {
+        this.stats[statsKey]++;
+      }
 
     } catch (error) {
       console.error(`${this.logPrefix} 发布数据失败 / Failed to publish data:`, error.message);

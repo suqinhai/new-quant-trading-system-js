@@ -232,7 +232,7 @@ export class MarketDataSubscriber extends EventEmitter {
    *
    * @param {string} exchange - 交易所名称 / Exchange name
    * @param {string} symbol - 交易对 / Symbol
-   * @param {string|Array<string>} dataTypes - 数据类型 / Data types (ticker, depth, trade, funding, kline)
+   * @param {string|Array<string>} dataTypes - 数据类型 / Data types (ticker, depth, trade, fundingRate, kline)
    * @returns {Promise<void>}
    */
   async subscribe(exchange, symbol, dataTypes = 'ticker') {
@@ -241,7 +241,8 @@ export class MarketDataSubscriber extends EventEmitter {
     }
 
     // 标准化数据类型 / Normalize data types
-    const types = Array.isArray(dataTypes) ? dataTypes : [dataTypes];
+    const rawTypes = Array.isArray(dataTypes) ? dataTypes : [dataTypes];
+    const types = Array.from(new Set(rawTypes.map((dataType) => this._normalizeRequestedType(dataType))));
 
     for (const dataType of types) {
       const channel = this._buildChannel(exchange, symbol, dataType);
@@ -276,7 +277,8 @@ export class MarketDataSubscriber extends EventEmitter {
       return;
     }
 
-    const types = Array.isArray(dataTypes) ? dataTypes : [dataTypes];
+    const rawTypes = Array.isArray(dataTypes) ? dataTypes : [dataTypes];
+    const types = Array.from(new Set(rawTypes.map((dataType) => this._normalizeRequestedType(dataType))));
 
     for (const dataType of types) {
       const channel = this._buildChannel(exchange, symbol, dataType);
@@ -308,7 +310,9 @@ export class MarketDataSubscriber extends EventEmitter {
       throw new Error('未连接到 Redis / Not connected to Redis');
     }
 
-    const pattern = `${REDIS_KEYS[dataType.toUpperCase()]}:${exchange}:*`;
+    const normalizedType = this._normalizeChannelType(dataType);
+    const patternPrefix = REDIS_KEYS[normalizedType.toUpperCase()] || REDIS_KEYS.TICKER;
+    const pattern = `${patternPrefix}:${exchange}:*`;
 
     await this.redisSub.psubscribe(pattern);
 
@@ -367,6 +371,18 @@ export class MarketDataSubscriber extends EventEmitter {
   // 私有方法 / Private Methods
   // ============================================
 
+  _normalizeRequestedType(dataType) {
+    return dataType === 'funding' ? 'fundingRate' : dataType;
+  }
+
+  _normalizeChannelType(dataType) {
+    return dataType === 'fundingRate' ? 'funding' : dataType;
+  }
+
+  _normalizeEventType(dataType) {
+    return dataType === 'funding' ? 'fundingRate' : dataType;
+  }
+
   /**
    * 构建频道名
    * Build channel name
@@ -378,7 +394,8 @@ export class MarketDataSubscriber extends EventEmitter {
    * @private
    */
   _buildChannel(exchange, symbol, dataType) {
-    const prefix = REDIS_KEYS[dataType.toUpperCase()] || REDIS_KEYS.TICKER;
+    const normalizedType = this._normalizeChannelType(dataType);
+    const prefix = REDIS_KEYS[normalizedType.toUpperCase()] || REDIS_KEYS.TICKER;
     // 标准化交易对格式，移除 :USDT 后缀 / Normalize symbol format, remove :USDT suffix
     const normalizedSymbol = this._normalizeSymbol(symbol);
     return `${prefix}:${exchange}:${normalizedSymbol}`;
@@ -423,23 +440,26 @@ export class MarketDataSubscriber extends EventEmitter {
           return;
         }
 
+        const eventType = this._normalizeEventType(dataType);
+
         // 检查是否订阅了该数据 / Check if subscribed to this data
-        const filterKey = this._buildChannel(data.exchange, data.symbol, dataType);
+        const filterKey = this._buildChannel(data.exchange, data.symbol, eventType);
         if (!this.subscriptions.has(filterKey)) {
           return; // 未订阅，跳过 / Not subscribed, skip
         }
 
         // 更新对应统计 / Update corresponding stats
-        const statsKey = `${dataType}sReceived`;
+        const statsType = this._normalizeChannelType(eventType);
+        const statsKey = `${statsType}sReceived`;
         if (this.stats[statsKey] !== undefined) {
           this.stats[statsKey]++;
         }
 
         // 发射事件 / Emit event
-        this.emit(dataType, data);
+        this.emit(eventType, data);
 
         // 发射通用事件 / Emit generic event
-        this.emit('data', { type: dataType, data });
+        this.emit('data', { type: eventType, data });
 
         return;
       }
@@ -447,17 +467,19 @@ export class MarketDataSubscriber extends EventEmitter {
       // 处理旧的分散频道消息 (兼容模式) / Handle old separate channel message (compatibility mode)
       const parts = channel.split(':');
       const dataType = parts[1]; // ticker, depth, trade, funding, kline
+      const eventType = this._normalizeEventType(dataType);
 
       // 更新对应统计 / Update corresponding stats
-      if (this.stats[`${dataType}sReceived`] !== undefined) {
-        this.stats[`${dataType}sReceived`]++;
+      const statsType = this._normalizeChannelType(eventType);
+      if (this.stats[`${statsType}sReceived`] !== undefined) {
+        this.stats[`${statsType}sReceived`]++;
       }
 
       // 发射事件 / Emit event
-      this.emit(dataType, parsed);
+      this.emit(eventType, parsed);
 
       // 发射通用事件 / Emit generic event
-      this.emit('data', { type: dataType, data: parsed });
+      this.emit('data', { type: eventType, data: parsed });
 
     } catch (error) {
       console.error(`${this.logPrefix} 解析消息失败 / Failed to parse message:`, error.message);
