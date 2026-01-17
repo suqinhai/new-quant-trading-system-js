@@ -402,8 +402,13 @@ class TradingSystemRunner extends EventEmitter {
       candleCount: 0,
       orderbookCount: 0,
       fundingRateCount: 0,
+      tradeCount: 0,
       symbols: new Set(),
       exchanges: new Set(),
+      lastDataAt: null,
+      lastDataType: null,
+      lastSymbol: null,
+      lastExchange: null,
     };
 
     // 行情统计定时器 / Market data stats timer
@@ -1197,6 +1202,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.tickerCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('ticker', data);
 
       // 更新价格缓存 / Update price cache
       if (data.symbol && (data.last || data.close)) {
@@ -1215,6 +1221,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.candleCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('candle', data);
 
       // 更新价格缓存 / Update price cache
       if (data.symbol && data.close) {
@@ -1233,6 +1240,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.orderbookCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('orderbook', data);
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onOrderBook) {
@@ -1246,6 +1254,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.fundingRateCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('fundingRate', data);
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onFundingRate) {
@@ -1286,6 +1295,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.tickerCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('ticker', data);
 
       // 更新价格缓存 / Update price cache
       if (data.symbol && (data.last || data.close)) {
@@ -1306,6 +1316,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.candleCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('kline', data);
 
       // 更新价格缓存 / Update price cache
       if (data.symbol && data.close) {
@@ -1329,6 +1340,7 @@ class TradingSystemRunner extends EventEmitter {
       this._marketDataStats.orderbookCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('depth', data);
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onOrderBook) {
@@ -1339,9 +1351,10 @@ class TradingSystemRunner extends EventEmitter {
     // 成交数据事件 / Trade update event
     this.marketDataSubscriber.on('trade', (data) => {
       // 更新统计 / Update stats
-      this._marketDataStats.tradeCount = (this._marketDataStats.tradeCount || 0) + 1;
+      this._marketDataStats.tradeCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('trade', data);
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTrade) {
@@ -1350,11 +1363,12 @@ class TradingSystemRunner extends EventEmitter {
     });
 
     // 资金费率更新事件 / Funding rate update event
-    this.marketDataSubscriber.on('funding', (data) => {
+    this.marketDataSubscriber.on('fundingRate', (data) => {
       // 更新统计 / Update stats
       this._marketDataStats.fundingRateCount++;
       if (data.symbol) this._marketDataStats.symbols.add(data.symbol);
       if (data.exchange) this._marketDataStats.exchanges.add(data.exchange);
+      this._recordMarketDataEvent('fundingRate', data);
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onFundingRate) {
@@ -1377,12 +1391,35 @@ class TradingSystemRunner extends EventEmitter {
     }, 60000);
   }
 
+  _recordMarketDataEvent(dataType, data) {
+    this._marketDataStats.lastDataAt = Date.now();
+    this._marketDataStats.lastDataType = dataType;
+    if (data?.symbol) {
+      this._marketDataStats.lastSymbol = data.symbol;
+    }
+    if (data?.exchange) {
+      this._marketDataStats.lastExchange = data.exchange;
+    }
+  }
+
   /**
    * 记录行情数据统计
    * Log market data statistics
    * @private
    */
   _logMarketDataStats() {
+    const lastAt = this._marketDataStats.lastDataAt
+      ? new Date(this._marketDataStats.lastDataAt).toISOString()
+      : 'n/a';
+    const lastType = this._marketDataStats.lastDataType || 'n/a';
+    const lastSymbol = this._marketDataStats.lastSymbol || 'n/a';
+    const lastExchange = this._marketDataStats.lastExchange || 'n/a';
+
+    this._log(
+      'info',
+      `Market data stats (1m): ticker=${this._marketDataStats.tickerCount}, candle=${this._marketDataStats.candleCount}, orderbook=${this._marketDataStats.orderbookCount}, trade=${this._marketDataStats.tradeCount}, fundingRate=${this._marketDataStats.fundingRateCount}, last=${lastAt} ${lastType} ${lastExchange}:${lastSymbol}`
+    );
+
     // 如果没有日志模块，跳过 / If no logger module, skip
     if (!this.loggerModule || !this.loggerModule.pnlLogger) {
       return;
@@ -1394,15 +1431,21 @@ class TradingSystemRunner extends EventEmitter {
       tickerCount: this._marketDataStats.tickerCount,
       candleCount: this._marketDataStats.candleCount,
       orderbookCount: this._marketDataStats.orderbookCount,
+      tradeCount: this._marketDataStats.tradeCount,
       fundingRateCount: this._marketDataStats.fundingRateCount,
       symbols: Array.from(this._marketDataStats.symbols),
       exchanges: Array.from(this._marketDataStats.exchanges),
+      lastDataAt: this._marketDataStats.lastDataAt,
+      lastDataType: this._marketDataStats.lastDataType,
+      lastSymbol: this._marketDataStats.lastSymbol,
+      lastExchange: this._marketDataStats.lastExchange,
     });
 
     // 重置计数器 / Reset counters
     this._marketDataStats.tickerCount = 0;
     this._marketDataStats.candleCount = 0;
     this._marketDataStats.orderbookCount = 0;
+    this._marketDataStats.tradeCount = 0;
     this._marketDataStats.fundingRateCount = 0;
   }
 
