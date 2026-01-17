@@ -112,7 +112,7 @@ const DEFAULT_OPTIONS = {
   // 回测配置 / Backtest configuration
   startDate: null,                   // 开始日期 / Start date
   endDate: null,                     // 结束日期 / End date
-  initialCapital: 10000,             // 初始资金 / Initial capital
+  initialCapital: 100,            // 初始资金 / Initial capital
 
   // 交易所配置 / Exchange configuration
   exchange: 'binance',               // 默认交易所 / Default exchange
