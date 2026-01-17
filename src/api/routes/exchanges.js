@@ -189,9 +189,8 @@ export function createExchangeRoutes(deps = {}) {
       } else {
         // 模拟市场列表
         markets = [
-          { symbol: 'BTC/USDT', base: 'BTC', quote: 'USDT', type: 'spot', active: true },
-          { symbol: 'ETH/USDT', base: 'ETH', quote: 'USDT', type: 'spot', active: true },
-          { symbol: 'BTC/USDT:USDT', base: 'BTC', quote: 'USDT', type: 'swap', active: true },
+          { symbol: 'BTC/USDT', base: 'BTC', quote: 'USDT', type: 'swap', active: true },
+          { symbol: 'ETH/USDT', base: 'ETH', quote: 'USDT', type: 'swap', active: true },
         ];
       }
 

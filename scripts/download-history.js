@@ -11,8 +11,8 @@
  * 4. 支持增量更新 / Support incremental updates
  *
  * 使用方法 / Usage:
- *   node download-history.js --exchange binance --symbol BTC/USDT:USDT --type ohlcv
- *   node download-history.js --exchange all --symbol BTC/USDT:USDT --type all
+ *   node download-history.js --exchange binance --symbol BTC/USDT --type ohlcv
+ *   node download-history.js --exchange all --symbol BTC/USDT --type all
  *   node download-history.js --config config.json
  */
 
@@ -84,8 +84,8 @@ const DEFAULT_CONFIG = {
   },
   // 默认交易对列表 / Default symbol list
   symbols: [
-    'BTC/USDT:USDT',                 // 比特币永续合约 / BTC perpetual
-    'ETH/USDT:USDT',                 // 以太坊永续合约 / ETH perpetual
+    'BTC/USDT',                 // 比特币永续合约 / BTC perpetual
+    'ETH/USDT',                 // 以太坊永续合约 / ETH perpetual
   ],
 };
 
@@ -1425,7 +1425,7 @@ class HistoricalDataDownloader {
     let buffer = [];
 
     // OKX instId 格式: BTC-USDT-SWAP / OKX instId format
-    // 将 BTC/USDT:USDT 转换为 BTC-USDT-SWAP / Convert BTC/USDT:USDT to BTC-USDT-SWAP
+    // 将 BTC/USDT 转换为 BTC-USDT-SWAP / Convert BTC/USDT to BTC-USDT-SWAP
     const instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP';
 
     // OKX 支持的周期: 5m, 1H, 1D / OKX supported periods
@@ -1830,7 +1830,7 @@ function parseCliArgs() {
     symbol: {
       type: 'string',
       short: 's',
-      default: 'BTC/USDT:USDT',
+      default: 'BTC/USDT',
     },
     // 数据类型 / Data type
     type: {
@@ -1893,8 +1893,8 @@ function printHelp() {
   -e, --exchange <name>    交易所名称 (binance, bybit, okx, all)
                            Exchange name (default: all)
 
-  -s, --symbol <symbol>    交易对 (例如: BTC/USDT:USDT)
-                           Trading pair (default: BTC/USDT:USDT)
+  -s, --symbol <symbol>    交易对 (例如: BTC/USDT)
+                           Trading pair (default: BTC/USDT)
 
   -t, --type <type>        数据类型 (ohlcv, funding_rate, open_interest, mark_price, all)
                            Data type (default: all)
@@ -1920,11 +1920,11 @@ function printHelp() {
 示例 / Examples:
   # 下载所有交易所的 BTC 所有数据
   # Download all BTC data from all exchanges
-  node download-history.js -s BTC/USDT:USDT
+  node download-history.js -s BTC/USDT
 
   # 只下载 Binance 的 K线数据
   # Download only Binance OHLCV data
-  node download-history.js -e binance -t ohlcv -s BTC/USDT:USDT
+  node download-history.js -e binance -t ohlcv -s BTC/USDT
 
   # 使用配置文件
   # Use config file

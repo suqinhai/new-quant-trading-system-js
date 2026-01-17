@@ -66,11 +66,11 @@ const DEFAULT_CONFIG = {
 
   // 监控的永续合约交易对 / Perpetual swap symbols to monitor
   symbols: [
-    'BTC/USDT:USDT', 'ETH/USDT:USDT', 'BNB/USDT:USDT', 'SOL/USDT:USDT',
-    'XRP/USDT:USDT', 'ADA/USDT:USDT', 'AVAX/USDT:USDT', 'DOGE/USDT:USDT',
-    'DOT/USDT:USDT', 'MATIC/USDT:USDT', 'LINK/USDT:USDT', 'UNI/USDT:USDT',
-    'ATOM/USDT:USDT', 'LTC/USDT:USDT', 'ETC/USDT:USDT', 'OP/USDT:USDT',
-    'ARB/USDT:USDT', 'APT/USDT:USDT', 'INJ/USDT:USDT', 'FIL/USDT:USDT',
+    'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT',
+    'XRP/USDT', 'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT',
+    'DOT/USDT', 'MATIC/USDT', 'LINK/USDT', 'UNI/USDT',
+    'ATOM/USDT', 'LTC/USDT', 'ETC/USDT', 'OP/USDT',
+    'ARB/USDT', 'APT/USDT', 'INJ/USDT', 'FIL/USDT',
   ],
 
   // 资金费率结算频率 / Funding settlement frequency
