@@ -400,7 +400,8 @@ export class MarketDataService extends EventEmitter {
     });
 
     // 处理 kline 数据 / Handle kline data
-    this.marketDataEngine.on('kline', (kline) => {
+    // MarketDataEngine emits 'candle' events for klines.
+    this.marketDataEngine.on('candle', (kline) => {
       this._publishMarketData('kline', kline);
     });
 
