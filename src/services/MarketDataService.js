@@ -21,6 +21,8 @@ import { ExchangeFactory } from '../exchange/ExchangeFactory.js';
 // 导入配置加载器 / Import configuration loader
 import { loadConfig } from '../../config/index.js';
 
+const SYSTEM_CONFIG = loadConfig();
+
 /**
  * 获取已配置 API 密钥的交易所列表
  * Get list of exchanges with configured API keys
@@ -95,6 +97,9 @@ const DEFAULT_CONFIG = {
   // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
   tradingType: process.env.TRADING_TYPE || 'swap',
 
+  // Cache configuration
+  cache: SYSTEM_CONFIG.marketData?.cache || {},
+
   // 心跳间隔 (毫秒) / Heartbeat interval (ms)
   heartbeatInterval: 5000,
 
@@ -130,6 +135,7 @@ export class MarketDataService extends EventEmitter {
       redis: { ...DEFAULT_CONFIG.redis, ...config.redis },
       exchanges: config.exchanges || DEFAULT_CONFIG.exchanges,
       tradingType: config.tradingType || DEFAULT_CONFIG.tradingType,
+      cache: { ...DEFAULT_CONFIG.cache, ...config.cache },
       heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval,
       subscribeAll: config.subscribeAll ?? DEFAULT_CONFIG.subscribeAll,
       symbols: config.symbols || DEFAULT_CONFIG.symbols,
@@ -367,6 +373,9 @@ export class MarketDataService extends EventEmitter {
 
       // 交易类型 / Trading type
       tradingType: this.config.tradingType,
+
+      // Cache configuration
+      cache: this.config.cache,
     });
 
     console.log(`${this.logPrefix} 行情引擎初始化完成 / Market data engine initialized`);
