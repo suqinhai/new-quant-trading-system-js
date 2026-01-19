@@ -146,6 +146,11 @@ const DEFAULT_CONFIG = {
     timeout: 30000,           // 无数据超时毫秒 / No data timeout in milliseconds
     checkInterval: 5000,      // 检查间隔毫秒 / Check interval in milliseconds
   },
+  // Cache configuration
+  cache: {
+    maxCandles: 1000,
+    historyCandles: 200,
+  },
 };
 
 /**
@@ -186,11 +191,26 @@ export class MarketDataEngine extends EventEmitter {
       connectionPool: { ...DEFAULT_CONFIG.connectionPool, ...config.connectionPool },
       // 数据超时配置 / Data timeout configuration
       dataTimeout: { ...DEFAULT_CONFIG.dataTimeout, ...config.dataTimeout },
+      // Cache configuration
+      cache: { ...DEFAULT_CONFIG.cache, ...config.cache },
       // 启用的交易所 / Enabled exchanges
       exchanges: config.exchanges || ['binance', 'bybit', 'okx'],
       // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
       tradingType: config.tradingType || 'swap',
     };
+
+    const maxCandles = Number.isFinite(this.config.cache.maxCandles)
+      ? this.config.cache.maxCandles
+      : DEFAULT_CONFIG.cache.maxCandles;
+    const historyCandles = Number.isFinite(this.config.cache.historyCandles)
+      ? this.config.cache.historyCandles
+      : DEFAULT_CONFIG.cache.historyCandles;
+
+    this.config.cache.maxCandles = Math.max(1, maxCandles);
+    this.config.cache.historyCandles = Math.max(
+      1,
+      Math.min(historyCandles, this.config.cache.maxCandles)
+    );
 
     // ============================================
     // 内部状态 / Internal State
@@ -3582,6 +3602,7 @@ export class MarketDataEngine extends EventEmitter {
       this.cache.klines.set(cacheKey, []);
     }
     const klineCache = this.cache.klines.get(cacheKey);
+    const { maxCandles, historyCandles } = this.config.cache;
 
     // 如果是同一根K线更新，替换最后一根 / If same candle update, replace last one
     if (klineCache.length > 0 && klineCache[klineCache.length - 1].openTime === candle.openTime) {
@@ -3590,7 +3611,7 @@ export class MarketDataEngine extends EventEmitter {
       // 新K线，添加到缓存 / New candle, add to cache
       klineCache.push(candle);
       // 限制缓存大小 / Limit cache size
-      if (klineCache.length > 500) {
+      if (klineCache.length > maxCandles) {
         klineCache.shift();
       }
     }
@@ -3612,7 +3633,7 @@ export class MarketDataEngine extends EventEmitter {
     // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
     this.emit('candle', {
       ...candle,
-      history: klineCache.slice(-200), // 附带最近200根K线历史 / Attach last 200 candles history
+      history: klineCache.slice(-historyCandles), // Attach recent candles history
     });
   }
 

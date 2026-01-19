@@ -28,6 +28,14 @@ export class BaseStrategy extends EventEmitter {
     // 策略参数 / Strategy parameters
     this.params = params;
 
+    const maxCandleHistory = Number.isFinite(params.maxCandleHistory)
+      ? params.maxCandleHistory
+      : Number.isFinite(params.maxCandles)
+        ? params.maxCandles
+        : 200;
+
+    this.maxCandleHistory = Math.max(1, maxCandleHistory);
+
     // 回测/交易引擎引用 / Backtest/trading engine reference
     this.engine = null;
 
@@ -105,9 +113,9 @@ export class BaseStrategy extends EventEmitter {
       this._candleHistory.push(candle);
     }
 
-    // 保留最近 200 根 K 线 / Keep last 200 candles
-    if (this._candleHistory.length > 200) {
-      this._candleHistory = this._candleHistory.slice(-200);
+    // Keep the most recent candle history
+    if (this._candleHistory.length > this.maxCandleHistory) {
+      this._candleHistory = this._candleHistory.slice(-this.maxCandleHistory);
     }
 
     this.log(`已加载 ${candles.length} 根历史 K 线 (${symbol}) / Loaded ${candles.length} historical candles`);
@@ -149,8 +157,8 @@ export class BaseStrategy extends EventEmitter {
       }
       this._candleHistory.push(candle);
 
-      // 保留最近 200 根 K 线 / Keep last 200 candles
-      if (this._candleHistory.length > 200) {
+      // Keep the most recent candle history
+      if (this._candleHistory.length > this.maxCandleHistory) {
         this._candleHistory.shift();
       }
 
@@ -257,6 +265,10 @@ export class BaseStrategy extends EventEmitter {
       reason,
       timestamp: Date.now(),
     };
+    if (process.env.LOG_LEVEL === 'debug') {
+      const symbol = this.params?.symbol || this.symbol || this.params?.symbols?.[0] || 'n/a';
+      this.log(`[DEBUG] signal set: buy ${symbol} reason=${reason}`);
+    }
     // 不再发出信号事件，避免与 buy()/buyPercent() 重复
     // No longer emit signal event to avoid duplication with buy()/buyPercent()
   }
@@ -280,6 +292,10 @@ export class BaseStrategy extends EventEmitter {
       reason,
       timestamp: Date.now(),
     };
+    if (process.env.LOG_LEVEL === 'debug') {
+      const symbol = this.params?.symbol || this.symbol || this.params?.symbols?.[0] || 'n/a';
+      this.log(`[DEBUG] signal set: sell ${symbol} reason=${reason}`);
+    }
     // 不再发出信号事件，避免与 sell()/closePosition() 重复
     // No longer emit signal event to avoid duplication with sell()/closePosition()
   }

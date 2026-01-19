@@ -185,6 +185,8 @@ async function main() {
         tickers: status.stats.tickersPublished,
         depths: status.stats.depthsPublished,
         trades: status.stats.tradesPublished,
+        fundings: status.stats.fundingsPublished,
+        klines: status.stats.klinesPublished,
         errors: status.stats.errors,
       });
     }, 60000); // 每分钟 / Every minute

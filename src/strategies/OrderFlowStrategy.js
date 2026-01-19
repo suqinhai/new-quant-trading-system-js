@@ -118,8 +118,8 @@ export class OrderFlowStrategy extends BaseStrategy {
    * @returns {Array<string>} 数据类型列表 / Data type list
    */
   getRequiredDataTypes() {
-    // 订单流策略需要深度和成交数据 / Order flow strategy needs depth and trade data
-    return ['depth', 'trade'];
+    // Order flow strategy uses candle-based signals plus depth/trade data
+    return ['depth', 'trade', 'kline'];
   }
 
   /**
