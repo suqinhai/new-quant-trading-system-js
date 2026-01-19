@@ -1,32 +1,32 @@
 /**
- * 波动�?Regime 切换策略
+ * 波动率Regime 切换策略
  * Volatility Regime Strategy
  *
- * 识别市场�?低波动率状态，根据不同 Regime 采用不同交易逻辑
+ * 识别市场高低波动率状态，根据不同 Regime 采用不同交易逻辑
  * - 低波动期：等待突破，蓄势待发
  * - 高波动期：趋势跟踪，顺势而为
- * - 过渡期：谨慎操作，控制仓�?
+ * - 过渡期：谨慎操作，控制仓位
  */
 
 import { BaseStrategy } from './BaseStrategy.js';
 import { ATR, EMA, SMA, ADX, getLatest } from '../utils/indicators.js';
 
 /**
- * 波动率状态枚�?
+ * 波动率状态枚举
  */
 const VolatilityRegime = {
-  LOW: 'low',           // 低波�?
+  LOW: 'low',           // 低波动
   NORMAL: 'normal',     // 正常波动
-  HIGH: 'high',         // 高波�?
+  HIGH: 'high',         // 高波动
   EXTREME: 'extreme',   // 极端波动
 };
 
 /**
- * 波动�?Regime 策略�?
+ * 波动率Regime 策略类
  */
 export class VolatilityRegimeStrategy extends BaseStrategy {
   /**
-   * 构造函�?
+   * 构造函数
    * @param {Object} params - 策略参数
    */
   constructor(params = {}) {
@@ -38,30 +38,30 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     // ATR 周期 / ATR period
     this.atrPeriod = params.atrPeriod ?? 14;
 
-    // 波动率历史周�?/ Volatility history lookback
+    // 波动率历史周期 / Volatility history lookback
     this.volatilityLookback = params.volatilityLookback ?? 100;
 
-    // 低波动阈�?(百分�? / Low volatility threshold
+    // 低波动阈值(百分位) / Low volatility threshold
     this.lowVolThreshold = params.lowVolThreshold ?? 25;
 
-    // 高波动阈�?(百分�? / High volatility threshold
+    // 高波动阈值(百分位) / High volatility threshold
     this.highVolThreshold = params.highVolThreshold ?? 75;
 
-    // 极端波动阈�?(百分�? / Extreme volatility threshold
+    // 极端波动阈值(百分位) / Extreme volatility threshold
     this.extremeVolThreshold = params.extremeVolThreshold ?? 95;
 
     // 趋势均线周期 / Trend MA periods
     this.fastMAPeriod = params.fastMAPeriod ?? 10;
     this.slowMAPeriod = params.slowMAPeriod ?? 30;
 
-    // ADX 周期和阈�?/ ADX period and threshold
+    // ADX 周期和阈值 / ADX period and threshold
     this.adxPeriod = params.adxPeriod ?? 14;
     this.adxThreshold = params.adxThreshold ?? 25;
 
-    // 交易�?/ Trading pair
+    // 交易对 / Trading pair
     this.symbol = params.symbol || 'BTC/USDT';
 
-    // 基础仓位百分�?/ Base position percentage
+    // 基础仓位百分比 / Base position percentage
     this.basePositionPercent = params.positionPercent ?? 95;
 
     // 低波动期仓位调整 / Low volatility position adjustment
@@ -83,7 +83,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     // Regime confirmation bars
     this._regimeConfirmBars = params.regimeConfirmBars ?? 3;
 
-    // 内部状�?
+    // 内部状态
     this._atrHistory = [];
     this._currentRegime = VolatilityRegime.NORMAL;
     this._prevRegime = VolatilityRegime.NORMAL;
@@ -96,28 +96,28 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
   }
 
   /**
-   * 获取策略所需的数据类�?
+   * 获取策略所需的数据类型
    * Get data types required by the strategy
    * @returns {Array<string>} 数据类型列表 / Data type list
    */
   getRequiredDataTypes() {
-    // 波动�?Regime 策略只需�?K 线数�?/ Volatility Regime strategy only needs kline
+    // 波动率Regime 策略只需要 K 线数据 / Volatility Regime strategy only needs kline
     return ['kline'];
   }
 
   /**
-   * 初始�?
+   * 初始化
    */
   async onInit() {
     await super.onInit();
 
     this.log(`波动率Regime策略初始化`);
-    this.log(`ATR=${this.atrPeriod}, 低阈�?${this.lowVolThreshold}%, 高阈�?${this.highVolThreshold}%`);
+    this.log(`ATR=${this.atrPeriod}, 低阈值${this.lowVolThreshold}%, 高阈值${this.highVolThreshold}%`);
   }
 
   /**
-   * 每个 K 线触�?
-   * @param {Object} candle - 当前 K �?
+   * 每个 K 线触发
+   * @param {Object} candle - 当前 K 线
    * @param {Array} history - 历史数据
    */
   async onTick(candle, history) {
@@ -142,7 +142,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     const currentATR = getLatest(atrValues);
     const prevATR = atrValues.length > 1 ? atrValues[atrValues.length - 2] : currentATR;
 
-    // 归一�?ATR (ATR / 价格) / Normalized ATR
+    // 归一化ATR (ATR / 价格) / Normalized ATR
     const normalizedATR = (currentATR / candle.close) * 100;
 
     // 更新 ATR 历史 / Update ATR history
@@ -177,7 +177,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
 
     const entryRegime = this._regimeCandidate || this._currentRegime;
 
-    // 移动平均�?/ Moving averages
+    // 移动平均线 / Moving averages
     const fastMAValues = EMA(closes, this.fastMAPeriod);
     const fastMA = getLatest(fastMAValues);
     const prevFastMA = fastMAValues.length > 1 ? fastMAValues[fastMAValues.length - 2] : fastMA;
@@ -223,10 +223,10 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     this.setIndicator('atrBreakout', atrBreakout);
     this.setIndicator('lowBreakout', lowBreakout);
 
-    // 检�?Regime 变化 / Detect regime change
+    // 检测Regime 变化 / Detect regime change
     if (this._currentRegime !== this._prevRegime) {
       this._regimeChanges++;
-      this.log(`Regime切换: ${this._prevRegime} �?${this._currentRegime}, 波动百分�?${volPercentile.toFixed(0)}%`);
+      this.log(`Regime切换: ${this._prevRegime} -> ${this._currentRegime}, 波动百分位${volPercentile.toFixed(0)}%`);
     }
 
     // 获取持仓 / Get position
@@ -259,7 +259,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
   }
 
   /**
-   * 确定波动�?Regime
+   * 确定波动率Regime
    * @private
    */
   _determineRegime(percentile) {
@@ -386,7 +386,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     }
     const effectiveStop = this._stopLoss;
 
-    // 止损检�?/ Stop loss check
+    // 止损检查 / Stop loss check
     if (candle.close <= effectiveStop) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
       this.log(`止损触发, Regime=${regime}, 价格=${candle.close.toFixed(2)}, PnL=${pnl}%`);
@@ -400,7 +400,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
     // Regime 恶化出场 / Exit on regime deterioration
     if (regime === VolatilityRegime.EXTREME && this.disableInExtreme) {
       const pnl = ((candle.close - this._entryPrice) / this._entryPrice * 100).toFixed(2);
-      this.log(`Regime恶化出场, 切换到极端波�? PnL=${pnl}%`);
+      this.log(`Regime恶化出场, 切换到极端波动 PnL=${pnl}%`);
 
       this.setSellSignal(`Extreme Vol Exit @ ${candle.close.toFixed(2)}`);
       this.closePosition(this.symbol);
@@ -441,7 +441,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
   }
 
   /**
-   * 计算百分�?
+   * 计算百分位
    * @private
    */
   _calculatePercentile(value, history) {
@@ -456,7 +456,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy {
   }
 
   /**
-   * 重置状�?
+   * 重置状态
    * @private
    */
   _resetState() {
