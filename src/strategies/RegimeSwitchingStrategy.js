@@ -100,10 +100,10 @@ export class RegimeSwitchingStrategy extends BaseStrategy {
       bbStdDev: params.bbStdDev || 2,
       atrPeriod: params.atrPeriod || 14,
       lowVolPercentile: params.lowVolPercentile || 25,
-      highVolPercentile: params.highVolPercentile || 75,
-      extremeVolPercentile: params.extremeVolPercentile || 95,
+      highVolPercentile: params.highVolPercentile || 80,
+      extremeVolPercentile: params.extremeVolPercentile || 98,
       hurstPeriod: params.hurstPeriod || 100,
-      minRegimeDuration: params.minRegimeDuration || 3,
+      minRegimeDuration: params.minRegimeDuration || 5,
     };
 
     // ============================================
@@ -118,8 +118,8 @@ export class RegimeSwitchingStrategy extends BaseStrategy {
       ATRBreakout: params.atrBreakoutParams || { atrPeriod: 14, multiplier: 2 },
       WeightedCombo: params.weightedComboParams || {
         strategyWeights: { SMA: 0.4, RSI: 0.2, MACD: 0.4 },
-        buyThreshold: 0.7,
-        sellThreshold: 0.3,
+        buyThreshold: 0.6,
+        sellThreshold: 0.4,
         dynamicWeights: true,
         circuitBreaker: true,
       },

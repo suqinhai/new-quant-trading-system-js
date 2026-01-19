@@ -965,12 +965,12 @@ class TradingSystemRunner extends EventEmitter {
 
       // 获取资金 / Get capital
       getCapital: () => {
-        return this.config.trading?.initialCapital || 10000;
+        return this.options.capital ?? this.config.trading?.initialCapital ?? 10000;
       },
 
       // 获取权益 / Get equity
       getEquity: () => {
-        return this.config.trading?.initialCapital || 10000;
+        return this.options.capital ?? this.config.trading?.initialCapital ?? 10000;
       },
 
       // 买入 / Buy
@@ -1038,8 +1038,13 @@ class TradingSystemRunner extends EventEmitter {
         this._log('info', `[链路] 引擎适配器收到按比例买入: ${symbol} 比例=${percent}% / Engine adapter buyPercent`);
 
         const capital = engineAdapter.getCapital();
-        const amount = (capital * percent / 100);
-        return engineAdapter.buy(symbol, amount);
+        const price = engineAdapter.getLastPrice(symbol);
+        if (!price || !isFinite(price) || price <= 0 || !capital || capital <= 0) {
+          this._log('warn', `[链路] 买入失败: 无有效价格或资金 ${symbol} price=${price} capital=${capital}`);
+          return null;
+        }
+        const amount = (capital * percent / 100) / price;
+        return engineAdapter.buy(symbol, amount, { price });
       },
 
       // 平仓 / Close position

@@ -225,6 +225,14 @@ export default {
   },
 
   // ============================================
+  // 交易配置 / Trading Configuration
+  // ============================================
+  trading: {
+    // 初始资金 (USDT) / Initial capital (USDT)
+    initialCapital: 10000,
+  },
+
+  // ============================================
   // 策略配置 / Strategy Configuration
   // ============================================
   strategy: {
@@ -447,16 +455,16 @@ export default {
         lowVolPercentile: 25,
 
         // 高波动率百分位 / High volatility percentile
-        highVolPercentile: 75,
+        highVolPercentile: 80,
 
         // 极端波动率百分位 / Extreme volatility percentile
-        extremeVolPercentile: 95,
+        extremeVolPercentile: 98,
 
         // Hurst 指数计算周期 / Hurst exponent period
         hurstPeriod: 50,
 
         // 最小状态持续 K 线数 / Minimum regime duration in candles
-        minRegimeDuration: 3,
+        minRegimeDuration: 5,
       },
 
       // 子策略参数 / Sub-strategy parameters
@@ -548,9 +556,9 @@ export default {
       },
 
       // 交易阈值 / Trading thresholds
-      // 提高阈值减少信号频率 / Increase thresholds to reduce signal frequency
-      buyThreshold: 0.7,    // 总分 >= 0.7 买入
-      sellThreshold: 0.3,   // 总分 <= 0.3 卖出
+      // 降低阈值增加信号频率 / Lower thresholds to increase signal frequency
+      buyThreshold: 0.6,    // 总分 >= 0.6 买入
+      sellThreshold: 0.4,   // 总分 <= 0.4 卖出
 
       // ============================================
       // 子策略参数 / Sub-strategy Parameters

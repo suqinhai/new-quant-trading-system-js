@@ -359,6 +359,12 @@ function buildEnvConfig() {
       maxLeverage: getEnvNumber('RISK_MAX_LEVERAGE', 3),
     },
 
+    // 交易配置 / Trading configuration
+    trading: {
+      initialCapital: getEnvNumber('TRADING_INITIAL_CAPITAL', undefined),
+      type: getEnv('TRADING_TYPE'),
+    },
+
     // 告警配置 / Alert configuration
     alert: {
       email: {
