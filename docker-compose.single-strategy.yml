@@ -142,7 +142,7 @@ services:
       - ./.env:/app/.env:ro
     environment:
       NODE_ENV: production
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       TZ: Asia/Shanghai
       # 加密密钥主密码 (从宿主机环境变量传入) / Master key for decryption (from host env)
       MASTER_KEY: ${MASTER_KEY}
