@@ -70,8 +70,8 @@ const DEFAULT_CONFIG = {
   // ClickHouse 连接配置 / ClickHouse connection config
   clickhouse: {
     host: `http://${process.env.CLICKHOUSE_HOST || 'localhost'}:${process.env.CLICKHOUSE_PORT || '8123'}`,  // ClickHouse 主机地址 / ClickHouse host
-    database: process.env.CLICKHOUSE_DATABASE || 'default',               // 数据库名称 / Database name
-    username: process.env.CLICKHOUSE_USERNAME || 'default',             // 用户名 / Username
+    database: process.env.CLICKHOUSE_DATABASE || process.env.CLICKHOUSE_DB || 'default',               // 数据库名称 / Database name
+    username: process.env.CLICKHOUSE_USERNAME || process.env.CLICKHOUSE_USER || 'default',             // 用户名 / Username
     password: process.env.CLICKHOUSE_PASSWORD || '',                    // 密码 / Password
   },
   // 下载配置 / Download config

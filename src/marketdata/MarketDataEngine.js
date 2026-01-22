@@ -151,6 +151,8 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
     maxCandles: 1000, // 最大Candles
     historyCandles: 200, // 历史Candles
   }, // 结束代码块
+  // Exchange-specific configuration overrides
+  exchangeConfigs: {}, // Exchange configuration overrides
 }; // 结束代码块
 
 /**
@@ -171,6 +173,8 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
    * @param {Object} config.heartbeat - 心跳配置 / Heartbeat configuration
    * @param {Object} config.stream - 流配置 / Stream configuration
    * @param {Array<string>} config.exchanges - 启用的交易所列表 / Enabled exchanges
+   * @param {Object} config.exchangeConfigs - 交易所配置映射 / Exchange config map
+   * @param {boolean} config.sandbox - 全局沙盒开关 (可选) / Global sandbox toggle (optional)
    */
   constructor(config = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
@@ -195,8 +199,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // Cache configuration
       // 启用的交易所 / Enabled exchanges
       exchanges: config.exchanges || ['binance', 'bybit', 'okx'], // 交易所
+      // Exchange-specific configs (e.g., sandbox/testnet)
+      exchangeConfigs: config.exchangeConfigs || config.exchangeConfig || DEFAULT_CONFIG.exchangeConfigs, // 交易所配置
       // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
       tradingType: config.tradingType || 'swap', // 交易类型 (swap = 永续合约)
+      // Global sandbox flag (fallback)
+      sandbox: config.sandbox, // 全局沙盒开关
     }; // 结束代码块
 
     const maxCandles = Number.isFinite(this.config.cache.maxCandles) // 定义常量 maxCandles
@@ -1328,11 +1336,11 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // OKX: 使用公共端点 / Use public endpoint
         return WS_ENDPOINTS.okx.public; // 返回结果
 
-      case 'deribit': // 分支 'deribit'
-        // Deribit: 根据 sandbox 配置选择端点 / Select endpoint based on sandbox config
-        return this.config.sandbox // 返回结果
-          ? WS_ENDPOINTS.deribit.testnet // 执行语句
-          : WS_ENDPOINTS.deribit.public; // 执行语句
+        case 'deribit': // 分支 'deribit'
+          // Deribit: 根据 sandbox 配置选择端点 / Select endpoint based on sandbox config
+          return this._getExchangeSandbox(exchange) // 返回结果
+            ? WS_ENDPOINTS.deribit.testnet // 执行语句
+            : WS_ENDPOINTS.deribit.public; // 执行语句
 
       case 'gate': // 分支 'gate'
         // Gate.io: 根据交易类型选择端点 / Select endpoint based on trading type
@@ -1847,6 +1855,78 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     return symbol.replace(/:USDT$/, ''); // 返回结果
   } // 结束代码块
 
+  /**
+   * 获取交易所配置
+   * Get exchange config
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @returns {Object} 交易所配置 / Exchange config
+   * @private
+   */
+  _getExchangeConfig(exchange) { // 调用 _getExchangeConfig
+    if (!exchange) return {}; // 条件判断 !exchange
+    const configs = this.config.exchangeConfigs || {}; // 定义常量 configs
+    return configs[exchange] || {}; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 获取交易所沙盒开关
+   * Get exchange sandbox flag
+   *
+   * @param {string} exchange - 交易所名称 / Exchange name
+   * @returns {boolean} 是否启用沙盒 / Whether sandbox is enabled
+   * @private
+   */
+  _getExchangeSandbox(exchange) { // 调用 _getExchangeSandbox
+    const exchangeConfig = this._getExchangeConfig(exchange); // 定义常量 exchangeConfig
+    if (typeof exchangeConfig.sandbox === 'boolean') { // 条件判断 typeof exchangeConfig.sandbox === 'boolean'
+      return exchangeConfig.sandbox; // 返回结果
+    } // 结束代码块
+    if (typeof exchangeConfig.testnet === 'boolean') { // 条件判断 typeof exchangeConfig.testnet === 'boolean'
+      return exchangeConfig.testnet; // 返回结果
+    } // 结束代码块
+    if (typeof this.config.sandbox === 'boolean') { // 条件判断 typeof this.config.sandbox === 'boolean'
+      return this.config.sandbox; // 返回结果
+    } // 结束代码块
+    return false; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 将标准交易对转换为 Deribit 合约标识
+   * Convert standard symbol to Deribit instrument name
+   *
+   * @param {string} symbol - 标准交易对 / Standard symbol
+   * @returns {string} Deribit 合约标识 / Deribit instrument
+   * @private
+   */
+  _toDeribitInstrument(symbol) { // 调用 _toDeribitInstrument
+    if (!symbol) return symbol; // 条件判断 !symbol
+    const upperSymbol = symbol.toUpperCase(); // 定义常量 upperSymbol
+
+    // 已是 Deribit 合约格式 (如 BTC-PERPETUAL, BTC-28MAR25-50000-C)
+    if (!upperSymbol.includes('/') && /[A-Z]+-/.test(upperSymbol)) { // 条件判断 !upperSymbol.includes('/') && /[A-Z]+-/.test(...)
+      return upperSymbol; // 返回结果
+    } // 结束代码块
+
+    const parts = upperSymbol.split(':'); // 定义常量 parts
+    const pair = parts[0]; // 定义常量 pair
+    const suffix = parts[1]; // 定义常量 suffix
+    const base = pair.split('/')[0]; // 定义常量 base
+
+    if (suffix) { // 条件判断 suffix
+      // CCXT 派生格式: BTC/USD:BTC-28MAR25 或 BTC/USD:BTC
+      if (suffix.includes('-')) { // 条件判断 suffix.includes('-')
+        return suffix; // 返回结果
+      } // 结束代码块
+      if (suffix === base || suffix === 'PERPETUAL') { // 条件判断 suffix === base || suffix === 'PERPETUAL'
+        return `${base}-PERPETUAL`; // 返回结果
+      } // 结束代码块
+    } // 结束代码块
+
+    // 默认使用永续合约
+    return `${base}-PERPETUAL`; // 返回结果
+  } // 结束代码块
+
   // ============================================
   // 私有方法 - 订阅 / Private Methods - Subscription
   // ============================================
@@ -2261,10 +2341,9 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
    * @private
    */
   _buildDeribitSubscribeMessage(symbol, dataType) { // 调用 _buildDeribitSubscribeMessage
-    // 转换交易对格式: BTC/USDT -> BTC-PERPETUAL / Convert symbol format
-    // Deribit 永续合约格式: BTC-PERPETUAL, ETH-PERPETUAL / Deribit perpetual format
-    const base = symbol.split('/')[0]; // 定义常量 base
-    const deribitSymbol = `${base}-PERPETUAL`; // 定义常量 deribitSymbol
+    // 转换交易对格式为 Deribit 合约标识 / Convert to Deribit instrument
+    // 支持永续、期货、期权 / Supports perpetuals, futures, options
+    const deribitSymbol = this._toDeribitInstrument(symbol); // 定义常量 deribitSymbol
 
     // 根据数据类型构建频道 / Build channel based on data type
     let channels = []; // 定义变量 channels
@@ -2286,6 +2365,9 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.FUNDING_RATE: // 分支 DATA_TYPES.FUNDING_RATE
         // 永续合约状态 (包含资金费率) / Perpetual state (includes funding rate)
+        if (!deribitSymbol.endsWith('-PERPETUAL')) { // 条件判断 !deribitSymbol.endsWith('-PERPETUAL')
+          throw new Error('Deribit funding rate only supports perpetual instruments'); // 抛出异常
+        } // 结束代码块
         channels = [`perpetual.${deribitSymbol}.100ms`]; // 赋值 channels
         break; // 跳出循环或分支
 
@@ -5034,29 +5116,41 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
    * @private
    */
   _deribitToStandardSymbol(deribitSymbol) { // 调用 _deribitToStandardSymbol
+    if (!deribitSymbol) { // 条件判断 !deribitSymbol
+      return deribitSymbol; // 返回结果
+    } // 结束代码块
+
+    const upperSymbol = deribitSymbol.toUpperCase(); // 定义常量 upperSymbol
+
     // Deribit 永续合约格式: BTC-PERPETUAL -> BTC/USD
     // Deribit perpetual format: BTC-PERPETUAL -> BTC/USD
-    if (deribitSymbol.endsWith('-PERPETUAL')) { // 条件判断 deribitSymbol.endsWith('-PERPETUAL')
-      const base = deribitSymbol.replace('-PERPETUAL', ''); // 定义常量 base
+    if (upperSymbol.endsWith('-PERPETUAL')) { // 条件判断 upperSymbol.endsWith('-PERPETUAL')
+      const base = upperSymbol.replace('-PERPETUAL', ''); // 定义常量 base
       return `${base}/USD`; // 返回结果
     } // 结束代码块
 
-    // Deribit 期货格式: BTC-28MAR25 -> BTC/USD (带到期日)
-    // Deribit futures format: BTC-28MAR25 -> BTC/USD (with expiry)
-    const futuresMatch = deribitSymbol.match(/^([A-Z]+)-(\d{1,2}[A-Z]{3}\d{2})$/); // 定义常量 futuresMatch
+    // Deribit 期货格式: BTC-28MAR25 -> BTC/USD:BTC-28MAR25
+    // Deribit futures format: BTC-28MAR25 -> BTC/USD:BTC-28MAR25
+    const futuresMatch = upperSymbol.match(/^([A-Z]+)-(\d{1,2}[A-Z]{3}\d{2})$/); // 定义常量 futuresMatch
     if (futuresMatch) { // 条件判断 futuresMatch
-      return `${futuresMatch[1]}/USD`; // 返回结果
+      return `${futuresMatch[1]}/USD:${upperSymbol}`; // 返回结果
     } // 结束代码块
 
-    // Deribit 期权格式: BTC-28MAR25-50000-C -> BTC/USD (期权)
-    // Deribit options format: BTC-28MAR25-50000-C -> BTC/USD (options)
-    const optionsMatch = deribitSymbol.match(/^([A-Z]+)-/); // 定义常量 optionsMatch
+    // Deribit 期权格式: BTC-28MAR25-50000-C -> BTC/USD:BTC-28MAR25-50000-C
+    // Deribit options format: BTC-28MAR25-50000-C -> BTC/USD:BTC-28MAR25-50000-C
+    const optionsMatch = upperSymbol.match(/^([A-Z]+)-\d{1,2}[A-Z]{3}\d{2}-\d+(?:\.\d+)?-[CP]$/); // 定义常量 optionsMatch
     if (optionsMatch) { // 条件判断 optionsMatch
-      return `${optionsMatch[1]}/USD`; // 返回结果
+      return `${optionsMatch[1]}/USD:${upperSymbol}`; // 返回结果
+    } // 结束代码块
+
+    // 其他派生品格式: BTC-XXX -> BTC/USD:BTC-XXX
+    const baseMatch = upperSymbol.match(/^([A-Z]+)-/); // 定义常量 baseMatch
+    if (baseMatch) { // 条件判断 baseMatch
+      return `${baseMatch[1]}/USD:${upperSymbol}`; // 返回结果
     } // 结束代码块
 
     // 如果无法解析，返回原始格式 / If cannot parse, return original
-    return deribitSymbol; // 返回结果
+    return upperSymbol; // 返回结果
   } // 结束代码块
 
   /**

@@ -21,7 +21,7 @@ import {
 // ClickHouse 连接配置 (使用测试数据库)
 const TEST_CLICKHOUSE_CONFIG = {
   host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123',
-  username: process.env.CLICKHOUSE_USER || 'default',
+  username: process.env.CLICKHOUSE_USERNAME || process.env.CLICKHOUSE_USER || 'default',
   password: process.env.CLICKHOUSE_PASSWORD || '',
   database: 'quant_trading_test',
 };

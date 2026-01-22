@@ -32,22 +32,33 @@ function getConfiguredExchanges() { // 定义函数 getConfiguredExchanges
   const config = loadConfig(); // 定义常量 config
   const exchangeConfig = config.exchange || {}; // 定义常量 exchangeConfig
   const configuredExchanges = []; // 定义常量 configuredExchanges
+  const enabledExchanges = []; // 定义常量 enabledExchanges
 
   // 支持的交易所列表 / Supported exchanges list
   const supportedExchanges = ['binance', 'okx', 'gate', 'bybit', 'bitget', 'kucoin', 'kraken', 'deribit']; // 定义常量 supportedExchanges
 
   for (const exchange of supportedExchanges) { // 循环 const exchange of supportedExchanges
     const exchangeSettings = exchangeConfig[exchange]; // 定义常量 exchangeSettings
+    // 收集启用的交易所 / Collect enabled exchanges
+    if (exchangeSettings && exchangeSettings.enabled !== false) { // 条件判断 exchangeSettings && exchangeSettings.enabled !== false
+      enabledExchanges.push(exchange); // 调用 enabledExchanges.push
+    } // 结束代码块
     // 检查是否配置了 apiKey / Check if apiKey is configured
     if (exchangeSettings && exchangeSettings.apiKey) { // 条件判断 exchangeSettings && exchangeSettings.apiKey
       configuredExchanges.push(exchange); // 调用 configuredExchanges.push
     } // 结束代码块
   } // 结束代码块
 
+  // 如果没有配置 API Key，回退到启用的交易所 / If no API keys, fall back to enabled exchanges
+  if (configuredExchanges.length === 0 && enabledExchanges.length > 0) { // 条件判断 configuredExchanges.length === 0 && enabledExchanges.length > 0
+    console.warn('[MarketDataService] 未检测到已配置的 API Key，使用已启用交易所列表 / No API keys detected, using enabled exchanges'); // 控制台输出
+    return enabledExchanges; // 返回结果
+  } // 结束代码块
+
   // 如果没有配置任何交易所，返回默认列表 / If no exchange configured, return default list
   if (configuredExchanges.length === 0) { // 条件判断 configuredExchanges.length === 0
     console.warn('[MarketDataService] 未检测到已配置的交易所，使用默认列表 / No configured exchanges detected, using defaults'); // 控制台输出
-    return ['binance']; // 返回结果
+    return ['binance', 'okx', 'bybit']; // 返回结果
   } // 结束代码块
 
   console.log(`[MarketDataService] 检测到已配置的交易所 / Detected configured exchanges: ${configuredExchanges.join(', ')}`); // 控制台输出
@@ -94,6 +105,9 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
     ? process.env.MARKET_DATA_EXCHANGES.split(',') // 读取环境变量 MARKET_DATA_EXCHANGES
     : getConfiguredExchanges(), // 执行语句
 
+  // 交易所配置映射 / Exchange config map
+  exchangeConfigs: SYSTEM_CONFIG.exchange || {}, // 交易所配置映射
+
   // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
   tradingType: process.env.TRADING_TYPE || 'swap', // 交易类型 (swap = 永续合约)
 
@@ -134,6 +148,7 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
     this.config = { // 设置 config
       redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // redis
       exchanges: config.exchanges || DEFAULT_CONFIG.exchanges, // 交易所
+      exchangeConfigs: config.exchangeConfigs || DEFAULT_CONFIG.exchangeConfigs, // 交易所配置
       tradingType: config.tradingType || DEFAULT_CONFIG.tradingType, // 交易类型
       cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // cache
       heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // heartbeat间隔
@@ -361,22 +376,25 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
   async _initMarketDataEngine() { // 执行语句
     console.log(`${this.logPrefix} 正在初始化行情引擎... / Initializing market data engine...`); // 控制台输出
 
-    this.marketDataEngine = new MarketDataEngine({ // 设置 marketDataEngine
-      // 启用 WebSocket / Enable WebSocket
-      enableWebSocket: true, // 启用 WebSocket
+      this.marketDataEngine = new MarketDataEngine({ // 设置 marketDataEngine
+        // 启用 WebSocket / Enable WebSocket
+        enableWebSocket: true, // 启用 WebSocket
 
-      // 禁用内部 Redis (我们自己处理发布) / Disable internal Redis (we handle publishing ourselves)
-      enableRedis: false, // 禁用内部 Redis (我们自己处理发布)
+        // 禁用内部 Redis (我们自己处理发布) / Disable internal Redis (we handle publishing ourselves)
+        enableRedis: false, // 禁用内部 Redis (我们自己处理发布)
 
-      // 交易所列表 / Exchange list
-      exchanges: this.config.exchanges, // 交易所列表
+        // 交易所列表 / Exchange list
+        exchanges: this.config.exchanges, // 交易所列表
 
-      // 交易类型 / Trading type
-      tradingType: this.config.tradingType, // 交易类型
+        // 交易所配置 / Exchange configs
+        exchangeConfigs: this.config.exchangeConfigs, // 交易所配置
 
-      // Cache configuration
-      cache: this.config.cache, // Cache configuration
-    }); // 结束代码块
+        // 交易类型 / Trading type
+        tradingType: this.config.tradingType, // 交易类型
+
+        // Cache configuration
+        cache: this.config.cache, // Cache configuration
+      }); // 结束代码块
 
     console.log(`${this.logPrefix} 行情引擎初始化完成 / Market data engine initialized`); // 控制台输出
   } // 结束代码块
@@ -516,12 +534,23 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
             await exchangeInstance.connect(); // 等待异步结果
           } // 结束代码块
 
-          const markets = exchangeInstance.markets || {}; // 定义常量 markets
-          const symbols = Object.keys(markets).filter((s) => { // 定义函数 symbols
-            const market = markets[s]; // 定义常量 market
-            // 只订阅永续合约 / Only subscribe to perpetual swaps
-            return market.type === 'swap' || market.swap === true; // 返回结果
-          }); // 结束代码块
+            const markets = exchangeInstance.markets || {}; // 定义常量 markets
+            const symbols = Object.keys(markets).filter((s) => { // 定义函数 symbols
+              const market = markets[s]; // 定义常量 market
+              const tradingType = (this.config.tradingType || '').toLowerCase(); // 定义常量 tradingType
+              // 根据交易类型筛选 / Filter by trading type
+              if (tradingType === 'spot') { // 条件判断 tradingType === 'spot'
+                return market.type === 'spot' || market.spot === true; // 返回结果
+              } // 结束代码块
+              if (tradingType === 'future' || tradingType === 'futures') { // 条件判断 tradingType === 'future' || tradingType === 'futures'
+                return market.type === 'future' || market.future === true; // 返回结果
+              } // 结束代码块
+              if (tradingType === 'option' || tradingType === 'options') { // 条件判断 tradingType === 'option' || tradingType === 'options'
+                return market.type === 'option' || market.option === true; // 返回结果
+              } // 结束代码块
+              // 默认订阅永续合约 / Default to perpetual swaps
+              return market.type === 'swap' || market.swap === true; // 返回结果
+            }); // 结束代码块
 
           console.log(`${this.logPrefix} ${exchange} 发现 ${symbols.length} 个交易对 / ${exchange} found ${symbols.length} symbols`); // 控制台输出
 

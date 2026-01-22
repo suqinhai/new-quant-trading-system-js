@@ -604,7 +604,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     const primaryExchangeName = this.options.exchange || this.config.exchange?.default || 'binance'; // 定义常量 primaryExchangeName
 
     // 获取所有支持的交易所列表 / Get all supported exchanges
-    const supportedExchanges = ['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget', 'kucoin']; // 定义常量 supportedExchanges
+    const supportedExchanges = ['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget', 'kucoin', 'kraken']; // 定义常量 supportedExchanges
 
     // 遍历所有支持的交易所 / Iterate all supported exchanges
     for (const exchangeName of supportedExchanges) { // 循环 const exchangeName of supportedExchanges
@@ -794,6 +794,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // 传入已配置密钥的交易所列表 (动态) / Pass exchanges with configured API keys (dynamic)
       exchanges: connectedExchanges, // 传入已配置密钥的交易所列表 (动态)
+
+      // 交易所配置 / Exchange configs
+      exchangeConfigs: this.config.exchange || {}, // 交易所配置
 
       // 交易类型 / Trading type
       tradingType: this.config.trading?.type || 'futures', // 交易类型

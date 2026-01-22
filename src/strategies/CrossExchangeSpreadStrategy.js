@@ -40,6 +40,7 @@ export const SUPPORTED_EXCHANGES = { // 导出常量 SUPPORTED_EXCHANGES
   BYBIT: 'bybit', // BYBIT交易所配置
   OKX: 'okx', // OKX交易所配置
   GATE: 'gate', // GATE交易所配置
+  DERIBIT: 'deribit', // DERIBIT交易所配置
   HUOBI: 'huobi', // HUOBI
   KUCOIN: 'kucoin', // KUCOIN交易所配置
 }; // 结束代码块
@@ -81,6 +82,14 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
     SUPPORTED_EXCHANGES.OKX, // 执行语句
     SUPPORTED_EXCHANGES.GATE, // 执行语句
   ], // 结束数组或索引
+
+  // 交易对报价别名 / Quote alias mapping
+  // 用于跨所对齐 (如 Deribit USD -> USDT)
+  quoteAliases: { // Quote alias mapping
+    deribit: { // Deribit quote aliases
+      USD: 'USDT', // Map USD to USDT for cross-exchange comparison
+    }, // 结束代码块
+  }, // 结束代码块
 
   // 价差类型 / Spread type
   spreadType: SPREAD_TYPES.PERP_PERP, // 价差类型
@@ -238,12 +247,14 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
    * @param {Object} priceData - 价格数据 / Price data
    */
   updatePrice(symbol, exchange, priceData) { // 调用 updatePrice
+    const normalizedSymbol = this._normalizeSymbol(symbol, exchange); // 定义常量 normalizedSymbol
+
     // 初始化交易对价格映射 / Initialize symbol price map
-    if (!this.prices.has(symbol)) { // 条件判断 !this.prices.has(symbol)
-      this.prices.set(symbol, new Map()); // 访问 prices
+    if (!this.prices.has(normalizedSymbol)) { // 条件判断 !this.prices.has(normalizedSymbol)
+      this.prices.set(normalizedSymbol, new Map()); // 访问 prices
     } // 结束代码块
 
-    const symbolPrices = this.prices.get(symbol); // 定义常量 symbolPrices
+    const symbolPrices = this.prices.get(normalizedSymbol); // 定义常量 symbolPrices
 
     // 保存价格 / Save price
     symbolPrices.set(exchange, { // 调用 symbolPrices.set
@@ -256,10 +267,35 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
     }); // 结束代码块
 
     // 更新价差 / Update spreads
-    this._updateSpreads(symbol); // 调用 _updateSpreads
+    this._updateSpreads(normalizedSymbol); // 调用 _updateSpreads
 
     // 发出更新事件 / Emit update event
-    this.emit('priceUpdated', { symbol, exchange, price: symbolPrices.get(exchange) }); // 调用 emit
+    this.emit('priceUpdated', { symbol: normalizedSymbol, exchange, price: symbolPrices.get(exchange) }); // 调用 emit
+  } // 结束代码块
+
+  /**
+   * 标准化交易对用于跨所比较
+   * Normalize symbol for cross-exchange comparison
+   *
+   * @param {string} symbol - 交易对 / Symbol
+   * @param {string} exchange - 交易所 / Exchange
+   * @returns {string} 标准化后的交易对 / Normalized symbol
+   * @private
+   */
+  _normalizeSymbol(symbol, exchange) { // 调用 _normalizeSymbol
+    if (!symbol) return symbol; // 条件判断 !symbol
+    const aliasMap = this.config.quoteAliases?.[exchange]; // 定义常量 aliasMap
+    if (!aliasMap) return symbol; // 条件判断 !aliasMap
+
+    const [pair, suffix] = symbol.split(':'); // 定义常量 pair, suffix
+    const [base, quote] = pair.split('/'); // 定义常量 base, quote
+    if (!base || !quote) return symbol; // 条件判断 !base || !quote
+
+    const aliasQuote = aliasMap[quote]; // 定义常量 aliasQuote
+    if (!aliasQuote) return symbol; // 条件判断 !aliasQuote
+
+    const normalizedPair = `${base}/${aliasQuote}`; // 定义常量 normalizedPair
+    return suffix ? `${normalizedPair}:${suffix}` : normalizedPair; // 返回结果
   } // 结束代码块
 
   /**

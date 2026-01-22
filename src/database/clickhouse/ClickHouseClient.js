@@ -17,9 +17,9 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123', // 读取环境变量 CLICKHOUSE_HOST
-  username: process.env.CLICKHOUSE_USER || 'default', // username
+  username: process.env.CLICKHOUSE_USERNAME || process.env.CLICKHOUSE_USER || 'default', // username
   password: process.env.CLICKHOUSE_PASSWORD || '', // 密码
-  database: process.env.CLICKHOUSE_DB || 'quant_trading', // database
+  database: process.env.CLICKHOUSE_DATABASE || process.env.CLICKHOUSE_DB || 'quant_trading', // database
   // 连接超时 (ms) / Connection timeout (ms)
   request_timeout: 30000, // 连接超时 (ms)
   // 最大重试次数 / Max retries
