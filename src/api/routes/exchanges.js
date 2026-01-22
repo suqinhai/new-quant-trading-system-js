@@ -36,6 +36,7 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
           { id: 'deribit', name: 'Deribit', status: 'disconnected' }, // 执行语句
           { id: 'bitget', name: 'Bitget', status: 'disconnected' }, // 执行语句
           { id: 'kucoin', name: 'KuCoin', status: 'disconnected' }, // 执行语句
+          { id: 'kraken', name: 'Kraken', status: 'disconnected' }, // 执行语句
         ]; // 结束数组或索引
       } // 结束代码块
 

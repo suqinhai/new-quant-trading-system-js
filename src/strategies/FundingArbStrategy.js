@@ -37,7 +37,7 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * 支持的交易所列表
  * Supported exchanges list
  */
-const SUPPORTED_EXCHANGES = ['binance', 'bybit', 'okx', 'gate', 'deribit', 'bitget']; // 定义常量 SUPPORTED_EXCHANGES
+const SUPPORTED_EXCHANGES = ['binance', 'bybit', 'okx', 'gate', 'deribit', 'bitget', 'kraken']; // 定义常量 SUPPORTED_EXCHANGES
 
 /**
  * 资金费率结算间隔 (毫秒)

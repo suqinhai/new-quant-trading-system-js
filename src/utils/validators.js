@@ -31,9 +31,9 @@ export const ZodSchemas = { // 导出常量 ZodSchemas
   }), // 结束代码块
 
   // 交易所名称 / Exchange name
-  // 支持: binance, okx, bybit, gate, deribit, bitget
-  // Supported: binance, okx, bybit, gate, deribit, bitget
-  exchangeName: z.enum(['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget']), // Supported: binance, okx, bybit, gate, deribit, bitget
+  // 支持: binance, okx, bybit, gate, deribit, bitget, kucoin, kraken
+  // Supported: binance, okx, bybit, gate, deribit, bitget, kucoin, kraken
+  exchangeName: z.enum(['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget', 'kucoin', 'kraken']), // Supported: binance, okx, bybit, gate, deribit, bitget, kucoin, kraken
 
   // 订单方向
   orderSide: z.enum(['buy', 'sell']), // 订单方向

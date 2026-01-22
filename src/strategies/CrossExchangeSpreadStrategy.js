@@ -43,6 +43,7 @@ export const SUPPORTED_EXCHANGES = { // 导出常量 SUPPORTED_EXCHANGES
   DERIBIT: 'deribit', // DERIBIT交易所配置
   HUOBI: 'huobi', // HUOBI
   KUCOIN: 'kucoin', // KUCOIN交易所配置
+  KRAKEN: 'kraken', // KRAKEN交易所配置
 }; // 结束代码块
 
 /**

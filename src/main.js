@@ -275,8 +275,8 @@ function showHelp() { // 定义函数 showHelp
                             例如 / Example: BTC/USDT,ETH/USDT
 
   --exchange, -e <name>     交易所名称 / Exchange name
-                            可选: binance, okx, bybit
-                            Available: binance, okx, bybit
+                            可选: binance, okx, bybit, gate, deribit, bitget, kucoin, kraken
+                            Available: binance, okx, bybit, gate, deribit, bitget, kucoin, kraken
 
   --start <date>            回测开始日期 / Backtest start date
                             格式 / Format: YYYY-MM-DD
