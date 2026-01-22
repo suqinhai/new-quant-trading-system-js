@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OKX 交易所实现
  * OKX Exchange Implementation
  *
@@ -7,16 +7,16 @@
  */
 
 // 导入 CCXT 库 / Import CCXT library
-import ccxt from 'ccxt';
+import ccxt from 'ccxt'; // 导入模块 ccxt
 
 // 导入基类 / Import base class
-import { BaseExchange } from './BaseExchange.js';
+import { BaseExchange } from './BaseExchange.js'; // 导入模块 ./BaseExchange.js
 
 /**
  * OKX 交易所类
  * OKX Exchange Class
  */
-export class OKXExchange extends BaseExchange {
+export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
   /**
    * 构造函数
    * Constructor
@@ -27,13 +27,13 @@ export class OKXExchange extends BaseExchange {
    * @param {boolean} config.sandbox - 是否使用模拟盘 / Whether to use sandbox
    * @param {string} config.defaultType - 交易类型 ('spot' | 'swap' | 'future' | 'option') / Trading type
    */
-  constructor(config = {}) {
+  constructor(config = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
-    super(config);
+    super(config); // 调用父类
 
     // 设置交易所名称 / Set exchange name
-    this.name = 'okx';
-  }
+    this.name = 'okx'; // 设置 name
+  } // 结束代码块
 
   /**
    * 创建 CCXT 交易所实例 (覆盖父类方法)
@@ -41,72 +41,72 @@ export class OKXExchange extends BaseExchange {
    * @returns {ccxt.Exchange} CCXT 实例 / CCXT instance
    * @protected
    */
-  _createExchange() {
+  _createExchange() { // 调用 _createExchange
     // 调试：打印配置信息 / Debug: print config info
-    console.log(`[${this.name}] 创建交易所实例，配置: / Creating exchange instance, config:`, {
-      hasApiKey: !!this.config.apiKey,
-      hasSecret: !!this.config.secret,
-      hasPassword: !!this.config.password,
-      apiKeyType: typeof this.config.apiKey,
-      secretType: typeof this.config.secret,
-      passwordType: typeof this.config.password,
-    });
+    console.log(`[${this.name}] 创建交易所实例，配置: / Creating exchange instance, config:`, { // 控制台输出
+      hasApiKey: !!this.config.apiKey, // 设置 hasApiKey 字段
+      hasSecret: !!this.config.secret, // 设置 hasSecret 字段
+      hasPassword: !!this.config.password, // 设置 hasPassword 字段
+      apiKeyType: typeof this.config.apiKey, // 设置 apiKeyType 字段
+      secretType: typeof this.config.secret, // 设置 secretType 字段
+      passwordType: typeof this.config.password, // 设置 passwordType 字段
+    }); // 结束代码块
 
     // 构建基础配置 / Build base config
-    const exchangeConfig = {
+    const exchangeConfig = { // 定义常量 exchangeConfig
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit !== false,
+      enableRateLimit: this.config.enableRateLimit !== false, // 设置 enableRateLimit 字段
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout || 30000,
+      timeout: this.config.timeout || 30000, // 设置 timeout 字段
 
       // 配置选项 / Configuration options
-      options: {
+      options: { // 设置 options 字段
         // 默认交易类型 / Default trading type
         // spot = 现货 / Spot
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
         // option = 期权 / Options
-        defaultType: this.config.defaultType || 'swap',
+        defaultType: this.config.defaultType || 'swap', // 设置 defaultType 字段
 
         // 创建市价单时不需要价格 / Market order doesn't require price
-        createMarketBuyOrderRequiresPrice: false,
+        createMarketBuyOrderRequiresPrice: false, // 设置 createMarketBuyOrderRequiresPrice 字段
 
         // 合并额外选项 / Merge additional options
-        ...this.config.options,
-      },
-    };
+        ...this.config.options, // 展开对象或数组
+      }, // 结束代码块
+    }; // 结束代码块
 
     // API 认证信息 - 仅在有值时添加，避免 null 导致 substring 错误
     // API authentication - only add when has value, avoid null causing substring error
-    if (this.config.apiKey && typeof this.config.apiKey === 'string') {
-      exchangeConfig.apiKey = this.config.apiKey;
-    }
-    if (this.config.secret && typeof this.config.secret === 'string') {
-      exchangeConfig.secret = this.config.secret;
-    }
-    if (this.config.password && typeof this.config.password === 'string') {
-      exchangeConfig.password = this.config.password;
-    }
+    if (this.config.apiKey && typeof this.config.apiKey === 'string') { // 条件判断 this.config.apiKey && typeof this.config.apiK...
+      exchangeConfig.apiKey = this.config.apiKey; // 赋值 exchangeConfig.apiKey
+    } // 结束代码块
+    if (this.config.secret && typeof this.config.secret === 'string') { // 条件判断 this.config.secret && typeof this.config.secr...
+      exchangeConfig.secret = this.config.secret; // 赋值 exchangeConfig.secret
+    } // 结束代码块
+    if (this.config.password && typeof this.config.password === 'string') { // 条件判断 this.config.password && typeof this.config.pa...
+      exchangeConfig.password = this.config.password; // 赋值 exchangeConfig.password
+    } // 结束代码块
 
     // 代理设置 - 仅在有值时添加 / Proxy settings - only add when has value
-    if (this.config.proxy) {
-      exchangeConfig.proxy = this.config.proxy;
-    }
+    if (this.config.proxy) { // 条件判断 this.config.proxy
+      exchangeConfig.proxy = this.config.proxy; // 赋值 exchangeConfig.proxy
+    } // 结束代码块
 
     // 调试：打印最终配置 / Debug: print final config
-    console.log(`[${this.name}] 最终交易所配置: / Final exchange config:`, {
-      hasApiKey: !!exchangeConfig.apiKey,
-      hasSecret: !!exchangeConfig.secret,
-      hasPassword: !!exchangeConfig.password,
-      enableRateLimit: exchangeConfig.enableRateLimit,
-      timeout: exchangeConfig.timeout,
-      defaultType: exchangeConfig.options?.defaultType,
-    });
+    console.log(`[${this.name}] 最终交易所配置: / Final exchange config:`, { // 控制台输出
+      hasApiKey: !!exchangeConfig.apiKey, // 设置 hasApiKey 字段
+      hasSecret: !!exchangeConfig.secret, // 设置 hasSecret 字段
+      hasPassword: !!exchangeConfig.password, // 设置 hasPassword 字段
+      enableRateLimit: exchangeConfig.enableRateLimit, // 设置 enableRateLimit 字段
+      timeout: exchangeConfig.timeout, // 设置 timeout 字段
+      defaultType: exchangeConfig.options?.defaultType, // 设置 defaultType 字段
+    }); // 结束代码块
 
     // 创建并返回 CCXT OKX 实例 / Create and return CCXT OKX instance
-    return new ccxt.okx(exchangeConfig);
-  }
+    return new ccxt.okx(exchangeConfig); // 返回结果
+  } // 结束代码块
 
   // ============================================
   // OKX 特有方法 / OKX-Specific Methods
@@ -117,20 +117,20 @@ export class OKXExchange extends BaseExchange {
    * Get account configuration
    * @returns {Promise<Object>} 账户配置 / Account configuration
    */
-  async fetchAccountConfig() {
+  async fetchAccountConfig() { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调用 OKX API 获取账户配置 / Call OKX API to fetch account config
-      const response = await this.exchange.privateGetAccountConfig();
+      const response = await this.exchange.privateGetAccountConfig(); // 定义常量 response
 
       // 解析响应数据 / Parse response data
-      const data = response.data?.[0];
+      const data = response.data?.[0]; // 定义常量 data
 
       // 返回账户配置 / Return account configuration
-      return {
+      return { // 返回结果
         posMode: data?.posMode,              // 持仓模式 (long_short_mode/net_mode) / Position mode
         autoLoan: data?.autoLoan,            // 自动借币 / Auto loan
         level: data?.level,                  // 账户等级 / Account level
@@ -139,9 +139,9 @@ export class OKXExchange extends BaseExchange {
         uid: data?.uid,                      // 用户 ID / User ID
         exchange: this.name,                 // 交易所名称 / Exchange name
         timestamp: Date.now(),               // 时间戳 / Timestamp
-      };
-    }, '获取账户配置 / Fetch account config');
-  }
+      }; // 结束代码块
+    }, '获取账户配置 / Fetch account config'); // 执行语句
+  } // 结束代码块
 
   /**
    * 设置持仓模式
@@ -149,47 +149,47 @@ export class OKXExchange extends BaseExchange {
    * @param {string} posMode - 持仓模式 ('long_short_mode' | 'net_mode') / Position mode
    * @returns {Promise<Object>} 设置结果 / Setting result
    */
-  async setPositionMode(posMode) {
+  async setPositionMode(posMode) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证持仓模式参数 / Validate position mode parameter
-    const validModes = ['long_short_mode', 'net_mode'];
-    if (!validModes.includes(posMode)) {
-      throw this._createError('INVALID_PARAM', `无效的持仓模式 / Invalid position mode: ${posMode}`);
-    }
+    const validModes = ['long_short_mode', 'net_mode']; // 定义常量 validModes
+    if (!validModes.includes(posMode)) { // 条件判断 !validModes.includes(posMode)
+      throw this._createError('INVALID_PARAM', `无效的持仓模式 / Invalid position mode: ${posMode}`); // 抛出异常
+    } // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
-      try {
+    return this._executeWithRetry(async () => { // 返回结果
+      try { // 尝试执行
         // 设置持仓模式 / Set position mode
         // long_short_mode: 双向持仓 / Hedge mode
         // net_mode: 单向持仓 / One-way mode
-        const response = await this.exchange.privatePostAccountSetPositionMode({
-          posMode,
-        });
+        const response = await this.exchange.privatePostAccountSetPositionMode({ // 定义常量 response
+          posMode, // 执行语句
+        }); // 结束代码块
 
         // 发出持仓模式设置事件 / Emit position mode set event
-        this.emit('positionModeSet', { posMode, exchange: this.name });
+        this.emit('positionModeSet', { posMode, exchange: this.name }); // 调用 emit
 
         // 记录日志 / Log
-        console.log(`[${this.name}] ✓ 持仓模式已设置 / Position mode set: ${posMode}`);
+        console.log(`[${this.name}] ✓ 持仓模式已设置 / Position mode set: ${posMode}`); // 控制台输出
 
         // 返回结果 / Return result
-        return response;
+        return response; // 返回结果
 
-      } catch (error) {
+      } catch (error) { // 执行语句
         // 如果已经是该模式，返回成功 / If already in that mode, return success
-        if (error.message && error.message.includes('already')) {
-          console.log(`[${this.name}] ✓ 持仓模式无需更改 / Position mode already set`);
-          return { success: true, message: 'Position mode already set' };
-        }
+        if (error.message && error.message.includes('already')) { // 条件判断 error.message && error.message.includes('alre...
+          console.log(`[${this.name}] ✓ 持仓模式无需更改 / Position mode already set`); // 控制台输出
+          return { success: true, message: 'Position mode already set' }; // 返回结果
+        } // 结束代码块
 
         // 其他错误继续抛出 / Throw other errors
-        throw error;
-      }
-    }, `设置持仓模式 / Set position mode: ${posMode}`);
-  }
+        throw error; // 抛出异常
+      } // 结束代码块
+    }, `设置持仓模式 / Set position mode: ${posMode}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取标记价格
@@ -197,28 +197,28 @@ export class OKXExchange extends BaseExchange {
    * @param {string} symbol - 交易对 / Trading pair
    * @returns {Promise<Object>} 标记价格信息 / Mark price information
    */
-  async fetchMarkPrice(symbol) {
+  async fetchMarkPrice(symbol) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调用 CCXT 获取标记价格 / Call CCXT to fetch mark price
-      const markPrice = await this.exchange.fetchMarkPrice(symbol);
+      const markPrice = await this.exchange.fetchMarkPrice(symbol); // 定义常量 markPrice
 
       // 返回标记价格信息 / Return mark price information
-      return {
+      return { // 返回结果
         symbol,                              // 交易对 / Trading pair
         markPrice: markPrice.markPrice,      // 标记价格 / Mark price
         indexPrice: markPrice.indexPrice,    // 指数价格 / Index price
         timestamp: markPrice.timestamp,      // 时间戳 / Timestamp
         exchange: this.name,                 // 交易所名称 / Exchange name
-      };
-    }, `获取标记价格 / Fetch mark price: ${symbol}`);
-  }
+      }; // 结束代码块
+    }, `获取标记价格 / Fetch mark price: ${symbol}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 设置杠杆倍数 (覆盖父类方法，增加 OKX 特有参数)
@@ -229,42 +229,42 @@ export class OKXExchange extends BaseExchange {
    * @param {string} posSide - 持仓方向 ('long' | 'short' | 'net') / Position side
    * @returns {Promise<Object>} 设置结果 / Setting result
    */
-  async setLeverage(leverage, symbol, marginMode = 'cross', posSide = 'net') {
+  async setLeverage(leverage, symbol, marginMode = 'cross', posSide = 'net') { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 验证杠杆倍数 / Validate leverage
-    if (typeof leverage !== 'number' || leverage < 1 || leverage > 125) {
-      throw this._createError('INVALID_PARAM', `无效的杠杆倍数 / Invalid leverage: ${leverage}`);
-    }
+    if (typeof leverage !== 'number' || leverage < 1 || leverage > 125) { // 条件判断 typeof leverage !== 'number' || leverage < 1 ...
+      throw this._createError('INVALID_PARAM', `无效的杠杆倍数 / Invalid leverage: ${leverage}`); // 抛出异常
+    } // 结束代码块
 
     // 验证保证金模式 / Validate margin mode
-    const validModes = ['cross', 'isolated'];
-    if (!validModes.includes(marginMode)) {
-      throw this._createError('INVALID_PARAM', `无效的保证金模式 / Invalid margin mode: ${marginMode}`);
-    }
+    const validModes = ['cross', 'isolated']; // 定义常量 validModes
+    if (!validModes.includes(marginMode)) { // 条件判断 !validModes.includes(marginMode)
+      throw this._createError('INVALID_PARAM', `无效的保证金模式 / Invalid margin mode: ${marginMode}`); // 抛出异常
+    } // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调用 CCXT 设置杠杆 / Call CCXT to set leverage
-      const result = await this.exchange.setLeverage(leverage, symbol, {
+      const result = await this.exchange.setLeverage(leverage, symbol, { // 定义常量 result
         mgnMode: marginMode,  // 保证金模式 / Margin mode
         posSide,              // 持仓方向 / Position side
-      });
+      }); // 结束代码块
 
       // 发出杠杆设置事件 / Emit leverage set event
-      this.emit('leverageSet', { symbol, leverage, marginMode, posSide, exchange: this.name });
+      this.emit('leverageSet', { symbol, leverage, marginMode, posSide, exchange: this.name }); // 调用 emit
 
       // 记录日志 / Log
-      console.log(`[${this.name}] ✓ 杠杆已设置 / Leverage set: ${symbol} ${leverage}x (${marginMode})`);
+      console.log(`[${this.name}] ✓ 杠杆已设置 / Leverage set: ${symbol} ${leverage}x (${marginMode})`); // 控制台输出
 
       // 返回结果 / Return result
-      return result;
-    }, `设置杠杆 / Set leverage: ${symbol} ${leverage}x`);
-  }
+      return result; // 返回结果
+    }, `设置杠杆 / Set leverage: ${symbol} ${leverage}x`); // 执行语句
+  } // 结束代码块
 
   /**
    * 创建算法订单 (包括冰山单、时间加权等)
@@ -276,56 +276,56 @@ export class OKXExchange extends BaseExchange {
    * @param {Object} algoParams - 算法参数 / Algorithm parameters
    * @returns {Promise<Object>} 订单信息 / Order information
    */
-  async createAlgoOrder(symbol, type, side, amount, algoParams = {}) {
+  async createAlgoOrder(symbol, type, side, amount, algoParams = {}) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 记录日志 / Log
-    console.log(`[${this.name}] 创建算法订单 / Creating algo order:`, {
-      symbol,
-      type,
-      side,
-      amount,
-      ...algoParams,
-    });
+    console.log(`[${this.name}] 创建算法订单 / Creating algo order:`, { // 控制台输出
+      symbol, // 执行语句
+      type, // 执行语句
+      side, // 执行语句
+      amount, // 执行语句
+      ...algoParams, // 展开对象或数组
+    }); // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调整数量精度 / Adjust amount precision
-      const adjustedAmount = this._adjustPrecision(symbol, 'amount', amount);
+      const adjustedAmount = this._adjustPrecision(symbol, 'amount', amount); // 定义常量 adjustedAmount
 
       // 构建订单参数 / Build order parameters
-      const params = {
-        ...algoParams,
+      const params = { // 定义常量 params
+        ...algoParams, // 展开对象或数组
         tdMode: algoParams.marginMode || 'cross',  // 交易模式 / Trade mode
-      };
+      }; // 结束代码块
 
       // 调用 CCXT 创建订单 / Call CCXT to create order
-      const order = await this.exchange.createOrder(
+      const order = await this.exchange.createOrder( // 定义常量 order
         symbol,           // 交易对 / Symbol
         type,             // 订单类型 / Order type
         side,             // 买卖方向 / Side
         adjustedAmount,   // 数量 / Amount
         undefined,        // 价格 (根据类型可能需要) / Price (may need based on type)
         params            // 额外参数 / Additional params
-      );
+      ); // 结束调用或参数
 
       // 转换为统一格式 / Convert to unified format
-      const unifiedOrder = this._normalizeOrder(order);
+      const unifiedOrder = this._normalizeOrder(order); // 定义常量 unifiedOrder
 
       // 发出算法订单创建事件 / Emit algo order created event
-      this.emit('algoOrderCreated', unifiedOrder);
+      this.emit('algoOrderCreated', unifiedOrder); // 调用 emit
 
       // 记录日志 / Log
-      console.log(`[${this.name}] ✓ 算法订单创建成功 / Algo order created: ${unifiedOrder.id}`);
+      console.log(`[${this.name}] ✓ 算法订单创建成功 / Algo order created: ${unifiedOrder.id}`); // 控制台输出
 
       // 返回统一格式订单 / Return unified order
-      return unifiedOrder;
-    }, `创建算法订单 / Create algo order: ${symbol}`);
-  }
+      return unifiedOrder; // 返回结果
+    }, `创建算法订单 / Create algo order: ${symbol}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取未完成的算法订单
@@ -334,32 +334,32 @@ export class OKXExchange extends BaseExchange {
    * @param {string} algoType - 算法类型 / Algorithm type
    * @returns {Promise<Array>} 算法订单列表 / Algorithmic order list
    */
-  async fetchOpenAlgoOrders(symbol = undefined, algoType = 'conditional') {
+  async fetchOpenAlgoOrders(symbol = undefined, algoType = 'conditional') { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 如果指定了交易对，验证 / If symbol specified, validate
-    if (symbol) {
-      this._validateSymbol(symbol);
-    }
+    if (symbol) { // 条件判断 symbol
+      this._validateSymbol(symbol); // 调用 _validateSymbol
+    } // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
-      const params = {
+      const params = { // 定义常量 params
         ordType: algoType,  // 订单类型: conditional, oco, trigger, etc.
-      };
+      }; // 结束代码块
 
       // 如果指定了交易对 / If symbol is specified
-      if (symbol) {
-        params.instId = this.exchange.marketId(symbol);
-      }
+      if (symbol) { // 条件判断 symbol
+        params.instId = this.exchange.marketId(symbol); // 赋值 params.instId
+      } // 结束代码块
 
       // 调用 OKX API 获取算法订单 / Call OKX API to fetch algo orders
-      const response = await this.exchange.privateGetTradeOrdersAlgoPending(params);
+      const response = await this.exchange.privateGetTradeOrdersAlgoPending(params); // 定义常量 response
 
       // 返回订单列表 / Return order list
-      return (response.data || []).map(order => ({
+      return (response.data || []).map(order => ({ // 返回结果
         algoId: order.algoId,                          // 算法订单 ID / Algo order ID
         symbol: order.instId,                          // 交易对 / Trading pair
         ordType: order.ordType,                        // 订单类型 / Order type
@@ -370,9 +370,9 @@ export class OKXExchange extends BaseExchange {
         state: order.state,                            // 状态 / State
         cTime: parseInt(order.cTime),                  // 创建时间 / Create time
         exchange: this.name,                           // 交易所名称 / Exchange name
-      }));
-    }, `获取算法订单 / Fetch open algo orders: ${symbol || 'all'}`);
-  }
+      })); // 结束代码块
+    }, `获取算法订单 / Fetch open algo orders: ${symbol || 'all'}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 取消算法订单
@@ -381,34 +381,34 @@ export class OKXExchange extends BaseExchange {
    * @param {string} symbol - 交易对 / Trading pair
    * @returns {Promise<Object>} 取消结果 / Cancellation result
    */
-  async cancelAlgoOrder(algoId, symbol) {
+  async cancelAlgoOrder(algoId, symbol) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 记录日志 / Log
-    console.log(`[${this.name}] 取消算法订单 / Canceling algo order: ${algoId}`);
+    console.log(`[${this.name}] 取消算法订单 / Canceling algo order: ${algoId}`); // 控制台输出
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调用 OKX API 取消算法订单 / Call OKX API to cancel algo order
-      const result = await this.exchange.privatePostTradeCancelAlgos([{
-        algoId,
-        instId: this.exchange.marketId(symbol),
-      }]);
+      const result = await this.exchange.privatePostTradeCancelAlgos([{ // 定义常量 result
+        algoId, // 执行语句
+        instId: this.exchange.marketId(symbol), // 设置 instId 字段
+      }]); // 执行语句
 
       // 发出算法订单取消事件 / Emit algo order cancelled event
-      this.emit('algoOrderCancelled', { algoId, symbol, exchange: this.name });
+      this.emit('algoOrderCancelled', { algoId, symbol, exchange: this.name }); // 调用 emit
 
       // 记录日志 / Log
-      console.log(`[${this.name}] ✓ 算法订单已取消 / Algo order cancelled: ${algoId}`);
+      console.log(`[${this.name}] ✓ 算法订单已取消 / Algo order cancelled: ${algoId}`); // 控制台输出
 
       // 返回结果 / Return result
-      return result;
-    }, `取消算法订单 / Cancel algo order: ${algoId}`);
-  }
+      return result; // 返回结果
+    }, `取消算法订单 / Cancel algo order: ${algoId}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取最大可开仓数量
@@ -418,42 +418,42 @@ export class OKXExchange extends BaseExchange {
    * @param {number} price - 价格 (可选) / Price (optional)
    * @returns {Promise<Object>} 最大可开仓信息 / Maximum available size info
    */
-  async fetchMaxAvailableSize(symbol, side, price = undefined) {
+  async fetchMaxAvailableSize(symbol, side, price = undefined) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
-      const params = {
-        instId: this.exchange.marketId(symbol),
+      const params = { // 定义常量 params
+        instId: this.exchange.marketId(symbol), // 设置 instId 字段
         tdMode: 'cross',  // 交易模式 / Trade mode
-      };
+      }; // 结束代码块
 
       // 如果指定了价格 / If price is specified
-      if (price) {
-        params.px = price.toString();
-      }
+      if (price) { // 条件判断 price
+        params.px = price.toString(); // 赋值 params.px
+      } // 结束代码块
 
       // 调用 OKX API 获取最大可开仓数量 / Call OKX API to fetch max size
-      const response = await this.exchange.privateGetAccountMaxSize(params);
+      const response = await this.exchange.privateGetAccountMaxSize(params); // 定义常量 response
 
       // 解析响应数据 / Parse response data
-      const data = response.data?.[0];
+      const data = response.data?.[0]; // 定义常量 data
 
       // 返回结果 / Return result
-      return {
+      return { // 返回结果
         symbol,                                              // 交易对 / Trading pair
         maxBuy: parseFloat(data?.maxBuy || 0),               // 最大可买 / Max buy
         maxSell: parseFloat(data?.maxSell || 0),             // 最大可卖 / Max sell
         exchange: this.name,                                 // 交易所名称 / Exchange name
         timestamp: Date.now(),                               // 时间戳 / Timestamp
-      };
-    }, `获取最大可开仓 / Fetch max available size: ${symbol}`);
-  }
+      }; // 结束代码块
+    }, `获取最大可开仓 / Fetch max available size: ${symbol}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取持仓风险信息
@@ -461,24 +461,24 @@ export class OKXExchange extends BaseExchange {
    * @param {string} symbol - 交易对 (可选) / Trading pair (optional)
    * @returns {Promise<Array>} 持仓风险列表 / Position risk list
    */
-  async fetchPositionRisk(symbol = undefined) {
+  async fetchPositionRisk(symbol = undefined) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 如果指定了交易对，验证 / If symbol specified, validate
-    if (symbol) {
-      this._validateSymbol(symbol);
-    }
+    if (symbol) { // 条件判断 symbol
+      this._validateSymbol(symbol); // 调用 _validateSymbol
+    } // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 获取持仓 / Fetch positions
-      const positions = await this.exchange.fetchPositions(symbol ? [symbol] : undefined);
+      const positions = await this.exchange.fetchPositions(symbol ? [symbol] : undefined); // 定义常量 positions
 
       // 过滤有效持仓并返回风险信息 / Filter valid positions and return risk info
-      return positions
-        .filter(pos => Math.abs(parseFloat(pos.contracts || 0)) > 0)
-        .map(pos => ({
+      return positions // 返回结果
+        .filter(pos => Math.abs(parseFloat(pos.contracts || 0)) > 0) // 定义箭头函数
+        .map(pos => ({ // 定义箭头函数
           symbol: pos.symbol,                            // 交易对 / Trading pair
           side: pos.side,                                // 持仓方向 / Position side
           contracts: pos.contracts,                      // 合约数量 / Number of contracts
@@ -492,9 +492,9 @@ export class OKXExchange extends BaseExchange {
           marginRatio: pos.marginRatio,                  // 保证金率 / Margin ratio
           exchange: this.name,                           // 交易所名称 / Exchange name
           timestamp: Date.now(),                         // 时间戳 / Timestamp
-        }));
-    }, `获取持仓风险 / Fetch position risk: ${symbol || 'all'}`);
-  }
+        })); // 结束代码块
+    }, `获取持仓风险 / Fetch position risk: ${symbol || 'all'}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取交易历史 (最近 7 天)
@@ -502,23 +502,23 @@ export class OKXExchange extends BaseExchange {
    * @param {string} symbol - 交易对 / Trading pair
    * @returns {Promise<Array>} 交易历史 / Trade history
    */
-  async fetchRecentTrades(symbol) {
+  async fetchRecentTrades(symbol) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 计算 7 天前的时间戳 / Calculate timestamp 7 days ago
-      const since = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const since = Date.now() - (7 * 24 * 60 * 60 * 1000); // 定义常量 since
 
       // 调用 CCXT 获取交易历史 / Call CCXT to fetch trade history
-      const trades = await this.exchange.fetchMyTrades(symbol, since, 500);
+      const trades = await this.exchange.fetchMyTrades(symbol, since, 500); // 定义常量 trades
 
       // 返回交易历史 / Return trade history
-      return trades.map(trade => ({
+      return trades.map(trade => ({ // 返回结果
         id: trade.id,                          // 交易 ID / Trade ID
         orderId: trade.order,                  // 订单 ID / Order ID
         symbol: trade.symbol,                  // 交易对 / Trading pair
@@ -530,9 +530,9 @@ export class OKXExchange extends BaseExchange {
         timestamp: trade.timestamp,            // 时间戳 / Timestamp
         datetime: trade.datetime,              // ISO 时间 / ISO datetime
         exchange: this.name,                   // 交易所名称 / Exchange name
-      }));
-    }, `获取近期交易 / Fetch recent trades: ${symbol}`);
-  }
+      })); // 结束代码块
+    }, `获取近期交易 / Fetch recent trades: ${symbol}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取账户账单流水
@@ -541,25 +541,25 @@ export class OKXExchange extends BaseExchange {
    * @param {number} limit - 数量限制 / Limit
    * @returns {Promise<Array>} 账单列表 / Bills list
    */
-  async fetchBills(instType = undefined, limit = 100) {
+  async fetchBills(instType = undefined, limit = 100) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
-      const params = { limit };
+      const params = { limit }; // 定义常量 params
 
       // 如果指定了产品类型 / If instrument type specified
-      if (instType) {
-        params.instType = instType;
-      }
+      if (instType) { // 条件判断 instType
+        params.instType = instType; // 赋值 params.instType
+      } // 结束代码块
 
       // 调用 OKX API 获取账单 / Call OKX API to fetch bills
-      const response = await this.exchange.privateGetAccountBills(params);
+      const response = await this.exchange.privateGetAccountBills(params); // 定义常量 response
 
       // 返回格式化的账单列表 / Return formatted bills list
-      return (response.data || []).map(bill => ({
+      return (response.data || []).map(bill => ({ // 返回结果
         billId: bill.billId,                           // 账单 ID / Bill ID
         instType: bill.instType,                       // 产品类型 / Instrument type
         instId: bill.instId,                           // 产品 ID / Instrument ID
@@ -572,9 +572,9 @@ export class OKXExchange extends BaseExchange {
         bal: parseFloat(bill.bal || 0),                // 余额 / Balance
         ts: parseInt(bill.ts),                         // 时间戳 / Timestamp
         exchange: this.name,                           // 交易所名称 / Exchange name
-      }));
-    }, `获取账单流水 / Fetch bills: ${instType || 'all'}`);
-  }
+      })); // 结束代码块
+    }, `获取账单流水 / Fetch bills: ${instType || 'all'}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 获取持仓量历史数据
@@ -587,53 +587,53 @@ export class OKXExchange extends BaseExchange {
    * @param {string} period - 时间周期 ('5m' | '1H' | '1D') / Time period
    * @returns {Promise<Array>} 持仓量历史数据 / Open interest history data
    */
-  async fetchOpenInterestHistory(symbol, period = '5m') {
+  async fetchOpenInterestHistory(symbol, period = '5m') { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 验证周期参数 / Validate period parameter
-    const validPeriods = ['5m', '1H', '1D'];
-    if (!validPeriods.includes(period)) {
-      throw this._createError('INVALID_PARAM', `无效的时间周期 / Invalid period: ${period}. 支持 / Supported: ${validPeriods.join(', ')}`);
-    }
+    const validPeriods = ['5m', '1H', '1D']; // 定义常量 validPeriods
+    if (!validPeriods.includes(period)) { // 条件判断 !validPeriods.includes(period)
+      throw this._createError('INVALID_PARAM', `无效的时间周期 / Invalid period: ${period}. 支持 / Supported: ${validPeriods.join(', ')}`); // 抛出异常
+    } // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 获取 OKX 格式的 instId / Get OKX format instId
       // 将 BTC/USDT:USDT 转换为 BTC-USDT-SWAP / Convert BTC/USDT:USDT to BTC-USDT-SWAP
-      const market = this.markets[symbol];
-      let instId;
+      const market = this.markets[symbol]; // 定义常量 market
+      let instId; // 定义变量 instId
 
-      if (market && market.id) {
-        instId = market.id;
-      } else {
+      if (market && market.id) { // 条件判断 market && market.id
+        instId = market.id; // 赋值 instId
+      } else { // 执行语句
         // 手动转换格式 / Manual format conversion
-        instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP';
-      }
+        instId = symbol.replace('/', '-').replace(':USDT', '') + '-SWAP'; // 赋值 instId
+      } // 结束代码块
 
       // 调用 OKX Rubik API / Call OKX Rubik API
-      const response = await this.exchange.publicGetRubikStatContractsOpenInterestHistory({
-        instId,
-        period,
-      });
+      const response = await this.exchange.publicGetRubikStatContractsOpenInterestHistory({ // 定义常量 response
+        instId, // 执行语句
+        period, // 执行语句
+      }); // 结束代码块
 
       // 获取数据列表 / Get data list
       // OKX 返回格式: [[timestamp, oi, oiValue], ...] / OKX return format
-      const data = response.data || [];
+      const data = response.data || []; // 定义常量 data
 
       // 转换为统一格式 / Convert to unified format
-      return data.map(item => ({
+      return data.map(item => ({ // 返回结果
         timestamp: parseInt(item[0]),           // 时间戳 / Timestamp
         openInterest: parseFloat(item[1]),      // 持仓量（合约张数）/ OI (contracts)
         openInterestValue: parseFloat(item[2]), // 持仓价值（USD）/ OI value (USD)
         symbol,                                 // 交易对 / Trading pair
         exchange: this.name,                    // 交易所名称 / Exchange name
-      }));
-    }, `获取持仓量历史 / Fetch OI history: ${symbol}`);
-  }
+      })); // 结束代码块
+    }, `获取持仓量历史 / Fetch OI history: ${symbol}`); // 执行语句
+  } // 结束代码块
 
   /**
    * 创建止盈止损订单
@@ -647,69 +647,69 @@ export class OKXExchange extends BaseExchange {
    * @param {string} options.triggerType - 触发类型 ('last' | 'index' | 'mark') / Trigger type
    * @returns {Promise<Object>} 订单信息 / Order information
    */
-  async createStopOrder(symbol, side, amount, options = {}) {
+  async createStopOrder(symbol, side, amount, options = {}) { // 执行语句
     // 确保已连接 / Ensure connected
-    this._ensureConnected();
+    this._ensureConnected(); // 调用 _ensureConnected
 
     // 验证交易对 / Validate symbol
-    this._validateSymbol(symbol);
+    this._validateSymbol(symbol); // 调用 _validateSymbol
 
     // 验证必要参数 / Validate required parameters
-    if (!options.triggerPrice) {
-      throw this._createError('INVALID_PARAM', '止损订单必须指定触发价格 / Stop order requires triggerPrice');
-    }
+    if (!options.triggerPrice) { // 条件判断 !options.triggerPrice
+      throw this._createError('INVALID_PARAM', '止损订单必须指定触发价格 / Stop order requires triggerPrice'); // 抛出异常
+    } // 结束代码块
 
     // 记录日志 / Log
-    console.log(`[${this.name}] 创建止损订单 / Creating stop order:`, {
-      symbol,
-      side,
-      amount,
-      ...options,
-    });
+    console.log(`[${this.name}] 创建止损订单 / Creating stop order:`, { // 控制台输出
+      symbol, // 执行语句
+      side, // 执行语句
+      amount, // 执行语句
+      ...options, // 展开对象或数组
+    }); // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry
-    return this._executeWithRetry(async () => {
+    return this._executeWithRetry(async () => { // 返回结果
       // 调整数量精度 / Adjust amount precision
-      const adjustedAmount = this._adjustPrecision(symbol, 'amount', amount);
+      const adjustedAmount = this._adjustPrecision(symbol, 'amount', amount); // 定义常量 adjustedAmount
 
       // 构建订单参数 / Build order parameters
-      const params = {
+      const params = { // 定义常量 params
         triggerPx: options.triggerPrice.toString(),                     // 触发价格 / Trigger price
         triggerPxType: options.triggerType || 'last',                   // 触发类型 / Trigger type
         tdMode: 'cross',                                                // 交易模式 / Trade mode
-      };
+      }; // 结束代码块
 
       // 确定订单类型 / Determine order type
       // 如果有订单价格，则为限价单，否则为市价单 / If order price, limit order; otherwise market order
-      const orderType = options.orderPrice ? 'trigger' : 'trigger';
-      if (options.orderPrice) {
-        params.ordPx = options.orderPrice.toString();
-      }
+      const orderType = options.orderPrice ? 'trigger' : 'trigger'; // 定义常量 orderType
+      if (options.orderPrice) { // 条件判断 options.orderPrice
+        params.ordPx = options.orderPrice.toString(); // 赋值 params.ordPx
+      } // 结束代码块
 
       // 调用 CCXT 创建订单 / Call CCXT to create order
-      const order = await this.exchange.createOrder(
+      const order = await this.exchange.createOrder( // 定义常量 order
         symbol,           // 交易对 / Symbol
         orderType,        // 订单类型 / Order type
         side,             // 买卖方向 / Side
         adjustedAmount,   // 数量 / Amount
         options.orderPrice,  // 价格 / Price
         params            // 额外参数 / Additional params
-      );
+      ); // 结束调用或参数
 
       // 转换为统一格式 / Convert to unified format
-      const unifiedOrder = this._normalizeOrder(order);
+      const unifiedOrder = this._normalizeOrder(order); // 定义常量 unifiedOrder
 
       // 发出止损订单创建事件 / Emit stop order created event
-      this.emit('stopOrderCreated', unifiedOrder);
+      this.emit('stopOrderCreated', unifiedOrder); // 调用 emit
 
       // 记录日志 / Log
-      console.log(`[${this.name}] ✓ 止损订单创建成功 / Stop order created: ${unifiedOrder.id}`);
+      console.log(`[${this.name}] ✓ 止损订单创建成功 / Stop order created: ${unifiedOrder.id}`); // 控制台输出
 
       // 返回统一格式订单 / Return unified order
-      return unifiedOrder;
-    }, `创建止损订单 / Create stop order: ${symbol}`);
-  }
-}
+      return unifiedOrder; // 返回结果
+    }, `创建止损订单 / Create stop order: ${symbol}`); // 执行语句
+  } // 结束代码块
+} // 结束代码块
 
 // 默认导出 / Default export
-export default OKXExchange;
+export default OKXExchange; // 默认导出

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 审计日志系统
  * Audit Logger System
  *
@@ -8,133 +8,133 @@
  * @module src/logger/AuditLogger
  */
 
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import { EventEmitter } from 'events';
+import fs from 'fs'; // 导入模块 fs
+import path from 'path'; // 导入模块 path
+import crypto from 'crypto'; // 导入模块 crypto
+import { EventEmitter } from 'events'; // 导入模块 events
 
 /**
  * 审计事件类型
  */
-const AuditEventType = {
+const AuditEventType = { // 定义常量 AuditEventType
   // 认证相关
-  AUTH_SUCCESS: 'auth_success',
-  AUTH_FAILED: 'auth_failed',
-  API_KEY_CREATED: 'api_key_created',
-  API_KEY_REVOKED: 'api_key_revoked',
+  AUTH_SUCCESS: 'auth_success', // 设置 AUTH_SUCCESS 字段
+  AUTH_FAILED: 'auth_failed', // 设置 AUTH_FAILED 字段
+  API_KEY_CREATED: 'api_key_created', // 设置 API_KEY_CREATED 字段
+  API_KEY_REVOKED: 'api_key_revoked', // 设置 API_KEY_REVOKED 字段
 
   // API 访问
-  API_ACCESS: 'api_access',
-  IP_BLOCKED: 'ip_blocked',
-  RATE_LIMITED: 'rate_limited',
+  API_ACCESS: 'api_access', // 设置 API_ACCESS 字段
+  IP_BLOCKED: 'ip_blocked', // 设置 IP_BLOCKED 字段
+  RATE_LIMITED: 'rate_limited', // 设置 RATE_LIMITED 字段
 
   // 交易相关
-  ORDER_CREATED: 'order_created',
-  ORDER_FILLED: 'order_filled',
-  ORDER_CANCELLED: 'order_cancelled',
-  ORDER_FAILED: 'order_failed',
-  POSITION_OPENED: 'position_opened',
-  POSITION_CLOSED: 'position_closed',
+  ORDER_CREATED: 'order_created', // 设置 ORDER_CREATED 字段
+  ORDER_FILLED: 'order_filled', // 设置 ORDER_FILLED 字段
+  ORDER_CANCELLED: 'order_cancelled', // 设置 ORDER_CANCELLED 字段
+  ORDER_FAILED: 'order_failed', // 设置 ORDER_FAILED 字段
+  POSITION_OPENED: 'position_opened', // 设置 POSITION_OPENED 字段
+  POSITION_CLOSED: 'position_closed', // 设置 POSITION_CLOSED 字段
 
   // 风控相关
-  RISK_ALERT: 'risk_alert',
-  RISK_LIMIT_HIT: 'risk_limit_hit',
-  TRADING_DISABLED: 'trading_disabled',
-  TRADING_ENABLED: 'trading_enabled',
+  RISK_ALERT: 'risk_alert', // 设置 RISK_ALERT 字段
+  RISK_LIMIT_HIT: 'risk_limit_hit', // 设置 RISK_LIMIT_HIT 字段
+  TRADING_DISABLED: 'trading_disabled', // 设置 TRADING_DISABLED 字段
+  TRADING_ENABLED: 'trading_enabled', // 设置 TRADING_ENABLED 字段
 
   // 资金相关
-  WITHDRAWAL_REQUEST: 'withdrawal_request',
-  DEPOSIT_DETECTED: 'deposit_detected',
-  BALANCE_CHANGE: 'balance_change',
+  WITHDRAWAL_REQUEST: 'withdrawal_request', // 设置 WITHDRAWAL_REQUEST 字段
+  DEPOSIT_DETECTED: 'deposit_detected', // 设置 DEPOSIT_DETECTED 字段
+  BALANCE_CHANGE: 'balance_change', // 设置 BALANCE_CHANGE 字段
 
   // 系统相关
-  SYSTEM_START: 'system_start',
-  SYSTEM_STOP: 'system_stop',
-  CONFIG_CHANGE: 'config_change',
-  ERROR_CRITICAL: 'error_critical',
+  SYSTEM_START: 'system_start', // 设置 SYSTEM_START 字段
+  SYSTEM_STOP: 'system_stop', // 设置 SYSTEM_STOP 字段
+  CONFIG_CHANGE: 'config_change', // 设置 CONFIG_CHANGE 字段
+  ERROR_CRITICAL: 'error_critical', // 设置 ERROR_CRITICAL 字段
 
   // 策略相关
-  STRATEGY_STARTED: 'strategy_started',
-  STRATEGY_STOPPED: 'strategy_stopped',
-  SIGNAL_GENERATED: 'signal_generated',
-};
+  STRATEGY_STARTED: 'strategy_started', // 设置 STRATEGY_STARTED 字段
+  STRATEGY_STOPPED: 'strategy_stopped', // 设置 STRATEGY_STOPPED 字段
+  SIGNAL_GENERATED: 'signal_generated', // 设置 SIGNAL_GENERATED 字段
+}; // 结束代码块
 
 /**
  * 审计日志级别
  */
-const AuditLevel = {
-  INFO: 'info',
-  WARNING: 'warning',
-  CRITICAL: 'critical',
-};
+const AuditLevel = { // 定义常量 AuditLevel
+  INFO: 'info', // 设置 INFO 字段
+  WARNING: 'warning', // 设置 WARNING 字段
+  CRITICAL: 'critical', // 设置 CRITICAL 字段
+}; // 结束代码块
 
 /**
  * 审计日志记录器
  * Audit Logger
  */
-class AuditLogger extends EventEmitter {
-  constructor(config = {}) {
-    super();
+class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmitter)
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
-    this.config = {
+    this.config = { // 设置 config
       // 日志目录
-      logDir: config.logDir || process.env.AUDIT_LOG_DIR || './logs/audit',
+      logDir: config.logDir || process.env.AUDIT_LOG_DIR || './logs/audit', // 读取环境变量 AUDIT_LOG_DIR
       // 日志文件前缀
-      filePrefix: config.filePrefix || 'audit',
+      filePrefix: config.filePrefix || 'audit', // 设置 filePrefix 字段
       // 单个文件最大大小 (字节)
       maxFileSize: config.maxFileSize || 50 * 1024 * 1024, // 50MB
       // 最大保留天数
-      maxRetentionDays: config.maxRetentionDays || 90,
+      maxRetentionDays: config.maxRetentionDays || 90, // 设置 maxRetentionDays 字段
       // 是否启用加密
-      enableEncryption: config.enableEncryption ?? false,
+      enableEncryption: config.enableEncryption ?? false, // 设置 enableEncryption 字段
       // 加密密钥 (应从安全存储获取)
-      encryptionKey: config.encryptionKey || process.env.AUDIT_ENCRYPTION_KEY,
+      encryptionKey: config.encryptionKey || process.env.AUDIT_ENCRYPTION_KEY, // 读取环境变量 AUDIT_ENCRYPTION_KEY
       // 是否启用签名 (防篡改)
-      enableIntegrity: config.enableIntegrity ?? true,
+      enableIntegrity: config.enableIntegrity ?? true, // 设置 enableIntegrity 字段
       // 签名密钥
-      integrityKey: config.integrityKey || process.env.AUDIT_INTEGRITY_KEY || 'audit-integrity-key',
+      integrityKey: config.integrityKey || process.env.AUDIT_INTEGRITY_KEY || 'audit-integrity-key', // 读取环境变量 AUDIT_INTEGRITY_KEY
       // 是否输出到控制台
-      consoleOutput: config.consoleOutput ?? (process.env.NODE_ENV !== 'production'),
+      consoleOutput: config.consoleOutput ?? (process.env.NODE_ENV !== 'production'), // 读取环境变量 NODE_ENV
       // 批量写入配置
-      batchSize: config.batchSize || 100,
+      batchSize: config.batchSize || 100, // 设置 batchSize 字段
       flushInterval: config.flushInterval || 5000, // 5秒
       // 敏感字段 (需要脱敏) - 全部使用小写，因为检查时会转换为小写
-      sensitiveFields: new Set(config.sensitiveFields || [
-        'password', 'secret', 'apikey', 'privatekey', 'token',
-        'apisecret', 'passphrase', 'credential', 'accesstoken',
-        'refreshtoken', 'secretkey', 'privatekey', 'authorization',
-      ]),
-    };
+      sensitiveFields: new Set(config.sensitiveFields || [ // 设置 sensitiveFields 字段
+        'password', 'secret', 'apikey', 'privatekey', 'token', // 执行语句
+        'apisecret', 'passphrase', 'credential', 'accesstoken', // 执行语句
+        'refreshtoken', 'secretkey', 'privatekey', 'authorization', // 执行语句
+      ]), // 结束数组或索引
+    }; // 结束代码块
 
     // 确保目录存在
-    this._ensureLogDir();
+    this._ensureLogDir(); // 调用 _ensureLogDir
 
     // 当前日志文件
-    this.currentFile = null;
-    this.currentFileSize = 0;
-    this.currentDate = null;
+    this.currentFile = null; // 设置 currentFile
+    this.currentFileSize = 0; // 设置 currentFileSize
+    this.currentDate = null; // 设置 currentDate
 
     // 写入缓冲
-    this.buffer = [];
-    this.flushTimer = null;
+    this.buffer = []; // 设置 buffer
+    this.flushTimer = null; // 设置 flushTimer
 
     // 链式哈希 (用于完整性验证)
-    this.lastHash = crypto.randomBytes(32).toString('hex');
+    this.lastHash = crypto.randomBytes(32).toString('hex'); // 设置 lastHash
 
     // 统计
-    this.stats = {
-      totalLogs: 0,
-      logsToday: 0,
-      errorCount: 0,
-      lastLogTime: null,
-    };
+    this.stats = { // 设置 stats
+      totalLogs: 0, // 设置 totalLogs 字段
+      logsToday: 0, // 设置 logsToday 字段
+      errorCount: 0, // 设置 errorCount 字段
+      lastLogTime: null, // 设置 lastLogTime 字段
+    }; // 结束代码块
 
     // 启动定时刷新
-    this._startFlushTimer();
+    this._startFlushTimer(); // 调用 _startFlushTimer
 
     // 启动日志轮转检查
-    this._startRetentionCheck();
-  }
+    this._startRetentionCheck(); // 调用 _startRetentionCheck
+  } // 结束代码块
 
   /**
    * 记录审计日志
@@ -142,305 +142,305 @@ class AuditLogger extends EventEmitter {
    * @param {Object} data - 事件数据
    * @param {Object} options - 选项
    */
-  log(eventType, data = {}, options = {}) {
-    const level = options.level || this._getDefaultLevel(eventType);
-    const timestamp = new Date().toISOString();
+  log(eventType, data = {}, options = {}) { // 调用 log
+    const level = options.level || this._getDefaultLevel(eventType); // 定义常量 level
+    const timestamp = new Date().toISOString(); // 定义常量 timestamp
 
     // 脱敏处理
-    const sanitizedData = this._sanitize(data);
+    const sanitizedData = this._sanitize(data); // 定义常量 sanitizedData
 
     // 构建审计记录
-    const record = {
-      id: this._generateId(),
-      timestamp,
-      eventType,
-      level,
-      data: sanitizedData,
-      metadata: {
-        hostname: process.env.HOSTNAME || 'localhost',
-        pid: process.pid,
-        version: process.env.npm_package_version || '1.0.0',
-        env: process.env.NODE_ENV || 'development',
-      },
-    };
+    const record = { // 定义常量 record
+      id: this._generateId(), // 设置 id 字段
+      timestamp, // 执行语句
+      eventType, // 执行语句
+      level, // 执行语句
+      data: sanitizedData, // 设置 data 字段
+      metadata: { // 设置 metadata 字段
+        hostname: process.env.HOSTNAME || 'localhost', // 读取环境变量 HOSTNAME
+        pid: process.pid, // 设置 pid 字段
+        version: process.env.npm_package_version || '1.0.0', // 读取环境变量
+        env: process.env.NODE_ENV || 'development', // 读取环境变量 NODE_ENV
+      }, // 结束代码块
+    }; // 结束代码块
 
     // 添加完整性签名
-    if (this.config.enableIntegrity) {
-      record.prevHash = this.lastHash;
-      record.hash = this._computeHash(record);
-      this.lastHash = record.hash;
-    }
+    if (this.config.enableIntegrity) { // 条件判断 this.config.enableIntegrity
+      record.prevHash = this.lastHash; // 赋值 record.prevHash
+      record.hash = this._computeHash(record); // 赋值 record.hash
+      this.lastHash = record.hash; // 设置 lastHash
+    } // 结束代码块
 
     // 添加到缓冲
-    this.buffer.push(record);
+    this.buffer.push(record); // 访问 buffer
 
     // 更新统计
-    this.stats.totalLogs++;
-    this.stats.logsToday++;
-    this.stats.lastLogTime = timestamp;
+    this.stats.totalLogs++; // 访问 stats
+    this.stats.logsToday++; // 访问 stats
+    this.stats.lastLogTime = timestamp; // 访问 stats
 
     // 控制台输出
-    if (this.config.consoleOutput) {
-      this._consoleOutput(record);
-    }
+    if (this.config.consoleOutput) { // 条件判断 this.config.consoleOutput
+      this._consoleOutput(record); // 调用 _consoleOutput
+    } // 结束代码块
 
     // 发射事件
-    this.emit('log', record);
+    this.emit('log', record); // 调用 emit
 
     // 如果是关键事件，立即刷新
-    if (level === AuditLevel.CRITICAL || this.buffer.length >= this.config.batchSize) {
-      this.flush();
-    }
+    if (level === AuditLevel.CRITICAL || this.buffer.length >= this.config.batchSize) { // 条件判断 level === AuditLevel.CRITICAL || this.buffer....
+      this.flush(); // 调用 flush
+    } // 结束代码块
 
-    return record.id;
-  }
+    return record.id; // 返回结果
+  } // 结束代码块
 
   /**
    * 便捷方法：记录信息
    */
-  info(eventType, data) {
-    return this.log(eventType, data, { level: AuditLevel.INFO });
-  }
+  info(eventType, data) { // 调用 info
+    return this.log(eventType, data, { level: AuditLevel.INFO }); // 返回结果
+  } // 结束代码块
 
   /**
    * 便捷方法：记录警告
    */
-  warning(eventType, data) {
-    return this.log(eventType, data, { level: AuditLevel.WARNING });
-  }
+  warning(eventType, data) { // 调用 warning
+    return this.log(eventType, data, { level: AuditLevel.WARNING }); // 返回结果
+  } // 结束代码块
 
   /**
    * 便捷方法：记录关键事件
    */
-  critical(eventType, data) {
-    return this.log(eventType, data, { level: AuditLevel.CRITICAL });
-  }
+  critical(eventType, data) { // 调用 critical
+    return this.log(eventType, data, { level: AuditLevel.CRITICAL }); // 返回结果
+  } // 结束代码块
 
   /**
    * 记录 API 访问
    */
-  logApiAccess(req, res, duration) {
-    return this.log(AuditEventType.API_ACCESS, {
-      method: req.method,
-      path: req.path,
-      query: req.query,
-      ip: req.ip || req.connection?.remoteAddress,
-      userAgent: req.headers['user-agent'],
-      statusCode: res.statusCode,
-      duration,
-      apiKey: req.headers['x-api-key'] ? '***' + req.headers['x-api-key'].slice(-4) : null,
-    });
-  }
+  logApiAccess(req, res, duration) { // 调用 logApiAccess
+    return this.log(AuditEventType.API_ACCESS, { // 返回结果
+      method: req.method, // 设置 method 字段
+      path: req.path, // 设置 path 字段
+      query: req.query, // 设置 query 字段
+      ip: req.ip || req.connection?.remoteAddress, // 设置 ip 字段
+      userAgent: req.headers['user-agent'], // 设置 userAgent 字段
+      statusCode: res.statusCode, // 设置 statusCode 字段
+      duration, // 执行语句
+      apiKey: req.headers['x-api-key'] ? '***' + req.headers['x-api-key'].slice(-4) : null, // 设置 apiKey 字段
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 记录订单事件
    */
-  logOrder(action, orderData) {
-    const eventType = {
-      created: AuditEventType.ORDER_CREATED,
-      filled: AuditEventType.ORDER_FILLED,
-      cancelled: AuditEventType.ORDER_CANCELLED,
-      failed: AuditEventType.ORDER_FAILED,
-    }[action] || 'order_unknown';
+  logOrder(action, orderData) { // 调用 logOrder
+    const eventType = { // 定义常量 eventType
+      created: AuditEventType.ORDER_CREATED, // 设置 created 字段
+      filled: AuditEventType.ORDER_FILLED, // 设置 filled 字段
+      cancelled: AuditEventType.ORDER_CANCELLED, // 设置 cancelled 字段
+      failed: AuditEventType.ORDER_FAILED, // 设置 failed 字段
+    }[action] || 'order_unknown'; // 执行语句
 
-    return this.log(eventType, {
-      orderId: orderData.id || orderData.orderId,
-      symbol: orderData.symbol,
-      side: orderData.side,
-      type: orderData.type,
-      amount: orderData.amount,
-      price: orderData.price,
-      status: orderData.status,
-      exchange: orderData.exchange,
-      error: orderData.error,
-    }, {
-      level: action === 'failed' ? AuditLevel.WARNING : AuditLevel.INFO,
-    });
-  }
+    return this.log(eventType, { // 返回结果
+      orderId: orderData.id || orderData.orderId, // 设置 orderId 字段
+      symbol: orderData.symbol, // 设置 symbol 字段
+      side: orderData.side, // 设置 side 字段
+      type: orderData.type, // 设置 type 字段
+      amount: orderData.amount, // 设置 amount 字段
+      price: orderData.price, // 设置 price 字段
+      status: orderData.status, // 设置 status 字段
+      exchange: orderData.exchange, // 设置 exchange 字段
+      error: orderData.error, // 设置 error 字段
+    }, { // 执行语句
+      level: action === 'failed' ? AuditLevel.WARNING : AuditLevel.INFO, // 设置 level 字段
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 记录风控事件
    */
-  logRiskEvent(eventType, data) {
-    return this.log(eventType, data, {
-      level: [
-        AuditEventType.RISK_LIMIT_HIT,
-        AuditEventType.TRADING_DISABLED,
-      ].includes(eventType) ? AuditLevel.CRITICAL : AuditLevel.WARNING,
-    });
-  }
+  logRiskEvent(eventType, data) { // 调用 logRiskEvent
+    return this.log(eventType, data, { // 返回结果
+      level: [ // 设置 level 字段
+        AuditEventType.RISK_LIMIT_HIT, // 执行语句
+        AuditEventType.TRADING_DISABLED, // 执行语句
+      ].includes(eventType) ? AuditLevel.CRITICAL : AuditLevel.WARNING, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 刷新缓冲到文件
    */
-  async flush() {
-    if (this.buffer.length === 0) return;
+  async flush() { // 执行语句
+    if (this.buffer.length === 0) return; // 条件判断 this.buffer.length === 0
 
-    const records = [...this.buffer];
-    this.buffer = [];
+    const records = [...this.buffer]; // 定义常量 records
+    this.buffer = []; // 设置 buffer
 
-    try {
-      await this._writeRecords(records);
-    } catch (error) {
+    try { // 尝试执行
+      await this._writeRecords(records); // 等待异步结果
+    } catch (error) { // 执行语句
       // 写入失败，放回缓冲
-      this.buffer.unshift(...records);
-      this.stats.errorCount++;
-      this.emit('error', error);
-      console.error('[AuditLogger] 写入失败:', error.message);
-    }
-  }
+      this.buffer.unshift(...records); // 访问 buffer
+      this.stats.errorCount++; // 访问 stats
+      this.emit('error', error); // 调用 emit
+      console.error('[AuditLogger] 写入失败:', error.message); // 控制台输出
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 查询审计日志
    * @param {Object} query - 查询条件
    * @returns {Promise<Array>} 匹配的记录
    */
-  async query(query = {}) {
-    const {
-      startTime,
-      endTime,
-      eventType,
-      level,
-      limit = 1000,
-    } = query;
+  async query(query = {}) { // 执行语句
+    const { // 解构赋值
+      startTime, // 执行语句
+      endTime, // 执行语句
+      eventType, // 执行语句
+      level, // 执行语句
+      limit = 1000, // 赋值 limit
+    } = query; // 执行语句
 
-    const results = [];
-    const files = await this._getLogFiles();
+    const results = []; // 定义常量 results
+    const files = await this._getLogFiles(); // 定义常量 files
 
-    for (const file of files) {
+    for (const file of files) { // 循环 const file of files
       // 检查文件日期是否在范围内
-      const fileDate = this._extractDateFromFilename(file);
-      if (startTime && fileDate < startTime) continue;
-      if (endTime && fileDate > endTime) continue;
+      const fileDate = this._extractDateFromFilename(file); // 定义常量 fileDate
+      if (startTime && fileDate < startTime) continue; // 条件判断 startTime && fileDate < startTime
+      if (endTime && fileDate > endTime) continue; // 条件判断 endTime && fileDate > endTime
 
-      try {
-        const content = await fs.promises.readFile(file, 'utf8');
-        const lines = content.trim().split('\n');
+      try { // 尝试执行
+        const content = await fs.promises.readFile(file, 'utf8'); // 定义常量 content
+        const lines = content.trim().split('\n'); // 定义常量 lines
 
-        for (const line of lines) {
-          if (!line) continue;
+        for (const line of lines) { // 循环 const line of lines
+          if (!line) continue; // 条件判断 !line
 
-          let record;
-          try {
-            record = JSON.parse(line);
-          } catch {
-            continue;
-          }
+          let record; // 定义变量 record
+          try { // 尝试执行
+            record = JSON.parse(line); // 赋值 record
+          } catch { // 执行语句
+            continue; // 继续下一轮循环
+          } // 结束代码块
 
           // 应用过滤条件
-          if (eventType && record.eventType !== eventType) continue;
-          if (level && record.level !== level) continue;
-          if (startTime && new Date(record.timestamp) < new Date(startTime)) continue;
-          if (endTime && new Date(record.timestamp) > new Date(endTime)) continue;
+          if (eventType && record.eventType !== eventType) continue; // 条件判断 eventType && record.eventType !== eventType
+          if (level && record.level !== level) continue; // 条件判断 level && record.level !== level
+          if (startTime && new Date(record.timestamp) < new Date(startTime)) continue; // 条件判断 startTime && new Date(record.timestamp) < new...
+          if (endTime && new Date(record.timestamp) > new Date(endTime)) continue; // 条件判断 endTime && new Date(record.timestamp) > new D...
 
-          results.push(record);
+          results.push(record); // 调用 results.push
 
-          if (results.length >= limit) {
-            return results;
-          }
-        }
-      } catch (error) {
-        console.error(`[AuditLogger] 读取文件失败 ${file}:`, error.message);
-      }
-    }
+          if (results.length >= limit) { // 条件判断 results.length >= limit
+            return results; // 返回结果
+          } // 结束代码块
+        } // 结束代码块
+      } catch (error) { // 执行语句
+        console.error(`[AuditLogger] 读取文件失败 ${file}:`, error.message); // 控制台输出
+      } // 结束代码块
+    } // 结束代码块
 
-    return results;
-  }
+    return results; // 返回结果
+  } // 结束代码块
 
   /**
    * 验证日志完整性
    * @param {string} filePath - 日志文件路径
    * @returns {Promise<Object>} 验证结果
    */
-  async verifyIntegrity(filePath) {
-    const result = {
-      valid: true,
-      totalRecords: 0,
-      invalidRecords: [],
-      chainBroken: false,
-    };
+  async verifyIntegrity(filePath) { // 执行语句
+    const result = { // 定义常量 result
+      valid: true, // 设置 valid 字段
+      totalRecords: 0, // 设置 totalRecords 字段
+      invalidRecords: [], // 设置 invalidRecords 字段
+      chainBroken: false, // 设置 chainBroken 字段
+    }; // 结束代码块
 
-    try {
-      const content = await fs.promises.readFile(filePath, 'utf8');
-      const lines = content.trim().split('\n');
+    try { // 尝试执行
+      const content = await fs.promises.readFile(filePath, 'utf8'); // 定义常量 content
+      const lines = content.trim().split('\n'); // 定义常量 lines
 
-      let prevHash = null;
+      let prevHash = null; // 定义变量 prevHash
 
-      for (let i = 0; i < lines.length; i++) {
-        if (!lines[i]) continue;
+      for (let i = 0; i < lines.length; i++) { // 循环 let i = 0; i < lines.length; i++
+        if (!lines[i]) continue; // 条件判断 !lines[i]
 
-        let record;
-        try {
-          record = JSON.parse(lines[i]);
-        } catch {
-          result.invalidRecords.push({ line: i + 1, error: 'JSON parse error' });
-          result.valid = false;
-          continue;
-        }
+        let record; // 定义变量 record
+        try { // 尝试执行
+          record = JSON.parse(lines[i]); // 赋值 record
+        } catch { // 执行语句
+          result.invalidRecords.push({ line: i + 1, error: 'JSON parse error' }); // 调用 result.invalidRecords.push
+          result.valid = false; // 赋值 result.valid
+          continue; // 继续下一轮循环
+        } // 结束代码块
 
-        result.totalRecords++;
+        result.totalRecords++; // 执行语句
 
         // 验证哈希链
-        if (prevHash !== null && record.prevHash !== prevHash) {
-          result.chainBroken = true;
-          result.invalidRecords.push({
-            line: i + 1,
-            error: 'Chain broken - prevHash mismatch',
-          });
-          result.valid = false;
-        }
+        if (prevHash !== null && record.prevHash !== prevHash) { // 条件判断 prevHash !== null && record.prevHash !== prev...
+          result.chainBroken = true; // 赋值 result.chainBroken
+          result.invalidRecords.push({ // 调用 result.invalidRecords.push
+            line: i + 1, // 设置 line 字段
+            error: 'Chain broken - prevHash mismatch', // 设置 error 字段
+          }); // 结束代码块
+          result.valid = false; // 赋值 result.valid
+        } // 结束代码块
 
         // 验证记录哈希
-        const expectedHash = this._computeHash({ ...record, hash: undefined });
-        if (record.hash !== expectedHash) {
-          result.invalidRecords.push({
-            line: i + 1,
-            error: 'Hash mismatch - record may be tampered',
-          });
-          result.valid = false;
-        }
+        const expectedHash = this._computeHash({ ...record, hash: undefined }); // 定义常量 expectedHash
+        if (record.hash !== expectedHash) { // 条件判断 record.hash !== expectedHash
+          result.invalidRecords.push({ // 调用 result.invalidRecords.push
+            line: i + 1, // 设置 line 字段
+            error: 'Hash mismatch - record may be tampered', // 设置 error 字段
+          }); // 结束代码块
+          result.valid = false; // 赋值 result.valid
+        } // 结束代码块
 
-        prevHash = record.hash;
-      }
-    } catch (error) {
-      result.valid = false;
-      result.error = error.message;
-    }
+        prevHash = record.hash; // 赋值 prevHash
+      } // 结束代码块
+    } catch (error) { // 执行语句
+      result.valid = false; // 赋值 result.valid
+      result.error = error.message; // 赋值 result.error
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取统计信息
    */
-  getStats() {
-    return {
-      ...this.stats,
-      bufferSize: this.buffer.length,
-      currentFile: this.currentFile,
-    };
-  }
+  getStats() { // 调用 getStats
+    return { // 返回结果
+      ...this.stats, // 展开对象或数组
+      bufferSize: this.buffer.length, // 设置 bufferSize 字段
+      currentFile: this.currentFile, // 设置 currentFile 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 停止审计日志记录器
    */
-  async stop() {
+  async stop() { // 执行语句
     // 停止定时器
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer);
-      this.flushTimer = null;
-    }
+    if (this.flushTimer) { // 条件判断 this.flushTimer
+      clearInterval(this.flushTimer); // 调用 clearInterval
+      this.flushTimer = null; // 设置 flushTimer
+    } // 结束代码块
 
-    if (this.retentionTimer) {
-      clearInterval(this.retentionTimer);
-      this.retentionTimer = null;
-    }
+    if (this.retentionTimer) { // 条件判断 this.retentionTimer
+      clearInterval(this.retentionTimer); // 调用 clearInterval
+      this.retentionTimer = null; // 设置 retentionTimer
+    } // 结束代码块
 
     // 刷新剩余日志
-    await this.flush();
+    await this.flush(); // 等待异步结果
 
-    this.emit('stopped');
-  }
+    this.emit('stopped'); // 调用 emit
+  } // 结束代码块
 
   // ============================================
   // 私有方法
@@ -450,271 +450,271 @@ class AuditLogger extends EventEmitter {
    * 确保日志目录存在
    * @private
    */
-  _ensureLogDir() {
-    if (!fs.existsSync(this.config.logDir)) {
-      fs.mkdirSync(this.config.logDir, { recursive: true });
-    }
-  }
+  _ensureLogDir() { // 调用 _ensureLogDir
+    if (!fs.existsSync(this.config.logDir)) { // 条件判断 !fs.existsSync(this.config.logDir)
+      fs.mkdirSync(this.config.logDir, { recursive: true }); // 调用 fs.mkdirSync
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 生成记录 ID
    * @private
    */
-  _generateId() {
-    return `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-  }
+  _generateId() { // 调用 _generateId
+    return `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算记录哈希
    * @private
    */
-  _computeHash(record) {
-    const data = JSON.stringify({
-      id: record.id,
-      timestamp: record.timestamp,
-      eventType: record.eventType,
-      level: record.level,
-      data: record.data,
-      prevHash: record.prevHash,
-    });
+  _computeHash(record) { // 调用 _computeHash
+    const data = JSON.stringify({ // 定义常量 data
+      id: record.id, // 设置 id 字段
+      timestamp: record.timestamp, // 设置 timestamp 字段
+      eventType: record.eventType, // 设置 eventType 字段
+      level: record.level, // 设置 level 字段
+      data: record.data, // 设置 data 字段
+      prevHash: record.prevHash, // 设置 prevHash 字段
+    }); // 结束代码块
 
-    return crypto
-      .createHmac('sha256', this.config.integrityKey)
-      .update(data)
-      .digest('hex');
-  }
+    return crypto // 返回结果
+      .createHmac('sha256', this.config.integrityKey) // 执行语句
+      .update(data) // 执行语句
+      .digest('hex'); // 执行语句
+  } // 结束代码块
 
   /**
    * 脱敏处理
    * @private
    */
-  _sanitize(data, depth = 0) {
-    if (depth > 10) return '[MAX_DEPTH]';
-    if (data === null || data === undefined) return data;
+  _sanitize(data, depth = 0) { // 调用 _sanitize
+    if (depth > 10) return '[MAX_DEPTH]'; // 条件判断 depth > 10
+    if (data === null || data === undefined) return data; // 条件判断 data === null || data === undefined
 
-    if (typeof data !== 'object') {
-      return data;
-    }
+    if (typeof data !== 'object') { // 条件判断 typeof data !== 'object'
+      return data; // 返回结果
+    } // 结束代码块
 
-    if (Array.isArray(data)) {
-      return data.map(item => this._sanitize(item, depth + 1));
-    }
+    if (Array.isArray(data)) { // 条件判断 Array.isArray(data)
+      return data.map(item => this._sanitize(item, depth + 1)); // 返回结果
+    } // 结束代码块
 
-    const result = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (this.config.sensitiveFields.has(key.toLowerCase())) {
-        result[key] = '***REDACTED***';
-      } else if (typeof value === 'object' && value !== null) {
-        result[key] = this._sanitize(value, depth + 1);
-      } else {
-        result[key] = value;
-      }
-    }
+    const result = {}; // 定义常量 result
+    for (const [key, value] of Object.entries(data)) { // 循环 const [key, value] of Object.entries(data)
+      if (this.config.sensitiveFields.has(key.toLowerCase())) { // 条件判断 this.config.sensitiveFields.has(key.toLowerCa...
+        result[key] = '***REDACTED***'; // 执行语句
+      } else if (typeof value === 'object' && value !== null) { // 执行语句
+        result[key] = this._sanitize(value, depth + 1); // 执行语句
+      } else { // 执行语句
+        result[key] = value; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取事件的默认级别
    * @private
    */
-  _getDefaultLevel(eventType) {
-    const criticalEvents = [
-      AuditEventType.AUTH_FAILED,
-      AuditEventType.RISK_LIMIT_HIT,
-      AuditEventType.TRADING_DISABLED,
-      AuditEventType.ERROR_CRITICAL,
-      AuditEventType.WITHDRAWAL_REQUEST,
-    ];
+  _getDefaultLevel(eventType) { // 调用 _getDefaultLevel
+    const criticalEvents = [ // 定义常量 criticalEvents
+      AuditEventType.AUTH_FAILED, // 执行语句
+      AuditEventType.RISK_LIMIT_HIT, // 执行语句
+      AuditEventType.TRADING_DISABLED, // 执行语句
+      AuditEventType.ERROR_CRITICAL, // 执行语句
+      AuditEventType.WITHDRAWAL_REQUEST, // 执行语句
+    ]; // 结束数组或索引
 
-    const warningEvents = [
-      AuditEventType.IP_BLOCKED,
-      AuditEventType.RATE_LIMITED,
-      AuditEventType.ORDER_FAILED,
-      AuditEventType.RISK_ALERT,
-    ];
+    const warningEvents = [ // 定义常量 warningEvents
+      AuditEventType.IP_BLOCKED, // 执行语句
+      AuditEventType.RATE_LIMITED, // 执行语句
+      AuditEventType.ORDER_FAILED, // 执行语句
+      AuditEventType.RISK_ALERT, // 执行语句
+    ]; // 结束数组或索引
 
-    if (criticalEvents.includes(eventType)) {
-      return AuditLevel.CRITICAL;
-    }
-    if (warningEvents.includes(eventType)) {
-      return AuditLevel.WARNING;
-    }
-    return AuditLevel.INFO;
-  }
+    if (criticalEvents.includes(eventType)) { // 条件判断 criticalEvents.includes(eventType)
+      return AuditLevel.CRITICAL; // 返回结果
+    } // 结束代码块
+    if (warningEvents.includes(eventType)) { // 条件判断 warningEvents.includes(eventType)
+      return AuditLevel.WARNING; // 返回结果
+    } // 结束代码块
+    return AuditLevel.INFO; // 返回结果
+  } // 结束代码块
 
   /**
    * 控制台输出
    * @private
    */
-  _consoleOutput(record) {
-    const levelColors = {
+  _consoleOutput(record) { // 调用 _consoleOutput
+    const levelColors = { // 定义常量 levelColors
       info: '\x1b[36m',    // 青色
       warning: '\x1b[33m', // 黄色
       critical: '\x1b[31m', // 红色
-    };
-    const reset = '\x1b[0m';
-    const color = levelColors[record.level] || '';
+    }; // 结束代码块
+    const reset = '\x1b[0m'; // 定义常量 reset
+    const color = levelColors[record.level] || ''; // 定义常量 color
 
-    console.log(
-      `${color}[AUDIT]${reset} ${record.timestamp} [${record.level.toUpperCase()}] ${record.eventType}`,
-      JSON.stringify(record.data)
-    );
-  }
+    console.log( // 控制台输出
+      `${color}[AUDIT]${reset} ${record.timestamp} [${record.level.toUpperCase()}] ${record.eventType}`, // 执行语句
+      JSON.stringify(record.data) // 调用 JSON.stringify
+    ); // 结束调用或参数
+  } // 结束代码块
 
   /**
    * 写入记录到文件
    * @private
    */
-  async _writeRecords(records) {
-    const today = new Date().toISOString().slice(0, 10);
+  async _writeRecords(records) { // 执行语句
+    const today = new Date().toISOString().slice(0, 10); // 定义常量 today
 
     // 检查是否需要新文件
-    if (this.currentDate !== today || !this.currentFile) {
-      this.currentDate = today;
-      this.currentFile = path.join(
-        this.config.logDir,
-        `${this.config.filePrefix}-${today}.log`
-      );
-      this.currentFileSize = 0;
+    if (this.currentDate !== today || !this.currentFile) { // 条件判断 this.currentDate !== today || !this.currentFile
+      this.currentDate = today; // 设置 currentDate
+      this.currentFile = path.join( // 设置 currentFile
+        this.config.logDir, // 访问 config
+        `${this.config.filePrefix}-${today}.log` // 执行语句
+      ); // 结束调用或参数
+      this.currentFileSize = 0; // 设置 currentFileSize
 
-      if (fs.existsSync(this.currentFile)) {
-        const stats = await fs.promises.stat(this.currentFile);
-        this.currentFileSize = stats.size;
-      }
-    }
+      if (fs.existsSync(this.currentFile)) { // 条件判断 fs.existsSync(this.currentFile)
+        const stats = await fs.promises.stat(this.currentFile); // 定义常量 stats
+        this.currentFileSize = stats.size; // 设置 currentFileSize
+      } // 结束代码块
+    } // 结束代码块
 
     // 检查文件大小
-    if (this.currentFileSize > this.config.maxFileSize) {
-      const index = Math.floor(Date.now() / 1000);
-      this.currentFile = path.join(
-        this.config.logDir,
-        `${this.config.filePrefix}-${today}-${index}.log`
-      );
-      this.currentFileSize = 0;
-    }
+    if (this.currentFileSize > this.config.maxFileSize) { // 条件判断 this.currentFileSize > this.config.maxFileSize
+      const index = Math.floor(Date.now() / 1000); // 定义常量 index
+      this.currentFile = path.join( // 设置 currentFile
+        this.config.logDir, // 访问 config
+        `${this.config.filePrefix}-${today}-${index}.log` // 执行语句
+      ); // 结束调用或参数
+      this.currentFileSize = 0; // 设置 currentFileSize
+    } // 结束代码块
 
     // 格式化记录
-    const lines = records.map(r => JSON.stringify(r)).join('\n') + '\n';
+    const lines = records.map(r => JSON.stringify(r)).join('\n') + '\n'; // 定义函数 lines
 
     // 加密 (如果启用)
-    let content = lines;
-    if (this.config.enableEncryption && this.config.encryptionKey) {
-      content = this._encrypt(lines);
-    }
+    let content = lines; // 定义变量 content
+    if (this.config.enableEncryption && this.config.encryptionKey) { // 条件判断 this.config.enableEncryption && this.config.e...
+      content = this._encrypt(lines); // 赋值 content
+    } // 结束代码块
 
     // 写入文件
-    await fs.promises.appendFile(this.currentFile, content);
-    this.currentFileSize += Buffer.byteLength(content);
-  }
+    await fs.promises.appendFile(this.currentFile, content); // 等待异步结果
+    this.currentFileSize += Buffer.byteLength(content); // 访问 currentFileSize
+  } // 结束代码块
 
   /**
    * 加密内容
    * @private
    */
-  _encrypt(content) {
-    const iv = crypto.randomBytes(16);
-    const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  _encrypt(content) { // 调用 _encrypt
+    const iv = crypto.randomBytes(16); // 定义常量 iv
+    const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32); // 定义常量 key
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv); // 定义常量 cipher
 
-    let encrypted = cipher.update(content, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
+    let encrypted = cipher.update(content, 'utf8', 'hex'); // 定义变量 encrypted
+    encrypted += cipher.final('hex'); // 执行语句
 
-    return iv.toString('hex') + ':' + encrypted + '\n';
-  }
+    return iv.toString('hex') + ':' + encrypted + '\n'; // 返回结果
+  } // 结束代码块
 
   /**
    * 解密内容
    * @private
    */
-  _decrypt(content) {
-    const [ivHex, encrypted] = content.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+  _decrypt(content) { // 调用 _decrypt
+    const [ivHex, encrypted] = content.split(':'); // 解构赋值
+    const iv = Buffer.from(ivHex, 'hex'); // 定义常量 iv
+    const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32); // 定义常量 key
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv); // 定义常量 decipher
 
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8'); // 定义变量 decrypted
+    decrypted += decipher.final('utf8'); // 执行语句
 
-    return decrypted;
-  }
+    return decrypted; // 返回结果
+  } // 结束代码块
 
   /**
    * 启动定时刷新
    * @private
    */
-  _startFlushTimer() {
-    this.flushTimer = setInterval(() => {
-      this.flush().catch(err => {
-        console.error('[AuditLogger] 定时刷新失败:', err.message);
-      });
-    }, this.config.flushInterval);
-  }
+  _startFlushTimer() { // 调用 _startFlushTimer
+    this.flushTimer = setInterval(() => { // 设置 flushTimer
+      this.flush().catch(err => { // 调用 flush
+        console.error('[AuditLogger] 定时刷新失败:', err.message); // 控制台输出
+      }); // 结束代码块
+    }, this.config.flushInterval); // 执行语句
+  } // 结束代码块
 
   /**
    * 启动日志保留检查
    * @private
    */
-  _startRetentionCheck() {
+  _startRetentionCheck() { // 调用 _startRetentionCheck
     // 每天检查一次
-    this.retentionTimer = setInterval(() => {
-      this._cleanupOldLogs().catch(err => {
-        console.error('[AuditLogger] 清理旧日志失败:', err.message);
-      });
-    }, 24 * 60 * 60 * 1000);
+    this.retentionTimer = setInterval(() => { // 设置 retentionTimer
+      this._cleanupOldLogs().catch(err => { // 调用 _cleanupOldLogs
+        console.error('[AuditLogger] 清理旧日志失败:', err.message); // 控制台输出
+      }); // 结束代码块
+    }, 24 * 60 * 60 * 1000); // 执行语句
 
     // 启动时也执行一次
-    this._cleanupOldLogs().catch(() => {});
-  }
+    this._cleanupOldLogs().catch(() => {}); // 调用 _cleanupOldLogs
+  } // 结束代码块
 
   /**
    * 清理旧日志
    * @private
    */
-  async _cleanupOldLogs() {
-    const files = await this._getLogFiles();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - this.config.maxRetentionDays);
+  async _cleanupOldLogs() { // 执行语句
+    const files = await this._getLogFiles(); // 定义常量 files
+    const cutoffDate = new Date(); // 定义常量 cutoffDate
+    cutoffDate.setDate(cutoffDate.getDate() - this.config.maxRetentionDays); // 调用 cutoffDate.setDate
 
-    for (const file of files) {
-      const fileDate = this._extractDateFromFilename(file);
-      if (fileDate && fileDate < cutoffDate) {
-        try {
-          await fs.promises.unlink(file);
-          console.log(`[AuditLogger] 已删除过期日志: ${file}`);
-        } catch (error) {
-          console.error(`[AuditLogger] 删除失败 ${file}:`, error.message);
-        }
-      }
-    }
-  }
+    for (const file of files) { // 循环 const file of files
+      const fileDate = this._extractDateFromFilename(file); // 定义常量 fileDate
+      if (fileDate && fileDate < cutoffDate) { // 条件判断 fileDate && fileDate < cutoffDate
+        try { // 尝试执行
+          await fs.promises.unlink(file); // 等待异步结果
+          console.log(`[AuditLogger] 已删除过期日志: ${file}`); // 控制台输出
+        } catch (error) { // 执行语句
+          console.error(`[AuditLogger] 删除失败 ${file}:`, error.message); // 控制台输出
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取日志文件列表
    * @private
    */
-  async _getLogFiles() {
-    const files = await fs.promises.readdir(this.config.logDir);
-    return files
-      .filter(f => f.startsWith(this.config.filePrefix) && f.endsWith('.log'))
-      .map(f => path.join(this.config.logDir, f))
-      .sort();
-  }
+  async _getLogFiles() { // 执行语句
+    const files = await fs.promises.readdir(this.config.logDir); // 定义常量 files
+    return files // 返回结果
+      .filter(f => f.startsWith(this.config.filePrefix) && f.endsWith('.log')) // 定义箭头函数
+      .map(f => path.join(this.config.logDir, f)) // 定义箭头函数
+      .sort(); // 执行语句
+  } // 结束代码块
 
   /**
    * 从文件名提取日期
    * @private
    */
-  _extractDateFromFilename(filename) {
-    const match = path.basename(filename).match(/(\d{4}-\d{2}-\d{2})/);
-    return match ? new Date(match[1]) : null;
-  }
-}
+  _extractDateFromFilename(filename) { // 调用 _extractDateFromFilename
+    const match = path.basename(filename).match(/(\d{4}-\d{2}-\d{2})/); // 定义常量 match
+    return match ? new Date(match[1]) : null; // 返回结果
+  } // 结束代码块
+} // 结束代码块
 
-export {
-  AuditLogger,
-  AuditEventType,
-  AuditLevel,
-};
+export { // 导出命名成员
+  AuditLogger, // 执行语句
+  AuditEventType, // 执行语句
+  AuditLevel, // 执行语句
+}; // 结束代码块
 
-export default AuditLogger;
+export default AuditLogger; // 默认导出

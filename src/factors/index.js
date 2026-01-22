@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Alpha 因子库
  * Alpha Factor Library
  *
@@ -10,203 +10,203 @@
 // 基础设施 / Infrastructure
 // ============================================
 
-import {
-  BaseFactor,
-  FACTOR_CATEGORY,
-  FACTOR_DIRECTION,
-  FACTOR_FREQUENCY,
-} from './BaseFactor.js';
+import { // 导入依赖
+  BaseFactor, // 执行语句
+  FACTOR_CATEGORY, // 执行语句
+  FACTOR_DIRECTION, // 执行语句
+  FACTOR_FREQUENCY, // 执行语句
+} from './BaseFactor.js'; // 执行语句
 
-export {
-  BaseFactor,
-  FACTOR_CATEGORY,
-  FACTOR_DIRECTION,
-  FACTOR_FREQUENCY,
-};
+export { // 导出命名成员
+  BaseFactor, // 执行语句
+  FACTOR_CATEGORY, // 执行语句
+  FACTOR_DIRECTION, // 执行语句
+  FACTOR_FREQUENCY, // 执行语句
+}; // 结束代码块
 
-import {
-  FactorRegistry,
-  getGlobalRegistry,
-  resetGlobalRegistry,
-} from './FactorRegistry.js';
+import { // 导入依赖
+  FactorRegistry, // 执行语句
+  getGlobalRegistry, // 执行语句
+  resetGlobalRegistry, // 执行语句
+} from './FactorRegistry.js'; // 执行语句
 
-export {
-  FactorRegistry,
-  getGlobalRegistry,
-  resetGlobalRegistry,
-};
+export { // 导出命名成员
+  FactorRegistry, // 执行语句
+  getGlobalRegistry, // 执行语句
+  resetGlobalRegistry, // 执行语句
+}; // 结束代码块
 
-import {
-  FactorCombiner,
-  NORMALIZATION_METHOD,
-  COMBINATION_METHOD,
-  createDefaultCombiner,
-  createEqualWeightCombiner,
-  createRankCombiner,
-} from './FactorCombiner.js';
+import { // 导入依赖
+  FactorCombiner, // 执行语句
+  NORMALIZATION_METHOD, // 执行语句
+  COMBINATION_METHOD, // 执行语句
+  createDefaultCombiner, // 执行语句
+  createEqualWeightCombiner, // 执行语句
+  createRankCombiner, // 执行语句
+} from './FactorCombiner.js'; // 执行语句
 
-export {
-  FactorCombiner,
-  NORMALIZATION_METHOD,
-  COMBINATION_METHOD,
-  createDefaultCombiner,
-  createEqualWeightCombiner,
-  createRankCombiner,
-};
+export { // 导出命名成员
+  FactorCombiner, // 执行语句
+  NORMALIZATION_METHOD, // 执行语句
+  COMBINATION_METHOD, // 执行语句
+  createDefaultCombiner, // 执行语句
+  createEqualWeightCombiner, // 执行语句
+  createRankCombiner, // 执行语句
+}; // 结束代码块
 
 // ============================================
 // 因子实现 / Factor Implementations
 // ============================================
 
 // 动量因子 / Momentum Factors
-import {
-  MomentumFactor,
-  MOMENTUM_TYPE,
-  Momentum1D,
-  Momentum7D,
-  Momentum30D,
-  RiskAdjustedMomentum7D,
-  MomentumAcceleration14D,
-  createMomentumFactor,
-} from './factors/MomentumFactor.js';
+import { // 导入依赖
+  MomentumFactor, // 执行语句
+  MOMENTUM_TYPE, // 执行语句
+  Momentum1D, // 执行语句
+  Momentum7D, // 执行语句
+  Momentum30D, // 执行语句
+  RiskAdjustedMomentum7D, // 执行语句
+  MomentumAcceleration14D, // 执行语句
+  createMomentumFactor, // 执行语句
+} from './factors/MomentumFactor.js'; // 执行语句
 
-export {
-  MomentumFactor,
-  MOMENTUM_TYPE,
-  Momentum1D,
-  Momentum7D,
-  Momentum30D,
-  RiskAdjustedMomentum7D,
-  MomentumAcceleration14D,
-  createMomentumFactor,
-};
+export { // 导出命名成员
+  MomentumFactor, // 执行语句
+  MOMENTUM_TYPE, // 执行语句
+  Momentum1D, // 执行语句
+  Momentum7D, // 执行语句
+  Momentum30D, // 执行语句
+  RiskAdjustedMomentum7D, // 执行语句
+  MomentumAcceleration14D, // 执行语句
+  createMomentumFactor, // 执行语句
+}; // 结束代码块
 
 // 波动率因子 / Volatility Factors
-import {
-  VolatilityFactor,
-  VOLATILITY_METHOD,
-  BollingerWidth20,
-  ATRRatio,
-  KeltnerSqueeze,
-  VolatilityPercentile,
-  createVolatilityFactor,
-} from './factors/VolatilityFactor.js';
+import { // 导入依赖
+  VolatilityFactor, // 执行语句
+  VOLATILITY_METHOD, // 执行语句
+  BollingerWidth20, // 执行语句
+  ATRRatio, // 执行语句
+  KeltnerSqueeze, // 执行语句
+  VolatilityPercentile, // 执行语句
+  createVolatilityFactor, // 执行语句
+} from './factors/VolatilityFactor.js'; // 执行语句
 
-export {
-  VolatilityFactor,
-  VOLATILITY_METHOD,
-  BollingerWidth20,
-  ATRRatio,
-  KeltnerSqueeze,
-  VolatilityPercentile,
-  createVolatilityFactor,
-};
+export { // 导出命名成员
+  VolatilityFactor, // 执行语句
+  VOLATILITY_METHOD, // 执行语句
+  BollingerWidth20, // 执行语句
+  ATRRatio, // 执行语句
+  KeltnerSqueeze, // 执行语句
+  VolatilityPercentile, // 执行语句
+  createVolatilityFactor, // 执行语句
+}; // 结束代码块
 
 // 资金流向因子 / Money Flow Factors
-import {
-  MoneyFlowFactor,
-  MONEY_FLOW_METHOD,
-  MFI14,
-  OBVSlope20,
-  CMF20,
-  VolumeRatio14,
-  createMoneyFlowFactor,
-} from './factors/MoneyFlowFactor.js';
+import { // 导入依赖
+  MoneyFlowFactor, // 执行语句
+  MONEY_FLOW_METHOD, // 执行语句
+  MFI14, // 执行语句
+  OBVSlope20, // 执行语句
+  CMF20, // 执行语句
+  VolumeRatio14, // 执行语句
+  createMoneyFlowFactor, // 执行语句
+} from './factors/MoneyFlowFactor.js'; // 执行语句
 
-export {
-  MoneyFlowFactor,
-  MONEY_FLOW_METHOD,
-  MFI14,
-  OBVSlope20,
-  CMF20,
-  VolumeRatio14,
-  createMoneyFlowFactor,
-};
+export { // 导出命名成员
+  MoneyFlowFactor, // 执行语句
+  MONEY_FLOW_METHOD, // 执行语句
+  MFI14, // 执行语句
+  OBVSlope20, // 执行语句
+  CMF20, // 执行语句
+  VolumeRatio14, // 执行语句
+  createMoneyFlowFactor, // 执行语句
+}; // 结束代码块
 
 // 换手率因子 / Turnover Factors
-import {
-  TurnoverFactor,
-  TURNOVER_METHOD,
-  VolumeMAR20,
-  VolumeRank60,
-  RelativeVolume,
-  AbnormalVolume,
-  createTurnoverFactor,
-} from './factors/TurnoverFactor.js';
+import { // 导入依赖
+  TurnoverFactor, // 执行语句
+  TURNOVER_METHOD, // 执行语句
+  VolumeMAR20, // 执行语句
+  VolumeRank60, // 执行语句
+  RelativeVolume, // 执行语句
+  AbnormalVolume, // 执行语句
+  createTurnoverFactor, // 执行语句
+} from './factors/TurnoverFactor.js'; // 执行语句
 
-export {
-  TurnoverFactor,
-  TURNOVER_METHOD,
-  VolumeMAR20,
-  VolumeRank60,
-  RelativeVolume,
-  AbnormalVolume,
-  createTurnoverFactor,
-};
+export { // 导出命名成员
+  TurnoverFactor, // 执行语句
+  TURNOVER_METHOD, // 执行语句
+  VolumeMAR20, // 执行语句
+  VolumeRank60, // 执行语句
+  RelativeVolume, // 执行语句
+  AbnormalVolume, // 执行语句
+  createTurnoverFactor, // 执行语句
+}; // 结束代码块
 
 // 资金费率因子 / Funding Rate Factors
-import {
-  FundingRateFactor,
-  FUNDING_RATE_METHOD,
-  FundingRateCurrent,
-  FundingRateAvg7D,
-  FundingRatePercentile,
-  FundingRateZScore,
-  FundingRateExtreme,
-  FundingRateCumulative,
-  createFundingRateFactor,
-} from './factors/FundingRateFactor.js';
+import { // 导入依赖
+  FundingRateFactor, // 执行语句
+  FUNDING_RATE_METHOD, // 执行语句
+  FundingRateCurrent, // 执行语句
+  FundingRateAvg7D, // 执行语句
+  FundingRatePercentile, // 执行语句
+  FundingRateZScore, // 执行语句
+  FundingRateExtreme, // 执行语句
+  FundingRateCumulative, // 执行语句
+  createFundingRateFactor, // 执行语句
+} from './factors/FundingRateFactor.js'; // 执行语句
 
-export {
-  FundingRateFactor,
-  FUNDING_RATE_METHOD,
-  FundingRateCurrent,
-  FundingRateAvg7D,
-  FundingRatePercentile,
-  FundingRateZScore,
-  FundingRateExtreme,
-  FundingRateCumulative,
-  createFundingRateFactor,
-};
+export { // 导出命名成员
+  FundingRateFactor, // 执行语句
+  FUNDING_RATE_METHOD, // 执行语句
+  FundingRateCurrent, // 执行语句
+  FundingRateAvg7D, // 执行语句
+  FundingRatePercentile, // 执行语句
+  FundingRateZScore, // 执行语句
+  FundingRateExtreme, // 执行语句
+  FundingRateCumulative, // 执行语句
+  createFundingRateFactor, // 执行语句
+}; // 结束代码块
 
 // 大单因子 / Large Order Factors
-import {
-  LargeOrderFactor,
-  LARGE_ORDER_METHOD,
-  LargeOrderVolumeRatio,
-  LargeOrderNetFlow,
-  LargeOrderBuySell,
-  WhaleActivity,
-  LargeOrderImbalance,
-  createLargeOrderFactor,
-} from './factors/LargeOrderFactor.js';
+import { // 导入依赖
+  LargeOrderFactor, // 执行语句
+  LARGE_ORDER_METHOD, // 执行语句
+  LargeOrderVolumeRatio, // 执行语句
+  LargeOrderNetFlow, // 执行语句
+  LargeOrderBuySell, // 执行语句
+  WhaleActivity, // 执行语句
+  LargeOrderImbalance, // 执行语句
+  createLargeOrderFactor, // 执行语句
+} from './factors/LargeOrderFactor.js'; // 执行语句
 
-export {
-  LargeOrderFactor,
-  LARGE_ORDER_METHOD,
-  LargeOrderVolumeRatio,
-  LargeOrderNetFlow,
-  LargeOrderBuySell,
-  WhaleActivity,
-  LargeOrderImbalance,
-  createLargeOrderFactor,
-};
+export { // 导出命名成员
+  LargeOrderFactor, // 执行语句
+  LARGE_ORDER_METHOD, // 执行语句
+  LargeOrderVolumeRatio, // 执行语句
+  LargeOrderNetFlow, // 执行语句
+  LargeOrderBuySell, // 执行语句
+  WhaleActivity, // 执行语句
+  LargeOrderImbalance, // 执行语句
+  createLargeOrderFactor, // 执行语句
+}; // 结束代码块
 
 // ============================================
 // 策略 / Strategy
 // ============================================
 
-import {
-  FactorInvestingStrategy,
-  POSITION_TYPE,
-  WEIGHT_METHOD,
-} from './FactorInvestingStrategy.js';
+import { // 导入依赖
+  FactorInvestingStrategy, // 执行语句
+  POSITION_TYPE, // 执行语句
+  WEIGHT_METHOD, // 执行语句
+} from './FactorInvestingStrategy.js'; // 执行语句
 
-export {
-  FactorInvestingStrategy,
-  POSITION_TYPE,
-  WEIGHT_METHOD,
-};
+export { // 导出命名成员
+  FactorInvestingStrategy, // 执行语句
+  POSITION_TYPE, // 执行语句
+  WEIGHT_METHOD, // 执行语句
+}; // 结束代码块
 
 // ============================================
 // 预定义因子集合 / Predefined Factor Collections
@@ -216,115 +216,115 @@ export {
  * 所有预定义因子实例
  * All predefined factor instances
  */
-export const PREDEFINED_FACTORS = {
+export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   // 动量因子
-  momentum: {
-    Momentum1D,
-    Momentum7D,
-    Momentum30D,
-    RiskAdjustedMomentum7D,
-    MomentumAcceleration14D,
-  },
+  momentum: { // 设置 momentum 字段
+    Momentum1D, // 执行语句
+    Momentum7D, // 执行语句
+    Momentum30D, // 执行语句
+    RiskAdjustedMomentum7D, // 执行语句
+    MomentumAcceleration14D, // 执行语句
+  }, // 结束代码块
 
   // 波动率因子
-  volatility: {
-    BollingerWidth20,
-    ATRRatio,
-    KeltnerSqueeze,
-    VolatilityPercentile,
-  },
+  volatility: { // 设置 volatility 字段
+    BollingerWidth20, // 执行语句
+    ATRRatio, // 执行语句
+    KeltnerSqueeze, // 执行语句
+    VolatilityPercentile, // 执行语句
+  }, // 结束代码块
 
   // 资金流向因子
-  moneyFlow: {
-    MFI14,
-    OBVSlope20,
-    CMF20,
-    VolumeRatio14,
-  },
+  moneyFlow: { // 设置 moneyFlow 字段
+    MFI14, // 执行语句
+    OBVSlope20, // 执行语句
+    CMF20, // 执行语句
+    VolumeRatio14, // 执行语句
+  }, // 结束代码块
 
   // 换手率因子
-  turnover: {
-    VolumeMAR20,
-    VolumeRank60,
-    RelativeVolume,
-    AbnormalVolume,
-  },
+  turnover: { // 设置 turnover 字段
+    VolumeMAR20, // 执行语句
+    VolumeRank60, // 执行语句
+    RelativeVolume, // 执行语句
+    AbnormalVolume, // 执行语句
+  }, // 结束代码块
 
   // 资金费率因子
-  fundingRate: {
-    FundingRateCurrent,
-    FundingRateAvg7D,
-    FundingRatePercentile,
-    FundingRateZScore,
-    FundingRateExtreme,
-    FundingRateCumulative,
-  },
+  fundingRate: { // 设置 fundingRate 字段
+    FundingRateCurrent, // 执行语句
+    FundingRateAvg7D, // 执行语句
+    FundingRatePercentile, // 执行语句
+    FundingRateZScore, // 执行语句
+    FundingRateExtreme, // 执行语句
+    FundingRateCumulative, // 执行语句
+  }, // 结束代码块
 
   // 大单因子
-  largeOrder: {
-    LargeOrderVolumeRatio,
-    LargeOrderNetFlow,
-    LargeOrderBuySell,
-    WhaleActivity,
-    LargeOrderImbalance,
-  },
-};
+  largeOrder: { // 设置 largeOrder 字段
+    LargeOrderVolumeRatio, // 执行语句
+    LargeOrderNetFlow, // 执行语句
+    LargeOrderBuySell, // 执行语句
+    WhaleActivity, // 执行语句
+    LargeOrderImbalance, // 执行语句
+  }, // 结束代码块
+}; // 结束代码块
 
 /**
  * 快速创建因子注册表并注册所有预定义因子
  * Quick create factor registry with all predefined factors
  */
-export function createFullRegistry() {
-  const registry = new FactorRegistry();
+export function createFullRegistry() { // 导出函数 createFullRegistry
+  const registry = new FactorRegistry(); // 定义常量 registry
 
   // 注册所有因子
-  Object.values(PREDEFINED_FACTORS).forEach(category => {
-    Object.values(category).forEach(factor => {
-      registry.register(factor);
-    });
-  });
+  Object.values(PREDEFINED_FACTORS).forEach(category => { // 调用 Object.values
+    Object.values(category).forEach(factor => { // 调用 Object.values
+      registry.register(factor); // 调用 registry.register
+    }); // 结束代码块
+  }); // 结束代码块
 
-  return registry;
-}
+  return registry; // 返回结果
+} // 结束代码块
 
 /**
  * 快速创建常用因子集合的注册表
  * Quick create registry with common factor set
  */
-export function createCommonRegistry() {
-  const registry = new FactorRegistry();
+export function createCommonRegistry() { // 导出函数 createCommonRegistry
+  const registry = new FactorRegistry(); // 定义常量 registry
 
   // 注册常用因子
-  registry.register(Momentum7D);
-  registry.register(Momentum30D);
-  registry.register(BollingerWidth20);
-  registry.register(MFI14);
-  registry.register(RelativeVolume);
+  registry.register(Momentum7D); // 调用 registry.register
+  registry.register(Momentum30D); // 调用 registry.register
+  registry.register(BollingerWidth20); // 调用 registry.register
+  registry.register(MFI14); // 调用 registry.register
+  registry.register(RelativeVolume); // 调用 registry.register
 
-  return registry;
-}
+  return registry; // 返回结果
+} // 结束代码块
 
 // 默认导出
-export default {
+export default { // 默认导出
   // 基础类
-  BaseFactor,
-  FactorRegistry,
-  FactorCombiner,
-  FactorInvestingStrategy,
+  BaseFactor, // 执行语句
+  FactorRegistry, // 执行语句
+  FactorCombiner, // 执行语句
+  FactorInvestingStrategy, // 执行语句
 
   // 工厂函数
-  createMomentumFactor,
-  createVolatilityFactor,
-  createMoneyFlowFactor,
-  createTurnoverFactor,
-  createFundingRateFactor,
-  createLargeOrderFactor,
+  createMomentumFactor, // 执行语句
+  createVolatilityFactor, // 执行语句
+  createMoneyFlowFactor, // 执行语句
+  createTurnoverFactor, // 执行语句
+  createFundingRateFactor, // 执行语句
+  createLargeOrderFactor, // 执行语句
 
   // 便捷函数
-  createFullRegistry,
-  createCommonRegistry,
-  getGlobalRegistry,
+  createFullRegistry, // 执行语句
+  createCommonRegistry, // 执行语句
+  getGlobalRegistry, // 执行语句
 
   // 预定义因子
-  PREDEFINED_FACTORS,
-};
+  PREDEFINED_FACTORS, // 执行语句
+}; // 结束代码块

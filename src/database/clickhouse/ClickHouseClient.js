@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ClickHouse 客户端
  * ClickHouse Client
  *
@@ -8,106 +8,106 @@
  * @module src/database/clickhouse/ClickHouseClient
  */
 
-import { createClient } from '@clickhouse/client';
-import { EventEmitter } from 'events';
+import { createClient } from '@clickhouse/client'; // 导入模块 @clickhouse/client
+import { EventEmitter } from 'events'; // 导入模块 events
 
 /**
  * 默认配置
  * Default configuration
  */
-const DEFAULT_CONFIG = {
-  host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123',
-  username: process.env.CLICKHOUSE_USER || 'default',
-  password: process.env.CLICKHOUSE_PASSWORD || '',
-  database: process.env.CLICKHOUSE_DB || 'quant_trading',
+const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
+  host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123', // 读取环境变量 CLICKHOUSE_HOST
+  username: process.env.CLICKHOUSE_USER || 'default', // 读取环境变量 CLICKHOUSE_USER
+  password: process.env.CLICKHOUSE_PASSWORD || '', // 读取环境变量 CLICKHOUSE_PASSWORD
+  database: process.env.CLICKHOUSE_DB || 'quant_trading', // 读取环境变量 CLICKHOUSE_DB
   // 连接超时 (ms) / Connection timeout (ms)
-  request_timeout: 30000,
+  request_timeout: 30000, // 设置 request_timeout 字段
   // 最大重试次数 / Max retries
-  max_open_connections: 10,
+  max_open_connections: 10, // 设置 max_open_connections 字段
   // 压缩设置 / Compression settings
-  compression: {
-    request: true,
-    response: true,
-  },
-};
+  compression: { // 设置 compression 字段
+    request: true, // 设置 request 字段
+    response: true, // 设置 response 字段
+  }, // 结束代码块
+}; // 结束代码块
 
 /**
  * ClickHouse 客户端类
  * ClickHouse Client Class
  */
-class ClickHouseClient extends EventEmitter {
-  constructor(config = {}) {
-    super();
+class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继承EventEmitter)
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.client = null;
-    this.isInitialized = false;
-    this.isConnected = false;
-  }
+    this.config = { ...DEFAULT_CONFIG, ...config }; // 设置 config
+    this.client = null; // 设置 client
+    this.isInitialized = false; // 设置 isInitialized
+    this.isConnected = false; // 设置 isConnected
+  } // 结束代码块
 
   /**
    * 初始化连接
    * Initialize connection
    */
-  async initialize() {
-    if (this.isInitialized) return;
+  async initialize() { // 执行语句
+    if (this.isInitialized) return; // 条件判断 this.isInitialized
 
-    try {
-      this.client = createClient({
-        host: this.config.host,
-        username: this.config.username,
-        password: this.config.password,
-        database: this.config.database,
-        request_timeout: this.config.request_timeout,
-        max_open_connections: this.config.max_open_connections,
-        compression: this.config.compression,
-      });
+    try { // 尝试执行
+      this.client = createClient({ // 设置 client
+        host: this.config.host, // 设置 host 字段
+        username: this.config.username, // 设置 username 字段
+        password: this.config.password, // 设置 password 字段
+        database: this.config.database, // 设置 database 字段
+        request_timeout: this.config.request_timeout, // 设置 request_timeout 字段
+        max_open_connections: this.config.max_open_connections, // 设置 max_open_connections 字段
+        compression: this.config.compression, // 设置 compression 字段
+      }); // 结束代码块
 
       // 测试连接 / Test connection
-      await this.client.ping();
+      await this.client.ping(); // 等待异步结果
 
       // 创建数据库 (如果不存在) / Create database if not exists
-      await this._createDatabase();
+      await this._createDatabase(); // 等待异步结果
 
       // 创建表结构 / Create tables
-      await this._createTables();
+      await this._createTables(); // 等待异步结果
 
-      this.isInitialized = true;
-      this.isConnected = true;
-      this.emit('initialized');
+      this.isInitialized = true; // 设置 isInitialized
+      this.isConnected = true; // 设置 isConnected
+      this.emit('initialized'); // 调用 emit
 
-    } catch (error) {
-      this.emit('error', error);
-      throw error;
-    }
-  }
+    } catch (error) { // 执行语句
+      this.emit('error', error); // 调用 emit
+      throw error; // 抛出异常
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 创建数据库
    * Create database
    * @private
    */
-  async _createDatabase() {
+  async _createDatabase() { // 执行语句
     // 临时使用无数据库连接 / Temporarily connect without database
-    const tempClient = createClient({
-      host: this.config.host,
-      username: this.config.username,
-      password: this.config.password,
-    });
+    const tempClient = createClient({ // 定义常量 tempClient
+      host: this.config.host, // 设置 host 字段
+      username: this.config.username, // 设置 username 字段
+      password: this.config.password, // 设置 password 字段
+    }); // 结束代码块
 
-    await tempClient.command({
-      query: `CREATE DATABASE IF NOT EXISTS ${this.config.database}`,
-    });
+    await tempClient.command({ // 等待异步结果
+      query: `CREATE DATABASE IF NOT EXISTS ${this.config.database}`, // 设置 query 字段
+    }); // 结束代码块
 
-    await tempClient.close();
-  }
+    await tempClient.close(); // 等待异步结果
+  } // 结束代码块
 
   /**
    * 创建表结构
    * Create table structures
    * @private
    */
-  async _createTables() {
+  async _createTables() { // 执行语句
     // 1. 交易记录表 (使用 MergeTree) / Trades table (using MergeTree)
     await this.command(`
       CREATE TABLE IF NOT EXISTS trades (
@@ -133,7 +133,7 @@ class ClickHouseClient extends EventEmitter {
       ORDER BY (symbol, timestamp, trade_id)
       TTL timestamp + INTERVAL 3 YEAR
       SETTINGS index_granularity = 8192
-    `);
+    `); // 执行语句
 
     // 2. 订单归档表 / Archived orders table
     await this.command(`
@@ -166,7 +166,7 @@ class ClickHouseClient extends EventEmitter {
       ORDER BY (symbol, created_at, order_id)
       TTL created_at + INTERVAL 3 YEAR
       SETTINGS index_granularity = 8192
-    `);
+    `); // 执行语句
 
     // 3. 持仓归档表 / Archived positions table
     await this.command(`
@@ -195,7 +195,7 @@ class ClickHouseClient extends EventEmitter {
       ORDER BY (symbol, opened_at, position_id)
       TTL opened_at + INTERVAL 5 YEAR
       SETTINGS index_granularity = 8192
-    `);
+    `); // 执行语句
 
     // 4. 审计日志表 / Audit logs table
     await this.command(`
@@ -215,7 +215,7 @@ class ClickHouseClient extends EventEmitter {
       ORDER BY (event_type, timestamp, log_id)
       TTL timestamp + INTERVAL 2 YEAR
       SETTINGS index_granularity = 8192
-    `);
+    `); // 执行语句
 
     // 5. 余额快照表 / Balance snapshots table
     await this.command(`
@@ -234,7 +234,7 @@ class ClickHouseClient extends EventEmitter {
       ORDER BY (exchange, currency, timestamp)
       TTL timestamp + INTERVAL 1 YEAR
       SETTINGS index_granularity = 8192
-    `);
+    `); // 执行语句
 
     // 6. 每日交易统计物化视图 / Daily trade statistics materialized view
     await this.command(`
@@ -257,7 +257,7 @@ class ClickHouseClient extends EventEmitter {
         sum(CASE WHEN realized_pnl < 0 THEN 1 ELSE 0 END) as loss_count
       FROM trades
       GROUP BY date, symbol, exchange, strategy
-    `);
+    `); // 执行语句
 
     // 7. 每小时订单统计物化视图 / Hourly order statistics materialized view
     await this.command(`
@@ -276,8 +276,8 @@ class ClickHouseClient extends EventEmitter {
         sum(fee) as total_fees
       FROM orders_archive
       GROUP BY hour, symbol, exchange, status
-    `);
-  }
+    `); // 执行语句
+  } // 结束代码块
 
   // ============================================
   // 查询方法 / Query Methods
@@ -289,13 +289,13 @@ class ClickHouseClient extends EventEmitter {
    *
    * @param {string} query - SQL 命令 / SQL command
    */
-  async command(query) {
-    if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
-    }
+  async command(query) { // 执行语句
+    if (!this.client) { // 条件判断 !this.client
+      throw new Error('ClickHouse client not initialized'); // 抛出异常
+    } // 结束代码块
 
-    await this.client.command({ query });
-  }
+    await this.client.command({ query }); // 等待异步结果
+  } // 结束代码块
 
   /**
    * 执行查询
@@ -305,19 +305,19 @@ class ClickHouseClient extends EventEmitter {
    * @param {Object} params - 查询参数 / Query parameters
    * @returns {Array} 查询结果 / Query results
    */
-  async query(query, params = {}) {
-    if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
-    }
+  async query(query, params = {}) { // 执行语句
+    if (!this.client) { // 条件判断 !this.client
+      throw new Error('ClickHouse client not initialized'); // 抛出异常
+    } // 结束代码块
 
-    const result = await this.client.query({
-      query,
-      query_params: params,
-      format: 'JSONEachRow',
-    });
+    const result = await this.client.query({ // 定义常量 result
+      query, // 执行语句
+      query_params: params, // 设置 query_params 字段
+      format: 'JSONEachRow', // 设置 format 字段
+    }); // 结束代码块
 
-    return result.json();
-  }
+    return result.json(); // 返回结果
+  } // 结束代码块
 
   /**
    * 查询单行
@@ -327,10 +327,10 @@ class ClickHouseClient extends EventEmitter {
    * @param {Object} params - 查询参数 / Query parameters
    * @returns {Object|null} 查询结果 / Query result
    */
-  async queryOne(query, params = {}) {
-    const results = await this.query(query, params);
-    return results.length > 0 ? results[0] : null;
-  }
+  async queryOne(query, params = {}) { // 执行语句
+    const results = await this.query(query, params); // 定义常量 results
+    return results.length > 0 ? results[0] : null; // 返回结果
+  } // 结束代码块
 
   /**
    * 批量插入数据
@@ -339,23 +339,23 @@ class ClickHouseClient extends EventEmitter {
    * @param {string} table - 表名 / Table name
    * @param {Array} values - 数据数组 / Data array
    */
-  async insert(table, values) {
-    if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
-    }
+  async insert(table, values) { // 执行语句
+    if (!this.client) { // 条件判断 !this.client
+      throw new Error('ClickHouse client not initialized'); // 抛出异常
+    } // 结束代码块
 
-    if (!values || values.length === 0) {
-      return { inserted: 0 };
-    }
+    if (!values || values.length === 0) { // 条件判断 !values || values.length === 0
+      return { inserted: 0 }; // 返回结果
+    } // 结束代码块
 
-    await this.client.insert({
-      table,
-      values,
-      format: 'JSONEachRow',
-    });
+    await this.client.insert({ // 等待异步结果
+      table, // 执行语句
+      values, // 执行语句
+      format: 'JSONEachRow', // 设置 format 字段
+    }); // 结束代码块
 
-    return { inserted: values.length };
-  }
+    return { inserted: values.length }; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 工具方法 / Utility Methods
@@ -365,33 +365,33 @@ class ClickHouseClient extends EventEmitter {
    * 健康检查
    * Health check
    */
-  async healthCheck() {
-    try {
-      await this.client.ping();
-      return {
-        status: 'healthy',
-        connected: true,
-        database: this.config.database,
-      };
-    } catch (error) {
-      return {
-        status: 'unhealthy',
-        connected: false,
-        error: error.message,
-      };
-    }
-  }
+  async healthCheck() { // 执行语句
+    try { // 尝试执行
+      await this.client.ping(); // 等待异步结果
+      return { // 返回结果
+        status: 'healthy', // 设置 status 字段
+        connected: true, // 设置 connected 字段
+        database: this.config.database, // 设置 database 字段
+      }; // 结束代码块
+    } catch (error) { // 执行语句
+      return { // 返回结果
+        status: 'unhealthy', // 设置 status 字段
+        connected: false, // 设置 connected 字段
+        error: error.message, // 设置 error 字段
+      }; // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取表统计信息
    * Get table statistics
    */
-  async getStats() {
-    const tables = ['trades', 'orders_archive', 'positions_archive', 'audit_logs', 'balance_snapshots'];
-    const stats = {};
+  async getStats() { // 执行语句
+    const tables = ['trades', 'orders_archive', 'positions_archive', 'audit_logs', 'balance_snapshots']; // 定义常量 tables
+    const stats = {}; // 定义常量 stats
 
-    for (const table of tables) {
-      try {
+    for (const table of tables) { // 循环 const table of tables
+      try { // 尝试执行
         const result = await this.queryOne(`
           SELECT
             count() as row_count,
@@ -399,16 +399,16 @@ class ClickHouseClient extends EventEmitter {
             formatReadableSize(sum(data_uncompressed_bytes)) as uncompressed_size
           FROM system.parts
           WHERE database = {db:String} AND table = {table:String} AND active = 1
-        `, { db: this.config.database, table });
+        `, { db: this.config.database, table }); // 执行语句
 
-        stats[table] = result || { row_count: 0, compressed_size: '0 B', uncompressed_size: '0 B' };
-      } catch {
-        stats[table] = { row_count: 0, compressed_size: '0 B', uncompressed_size: '0 B' };
-      }
-    }
+        stats[table] = result || { row_count: 0, compressed_size: '0 B', uncompressed_size: '0 B' }; // 执行语句
+      } catch { // 执行语句
+        stats[table] = { row_count: 0, compressed_size: '0 B', uncompressed_size: '0 B' }; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    return stats;
-  }
+    return stats; // 返回结果
+  } // 结束代码块
 
   /**
    * 优化表
@@ -416,27 +416,27 @@ class ClickHouseClient extends EventEmitter {
    *
    * @param {string} table - 表名 / Table name
    */
-  async optimize(table) {
-    await this.command(`OPTIMIZE TABLE ${table} FINAL`);
-  }
+  async optimize(table) { // 执行语句
+    await this.command(`OPTIMIZE TABLE ${table} FINAL`); // 等待异步结果
+  } // 结束代码块
 
   /**
    * 关闭连接
    * Close connection
    */
-  async close() {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.isInitialized = false;
-      this.isConnected = false;
-      this.emit('closed');
-    }
-  }
-}
+  async close() { // 执行语句
+    if (this.client) { // 条件判断 this.client
+      await this.client.close(); // 等待异步结果
+      this.client = null; // 设置 client
+      this.isInitialized = false; // 设置 isInitialized
+      this.isConnected = false; // 设置 isConnected
+      this.emit('closed'); // 调用 emit
+    } // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // 默认实例 / Default instance
-let defaultClient = null;
+let defaultClient = null; // 定义变量 defaultClient
 
 /**
  * 获取默认 ClickHouse 客户端
@@ -445,12 +445,12 @@ let defaultClient = null;
  * @param {Object} config - 配置 / Configuration
  * @returns {ClickHouseClient}
  */
-function getClickHouseClient(config = {}) {
-  if (!defaultClient) {
-    defaultClient = new ClickHouseClient(config);
-  }
-  return defaultClient;
-}
+function getClickHouseClient(config = {}) { // 定义函数 getClickHouseClient
+  if (!defaultClient) { // 条件判断 !defaultClient
+    defaultClient = new ClickHouseClient(config); // 赋值 defaultClient
+  } // 结束代码块
+  return defaultClient; // 返回结果
+} // 结束代码块
 
-export { ClickHouseClient, getClickHouseClient };
-export default ClickHouseClient;
+export { ClickHouseClient, getClickHouseClient }; // 导出命名成员
+export default ClickHouseClient; // 默认导出

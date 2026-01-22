@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 组合风控管理器
  * Portfolio Risk Manager
  *
@@ -16,8 +16,8 @@
 // 导入依赖 / Import Dependencies
 // ============================================
 
-import EventEmitter from 'eventemitter3';
-import Decimal from 'decimal.js';
+import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
+import Decimal from 'decimal.js'; // 导入模块 decimal.js
 
 // ============================================
 // 常量定义 / Constants Definition
@@ -27,20 +27,20 @@ import Decimal from 'decimal.js';
  * 组合风险级别
  * Portfolio risk level
  */
-const PORTFOLIO_RISK_LEVEL = {
+const PORTFOLIO_RISK_LEVEL = { // 定义常量 PORTFOLIO_RISK_LEVEL
   SAFE: 'safe',               // 安全 / Safe
   NORMAL: 'normal',           // 正常 / Normal
   ELEVATED: 'elevated',       // 升高 / Elevated
   HIGH: 'high',               // 高 / High
   CRITICAL: 'critical',       // 严重 / Critical
   EMERGENCY: 'emergency',     // 紧急 / Emergency
-};
+}; // 结束代码块
 
 /**
  * 风控动作
  * Risk control action
  */
-const RISK_ACTION = {
+const RISK_ACTION = { // 定义常量 RISK_ACTION
   NONE: 'none',                         // 无动作 / No action
   ALERT: 'alert',                       // 警报 / Alert
   REDUCE_EXPOSURE: 'reduce_exposure',   // 降低敞口 / Reduce exposure
@@ -48,80 +48,80 @@ const RISK_ACTION = {
   REDUCE_ALL: 'reduce_all',             // 全面减仓 / Reduce all positions
   EMERGENCY_CLOSE: 'emergency_close',   // 紧急平仓 / Emergency close
   REBALANCE: 'rebalance',               // 再平衡 / Rebalance
-};
+}; // 结束代码块
 
 /**
  * 默认配置
  * Default configuration
  */
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
   // 全局仓位限制 / Global Position Limits
   // ============================================
 
   // 最大总仓位比例 / Maximum total position ratio
-  maxTotalPositionRatio: 0.60,
+  maxTotalPositionRatio: 0.60, // 设置 maxTotalPositionRatio 字段
 
   // 仓位警告阈值 / Position warning threshold
-  positionWarningRatio: 0.50,
+  positionWarningRatio: 0.50, // 设置 positionWarningRatio 字段
 
   // 单策略最大仓位比例 / Maximum single strategy position ratio
-  maxSingleStrategyRatio: 0.25,
+  maxSingleStrategyRatio: 0.25, // 设置 maxSingleStrategyRatio 字段
 
   // 最大持仓数量 / Maximum number of positions
-  maxPositionCount: 10,
+  maxPositionCount: 10, // 设置 maxPositionCount 字段
 
   // ============================================
   // 组合回撤限制 / Portfolio Drawdown Limits
   // ============================================
 
   // 组合最大回撤 / Maximum portfolio drawdown
-  maxPortfolioDrawdown: 0.15,
+  maxPortfolioDrawdown: 0.15, // 设置 maxPortfolioDrawdown 字段
 
   // 回撤警告阈值 / Drawdown warning threshold
-  drawdownWarningThreshold: 0.10,
+  drawdownWarningThreshold: 0.10, // 设置 drawdownWarningThreshold 字段
 
   // 单日最大回撤 / Maximum daily drawdown
-  maxDailyDrawdown: 0.05,
+  maxDailyDrawdown: 0.05, // 设置 maxDailyDrawdown 字段
 
   // 单周最大回撤 / Maximum weekly drawdown
-  maxWeeklyDrawdown: 0.10,
+  maxWeeklyDrawdown: 0.10, // 设置 maxWeeklyDrawdown 字段
 
   // ============================================
   // 相关性风险限制 / Correlation Risk Limits
   // ============================================
 
   // 高相关性警告阈值 / High correlation warning threshold
-  highCorrelationThreshold: 0.70,
+  highCorrelationThreshold: 0.70, // 设置 highCorrelationThreshold 字段
 
   // 高相关策略对最大数量 / Maximum high correlation pairs
-  maxHighCorrelationPairs: 2,
+  maxHighCorrelationPairs: 2, // 设置 maxHighCorrelationPairs 字段
 
   // 相关性突变检测阈值 / Correlation regime change threshold
-  correlationChangeThreshold: 0.30,
+  correlationChangeThreshold: 0.30, // 设置 correlationChangeThreshold 字段
 
   // ============================================
   // VaR配置 / VaR Configuration
   // ============================================
 
   // VaR置信水平 / VaR confidence level
-  varConfidenceLevel: 0.95,
+  varConfidenceLevel: 0.95, // 设置 varConfidenceLevel 字段
 
   // VaR限制 (占总资金比例) / VaR limit (as ratio of total capital)
-  maxVaR: 0.05,
+  maxVaR: 0.05, // 设置 maxVaR 字段
 
   // CVaR限制 / CVaR limit
-  maxCVaR: 0.08,
+  maxCVaR: 0.08, // 设置 maxCVaR 字段
 
   // ============================================
   // 去风险配置 / De-risking Configuration
   // ============================================
 
   // 自动去风险启用 / Enable auto de-risking
-  enableAutoDeRisk: true,
+  enableAutoDeRisk: true, // 设置 enableAutoDeRisk 字段
 
   // 去风险比例 / De-risk ratio
-  deRiskRatio: 0.30,
+  deRiskRatio: 0.30, // 设置 deRiskRatio 字段
 
   // 去风险冷却时间 (毫秒) / De-risk cooldown (ms)
   deRiskCooldown: 30 * 60 * 1000, // 30分钟 / 30 minutes
@@ -131,14 +131,14 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 检查间隔 (毫秒) / Check interval (ms)
-  checkInterval: 5000,
+  checkInterval: 5000, // 设置 checkInterval 字段
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true,
+  verbose: true, // 设置 verbose 字段
 
   // 日志前缀 / Log prefix
-  logPrefix: '[PortfolioRiskMgr]',
-};
+  logPrefix: '[PortfolioRiskMgr]', // 设置 logPrefix 字段
+}; // 结束代码块
 
 // ============================================
 // 主类 / Main Class
@@ -148,64 +148,64 @@ const DEFAULT_CONFIG = {
  * 组合风控管理器
  * Portfolio Risk Manager
  */
-export class PortfolioRiskManager extends EventEmitter {
+export class PortfolioRiskManager extends EventEmitter { // 导出类 PortfolioRiskManager
   /**
    * 构造函数
    * Constructor
    *
    * @param {Object} config - 配置对象 / Configuration object
    */
-  constructor(config = {}) {
-    super();
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
     // 合并配置 / Merge configuration
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...config }; // 设置 config
 
     // 策略风控状态 / Strategy risk states
     // 格式: { strategyId: { positions, equity, allocation, riskBudget, ... } }
-    this.strategyStates = new Map();
+    this.strategyStates = new Map(); // 设置 strategyStates
 
     // 组合状态 / Portfolio state
-    this.portfolioState = {
-      totalEquity: 0,
-      totalPositionValue: 0,
-      positionRatio: 0,
-      peakEquity: 0,
-      currentDrawdown: 0,
-      dailyStartEquity: 0,
-      dailyDrawdown: 0,
-      weeklyStartEquity: 0,
-      weeklyDrawdown: 0,
-      riskLevel: PORTFOLIO_RISK_LEVEL.NORMAL,
-      tradingAllowed: true,
-      pauseReason: null,
-    };
+    this.portfolioState = { // 设置 portfolioState
+      totalEquity: 0, // 设置 totalEquity 字段
+      totalPositionValue: 0, // 设置 totalPositionValue 字段
+      positionRatio: 0, // 设置 positionRatio 字段
+      peakEquity: 0, // 设置 peakEquity 字段
+      currentDrawdown: 0, // 设置 currentDrawdown 字段
+      dailyStartEquity: 0, // 设置 dailyStartEquity 字段
+      dailyDrawdown: 0, // 设置 dailyDrawdown 字段
+      weeklyStartEquity: 0, // 设置 weeklyStartEquity 字段
+      weeklyDrawdown: 0, // 设置 weeklyDrawdown 字段
+      riskLevel: PORTFOLIO_RISK_LEVEL.NORMAL, // 设置 riskLevel 字段
+      tradingAllowed: true, // 设置 tradingAllowed 字段
+      pauseReason: null, // 设置 pauseReason 字段
+    }; // 结束代码块
 
     // 风险预算 / Risk budgets
     // 格式: { strategyId: { budget, used, remaining } }
-    this.riskBudgets = new Map();
+    this.riskBudgets = new Map(); // 设置 riskBudgets
 
     // 相关性分析器引用 / Correlation analyzer reference
-    this.correlationAnalyzer = null;
+    this.correlationAnalyzer = null; // 设置 correlationAnalyzer
 
     // 资金分配器引用 / Capital allocator reference
-    this.capitalAllocator = null;
+    this.capitalAllocator = null; // 设置 capitalAllocator
 
     // 订单执行器引用 / Order executor reference
-    this.executor = null;
+    this.executor = null; // 设置 executor
 
     // 风控触发历史 / Risk trigger history
-    this.riskHistory = [];
+    this.riskHistory = []; // 设置 riskHistory
 
     // 最后去风险时间 / Last de-risk time
-    this.lastDeRiskTime = 0;
+    this.lastDeRiskTime = 0; // 设置 lastDeRiskTime
 
     // 定时器 / Timer
-    this.checkTimer = null;
+    this.checkTimer = null; // 设置 checkTimer
 
     // 运行状态 / Running state
-    this.running = false;
-  }
+    this.running = false; // 设置 running
+  } // 结束代码块
 
   // ============================================
   // 生命周期管理 / Lifecycle Management
@@ -217,66 +217,66 @@ export class PortfolioRiskManager extends EventEmitter {
    *
    * @param {Object} options - 选项 / Options
    */
-  async init(options = {}) {
-    const {
-      correlationAnalyzer,
-      capitalAllocator,
-      executor,
-      initialEquity,
-    } = options;
+  async init(options = {}) { // 执行语句
+    const { // 解构赋值
+      correlationAnalyzer, // 执行语句
+      capitalAllocator, // 执行语句
+      executor, // 执行语句
+      initialEquity, // 执行语句
+    } = options; // 执行语句
 
     // 保存引用 / Save references
-    this.correlationAnalyzer = correlationAnalyzer;
-    this.capitalAllocator = capitalAllocator;
-    this.executor = executor;
+    this.correlationAnalyzer = correlationAnalyzer; // 设置 correlationAnalyzer
+    this.capitalAllocator = capitalAllocator; // 设置 capitalAllocator
+    this.executor = executor; // 设置 executor
 
     // 初始化组合状态 / Initialize portfolio state
-    if (initialEquity) {
-      this.portfolioState.totalEquity = initialEquity;
-      this.portfolioState.peakEquity = initialEquity;
-      this.portfolioState.dailyStartEquity = initialEquity;
-      this.portfolioState.weeklyStartEquity = initialEquity;
-    }
+    if (initialEquity) { // 条件判断 initialEquity
+      this.portfolioState.totalEquity = initialEquity; // 访问 portfolioState
+      this.portfolioState.peakEquity = initialEquity; // 访问 portfolioState
+      this.portfolioState.dailyStartEquity = initialEquity; // 访问 portfolioState
+      this.portfolioState.weeklyStartEquity = initialEquity; // 访问 portfolioState
+    } // 结束代码块
 
-    this.log('组合风控管理器初始化完成 / Portfolio risk manager initialized', 'info');
-  }
+    this.log('组合风控管理器初始化完成 / Portfolio risk manager initialized', 'info'); // 调用 log
+  } // 结束代码块
 
   /**
    * 启动风控管理器
    * Start risk manager
    */
-  start() {
-    if (this.running) return;
+  start() { // 调用 start
+    if (this.running) return; // 条件判断 this.running
 
-    this.running = true;
+    this.running = true; // 设置 running
 
     // 启动定时检查 / Start periodic check
-    this.checkTimer = setInterval(
-      () => this._performRiskCheck(),
-      this.config.checkInterval
-    );
+    this.checkTimer = setInterval( // 设置 checkTimer
+      () => this._performRiskCheck(), // 定义箭头函数
+      this.config.checkInterval // 访问 config
+    ); // 结束调用或参数
 
-    this.log('组合风控管理器已启动 / Portfolio risk manager started', 'info');
-    this.emit('started');
-  }
+    this.log('组合风控管理器已启动 / Portfolio risk manager started', 'info'); // 调用 log
+    this.emit('started'); // 调用 emit
+  } // 结束代码块
 
   /**
    * 停止风控管理器
    * Stop risk manager
    */
-  stop() {
-    if (!this.running) return;
+  stop() { // 调用 stop
+    if (!this.running) return; // 条件判断 !this.running
 
-    this.running = false;
+    this.running = false; // 设置 running
 
-    if (this.checkTimer) {
-      clearInterval(this.checkTimer);
-      this.checkTimer = null;
-    }
+    if (this.checkTimer) { // 条件判断 this.checkTimer
+      clearInterval(this.checkTimer); // 调用 clearInterval
+      this.checkTimer = null; // 设置 checkTimer
+    } // 结束代码块
 
-    this.log('组合风控管理器已停止 / Portfolio risk manager stopped', 'info');
-    this.emit('stopped');
-  }
+    this.log('组合风控管理器已停止 / Portfolio risk manager stopped', 'info'); // 调用 log
+    this.emit('stopped'); // 调用 emit
+  } // 结束代码块
 
   // ============================================
   // 策略注册 / Strategy Registration
@@ -289,29 +289,29 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {string} strategyId - 策略ID / Strategy ID
    * @param {Object} config - 策略配置 / Strategy config
    */
-  registerStrategy(strategyId, config = {}) {
-    this.strategyStates.set(strategyId, {
-      id: strategyId,
-      positions: [],
-      positionValue: 0,
-      equity: 0,
-      allocation: config.allocation || 0,
-      riskBudget: config.riskBudget || 0,
-      dailyPnL: 0,
-      tradingAllowed: true,
-      registeredAt: Date.now(),
-    });
+  registerStrategy(strategyId, config = {}) { // 调用 registerStrategy
+    this.strategyStates.set(strategyId, { // 访问 strategyStates
+      id: strategyId, // 设置 id 字段
+      positions: [], // 设置 positions 字段
+      positionValue: 0, // 设置 positionValue 字段
+      equity: 0, // 设置 equity 字段
+      allocation: config.allocation || 0, // 设置 allocation 字段
+      riskBudget: config.riskBudget || 0, // 设置 riskBudget 字段
+      dailyPnL: 0, // 设置 dailyPnL 字段
+      tradingAllowed: true, // 设置 tradingAllowed 字段
+      registeredAt: Date.now(), // 设置 registeredAt 字段
+    }); // 结束代码块
 
     // 初始化风险预算 / Initialize risk budget
-    this.riskBudgets.set(strategyId, {
-      budget: config.riskBudget || this.portfolioState.totalEquity * 0.1,
-      used: 0,
-      remaining: config.riskBudget || this.portfolioState.totalEquity * 0.1,
-    });
+    this.riskBudgets.set(strategyId, { // 访问 riskBudgets
+      budget: config.riskBudget || this.portfolioState.totalEquity * 0.1, // 设置 budget 字段
+      used: 0, // 设置 used 字段
+      remaining: config.riskBudget || this.portfolioState.totalEquity * 0.1, // 设置 remaining 字段
+    }); // 结束代码块
 
-    this.log(`注册策略: ${strategyId} / Strategy registered: ${strategyId}`, 'info');
-    this.emit('strategyRegistered', { strategyId, config });
-  }
+    this.log(`注册策略: ${strategyId} / Strategy registered: ${strategyId}`, 'info'); // 调用 log
+    this.emit('strategyRegistered', { strategyId, config }); // 调用 emit
+  } // 结束代码块
 
   /**
    * 更新策略状态
@@ -320,22 +320,22 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {string} strategyId - 策略ID / Strategy ID
    * @param {Object} state - 状态数据 / State data
    */
-  updateStrategyState(strategyId, state) {
-    const existing = this.strategyStates.get(strategyId);
+  updateStrategyState(strategyId, state) { // 调用 updateStrategyState
+    const existing = this.strategyStates.get(strategyId); // 定义常量 existing
 
-    if (!existing) {
-      this.registerStrategy(strategyId);
-    }
+    if (!existing) { // 条件判断 !existing
+      this.registerStrategy(strategyId); // 调用 registerStrategy
+    } // 结束代码块
 
-    this.strategyStates.set(strategyId, {
-      ...existing,
-      ...state,
-      updatedAt: Date.now(),
-    });
+    this.strategyStates.set(strategyId, { // 访问 strategyStates
+      ...existing, // 展开对象或数组
+      ...state, // 展开对象或数组
+      updatedAt: Date.now(), // 设置 updatedAt 字段
+    }); // 结束代码块
 
     // 更新组合状态 / Update portfolio state
-    this._updatePortfolioState();
-  }
+    this._updatePortfolioState(); // 调用 _updatePortfolioState
+  } // 结束代码块
 
   // ============================================
   // 订单检查 / Order Checking
@@ -348,93 +348,93 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} order - 订单信息 / Order info
    * @returns {Object} 检查结果 / Check result
    */
-  checkOrder(order) {
-    const { strategyId, symbol, side, amount, price } = order;
-    const orderValue = amount * price;
+  checkOrder(order) { // 调用 checkOrder
+    const { strategyId, symbol, side, amount, price } = order; // 解构赋值
+    const orderValue = amount * price; // 定义常量 orderValue
 
-    const result = {
-      allowed: true,
-      reasons: [],
-      warnings: [],
-      riskLevel: this.portfolioState.riskLevel,
-    };
+    const result = { // 定义常量 result
+      allowed: true, // 设置 allowed 字段
+      reasons: [], // 设置 reasons 字段
+      warnings: [], // 设置 warnings 字段
+      riskLevel: this.portfolioState.riskLevel, // 设置 riskLevel 字段
+    }; // 结束代码块
 
     // 1. 检查组合交易状态 / Check portfolio trading status
-    if (!this.portfolioState.tradingAllowed) {
-      result.allowed = false;
-      result.reasons.push(`组合交易已暂停: ${this.portfolioState.pauseReason}`);
-      return result;
-    }
+    if (!this.portfolioState.tradingAllowed) { // 条件判断 !this.portfolioState.tradingAllowed
+      result.allowed = false; // 赋值 result.allowed
+      result.reasons.push(`组合交易已暂停: ${this.portfolioState.pauseReason}`); // 调用 result.reasons.push
+      return result; // 返回结果
+    } // 结束代码块
 
     // 2. 检查策略交易状态 / Check strategy trading status
-    const strategyState = this.strategyStates.get(strategyId);
-    if (strategyState && !strategyState.tradingAllowed) {
-      result.allowed = false;
-      result.reasons.push(`策略 ${strategyId} 交易已暂停`);
-      return result;
-    }
+    const strategyState = this.strategyStates.get(strategyId); // 定义常量 strategyState
+    if (strategyState && !strategyState.tradingAllowed) { // 条件判断 strategyState && !strategyState.tradingAllowed
+      result.allowed = false; // 赋值 result.allowed
+      result.reasons.push(`策略 ${strategyId} 交易已暂停`); // 调用 result.reasons.push
+      return result; // 返回结果
+    } // 结束代码块
 
     // 3. 检查全局仓位限制 / Check global position limit
-    const newTotalPosition = this.portfolioState.totalPositionValue + orderValue;
-    const newPositionRatio = newTotalPosition / this.portfolioState.totalEquity;
+    const newTotalPosition = this.portfolioState.totalPositionValue + orderValue; // 定义常量 newTotalPosition
+    const newPositionRatio = newTotalPosition / this.portfolioState.totalEquity; // 定义常量 newPositionRatio
 
-    if (newPositionRatio > this.config.maxTotalPositionRatio) {
-      result.allowed = false;
-      result.reasons.push(
-        `超过全局仓位限制: ${(newPositionRatio * 100).toFixed(1)}% > ${(this.config.maxTotalPositionRatio * 100).toFixed(1)}%`
-      );
-    } else if (newPositionRatio > this.config.positionWarningRatio) {
-      result.warnings.push(
-        `接近全局仓位限制: ${(newPositionRatio * 100).toFixed(1)}%`
-      );
-    }
+    if (newPositionRatio > this.config.maxTotalPositionRatio) { // 条件判断 newPositionRatio > this.config.maxTotalPositi...
+      result.allowed = false; // 赋值 result.allowed
+      result.reasons.push( // 调用 result.reasons.push
+        `超过全局仓位限制: ${(newPositionRatio * 100).toFixed(1)}% > ${(this.config.maxTotalPositionRatio * 100).toFixed(1)}%` // 执行语句
+      ); // 结束调用或参数
+    } else if (newPositionRatio > this.config.positionWarningRatio) { // 执行语句
+      result.warnings.push( // 调用 result.warnings.push
+        `接近全局仓位限制: ${(newPositionRatio * 100).toFixed(1)}%` // 执行语句
+      ); // 结束调用或参数
+    } // 结束代码块
 
     // 4. 检查单策略仓位限制 / Check single strategy position limit
-    if (strategyState) {
-      const newStrategyPosition = strategyState.positionValue + orderValue;
-      const strategyRatio = newStrategyPosition / this.portfolioState.totalEquity;
+    if (strategyState) { // 条件判断 strategyState
+      const newStrategyPosition = strategyState.positionValue + orderValue; // 定义常量 newStrategyPosition
+      const strategyRatio = newStrategyPosition / this.portfolioState.totalEquity; // 定义常量 strategyRatio
 
-      if (strategyRatio > this.config.maxSingleStrategyRatio) {
-        result.allowed = false;
-        result.reasons.push(
-          `策略 ${strategyId} 超过单策略仓位限制: ${(strategyRatio * 100).toFixed(1)}% > ${(this.config.maxSingleStrategyRatio * 100).toFixed(1)}%`
-        );
-      }
-    }
+      if (strategyRatio > this.config.maxSingleStrategyRatio) { // 条件判断 strategyRatio > this.config.maxSingleStrategy...
+        result.allowed = false; // 赋值 result.allowed
+        result.reasons.push( // 调用 result.reasons.push
+          `策略 ${strategyId} 超过单策略仓位限制: ${(strategyRatio * 100).toFixed(1)}% > ${(this.config.maxSingleStrategyRatio * 100).toFixed(1)}%` // 执行语句
+        ); // 结束调用或参数
+      } // 结束代码块
+    } // 结束代码块
 
     // 5. 检查风险预算 / Check risk budget
-    const budget = this.riskBudgets.get(strategyId);
-    if (budget) {
+    const budget = this.riskBudgets.get(strategyId); // 定义常量 budget
+    if (budget) { // 条件判断 budget
       const riskAmount = orderValue * 0.02; // 假设2%风险 / Assume 2% risk
-      if (riskAmount > budget.remaining) {
-        result.allowed = false;
-        result.reasons.push(
-          `策略 ${strategyId} 风险预算不足: 需要 ${riskAmount.toFixed(2)}, 剩余 ${budget.remaining.toFixed(2)}`
-        );
-      }
-    }
+      if (riskAmount > budget.remaining) { // 条件判断 riskAmount > budget.remaining
+        result.allowed = false; // 赋值 result.allowed
+        result.reasons.push( // 调用 result.reasons.push
+          `策略 ${strategyId} 风险预算不足: 需要 ${riskAmount.toFixed(2)}, 剩余 ${budget.remaining.toFixed(2)}` // 执行语句
+        ); // 结束调用或参数
+      } // 结束代码块
+    } // 结束代码块
 
     // 6. 检查回撤状态 / Check drawdown status
-    if (this.portfolioState.currentDrawdown > this.config.drawdownWarningThreshold) {
-      result.warnings.push(
-        `当前组合回撤较高: ${(this.portfolioState.currentDrawdown * 100).toFixed(2)}%`
-      );
-    }
+    if (this.portfolioState.currentDrawdown > this.config.drawdownWarningThreshold) { // 条件判断 this.portfolioState.currentDrawdown > this.co...
+      result.warnings.push( // 调用 result.warnings.push
+        `当前组合回撤较高: ${(this.portfolioState.currentDrawdown * 100).toFixed(2)}%` // 执行语句
+      ); // 结束调用或参数
+    } // 结束代码块
 
     // 7. 检查风险级别 / Check risk level
-    if (this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.HIGH ||
-        this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.CRITICAL) {
-      result.warnings.push(`当前风险级别: ${this.portfolioState.riskLevel}`);
+    if (this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.HIGH || // 条件判断 this.portfolioState.riskLevel === PORTFOLIO_R...
+        this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.CRITICAL) { // 访问 portfolioState
+      result.warnings.push(`当前风险级别: ${this.portfolioState.riskLevel}`); // 调用 result.warnings.push
 
       // 高风险时减少订单量 / Reduce order size in high risk
-      if (this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.CRITICAL) {
-        result.suggestedReduction = 0.5;
-        result.warnings.push('建议减少50%订单量 / Suggest reducing order size by 50%');
-      }
-    }
+      if (this.portfolioState.riskLevel === PORTFOLIO_RISK_LEVEL.CRITICAL) { // 条件判断 this.portfolioState.riskLevel === PORTFOLIO_R...
+        result.suggestedReduction = 0.5; // 赋值 result.suggestedReduction
+        result.warnings.push('建议减少50%订单量 / Suggest reducing order size by 50%'); // 调用 result.warnings.push
+      } // 结束代码块
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 风控检查 / Risk Checks
@@ -445,30 +445,30 @@ export class PortfolioRiskManager extends EventEmitter {
    * Perform risk check
    * @private
    */
-  async _performRiskCheck() {
-    if (!this.running) return;
+  async _performRiskCheck() { // 执行语句
+    if (!this.running) return; // 条件判断 !this.running
 
     // 检查时间重置 / Check time resets
-    this._checkTimeResets();
+    this._checkTimeResets(); // 调用 _checkTimeResets
 
     // 1. 检查组合回撤 / Check portfolio drawdown
-    const drawdownResult = this._checkPortfolioDrawdown();
+    const drawdownResult = this._checkPortfolioDrawdown(); // 定义常量 drawdownResult
 
     // 2. 检查全局仓位 / Check global position
-    const positionResult = this._checkGlobalPosition();
+    const positionResult = this._checkGlobalPosition(); // 定义常量 positionResult
 
     // 3. 检查相关性风险 / Check correlation risk
-    const correlationResult = this._checkCorrelationRisk();
+    const correlationResult = this._checkCorrelationRisk(); // 定义常量 correlationResult
 
     // 4. 检查VaR / Check VaR
-    const varResult = this._checkVaR();
+    const varResult = this._checkVaR(); // 定义常量 varResult
 
     // 5. 更新风险级别 / Update risk level
-    this._updateRiskLevel([drawdownResult, positionResult, correlationResult, varResult]);
+    this._updateRiskLevel([drawdownResult, positionResult, correlationResult, varResult]); // 调用 _updateRiskLevel
 
     // 6. 执行风控动作 / Execute risk actions
-    await this._executeRiskActions([drawdownResult, positionResult, correlationResult, varResult]);
-  }
+    await this._executeRiskActions([drawdownResult, positionResult, correlationResult, varResult]); // 等待异步结果
+  } // 结束代码块
 
   /**
    * 检查组合回撤
@@ -477,62 +477,62 @@ export class PortfolioRiskManager extends EventEmitter {
    * @returns {Object} 检查结果 / Check result
    * @private
    */
-  _checkPortfolioDrawdown() {
-    const result = {
-      type: 'drawdown',
-      action: RISK_ACTION.NONE,
-      level: PORTFOLIO_RISK_LEVEL.NORMAL,
-      details: {},
-    };
+  _checkPortfolioDrawdown() { // 调用 _checkPortfolioDrawdown
+    const result = { // 定义常量 result
+      type: 'drawdown', // 设置 type 字段
+      action: RISK_ACTION.NONE, // 设置 action 字段
+      level: PORTFOLIO_RISK_LEVEL.NORMAL, // 设置 level 字段
+      details: {}, // 设置 details 字段
+    }; // 结束代码块
 
     // 计算当前回撤 / Calculate current drawdown
-    const { currentDrawdown, dailyDrawdown, weeklyDrawdown } = this.portfolioState;
+    const { currentDrawdown, dailyDrawdown, weeklyDrawdown } = this.portfolioState; // 解构赋值
 
-    result.details = {
-      currentDrawdown,
-      dailyDrawdown,
-      weeklyDrawdown,
-      maxPortfolioDrawdown: this.config.maxPortfolioDrawdown,
-      maxDailyDrawdown: this.config.maxDailyDrawdown,
-      maxWeeklyDrawdown: this.config.maxWeeklyDrawdown,
-    };
+    result.details = { // 赋值 result.details
+      currentDrawdown, // 执行语句
+      dailyDrawdown, // 执行语句
+      weeklyDrawdown, // 执行语句
+      maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 设置 maxPortfolioDrawdown 字段
+      maxDailyDrawdown: this.config.maxDailyDrawdown, // 设置 maxDailyDrawdown 字段
+      maxWeeklyDrawdown: this.config.maxWeeklyDrawdown, // 设置 maxWeeklyDrawdown 字段
+    }; // 结束代码块
 
     // 检查组合最大回撤 / Check max portfolio drawdown
-    if (currentDrawdown >= this.config.maxPortfolioDrawdown) {
-      result.action = RISK_ACTION.EMERGENCY_CLOSE;
-      result.level = PORTFOLIO_RISK_LEVEL.EMERGENCY;
-      result.message = `组合回撤超限: ${(currentDrawdown * 100).toFixed(2)}% >= ${(this.config.maxPortfolioDrawdown * 100).toFixed(0)}%`;
+    if (currentDrawdown >= this.config.maxPortfolioDrawdown) { // 条件判断 currentDrawdown >= this.config.maxPortfolioDr...
+      result.action = RISK_ACTION.EMERGENCY_CLOSE; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.EMERGENCY; // 赋值 result.level
+      result.message = `组合回撤超限: ${(currentDrawdown * 100).toFixed(2)}% >= ${(this.config.maxPortfolioDrawdown * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'error');
+      this.log(`⚠️ ${result.message}`, 'error'); // 调用 log
 
-    } else if (currentDrawdown >= this.config.drawdownWarningThreshold) {
-      result.action = RISK_ACTION.REDUCE_EXPOSURE;
-      result.level = PORTFOLIO_RISK_LEVEL.HIGH;
-      result.message = `组合回撤警告: ${(currentDrawdown * 100).toFixed(2)}%`;
+    } else if (currentDrawdown >= this.config.drawdownWarningThreshold) { // 执行语句
+      result.action = RISK_ACTION.REDUCE_EXPOSURE; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.HIGH; // 赋值 result.level
+      result.message = `组合回撤警告: ${(currentDrawdown * 100).toFixed(2)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'warn');
-    }
+      this.log(`⚠️ ${result.message}`, 'warn'); // 调用 log
+    } // 结束代码块
 
     // 检查单日回撤 / Check daily drawdown
-    if (dailyDrawdown >= this.config.maxDailyDrawdown) {
-      result.action = RISK_ACTION.PAUSE_NEW_TRADES;
-      result.level = Math.max(result.level === PORTFOLIO_RISK_LEVEL.NORMAL ? 0 : 1, PORTFOLIO_RISK_LEVEL.HIGH);
-      result.message = `单日回撤超限: ${(dailyDrawdown * 100).toFixed(2)}% >= ${(this.config.maxDailyDrawdown * 100).toFixed(0)}%`;
+    if (dailyDrawdown >= this.config.maxDailyDrawdown) { // 条件判断 dailyDrawdown >= this.config.maxDailyDrawdown
+      result.action = RISK_ACTION.PAUSE_NEW_TRADES; // 赋值 result.action
+      result.level = Math.max(result.level === PORTFOLIO_RISK_LEVEL.NORMAL ? 0 : 1, PORTFOLIO_RISK_LEVEL.HIGH); // 赋值 result.level
+      result.message = `单日回撤超限: ${(dailyDrawdown * 100).toFixed(2)}% >= ${(this.config.maxDailyDrawdown * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'error');
-    }
+      this.log(`⚠️ ${result.message}`, 'error'); // 调用 log
+    } // 结束代码块
 
     // 检查单周回撤 / Check weekly drawdown
-    if (weeklyDrawdown >= this.config.maxWeeklyDrawdown) {
-      result.action = RISK_ACTION.REDUCE_ALL;
-      result.level = PORTFOLIO_RISK_LEVEL.CRITICAL;
-      result.message = `单周回撤超限: ${(weeklyDrawdown * 100).toFixed(2)}% >= ${(this.config.maxWeeklyDrawdown * 100).toFixed(0)}%`;
+    if (weeklyDrawdown >= this.config.maxWeeklyDrawdown) { // 条件判断 weeklyDrawdown >= this.config.maxWeeklyDrawdown
+      result.action = RISK_ACTION.REDUCE_ALL; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.CRITICAL; // 赋值 result.level
+      result.message = `单周回撤超限: ${(weeklyDrawdown * 100).toFixed(2)}% >= ${(this.config.maxWeeklyDrawdown * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'error');
-    }
+      this.log(`⚠️ ${result.message}`, 'error'); // 调用 log
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 检查全局仓位
@@ -541,53 +541,53 @@ export class PortfolioRiskManager extends EventEmitter {
    * @returns {Object} 检查结果 / Check result
    * @private
    */
-  _checkGlobalPosition() {
-    const result = {
-      type: 'position',
-      action: RISK_ACTION.NONE,
-      level: PORTFOLIO_RISK_LEVEL.NORMAL,
-      details: {},
-    };
+  _checkGlobalPosition() { // 调用 _checkGlobalPosition
+    const result = { // 定义常量 result
+      type: 'position', // 设置 type 字段
+      action: RISK_ACTION.NONE, // 设置 action 字段
+      level: PORTFOLIO_RISK_LEVEL.NORMAL, // 设置 level 字段
+      details: {}, // 设置 details 字段
+    }; // 结束代码块
 
-    const { positionRatio, totalPositionValue, totalEquity } = this.portfolioState;
+    const { positionRatio, totalPositionValue, totalEquity } = this.portfolioState; // 解构赋值
 
-    result.details = {
-      positionRatio,
-      totalPositionValue,
-      totalEquity,
-      maxTotalPositionRatio: this.config.maxTotalPositionRatio,
-    };
+    result.details = { // 赋值 result.details
+      positionRatio, // 执行语句
+      totalPositionValue, // 执行语句
+      totalEquity, // 执行语句
+      maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 设置 maxTotalPositionRatio 字段
+    }; // 结束代码块
 
-    if (positionRatio >= this.config.maxTotalPositionRatio) {
-      result.action = RISK_ACTION.PAUSE_NEW_TRADES;
-      result.level = PORTFOLIO_RISK_LEVEL.HIGH;
-      result.message = `全局仓位超限: ${(positionRatio * 100).toFixed(2)}% >= ${(this.config.maxTotalPositionRatio * 100).toFixed(0)}%`;
+    if (positionRatio >= this.config.maxTotalPositionRatio) { // 条件判断 positionRatio >= this.config.maxTotalPosition...
+      result.action = RISK_ACTION.PAUSE_NEW_TRADES; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.HIGH; // 赋值 result.level
+      result.message = `全局仓位超限: ${(positionRatio * 100).toFixed(2)}% >= ${(this.config.maxTotalPositionRatio * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'warn');
+      this.log(`⚠️ ${result.message}`, 'warn'); // 调用 log
 
-    } else if (positionRatio >= this.config.positionWarningRatio) {
-      result.action = RISK_ACTION.ALERT;
-      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED;
-      result.message = `全局仓位警告: ${(positionRatio * 100).toFixed(2)}%`;
-    }
+    } else if (positionRatio >= this.config.positionWarningRatio) { // 执行语句
+      result.action = RISK_ACTION.ALERT; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED; // 赋值 result.level
+      result.message = `全局仓位警告: ${(positionRatio * 100).toFixed(2)}%`; // 赋值 result.message
+    } // 结束代码块
 
     // 检查持仓数量 / Check position count
-    let totalPositionCount = 0;
-    for (const [, state] of this.strategyStates) {
-      totalPositionCount += (state.positions?.length || 0);
-    }
+    let totalPositionCount = 0; // 定义变量 totalPositionCount
+    for (const [, state] of this.strategyStates) { // 循环 const [, state] of this.strategyStates
+      totalPositionCount += (state.positions?.length || 0); // 执行语句
+    } // 结束代码块
 
-    if (totalPositionCount > this.config.maxPositionCount) {
-      result.action = RISK_ACTION.ALERT;
-      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED;
-      result.details.positionCount = totalPositionCount;
-      result.message = `持仓数量过多: ${totalPositionCount} > ${this.config.maxPositionCount}`;
+    if (totalPositionCount > this.config.maxPositionCount) { // 条件判断 totalPositionCount > this.config.maxPositionC...
+      result.action = RISK_ACTION.ALERT; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED; // 赋值 result.level
+      result.details.positionCount = totalPositionCount; // 赋值 result.details.positionCount
+      result.message = `持仓数量过多: ${totalPositionCount} > ${this.config.maxPositionCount}`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'warn');
-    }
+      this.log(`⚠️ ${result.message}`, 'warn'); // 调用 log
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 检查相关性风险
@@ -596,63 +596,63 @@ export class PortfolioRiskManager extends EventEmitter {
    * @returns {Object} 检查结果 / Check result
    * @private
    */
-  _checkCorrelationRisk() {
-    const result = {
-      type: 'correlation',
-      action: RISK_ACTION.NONE,
-      level: PORTFOLIO_RISK_LEVEL.NORMAL,
-      details: {},
-    };
+  _checkCorrelationRisk() { // 调用 _checkCorrelationRisk
+    const result = { // 定义常量 result
+      type: 'correlation', // 设置 type 字段
+      action: RISK_ACTION.NONE, // 设置 action 字段
+      level: PORTFOLIO_RISK_LEVEL.NORMAL, // 设置 level 字段
+      details: {}, // 设置 details 字段
+    }; // 结束代码块
 
-    if (!this.correlationAnalyzer) {
-      return result;
-    }
+    if (!this.correlationAnalyzer) { // 条件判断 !this.correlationAnalyzer
+      return result; // 返回结果
+    } // 结束代码块
 
     // 获取高相关策略对 / Get high correlation pairs
-    const highCorrPairs = this.correlationAnalyzer.findHighCorrelationPairs(
-      this.config.highCorrelationThreshold
-    );
+    const highCorrPairs = this.correlationAnalyzer.findHighCorrelationPairs( // 定义常量 highCorrPairs
+      this.config.highCorrelationThreshold // 访问 config
+    ); // 结束调用或参数
 
-    result.details = {
-      highCorrelationPairs: highCorrPairs,
-      threshold: this.config.highCorrelationThreshold,
-    };
+    result.details = { // 赋值 result.details
+      highCorrelationPairs: highCorrPairs, // 设置 highCorrelationPairs 字段
+      threshold: this.config.highCorrelationThreshold, // 设置 threshold 字段
+    }; // 结束代码块
 
-    if (highCorrPairs.length > this.config.maxHighCorrelationPairs) {
-      result.action = RISK_ACTION.REBALANCE;
-      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED;
-      result.message = `高相关策略对过多: ${highCorrPairs.length} > ${this.config.maxHighCorrelationPairs}`;
+    if (highCorrPairs.length > this.config.maxHighCorrelationPairs) { // 条件判断 highCorrPairs.length > this.config.maxHighCor...
+      result.action = RISK_ACTION.REBALANCE; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.ELEVATED; // 赋值 result.level
+      result.message = `高相关策略对过多: ${highCorrPairs.length} > ${this.config.maxHighCorrelationPairs}`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'warn');
+      this.log(`⚠️ ${result.message}`, 'warn'); // 调用 log
 
       // 记录具体的高相关对 / Log specific high correlation pairs
-      for (const pair of highCorrPairs) {
-        this.log(`  高相关: ${pair.strategies.join(' <-> ')} = ${pair.correlation.toFixed(3)}`, 'warn');
-      }
-    }
+      for (const pair of highCorrPairs) { // 循环 const pair of highCorrPairs
+        this.log(`  高相关: ${pair.strategies.join(' <-> ')} = ${pair.correlation.toFixed(3)}`, 'warn'); // 调用 log
+      } // 结束代码块
+    } // 结束代码块
 
     // 检测相关性突变 / Detect correlation regime change
-    if (this.strategies && this.strategies.length >= 2) {
-      const strategies = [...this.strategyStates.keys()];
-      for (let i = 0; i < strategies.length - 1; i++) {
-        for (let j = i + 1; j < strategies.length; j++) {
-          const change = this.correlationAnalyzer.detectCorrelationRegimeChange(
-            strategies[i],
-            strategies[j],
-            this.config.correlationChangeThreshold
-          );
+    if (this.strategies && this.strategies.length >= 2) { // 条件判断 this.strategies && this.strategies.length >= 2
+      const strategies = [...this.strategyStates.keys()]; // 定义常量 strategies
+      for (let i = 0; i < strategies.length - 1; i++) { // 循环 let i = 0; i < strategies.length - 1; i++
+        for (let j = i + 1; j < strategies.length; j++) { // 循环 let j = i + 1; j < strategies.length; j++
+          const change = this.correlationAnalyzer.detectCorrelationRegimeChange( // 定义常量 change
+            strategies[i], // 执行语句
+            strategies[j], // 执行语句
+            this.config.correlationChangeThreshold // 访问 config
+          ); // 结束调用或参数
 
-          if (change.detected) {
-            result.action = RISK_ACTION.ALERT;
-            result.details.regimeChange = change;
-            this.log(`⚠️ 相关性突变: ${strategies[i]} - ${strategies[j]}: ${change.historicalCorrelation.toFixed(2)} -> ${change.recentCorrelation.toFixed(2)}`, 'warn');
-          }
-        }
-      }
-    }
+          if (change.detected) { // 条件判断 change.detected
+            result.action = RISK_ACTION.ALERT; // 赋值 result.action
+            result.details.regimeChange = change; // 赋值 result.details.regimeChange
+            this.log(`⚠️ 相关性突变: ${strategies[i]} - ${strategies[j]}: ${change.historicalCorrelation.toFixed(2)} -> ${change.recentCorrelation.toFixed(2)}`, 'warn'); // 调用 log
+          } // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 检查VaR
@@ -661,48 +661,48 @@ export class PortfolioRiskManager extends EventEmitter {
    * @returns {Object} 检查结果 / Check result
    * @private
    */
-  _checkVaR() {
-    const result = {
-      type: 'var',
-      action: RISK_ACTION.NONE,
-      level: PORTFOLIO_RISK_LEVEL.NORMAL,
-      details: {},
-    };
+  _checkVaR() { // 调用 _checkVaR
+    const result = { // 定义常量 result
+      type: 'var', // 设置 type 字段
+      action: RISK_ACTION.NONE, // 设置 action 字段
+      level: PORTFOLIO_RISK_LEVEL.NORMAL, // 设置 level 字段
+      details: {}, // 设置 details 字段
+    }; // 结束代码块
 
     // 计算组合VaR / Calculate portfolio VaR
-    const varResult = this._calculatePortfolioVaR();
+    const varResult = this._calculatePortfolioVaR(); // 定义常量 varResult
 
-    result.details = {
-      var: varResult.var,
-      cvar: varResult.cvar,
-      maxVaR: this.config.maxVaR,
-      maxCVaR: this.config.maxCVaR,
-    };
+    result.details = { // 赋值 result.details
+      var: varResult.var, // 设置 var 字段
+      cvar: varResult.cvar, // 设置 cvar 字段
+      maxVaR: this.config.maxVaR, // 设置 maxVaR 字段
+      maxCVaR: this.config.maxCVaR, // 设置 maxCVaR 字段
+    }; // 结束代码块
 
     // 检查VaR限制 / Check VaR limit
-    const varRatio = varResult.var / this.portfolioState.totalEquity;
+    const varRatio = varResult.var / this.portfolioState.totalEquity; // 定义常量 varRatio
 
-    if (varRatio >= this.config.maxVaR) {
-      result.action = RISK_ACTION.REDUCE_EXPOSURE;
-      result.level = PORTFOLIO_RISK_LEVEL.HIGH;
-      result.message = `VaR超限: ${(varRatio * 100).toFixed(2)}% >= ${(this.config.maxVaR * 100).toFixed(0)}%`;
+    if (varRatio >= this.config.maxVaR) { // 条件判断 varRatio >= this.config.maxVaR
+      result.action = RISK_ACTION.REDUCE_EXPOSURE; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.HIGH; // 赋值 result.level
+      result.message = `VaR超限: ${(varRatio * 100).toFixed(2)}% >= ${(this.config.maxVaR * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'warn');
-    }
+      this.log(`⚠️ ${result.message}`, 'warn'); // 调用 log
+    } // 结束代码块
 
     // 检查CVaR限制 / Check CVaR limit
-    const cvarRatio = varResult.cvar / this.portfolioState.totalEquity;
+    const cvarRatio = varResult.cvar / this.portfolioState.totalEquity; // 定义常量 cvarRatio
 
-    if (cvarRatio >= this.config.maxCVaR) {
-      result.action = RISK_ACTION.REDUCE_ALL;
-      result.level = PORTFOLIO_RISK_LEVEL.CRITICAL;
-      result.message = `CVaR超限: ${(cvarRatio * 100).toFixed(2)}% >= ${(this.config.maxCVaR * 100).toFixed(0)}%`;
+    if (cvarRatio >= this.config.maxCVaR) { // 条件判断 cvarRatio >= this.config.maxCVaR
+      result.action = RISK_ACTION.REDUCE_ALL; // 赋值 result.action
+      result.level = PORTFOLIO_RISK_LEVEL.CRITICAL; // 赋值 result.level
+      result.message = `CVaR超限: ${(cvarRatio * 100).toFixed(2)}% >= ${(this.config.maxCVaR * 100).toFixed(0)}%`; // 赋值 result.message
 
-      this.log(`⚠️ ${result.message}`, 'error');
-    }
+      this.log(`⚠️ ${result.message}`, 'error'); // 调用 log
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算组合VaR
@@ -711,40 +711,40 @@ export class PortfolioRiskManager extends EventEmitter {
    * @returns {Object} VaR结果 / VaR result
    * @private
    */
-  _calculatePortfolioVaR() {
+  _calculatePortfolioVaR() { // 调用 _calculatePortfolioVaR
     // 收集策略收益数据 / Collect strategy return data
-    const returns = [];
+    const returns = []; // 定义常量 returns
 
-    for (const [, state] of this.strategyStates) {
-      if (state.returns && state.returns.length > 0) {
-        returns.push(...state.returns);
-      }
-    }
+    for (const [, state] of this.strategyStates) { // 循环 const [, state] of this.strategyStates
+      if (state.returns && state.returns.length > 0) { // 条件判断 state.returns && state.returns.length > 0
+        returns.push(...state.returns); // 调用 returns.push
+      } // 结束代码块
+    } // 结束代码块
 
-    if (returns.length < 10) {
+    if (returns.length < 10) { // 条件判断 returns.length < 10
       // 数据不足，使用简化估算 / Insufficient data, use simplified estimation
       const avgVolatility = 0.02; // 假设2%日波动率 / Assume 2% daily volatility
-      const var95 = this.portfolioState.totalPositionValue * avgVolatility * 1.65;
-      const cvar95 = var95 * 1.2;
+      const var95 = this.portfolioState.totalPositionValue * avgVolatility * 1.65; // 定义常量 var95
+      const cvar95 = var95 * 1.2; // 定义常量 cvar95
 
-      return { var: var95, cvar: cvar95, method: 'simplified' };
-    }
+      return { var: var95, cvar: cvar95, method: 'simplified' }; // 返回结果
+    } // 结束代码块
 
     // 排序收益 / Sort returns
-    const sortedReturns = [...returns].sort((a, b) => a - b);
-    const n = sortedReturns.length;
+    const sortedReturns = [...returns].sort((a, b) => a - b); // 定义函数 sortedReturns
+    const n = sortedReturns.length; // 定义常量 n
 
     // 计算VaR (历史模拟法) / Calculate VaR (historical simulation)
-    const varIndex = Math.floor(n * (1 - this.config.varConfidenceLevel));
-    const var95 = Math.abs(sortedReturns[varIndex]) * this.portfolioState.totalPositionValue;
+    const varIndex = Math.floor(n * (1 - this.config.varConfidenceLevel)); // 定义常量 varIndex
+    const var95 = Math.abs(sortedReturns[varIndex]) * this.portfolioState.totalPositionValue; // 定义常量 var95
 
     // 计算CVaR (条件VaR) / Calculate CVaR (Conditional VaR)
-    const tailReturns = sortedReturns.slice(0, varIndex + 1);
-    const cvar95 = Math.abs(tailReturns.reduce((a, b) => a + b, 0) / tailReturns.length) *
-                   this.portfolioState.totalPositionValue;
+    const tailReturns = sortedReturns.slice(0, varIndex + 1); // 定义常量 tailReturns
+    const cvar95 = Math.abs(tailReturns.reduce((a, b) => a + b, 0) / tailReturns.length) * // 定义函数 cvar95
+                   this.portfolioState.totalPositionValue; // 访问 portfolioState
 
-    return { var: var95, cvar: cvar95, method: 'historical' };
-  }
+    return { var: var95, cvar: cvar95, method: 'historical' }; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 风控动作执行 / Risk Action Execution
@@ -757,52 +757,52 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Array} results - 检查结果列表 / Check results list
    * @private
    */
-  async _executeRiskActions(results) {
+  async _executeRiskActions(results) { // 执行语句
     // 找出最严重的动作 / Find most severe action
-    const actionPriority = {
-      [RISK_ACTION.NONE]: 0,
-      [RISK_ACTION.ALERT]: 1,
-      [RISK_ACTION.REBALANCE]: 2,
-      [RISK_ACTION.PAUSE_NEW_TRADES]: 3,
-      [RISK_ACTION.REDUCE_EXPOSURE]: 4,
-      [RISK_ACTION.REDUCE_ALL]: 5,
-      [RISK_ACTION.EMERGENCY_CLOSE]: 6,
-    };
+    const actionPriority = { // 定义常量 actionPriority
+      [RISK_ACTION.NONE]: 0, // 执行语句
+      [RISK_ACTION.ALERT]: 1, // 执行语句
+      [RISK_ACTION.REBALANCE]: 2, // 执行语句
+      [RISK_ACTION.PAUSE_NEW_TRADES]: 3, // 执行语句
+      [RISK_ACTION.REDUCE_EXPOSURE]: 4, // 执行语句
+      [RISK_ACTION.REDUCE_ALL]: 5, // 执行语句
+      [RISK_ACTION.EMERGENCY_CLOSE]: 6, // 执行语句
+    }; // 结束代码块
 
-    const mostSevere = results.reduce((a, b) =>
-      (actionPriority[a.action] || 0) > (actionPriority[b.action] || 0) ? a : b
-    );
+    const mostSevere = results.reduce((a, b) => // 定义函数 mostSevere
+      (actionPriority[a.action] || 0) > (actionPriority[b.action] || 0) ? a : b // 执行语句
+    ); // 结束调用或参数
 
     // 执行相应动作 / Execute corresponding action
-    switch (mostSevere.action) {
-      case RISK_ACTION.EMERGENCY_CLOSE:
-        await this._emergencyClose(mostSevere);
-        break;
+    switch (mostSevere.action) { // 分支选择 mostSevere.action
+      case RISK_ACTION.EMERGENCY_CLOSE: // 分支 RISK_ACTION.EMERGENCY_CLOSE
+        await this._emergencyClose(mostSevere); // 等待异步结果
+        break; // 跳出循环或分支
 
-      case RISK_ACTION.REDUCE_ALL:
-        await this._reduceAllPositions(mostSevere);
-        break;
+      case RISK_ACTION.REDUCE_ALL: // 分支 RISK_ACTION.REDUCE_ALL
+        await this._reduceAllPositions(mostSevere); // 等待异步结果
+        break; // 跳出循环或分支
 
-      case RISK_ACTION.REDUCE_EXPOSURE:
-        await this._reduceExposure(mostSevere);
-        break;
+      case RISK_ACTION.REDUCE_EXPOSURE: // 分支 RISK_ACTION.REDUCE_EXPOSURE
+        await this._reduceExposure(mostSevere); // 等待异步结果
+        break; // 跳出循环或分支
 
-      case RISK_ACTION.PAUSE_NEW_TRADES:
-        this._pauseNewTrades(mostSevere);
-        break;
+      case RISK_ACTION.PAUSE_NEW_TRADES: // 分支 RISK_ACTION.PAUSE_NEW_TRADES
+        this._pauseNewTrades(mostSevere); // 调用 _pauseNewTrades
+        break; // 跳出循环或分支
 
-      case RISK_ACTION.REBALANCE:
-        this._triggerRebalance(mostSevere);
-        break;
+      case RISK_ACTION.REBALANCE: // 分支 RISK_ACTION.REBALANCE
+        this._triggerRebalance(mostSevere); // 调用 _triggerRebalance
+        break; // 跳出循环或分支
 
-      case RISK_ACTION.ALERT:
-        this._emitAlert(mostSevere);
-        break;
+      case RISK_ACTION.ALERT: // 分支 RISK_ACTION.ALERT
+        this._emitAlert(mostSevere); // 调用 _emitAlert
+        break; // 跳出循环或分支
 
-      default:
-        break;
-    }
-  }
+      default: // 默认分支
+        break; // 跳出循环或分支
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 紧急平仓
@@ -811,28 +811,28 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  async _emergencyClose(trigger) {
-    this.log(`🚨 执行紧急平仓: ${trigger.message}`, 'error');
+  async _emergencyClose(trigger) { // 执行语句
+    this.log(`🚨 执行紧急平仓: ${trigger.message}`, 'error'); // 调用 log
 
     // 暂停所有交易 / Pause all trading
-    this.portfolioState.tradingAllowed = false;
-    this.portfolioState.pauseReason = trigger.message;
+    this.portfolioState.tradingAllowed = false; // 访问 portfolioState
+    this.portfolioState.pauseReason = trigger.message; // 访问 portfolioState
 
     // 记录风控事件 / Record risk event
-    this._recordRiskEvent('emergencyClose', trigger);
+    this._recordRiskEvent('emergencyClose', trigger); // 调用 _recordRiskEvent
 
     // 调用执行器平仓 / Call executor to close
-    if (this.executor && typeof this.executor.emergencyCloseAll === 'function') {
-      try {
-        await this.executor.emergencyCloseAll();
-        this.log('✓ 紧急平仓完成 / Emergency close completed', 'info');
-      } catch (error) {
-        this.log(`✗ 紧急平仓失败: ${error.message}`, 'error');
-      }
-    }
+    if (this.executor && typeof this.executor.emergencyCloseAll === 'function') { // 条件判断 this.executor && typeof this.executor.emergen...
+      try { // 尝试执行
+        await this.executor.emergencyCloseAll(); // 等待异步结果
+        this.log('✓ 紧急平仓完成 / Emergency close completed', 'info'); // 调用 log
+      } catch (error) { // 执行语句
+        this.log(`✗ 紧急平仓失败: ${error.message}`, 'error'); // 调用 log
+      } // 结束代码块
+    } // 结束代码块
 
-    this.emit('emergencyClose', trigger);
-  }
+    this.emit('emergencyClose', trigger); // 调用 emit
+  } // 结束代码块
 
   /**
    * 全面减仓
@@ -841,35 +841,35 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  async _reduceAllPositions(trigger) {
+  async _reduceAllPositions(trigger) { // 执行语句
     // 检查冷却时间 / Check cooldown
-    if (Date.now() - this.lastDeRiskTime < this.config.deRiskCooldown) {
-      this.log('去风险冷却中，跳过 / De-risk cooldown, skipping', 'info');
-      return;
-    }
+    if (Date.now() - this.lastDeRiskTime < this.config.deRiskCooldown) { // 条件判断 Date.now() - this.lastDeRiskTime < this.confi...
+      this.log('去风险冷却中，跳过 / De-risk cooldown, skipping', 'info'); // 调用 log
+      return; // 返回结果
+    } // 结束代码块
 
-    this.log(`📉 执行全面减仓: ${trigger.message}`, 'warn');
+    this.log(`📉 执行全面减仓: ${trigger.message}`, 'warn'); // 调用 log
 
     // 记录风控事件 / Record risk event
-    this._recordRiskEvent('reduceAll', trigger);
+    this._recordRiskEvent('reduceAll', trigger); // 调用 _recordRiskEvent
 
     // 对每个策略执行减仓 / Reduce each strategy
-    if (this.executor && this.config.enableAutoDeRisk) {
-      for (const [strategyId, state] of this.strategyStates) {
-        if (state.positions && state.positions.length > 0) {
-          try {
-            await this._reduceStrategyPositions(strategyId, this.config.deRiskRatio);
-          } catch (error) {
-            this.log(`减仓策略 ${strategyId} 失败: ${error.message}`, 'error');
-          }
-        }
-      }
+    if (this.executor && this.config.enableAutoDeRisk) { // 条件判断 this.executor && this.config.enableAutoDeRisk
+      for (const [strategyId, state] of this.strategyStates) { // 循环 const [strategyId, state] of this.strategyStates
+        if (state.positions && state.positions.length > 0) { // 条件判断 state.positions && state.positions.length > 0
+          try { // 尝试执行
+            await this._reduceStrategyPositions(strategyId, this.config.deRiskRatio); // 等待异步结果
+          } catch (error) { // 执行语句
+            this.log(`减仓策略 ${strategyId} 失败: ${error.message}`, 'error'); // 调用 log
+          } // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
 
-      this.lastDeRiskTime = Date.now();
-    }
+      this.lastDeRiskTime = Date.now(); // 设置 lastDeRiskTime
+    } // 结束代码块
 
-    this.emit('reduceAll', trigger);
-  }
+    this.emit('reduceAll', trigger); // 调用 emit
+  } // 结束代码块
 
   /**
    * 降低敞口
@@ -878,41 +878,41 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  async _reduceExposure(trigger) {
+  async _reduceExposure(trigger) { // 执行语句
     // 检查冷却时间 / Check cooldown
-    if (Date.now() - this.lastDeRiskTime < this.config.deRiskCooldown) {
-      return;
-    }
+    if (Date.now() - this.lastDeRiskTime < this.config.deRiskCooldown) { // 条件判断 Date.now() - this.lastDeRiskTime < this.confi...
+      return; // 返回结果
+    } // 结束代码块
 
-    this.log(`📉 降低敞口: ${trigger.message}`, 'warn');
+    this.log(`📉 降低敞口: ${trigger.message}`, 'warn'); // 调用 log
 
     // 记录风控事件 / Record risk event
-    this._recordRiskEvent('reduceExposure', trigger);
+    this._recordRiskEvent('reduceExposure', trigger); // 调用 _recordRiskEvent
 
     // 找出仓位最大的策略进行减仓 / Find strategy with largest position to reduce
-    if (this.executor && this.config.enableAutoDeRisk) {
-      let largestStrategy = null;
-      let largestPosition = 0;
+    if (this.executor && this.config.enableAutoDeRisk) { // 条件判断 this.executor && this.config.enableAutoDeRisk
+      let largestStrategy = null; // 定义变量 largestStrategy
+      let largestPosition = 0; // 定义变量 largestPosition
 
-      for (const [strategyId, state] of this.strategyStates) {
-        if (state.positionValue > largestPosition) {
-          largestPosition = state.positionValue;
-          largestStrategy = strategyId;
-        }
-      }
+      for (const [strategyId, state] of this.strategyStates) { // 循环 const [strategyId, state] of this.strategyStates
+        if (state.positionValue > largestPosition) { // 条件判断 state.positionValue > largestPosition
+          largestPosition = state.positionValue; // 赋值 largestPosition
+          largestStrategy = strategyId; // 赋值 largestStrategy
+        } // 结束代码块
+      } // 结束代码块
 
-      if (largestStrategy) {
-        try {
-          await this._reduceStrategyPositions(largestStrategy, this.config.deRiskRatio / 2);
-          this.lastDeRiskTime = Date.now();
-        } catch (error) {
-          this.log(`减仓策略 ${largestStrategy} 失败: ${error.message}`, 'error');
-        }
-      }
-    }
+      if (largestStrategy) { // 条件判断 largestStrategy
+        try { // 尝试执行
+          await this._reduceStrategyPositions(largestStrategy, this.config.deRiskRatio / 2); // 等待异步结果
+          this.lastDeRiskTime = Date.now(); // 设置 lastDeRiskTime
+        } catch (error) { // 执行语句
+          this.log(`减仓策略 ${largestStrategy} 失败: ${error.message}`, 'error'); // 调用 log
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    this.emit('reduceExposure', trigger);
-  }
+    this.emit('reduceExposure', trigger); // 调用 emit
+  } // 结束代码块
 
   /**
    * 减少策略仓位
@@ -922,31 +922,31 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {number} ratio - 减仓比例 / Reduction ratio
    * @private
    */
-  async _reduceStrategyPositions(strategyId, ratio) {
-    const state = this.strategyStates.get(strategyId);
-    if (!state || !state.positions) return;
+  async _reduceStrategyPositions(strategyId, ratio) { // 执行语句
+    const state = this.strategyStates.get(strategyId); // 定义常量 state
+    if (!state || !state.positions) return; // 条件判断 !state || !state.positions
 
-    this.log(`减仓策略 ${strategyId}: ${(ratio * 100).toFixed(0)}%`, 'info');
+    this.log(`减仓策略 ${strategyId}: ${(ratio * 100).toFixed(0)}%`, 'info'); // 调用 log
 
-    for (const position of state.positions) {
-      const reduceAmount = Math.abs(position.size || position.amount) * ratio;
+    for (const position of state.positions) { // 循环 const position of state.positions
+      const reduceAmount = Math.abs(position.size || position.amount) * ratio; // 定义常量 reduceAmount
 
-      if (reduceAmount > 0 && this.executor) {
-        const closeSide = position.side === 'long' ? 'sell' : 'buy';
+      if (reduceAmount > 0 && this.executor) { // 条件判断 reduceAmount > 0 && this.executor
+        const closeSide = position.side === 'long' ? 'sell' : 'buy'; // 定义常量 closeSide
 
-        try {
-          await this.executor.executeMarketOrder({
-            symbol: position.symbol,
-            side: closeSide,
-            amount: reduceAmount,
-            reduceOnly: true,
-          });
-        } catch (error) {
-          this.log(`减仓 ${position.symbol} 失败: ${error.message}`, 'error');
-        }
-      }
-    }
-  }
+        try { // 尝试执行
+          await this.executor.executeMarketOrder({ // 等待异步结果
+            symbol: position.symbol, // 设置 symbol 字段
+            side: closeSide, // 设置 side 字段
+            amount: reduceAmount, // 设置 amount 字段
+            reduceOnly: true, // 设置 reduceOnly 字段
+          }); // 结束代码块
+        } catch (error) { // 执行语句
+          this.log(`减仓 ${position.symbol} 失败: ${error.message}`, 'error'); // 调用 log
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 暂停新开仓
@@ -955,19 +955,19 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  _pauseNewTrades(trigger) {
-    if (!this.portfolioState.tradingAllowed) return;
+  _pauseNewTrades(trigger) { // 调用 _pauseNewTrades
+    if (!this.portfolioState.tradingAllowed) return; // 条件判断 !this.portfolioState.tradingAllowed
 
-    this.log(`⏸️ 暂停新开仓: ${trigger.message}`, 'warn');
+    this.log(`⏸️ 暂停新开仓: ${trigger.message}`, 'warn'); // 调用 log
 
-    this.portfolioState.tradingAllowed = false;
-    this.portfolioState.pauseReason = trigger.message;
+    this.portfolioState.tradingAllowed = false; // 访问 portfolioState
+    this.portfolioState.pauseReason = trigger.message; // 访问 portfolioState
 
     // 记录风控事件 / Record risk event
-    this._recordRiskEvent('pauseNewTrades', trigger);
+    this._recordRiskEvent('pauseNewTrades', trigger); // 调用 _recordRiskEvent
 
-    this.emit('tradingPaused', trigger);
-  }
+    this.emit('tradingPaused', trigger); // 调用 emit
+  } // 结束代码块
 
   /**
    * 触发再平衡
@@ -976,18 +976,18 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  _triggerRebalance(trigger) {
-    this.log(`🔄 触发再平衡: ${trigger.message}`, 'info');
+  _triggerRebalance(trigger) { // 调用 _triggerRebalance
+    this.log(`🔄 触发再平衡: ${trigger.message}`, 'info'); // 调用 log
 
     // 记录风控事件 / Record risk event
-    this._recordRiskEvent('rebalance', trigger);
+    this._recordRiskEvent('rebalance', trigger); // 调用 _recordRiskEvent
 
-    if (this.capitalAllocator) {
-      this.capitalAllocator.rebalance('risk_triggered');
-    }
+    if (this.capitalAllocator) { // 条件判断 this.capitalAllocator
+      this.capitalAllocator.rebalance('risk_triggered'); // 访问 capitalAllocator
+    } // 结束代码块
 
-    this.emit('rebalanceTriggered', trigger);
-  }
+    this.emit('rebalanceTriggered', trigger); // 调用 emit
+  } // 结束代码块
 
   /**
    * 发出警报
@@ -996,15 +996,15 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} trigger - 触发信息 / Trigger info
    * @private
    */
-  _emitAlert(trigger) {
-    this.emit('alert', {
-      level: trigger.level,
-      type: trigger.type,
-      message: trigger.message,
-      details: trigger.details,
-      timestamp: Date.now(),
-    });
-  }
+  _emitAlert(trigger) { // 调用 _emitAlert
+    this.emit('alert', { // 调用 emit
+      level: trigger.level, // 设置 level 字段
+      type: trigger.type, // 设置 type 字段
+      message: trigger.message, // 设置 message 字段
+      details: trigger.details, // 设置 details 字段
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }); // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 状态更新 / State Updates
@@ -1015,41 +1015,41 @@ export class PortfolioRiskManager extends EventEmitter {
    * Update portfolio state
    * @private
    */
-  _updatePortfolioState() {
+  _updatePortfolioState() { // 调用 _updatePortfolioState
     // 计算总权益和总仓位 / Calculate total equity and position
-    let totalEquity = 0;
-    let totalPositionValue = 0;
+    let totalEquity = 0; // 定义变量 totalEquity
+    let totalPositionValue = 0; // 定义变量 totalPositionValue
 
-    for (const [, state] of this.strategyStates) {
-      totalEquity += state.equity || 0;
-      totalPositionValue += state.positionValue || 0;
-    }
+    for (const [, state] of this.strategyStates) { // 循环 const [, state] of this.strategyStates
+      totalEquity += state.equity || 0; // 执行语句
+      totalPositionValue += state.positionValue || 0; // 执行语句
+    } // 结束代码块
 
     // 更新组合状态 / Update portfolio state
-    this.portfolioState.totalEquity = totalEquity;
-    this.portfolioState.totalPositionValue = totalPositionValue;
-    this.portfolioState.positionRatio = totalEquity > 0
-      ? totalPositionValue / totalEquity
-      : 0;
+    this.portfolioState.totalEquity = totalEquity; // 访问 portfolioState
+    this.portfolioState.totalPositionValue = totalPositionValue; // 访问 portfolioState
+    this.portfolioState.positionRatio = totalEquity > 0 // 访问 portfolioState
+      ? totalPositionValue / totalEquity // 执行语句
+      : 0; // 执行语句
 
     // 更新峰值权益 / Update peak equity
-    if (totalEquity > this.portfolioState.peakEquity) {
-      this.portfolioState.peakEquity = totalEquity;
-    }
+    if (totalEquity > this.portfolioState.peakEquity) { // 条件判断 totalEquity > this.portfolioState.peakEquity
+      this.portfolioState.peakEquity = totalEquity; // 访问 portfolioState
+    } // 结束代码块
 
     // 计算回撤 / Calculate drawdowns
-    this.portfolioState.currentDrawdown = this.portfolioState.peakEquity > 0
-      ? (this.portfolioState.peakEquity - totalEquity) / this.portfolioState.peakEquity
-      : 0;
+    this.portfolioState.currentDrawdown = this.portfolioState.peakEquity > 0 // 访问 portfolioState
+      ? (this.portfolioState.peakEquity - totalEquity) / this.portfolioState.peakEquity // 执行语句
+      : 0; // 执行语句
 
-    this.portfolioState.dailyDrawdown = this.portfolioState.dailyStartEquity > 0
-      ? Math.max(0, (this.portfolioState.dailyStartEquity - totalEquity) / this.portfolioState.dailyStartEquity)
-      : 0;
+    this.portfolioState.dailyDrawdown = this.portfolioState.dailyStartEquity > 0 // 访问 portfolioState
+      ? Math.max(0, (this.portfolioState.dailyStartEquity - totalEquity) / this.portfolioState.dailyStartEquity) // 执行语句
+      : 0; // 执行语句
 
-    this.portfolioState.weeklyDrawdown = this.portfolioState.weeklyStartEquity > 0
-      ? Math.max(0, (this.portfolioState.weeklyStartEquity - totalEquity) / this.portfolioState.weeklyStartEquity)
-      : 0;
-  }
+    this.portfolioState.weeklyDrawdown = this.portfolioState.weeklyStartEquity > 0 // 访问 portfolioState
+      ? Math.max(0, (this.portfolioState.weeklyStartEquity - totalEquity) / this.portfolioState.weeklyStartEquity) // 执行语句
+      : 0; // 执行语句
+  } // 结束代码块
 
   /**
    * 更新风险级别
@@ -1058,78 +1058,78 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Array} results - 检查结果 / Check results
    * @private
    */
-  _updateRiskLevel(results) {
-    const levelPriority = {
-      [PORTFOLIO_RISK_LEVEL.SAFE]: 0,
-      [PORTFOLIO_RISK_LEVEL.NORMAL]: 1,
-      [PORTFOLIO_RISK_LEVEL.ELEVATED]: 2,
-      [PORTFOLIO_RISK_LEVEL.HIGH]: 3,
-      [PORTFOLIO_RISK_LEVEL.CRITICAL]: 4,
-      [PORTFOLIO_RISK_LEVEL.EMERGENCY]: 5,
-    };
+  _updateRiskLevel(results) { // 调用 _updateRiskLevel
+    const levelPriority = { // 定义常量 levelPriority
+      [PORTFOLIO_RISK_LEVEL.SAFE]: 0, // 执行语句
+      [PORTFOLIO_RISK_LEVEL.NORMAL]: 1, // 执行语句
+      [PORTFOLIO_RISK_LEVEL.ELEVATED]: 2, // 执行语句
+      [PORTFOLIO_RISK_LEVEL.HIGH]: 3, // 执行语句
+      [PORTFOLIO_RISK_LEVEL.CRITICAL]: 4, // 执行语句
+      [PORTFOLIO_RISK_LEVEL.EMERGENCY]: 5, // 执行语句
+    }; // 结束代码块
 
     // 找出最高风险级别 / Find highest risk level
-    let highestLevel = PORTFOLIO_RISK_LEVEL.NORMAL;
+    let highestLevel = PORTFOLIO_RISK_LEVEL.NORMAL; // 定义变量 highestLevel
 
-    for (const result of results) {
-      if ((levelPriority[result.level] || 0) > (levelPriority[highestLevel] || 0)) {
-        highestLevel = result.level;
-      }
-    }
+    for (const result of results) { // 循环 const result of results
+      if ((levelPriority[result.level] || 0) > (levelPriority[highestLevel] || 0)) { // 条件判断 (levelPriority[result.level] || 0) > (levelPr...
+        highestLevel = result.level; // 赋值 highestLevel
+      } // 结束代码块
+    } // 结束代码块
 
     // 如果风险级别变化，发出事件 / Emit event if risk level changed
-    if (highestLevel !== this.portfolioState.riskLevel) {
-      const previousLevel = this.portfolioState.riskLevel;
-      this.portfolioState.riskLevel = highestLevel;
+    if (highestLevel !== this.portfolioState.riskLevel) { // 条件判断 highestLevel !== this.portfolioState.riskLevel
+      const previousLevel = this.portfolioState.riskLevel; // 定义常量 previousLevel
+      this.portfolioState.riskLevel = highestLevel; // 访问 portfolioState
 
-      this.emit('riskLevelChanged', {
-        previousLevel,
-        currentLevel: highestLevel,
-        timestamp: Date.now(),
-      });
+      this.emit('riskLevelChanged', { // 调用 emit
+        previousLevel, // 执行语句
+        currentLevel: highestLevel, // 设置 currentLevel 字段
+        timestamp: Date.now(), // 设置 timestamp 字段
+      }); // 结束代码块
 
-      this.log(`风险级别变更: ${previousLevel} -> ${highestLevel}`, 'info');
-    }
-  }
+      this.log(`风险级别变更: ${previousLevel} -> ${highestLevel}`, 'info'); // 调用 log
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 检查时间重置
    * Check time resets
    * @private
    */
-  _checkTimeResets() {
-    const now = new Date();
-    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const weekStart = dayStart - now.getDay() * 24 * 60 * 60 * 1000;
+  _checkTimeResets() { // 调用 _checkTimeResets
+    const now = new Date(); // 定义常量 now
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(); // 定义常量 dayStart
+    const weekStart = dayStart - now.getDay() * 24 * 60 * 60 * 1000; // 定义常量 weekStart
 
     // 检查日重置 / Check daily reset
-    if (this._lastDayStart !== dayStart) {
-      this._lastDayStart = dayStart;
-      this.portfolioState.dailyStartEquity = this.portfolioState.totalEquity;
-      this.portfolioState.dailyDrawdown = 0;
+    if (this._lastDayStart !== dayStart) { // 条件判断 this._lastDayStart !== dayStart
+      this._lastDayStart = dayStart; // 设置 _lastDayStart
+      this.portfolioState.dailyStartEquity = this.portfolioState.totalEquity; // 访问 portfolioState
+      this.portfolioState.dailyDrawdown = 0; // 访问 portfolioState
 
       // 恢复交易 (如果因为单日回撤暂停) / Resume trading if paused due to daily drawdown
-      if (this.portfolioState.pauseReason?.includes('单日回撤')) {
-        this.portfolioState.tradingAllowed = true;
-        this.portfolioState.pauseReason = null;
-        this.log('跨天重置: 交易已恢复 / Day reset: Trading resumed', 'info');
-      }
-    }
+      if (this.portfolioState.pauseReason?.includes('单日回撤')) { // 条件判断 this.portfolioState.pauseReason?.includes('单日...
+        this.portfolioState.tradingAllowed = true; // 访问 portfolioState
+        this.portfolioState.pauseReason = null; // 访问 portfolioState
+        this.log('跨天重置: 交易已恢复 / Day reset: Trading resumed', 'info'); // 调用 log
+      } // 结束代码块
+    } // 结束代码块
 
     // 检查周重置 / Check weekly reset
-    if (this._lastWeekStart !== weekStart) {
-      this._lastWeekStart = weekStart;
-      this.portfolioState.weeklyStartEquity = this.portfolioState.totalEquity;
-      this.portfolioState.weeklyDrawdown = 0;
+    if (this._lastWeekStart !== weekStart) { // 条件判断 this._lastWeekStart !== weekStart
+      this._lastWeekStart = weekStart; // 设置 _lastWeekStart
+      this.portfolioState.weeklyStartEquity = this.portfolioState.totalEquity; // 访问 portfolioState
+      this.portfolioState.weeklyDrawdown = 0; // 访问 portfolioState
 
       // 恢复交易 (如果因为单周回撤暂停) / Resume trading if paused due to weekly drawdown
-      if (this.portfolioState.pauseReason?.includes('单周回撤')) {
-        this.portfolioState.tradingAllowed = true;
-        this.portfolioState.pauseReason = null;
-        this.log('跨周重置: 交易已恢复 / Week reset: Trading resumed', 'info');
-      }
-    }
-  }
+      if (this.portfolioState.pauseReason?.includes('单周回撤')) { // 条件判断 this.portfolioState.pauseReason?.includes('单周...
+        this.portfolioState.tradingAllowed = true; // 访问 portfolioState
+        this.portfolioState.pauseReason = null; // 访问 portfolioState
+        this.log('跨周重置: 交易已恢复 / Week reset: Trading resumed', 'info'); // 调用 log
+      } // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 记录风控事件
@@ -1139,19 +1139,19 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {Object} details - 详情 / Details
    * @private
    */
-  _recordRiskEvent(type, details) {
-    this.riskHistory.push({
-      type,
-      details,
-      portfolioState: { ...this.portfolioState },
-      timestamp: Date.now(),
-    });
+  _recordRiskEvent(type, details) { // 调用 _recordRiskEvent
+    this.riskHistory.push({ // 访问 riskHistory
+      type, // 执行语句
+      details, // 执行语句
+      portfolioState: { ...this.portfolioState }, // 设置 portfolioState 字段
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }); // 结束代码块
 
     // 限制历史长度 / Limit history length
-    if (this.riskHistory.length > 200) {
-      this.riskHistory = this.riskHistory.slice(-200);
-    }
-  }
+    if (this.riskHistory.length > 200) { // 条件判断 this.riskHistory.length > 200
+      this.riskHistory = this.riskHistory.slice(-200); // 设置 riskHistory
+    } // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 公共API / Public API
@@ -1161,13 +1161,13 @@ export class PortfolioRiskManager extends EventEmitter {
    * 手动恢复交易
    * Manual resume trading
    */
-  resumeTrading() {
-    this.portfolioState.tradingAllowed = true;
-    this.portfolioState.pauseReason = null;
+  resumeTrading() { // 调用 resumeTrading
+    this.portfolioState.tradingAllowed = true; // 访问 portfolioState
+    this.portfolioState.pauseReason = null; // 访问 portfolioState
 
-    this.log('交易已手动恢复 / Trading manually resumed', 'info');
-    this.emit('tradingResumed', { reason: 'manual' });
-  }
+    this.log('交易已手动恢复 / Trading manually resumed', 'info'); // 调用 log
+    this.emit('tradingResumed', { reason: 'manual' }); // 调用 emit
+  } // 结束代码块
 
   /**
    * 手动暂停交易
@@ -1175,13 +1175,13 @@ export class PortfolioRiskManager extends EventEmitter {
    *
    * @param {string} reason - 原因 / Reason
    */
-  pauseTrading(reason = '手动暂停') {
-    this.portfolioState.tradingAllowed = false;
-    this.portfolioState.pauseReason = reason;
+  pauseTrading(reason = '手动暂停') { // 调用 pauseTrading
+    this.portfolioState.tradingAllowed = false; // 访问 portfolioState
+    this.portfolioState.pauseReason = reason; // 访问 portfolioState
 
-    this.log(`交易已手动暂停: ${reason}`, 'info');
-    this.emit('tradingPaused', { reason });
-  }
+    this.log(`交易已手动暂停: ${reason}`, 'info'); // 调用 log
+    this.emit('tradingPaused', { reason }); // 调用 emit
+  } // 结束代码块
 
   /**
    * 更新总权益
@@ -1189,15 +1189,15 @@ export class PortfolioRiskManager extends EventEmitter {
    *
    * @param {number} equity - 权益 / Equity
    */
-  updateTotalEquity(equity) {
-    this.portfolioState.totalEquity = equity;
+  updateTotalEquity(equity) { // 调用 updateTotalEquity
+    this.portfolioState.totalEquity = equity; // 访问 portfolioState
 
-    if (equity > this.portfolioState.peakEquity) {
-      this.portfolioState.peakEquity = equity;
-    }
+    if (equity > this.portfolioState.peakEquity) { // 条件判断 equity > this.portfolioState.peakEquity
+      this.portfolioState.peakEquity = equity; // 访问 portfolioState
+    } // 结束代码块
 
-    this._updatePortfolioState();
-  }
+    this._updatePortfolioState(); // 调用 _updatePortfolioState
+  } // 结束代码块
 
   /**
    * 获取风控状态
@@ -1205,32 +1205,32 @@ export class PortfolioRiskManager extends EventEmitter {
    *
    * @returns {Object} 状态信息 / Status info
    */
-  getStatus() {
-    return {
-      running: this.running,
-      portfolioState: { ...this.portfolioState },
-      strategyCount: this.strategyStates.size,
-      strategies: Object.fromEntries(
-        [...this.strategyStates].map(([id, state]) => [
-          id,
-          {
-            positionValue: state.positionValue,
-            equity: state.equity,
-            tradingAllowed: state.tradingAllowed,
-          },
-        ])
-      ),
-      riskBudgets: Object.fromEntries(this.riskBudgets),
-      recentRiskEvents: this.riskHistory.slice(-10),
-      config: {
-        maxTotalPositionRatio: this.config.maxTotalPositionRatio,
-        maxPortfolioDrawdown: this.config.maxPortfolioDrawdown,
-        maxDailyDrawdown: this.config.maxDailyDrawdown,
-        highCorrelationThreshold: this.config.highCorrelationThreshold,
-        maxVaR: this.config.maxVaR,
-      },
-    };
-  }
+  getStatus() { // 调用 getStatus
+    return { // 返回结果
+      running: this.running, // 设置 running 字段
+      portfolioState: { ...this.portfolioState }, // 设置 portfolioState 字段
+      strategyCount: this.strategyStates.size, // 设置 strategyCount 字段
+      strategies: Object.fromEntries( // 设置 strategies 字段
+        [...this.strategyStates].map(([id, state]) => [ // 定义箭头函数
+          id, // 执行语句
+          { // 开始代码块
+            positionValue: state.positionValue, // 设置 positionValue 字段
+            equity: state.equity, // 设置 equity 字段
+            tradingAllowed: state.tradingAllowed, // 设置 tradingAllowed 字段
+          }, // 结束代码块
+        ]) // 结束数组或索引
+      ), // 结束调用或参数
+      riskBudgets: Object.fromEntries(this.riskBudgets), // 设置 riskBudgets 字段
+      recentRiskEvents: this.riskHistory.slice(-10), // 设置 recentRiskEvents 字段
+      config: { // 设置 config 字段
+        maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 设置 maxTotalPositionRatio 字段
+        maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 设置 maxPortfolioDrawdown 字段
+        maxDailyDrawdown: this.config.maxDailyDrawdown, // 设置 maxDailyDrawdown 字段
+        highCorrelationThreshold: this.config.highCorrelationThreshold, // 设置 highCorrelationThreshold 字段
+        maxVaR: this.config.maxVaR, // 设置 maxVaR 字段
+      }, // 结束代码块
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取风险报告
@@ -1238,25 +1238,25 @@ export class PortfolioRiskManager extends EventEmitter {
    *
    * @returns {Object} 风险报告 / Risk report
    */
-  getRiskReport() {
-    return {
-      timestamp: Date.now(),
-      portfolio: {
-        totalEquity: this.portfolioState.totalEquity,
-        totalPositionValue: this.portfolioState.totalPositionValue,
-        positionRatio: this.portfolioState.positionRatio,
-        currentDrawdown: this.portfolioState.currentDrawdown,
-        dailyDrawdown: this.portfolioState.dailyDrawdown,
-        weeklyDrawdown: this.portfolioState.weeklyDrawdown,
-        riskLevel: this.portfolioState.riskLevel,
-        tradingAllowed: this.portfolioState.tradingAllowed,
-      },
-      var: this._calculatePortfolioVaR(),
-      strategies: Object.fromEntries(this.strategyStates),
-      riskBudgets: Object.fromEntries(this.riskBudgets),
-      recentEvents: this.riskHistory.slice(-20),
-    };
-  }
+  getRiskReport() { // 调用 getRiskReport
+    return { // 返回结果
+      timestamp: Date.now(), // 设置 timestamp 字段
+      portfolio: { // 设置 portfolio 字段
+        totalEquity: this.portfolioState.totalEquity, // 设置 totalEquity 字段
+        totalPositionValue: this.portfolioState.totalPositionValue, // 设置 totalPositionValue 字段
+        positionRatio: this.portfolioState.positionRatio, // 设置 positionRatio 字段
+        currentDrawdown: this.portfolioState.currentDrawdown, // 设置 currentDrawdown 字段
+        dailyDrawdown: this.portfolioState.dailyDrawdown, // 设置 dailyDrawdown 字段
+        weeklyDrawdown: this.portfolioState.weeklyDrawdown, // 设置 weeklyDrawdown 字段
+        riskLevel: this.portfolioState.riskLevel, // 设置 riskLevel 字段
+        tradingAllowed: this.portfolioState.tradingAllowed, // 设置 tradingAllowed 字段
+      }, // 结束代码块
+      var: this._calculatePortfolioVaR(), // 设置 var 字段
+      strategies: Object.fromEntries(this.strategyStates), // 设置 strategies 字段
+      riskBudgets: Object.fromEntries(this.riskBudgets), // 设置 riskBudgets 字段
+      recentEvents: this.riskHistory.slice(-20), // 设置 recentEvents 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 日志输出
@@ -1265,29 +1265,29 @@ export class PortfolioRiskManager extends EventEmitter {
    * @param {string} message - 消息 / Message
    * @param {string} level - 级别 / Level
    */
-  log(message, level = 'info') {
-    if (!this.config.verbose && level === 'info') return;
+  log(message, level = 'info') { // 调用 log
+    if (!this.config.verbose && level === 'info') return; // 条件判断 !this.config.verbose && level === 'info'
 
-    const fullMessage = `${this.config.logPrefix} ${message}`;
+    const fullMessage = `${this.config.logPrefix} ${message}`; // 定义常量 fullMessage
 
-    switch (level) {
-      case 'error':
-        console.error(fullMessage);
-        break;
-      case 'warn':
-        console.warn(fullMessage);
-        break;
-      case 'info':
-      default:
-        console.log(fullMessage);
-        break;
-    }
-  }
-}
+    switch (level) { // 分支选择 level
+      case 'error': // 分支 'error'
+        console.error(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+      case 'warn': // 分支 'warn'
+        console.warn(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+      case 'info': // 分支 'info'
+      default: // 默认分支
+        console.log(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+    } // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 导出 / Exports
 // ============================================
 
-export { PORTFOLIO_RISK_LEVEL, RISK_ACTION, DEFAULT_CONFIG };
-export default PortfolioRiskManager;
+export { PORTFOLIO_RISK_LEVEL, RISK_ACTION, DEFAULT_CONFIG }; // 导出命名成员
+export default PortfolioRiskManager; // 默认导出
