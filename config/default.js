@@ -557,8 +557,8 @@ export default {
 
       // 交易阈值 / Trading thresholds
       // 降低阈值增加信号频率 / Lower thresholds to increase signal frequency
-      buyThreshold: 0.6,    // 总分 >= 0.6 买入
-      sellThreshold: 0.4,   // 总分 <= 0.4 卖出
+      buyThreshold: 0.8,    // 总分 >= 0.8 买入
+      sellThreshold: 0.2,   // 总分 <= 0.2 卖出
 
       // ============================================
       // 子策略参数 / Sub-strategy Parameters
