@@ -20,12 +20,12 @@ import { FACTOR_DIRECTION } from './BaseFactor.js'; // 导入模块 ./BaseFactor
  * Normalization Methods
  */
 export const NORMALIZATION_METHOD = { // 导出常量 NORMALIZATION_METHOD
-  ZSCORE: 'zscore',               // Z-Score 标准化
-  MIN_MAX: 'min_max',             // Min-Max 归一化 (0-1)
-  PERCENTILE: 'percentile',       // 百分位排名 (0-1)
-  RANK: 'rank',                   // 简单排名
-  ROBUST: 'robust',               // 稳健标准化 (使用中位数和IQR)
-  NONE: 'none',                   // 不标准化
+  ZSCORE: 'zscore',               // Z分数
+  MIN_MAX: 'min_max',             // 最小最大
+  PERCENTILE: 'percentile',       // PERCENTILE
+  RANK: 'rank',                   // RANK
+  ROBUST: 'robust',               // ROBUST
+  NONE: 'none',                   // NONE
 }; // 结束代码块
 
 /**
@@ -33,11 +33,11 @@ export const NORMALIZATION_METHOD = { // 导出常量 NORMALIZATION_METHOD
  * Combination Methods
  */
 export const COMBINATION_METHOD = { // 导出常量 COMBINATION_METHOD
-  WEIGHTED_SUM: 'weighted_sum',       // 加权求和
-  WEIGHTED_AVERAGE: 'weighted_avg',   // 加权平均
-  RANK_AVERAGE: 'rank_avg',           // 排名平均
-  IC_WEIGHTED: 'ic_weighted',         // IC 加权 (基于历史预测能力)
-  EQUAL: 'equal',                     // 等权重
+  WEIGHTED_SUM: 'weighted_sum',       // WEIGHTEDSUM
+  WEIGHTED_AVERAGE: 'weighted_avg',   // WEIGHTED平均
+  RANK_AVERAGE: 'rank_avg',           // RANK平均
+  IC_WEIGHTED: 'ic_weighted',         // ICWEIGHTED
+  EQUAL: 'equal',                     // EQUAL
 }; // 结束代码块
 
 /**
@@ -142,8 +142,8 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
     const rankings = entries.map(([symbol, score], index) => ({ // 定义函数 rankings
       symbol, // 执行语句
       score, // 执行语句
-      rank: index + 1, // 设置 rank 字段
-      percentile: ((entries.length - index) / entries.length) * 100, // 设置 percentile 字段
+      rank: index + 1, // rank
+      percentile: ((entries.length - index) / entries.length) * 100, // percentile
     })); // 结束代码块
 
     this.lastRankings = rankings; // 设置 lastRankings
@@ -188,8 +188,8 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
     const rankings = this.generateRankings(scores, 'descending'); // 定义常量 rankings
 
     return { // 返回结果
-      long: rankings.slice(0, topN), // 设置 long 字段
-      short: rankings.slice(-bottomN).reverse(), // 设置 short 字段
+      long: rankings.slice(0, topN), // long
+      short: rankings.slice(-bottomN).reverse(), // short
     }; // 结束代码块
   } // 结束代码块
 
@@ -253,7 +253,7 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
         break; // 跳出循环或分支
 
       case NORMALIZATION_METHOD.NONE: // 分支 NORMALIZATION_METHOD.NONE
-      default: // 默认分支
+      default: // 默认
         normalized = new Map(validEntries); // 赋值 normalized
     } // 结束代码块
 
@@ -424,7 +424,7 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
       case COMBINATION_METHOD.IC_WEIGHTED: // 分支 COMBINATION_METHOD.IC_WEIGHTED
         return this._combineICWeighted(factorValues, symbols); // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return this._combineWeightedSum(factorValues, symbols); // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -605,11 +605,11 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
    */
   getConfig() { // 调用 getConfig
     return { // 返回结果
-      factorWeights: { ...this.factorWeights }, // 设置 factorWeights 字段
-      normalizationMethod: this.normalizationMethod, // 设置 normalizationMethod 字段
-      combinationMethod: this.combinationMethod, // 设置 combinationMethod 字段
-      adjustForDirection: this.adjustForDirection, // 设置 adjustForDirection 字段
-      factorDirections: { ...this.factorDirections }, // 设置 factorDirections 字段
+      factorWeights: { ...this.factorWeights }, // factorWeights
+      normalizationMethod: this.normalizationMethod, // normalizationMethod
+      combinationMethod: this.combinationMethod, // combinationMethod
+      adjustForDirection: this.adjustForDirection, // adjust用于Direction
+      factorDirections: { ...this.factorDirections }, // factorDirections
     }; // 结束代码块
   } // 结束代码块
 
@@ -619,10 +619,10 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      numFactors: Object.keys(this.factorWeights).length, // 设置 numFactors 字段
-      totalWeight: Object.values(this.factorWeights).reduce((a, b) => a + b, 0), // 设置 totalWeight 字段
-      lastScoresCount: this.lastScores?.size || 0, // 设置 lastScoresCount 字段
-      lastRankingsCount: this.lastRankings?.length || 0, // 设置 lastRankingsCount 字段
+      numFactors: Object.keys(this.factorWeights).length, // numFactors
+      totalWeight: Object.values(this.factorWeights).reduce((a, b) => a + b, 0), // 总Weight
+      lastScoresCount: this.lastScores?.size || 0, // lastScores数量
+      lastRankingsCount: this.lastRankings?.length || 0, // lastRankings数量
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -636,18 +636,18 @@ export class FactorCombiner extends EventEmitter { // 导出类 FactorCombiner
 export function createDefaultCombiner(factorWeights = {}) { // 导出函数 createDefaultCombiner
   return new FactorCombiner({ // 返回结果
     factorWeights, // 执行语句
-    normalizationMethod: NORMALIZATION_METHOD.ZSCORE, // 设置 normalizationMethod 字段
-    combinationMethod: COMBINATION_METHOD.WEIGHTED_AVERAGE, // 设置 combinationMethod 字段
-    adjustForDirection: true, // 设置 adjustForDirection 字段
+    normalizationMethod: NORMALIZATION_METHOD.ZSCORE, // normalizationMethod
+    combinationMethod: COMBINATION_METHOD.WEIGHTED_AVERAGE, // combinationMethod
+    adjustForDirection: true, // adjust用于Direction
   }); // 结束代码块
 } // 结束代码块
 
 // 等权重组合器
 export function createEqualWeightCombiner() { // 导出函数 createEqualWeightCombiner
   return new FactorCombiner({ // 返回结果
-    normalizationMethod: NORMALIZATION_METHOD.PERCENTILE, // 设置 normalizationMethod 字段
-    combinationMethod: COMBINATION_METHOD.EQUAL, // 设置 combinationMethod 字段
-    adjustForDirection: true, // 设置 adjustForDirection 字段
+    normalizationMethod: NORMALIZATION_METHOD.PERCENTILE, // normalizationMethod
+    combinationMethod: COMBINATION_METHOD.EQUAL, // combinationMethod
+    adjustForDirection: true, // adjust用于Direction
   }); // 结束代码块
 } // 结束代码块
 
@@ -655,9 +655,9 @@ export function createEqualWeightCombiner() { // 导出函数 createEqualWeightC
 export function createRankCombiner(factorWeights = {}) { // 导出函数 createRankCombiner
   return new FactorCombiner({ // 返回结果
     factorWeights, // 执行语句
-    normalizationMethod: NORMALIZATION_METHOD.RANK, // 设置 normalizationMethod 字段
-    combinationMethod: COMBINATION_METHOD.RANK_AVERAGE, // 设置 combinationMethod 字段
-    adjustForDirection: true, // 设置 adjustForDirection 字段
+    normalizationMethod: NORMALIZATION_METHOD.RANK, // normalizationMethod
+    combinationMethod: COMBINATION_METHOD.RANK_AVERAGE, // combinationMethod
+    adjustForDirection: true, // adjust用于Direction
   }); // 结束代码块
 } // 结束代码块
 

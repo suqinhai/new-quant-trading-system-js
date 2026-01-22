@@ -53,37 +53,37 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
     // 配置参数 / Configuration parameters
     this.config = { // 设置 config
       // API 密钥 / API key
-      apiKey: config.apiKey || null, // 设置 apiKey 字段
+      apiKey: config.apiKey || null, // API密钥
 
       // API 密钥 / API secret
-      secret: config.secret || null, // 设置 secret 字段
+      secret: config.secret || null, // 密钥
 
       // API 密码 (OKX 等需要) / API password (required by OKX, etc.)
-      password: config.password || null, // 设置 password 字段
+      password: config.password || null, // API 密码 (OKX 等需要)
 
       // 是否使用沙盒/测试网 / Whether to use sandbox/testnet
-      sandbox: config.sandbox || false, // 设置 sandbox 字段
+      sandbox: config.sandbox || false, // 是否使用沙盒/测试网
 
       // 默认交易类型: spot/swap/future / Default trade type
-      defaultType: config.defaultType || 'swap', // 设置 defaultType 字段
+      defaultType: config.defaultType || 'swap', // 默认交易类型: spot/swap/future
 
       // 请求超时时间 (毫秒) / Request timeout (ms)
-      timeout: config.timeout || 30000, // 设置 timeout 字段
+      timeout: config.timeout || 30000, // 请求超时时间 (毫秒)
 
       // 是否启用限速 / Whether to enable rate limiting
-      enableRateLimit: config.enableRateLimit !== false, // 设置 enableRateLimit 字段
+      enableRateLimit: config.enableRateLimit !== false, // 启用频率限制
 
       // 最大重试次数 / Maximum retry attempts
-      maxRetries: config.maxRetries || 3, // 设置 maxRetries 字段
+      maxRetries: config.maxRetries || 3, // 最大重试次数
 
       // 重试基础延迟 (毫秒) / Base retry delay (ms)
-      retryDelay: config.retryDelay || 1000, // 设置 retryDelay 字段
+      retryDelay: config.retryDelay || 1000, // 重试基础延迟 (毫秒)
 
       // 代理设置 / Proxy settings
-      proxy: config.proxy || null, // 设置 proxy 字段
+      proxy: config.proxy || null, // proxy
 
       // 额外选项 / Additional options
-      options: config.options || {}, // 设置 options 字段
+      options: config.options || {}, // options
     }; // 结束代码块
 
     // CCXT 交易所实例 / CCXT exchange instance
@@ -120,11 +120,11 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
     // 调试：打印配置信息 / Debug: print config info
     console.log(`[${this.name}] 配置信息 / Config info:`, { // 控制台输出
-      hasApiKey: !!this.config.apiKey, // 设置 hasApiKey 字段
-      hasSecret: !!this.config.secret, // 设置 hasSecret 字段
-      hasPassword: !!this.config.password, // 设置 hasPassword 字段
-      sandbox: this.config.sandbox, // 设置 sandbox 字段
-      defaultType: this.config.defaultType, // 设置 defaultType 字段
+      hasApiKey: !!this.config.apiKey, // 是否有API密钥
+      hasSecret: !!this.config.secret, // 是否有密钥
+      hasPassword: !!this.config.password, // 是否有密码
+      sandbox: this.config.sandbox, // 沙盒
+      defaultType: this.config.defaultType, // 默认类型
       loadMarkets, // 执行语句
     }); // 结束代码块
 
@@ -186,10 +186,10 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
       // 调试：打印原始错误信息 / Debug: print raw error info
       console.error(`[${this.name}] 原始错误 / Raw error:`, { // 控制台输出
-        message: error?.message, // 设置 message 字段
-        name: error?.name, // 设置 name 字段
-        code: error?.code, // 设置 code 字段
-        type: typeof error, // 设置 type 字段
+        message: error?.message, // 消息
+        name: error?.name, // name
+        code: error?.code, // 代码
+        type: typeof error, // 类型
       }); // 结束代码块
       // 打印完整堆栈 / Print full stack trace
       console.error(`[${this.name}] 完整堆栈 / Full stack trace:`); // 控制台输出
@@ -223,22 +223,22 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
       // 返回统一格式的余额 / Return unified balance format
       return { // 返回结果
         // 总余额 (包括冻结) / Total balance (including frozen)
-        total: balance.total || {}, // 设置 total 字段
+        total: balance.total || {}, // 总余额 (包括冻结)
 
         // 可用余额 / Available balance
-        free: balance.free || {}, // 设置 free 字段
+        free: balance.free || {}, // free
 
         // 冻结/已用余额 / Frozen/Used balance
-        used: balance.used || {}, // 设置 used 字段
+        used: balance.used || {}, // used
 
         // 交易所名称 / Exchange name
-        exchange: this.name, // 设置 exchange 字段
+        exchange: this.name, // 交易所
 
         // 时间戳 / Timestamp
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
 
         // 原始数据 / Raw data
-        raw: balance, // 设置 raw 字段
+        raw: balance, // raw
       }; // 结束代码块
     }, '获取余额 / Fetch balance'); // 执行语句
   } // 结束代码块
@@ -306,34 +306,34 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
       // 返回统一格式 / Return unified format
       return { // 返回结果
         // 交易对 / Symbol
-        symbol: fundingRate.symbol, // 设置 symbol 字段
+        symbol: fundingRate.symbol, // 交易对
 
         // 当前资金费率 / Current funding rate
-        fundingRate: fundingRate.fundingRate, // 设置 fundingRate 字段
+        fundingRate: fundingRate.fundingRate, // 资金费率频率
 
         // 预测资金费率 / Predicted funding rate
-        fundingRatePredicted: fundingRate.fundingRatePredicted || null, // 设置 fundingRatePredicted 字段
+        fundingRatePredicted: fundingRate.fundingRatePredicted || null, // 资金费率频率Predicted
 
         // 下次结算时间戳 / Next funding timestamp
-        fundingTimestamp: fundingRate.fundingTimestamp, // 设置 fundingTimestamp 字段
+        fundingTimestamp: fundingRate.fundingTimestamp, // 资金费率时间戳
 
         // 下次结算时间 (ISO 字符串) / Next funding datetime (ISO string)
-        fundingDatetime: fundingRate.fundingDatetime, // 设置 fundingDatetime 字段
+        fundingDatetime: fundingRate.fundingDatetime, // 下次结算时间 (ISO 字符串)
 
         // 标记价格 / Mark price
-        markPrice: fundingRate.markPrice || null, // 设置 markPrice 字段
+        markPrice: fundingRate.markPrice || null, // mark价格
 
         // 指数价格 / Index price
-        indexPrice: fundingRate.indexPrice || null, // 设置 indexPrice 字段
+        indexPrice: fundingRate.indexPrice || null, // index价格
 
         // 交易所名称 / Exchange name
-        exchange: this.name, // 设置 exchange 字段
+        exchange: this.name, // 交易所
 
         // 当前时间戳 / Current timestamp
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
 
         // 原始数据 / Raw data
-        raw: fundingRate, // 设置 raw 字段
+        raw: fundingRate, // raw
       }; // 结束代码块
     }, `获取资金费率 / Fetch funding rate: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -370,11 +370,11 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
     // 记录日志 / Log
     console.log(`[${this.name}] 创建订单 / Creating order:`, { // 控制台输出
-      symbol: validSymbol, // 设置 symbol 字段
+      symbol: validSymbol, // 交易对
       side, // 执行语句
       type, // 执行语句
-      amount: adjustedAmount, // 设置 amount 字段
-      price: adjustedPrice, // 设置 price 字段
+      amount: adjustedAmount, // 数量
+      price: adjustedPrice, // 价格
       params, // 执行语句
     }); // 结束代码块
 
@@ -462,9 +462,9 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
             // 添加到详情 / Add to details
             result.orders.push({ // 调用 result.orders.push
-              id: order.id, // 设置 id 字段
-              status: 'canceled', // 设置 status 字段
-              success: true, // 设置 success 字段
+              id: order.id, // ID
+              status: 'canceled', // 状态
+              success: true, // 成功标记
             }); // 结束代码块
 
           } catch (error) { // 执行语句
@@ -473,10 +473,10 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
             // 添加到详情 / Add to details
             result.orders.push({ // 调用 result.orders.push
-              id: order.id, // 设置 id 字段
-              status: 'failed', // 设置 status 字段
-              success: false, // 设置 success 字段
-              error: error.message, // 设置 error 字段
+              id: order.id, // ID
+              status: 'failed', // 状态
+              success: false, // 成功标记
+              error: error.message, // 错误
             }); // 结束代码块
           } // 结束代码块
         } // 结束代码块
@@ -727,12 +727,12 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
     console.log(`[${this.name}] 🔍 执行 API 预检查... / Running API preflight check...`); // 控制台输出
 
     const result = { // 定义常量 result
-      networkOk: false, // 设置 networkOk 字段
-      apiKeyOk: false, // 设置 apiKeyOk 字段
-      ipAllowed: false, // 设置 ipAllowed 字段
-      serverTime: null, // 设置 serverTime 字段
-      serverIp: null, // 设置 serverIp 字段
-      error: null, // 设置 error 字段
+      networkOk: false, // 网络Ok
+      apiKeyOk: false, // API密钥Ok
+      ipAllowed: false, // ipAllowed
+      serverTime: null, // server时间
+      serverIp: null, // serverIp
+      error: null, // 错误
     }; // 结束代码块
 
     try { // 尝试执行
@@ -896,9 +896,9 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
           // 发出错误事件 / Emit error event
           this.emit('error', { // 调用 emit
-            type: 'request', // 设置 type 字段
+            type: 'request', // 类型
             operation, // 执行语句
-            error: this._normalizeError(error), // 设置 error 字段
+            error: this._normalizeError(error), // 错误
             originalStack: error?.stack,  // 保留原始堆栈 / Keep original stack
           }); // 结束代码块
 
@@ -930,8 +930,8 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
           operation, // 执行语句
           attempt, // 执行语句
           maxRetries, // 执行语句
-          delay: finalDelay, // 设置 delay 字段
-          error: error.message, // 设置 error 字段
+          delay: finalDelay, // 延迟
+          error: error.message, // 错误
         }); // 结束代码块
 
         // 等待延迟 / Wait for delay
@@ -1155,61 +1155,61 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
   _normalizeOrder(order) { // 调用 _normalizeOrder
     return { // 返回结果
       // 订单ID / Order ID
-      id: order.id, // 设置 id 字段
+      id: order.id, // ID
 
       // 客户端订单ID / Client order ID
-      clientOrderId: order.clientOrderId || null, // 设置 clientOrderId 字段
+      clientOrderId: order.clientOrderId || null, // client订单ID
 
       // 交易对 / Symbol
-      symbol: order.symbol, // 设置 symbol 字段
+      symbol: order.symbol, // 交易对
 
       // 买卖方向 / Side
-      side: order.side, // 设置 side 字段
+      side: order.side, // 方向
 
       // 订单类型 / Order type
-      type: order.type, // 设置 type 字段
+      type: order.type, // 类型订单类型
 
       // 订单数量 / Order amount
-      amount: order.amount, // 设置 amount 字段
+      amount: order.amount, // 订单数量
 
       // 订单价格 / Order price
-      price: order.price, // 设置 price 字段
+      price: order.price, // 价格
 
       // 已成交数量 / Filled amount
-      filled: order.filled || 0, // 设置 filled 字段
+      filled: order.filled || 0, // 已成交数量
 
       // 剩余数量 / Remaining amount
-      remaining: order.remaining || (order.amount - (order.filled || 0)), // 设置 remaining 字段
+      remaining: order.remaining || (order.amount - (order.filled || 0)), // 剩余数量
 
       // 成交金额 / Cost
-      cost: order.cost || 0, // 设置 cost 字段
+      cost: order.cost || 0, // cost
 
       // 平均成交价 / Average price
-      average: order.average || order.price, // 设置 average 字段
+      average: order.average || order.price, // 平均
 
       // 订单状态 / Order status
-      status: this._normalizeOrderStatus(order.status), // 设置 status 字段
+      status: this._normalizeOrderStatus(order.status), // 状态订单状态
 
       // 手续费 / Fee
-      fee: order.fee || null, // 设置 fee 字段
+      fee: order.fee || null, // 手续费
 
       // 创建时间戳 / Creation timestamp
-      timestamp: order.timestamp, // 设置 timestamp 字段
+      timestamp: order.timestamp, // 时间戳
 
       // 创建时间 (ISO 字符串) / Creation datetime (ISO string)
-      datetime: order.datetime, // 设置 datetime 字段
+      datetime: order.datetime, // 创建时间 (ISO 字符串)
 
       // 最后成交时间 / Last trade timestamp
-      lastTradeTimestamp: order.lastTradeTimestamp || null, // 设置 lastTradeTimestamp 字段
+      lastTradeTimestamp: order.lastTradeTimestamp || null, // last交易时间戳
 
       // 成交明细 / Trades
-      trades: order.trades || [], // 设置 trades 字段
+      trades: order.trades || [], // 成交
 
       // 交易所名称 / Exchange name
-      exchange: this.name, // 设置 exchange 字段
+      exchange: this.name, // 交易所
 
       // 原始数据 / Raw data
-      raw: order, // 设置 raw 字段
+      raw: order, // raw
     }; // 结束代码块
   } // 结束代码块
 
@@ -1223,52 +1223,52 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
   _normalizePosition(position) { // 调用 _normalizePosition
     return { // 返回结果
       // 交易对 / Symbol
-      symbol: position.symbol, // 设置 symbol 字段
+      symbol: position.symbol, // 交易对
 
       // 持仓方向 / Position side
-      side: position.side, // 设置 side 字段
+      side: position.side, // 方向
 
       // 持仓数量 (合约数) / Position size (contracts)
-      contracts: position.contracts || 0, // 设置 contracts 字段
+      contracts: position.contracts || 0, // 持仓数量 (合约数)
 
       // 持仓价值 / Notional value
-      notional: position.notional || 0, // 设置 notional 字段
+      notional: position.notional || 0, // notional
 
       // 开仓均价 / Entry price
-      entryPrice: position.entryPrice || 0, // 设置 entryPrice 字段
+      entryPrice: position.entryPrice || 0, // 开仓均价
 
       // 标记价格 / Mark price
-      markPrice: position.markPrice || 0, // 设置 markPrice 字段
+      markPrice: position.markPrice || 0, // mark价格
 
       // 清算价格 / Liquidation price
-      liquidationPrice: position.liquidationPrice || 0, // 设置 liquidationPrice 字段
+      liquidationPrice: position.liquidationPrice || 0, // 强平价格
 
       // 杠杆倍数 / Leverage
-      leverage: position.leverage || 1, // 设置 leverage 字段
+      leverage: position.leverage || 1, // 杠杆
 
       // 未实现盈亏 / Unrealized PnL
-      unrealizedPnl: position.unrealizedPnl || 0, // 设置 unrealizedPnl 字段
+      unrealizedPnl: position.unrealizedPnl || 0, // 未实现盈亏
 
       // 未实现盈亏百分比 / Unrealized PnL percentage
-      percentage: position.percentage || 0, // 设置 percentage 字段
+      percentage: position.percentage || 0, // 未实现盈亏百分比
 
       // 已实现盈亏 / Realized PnL
-      realizedPnl: position.realizedPnl || 0, // 设置 realizedPnl 字段
+      realizedPnl: position.realizedPnl || 0, // 已实现盈亏
 
       // 保证金模式 (cross/isolated) / Margin mode
-      marginMode: position.marginMode || position.marginType || 'cross', // 设置 marginMode 字段
+      marginMode: position.marginMode || position.marginType || 'cross', // 保证金模式 (cross/isolated)
 
       // 保证金 / Collateral
-      collateral: position.collateral || position.initialMargin || 0, // 设置 collateral 字段
+      collateral: position.collateral || position.initialMargin || 0, // collateral
 
       // 交易所名称 / Exchange name
-      exchange: this.name, // 设置 exchange 字段
+      exchange: this.name, // 交易所
 
       // 时间戳 / Timestamp
-      timestamp: position.timestamp || Date.now(), // 设置 timestamp 字段
+      timestamp: position.timestamp || Date.now(), // 时间戳
 
       // 原始数据 / Raw data
-      raw: position, // 设置 raw 字段
+      raw: position, // raw
     }; // 结束代码块
   } // 结束代码块
 
@@ -1283,32 +1283,32 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
     // 状态映射表 / Status mapping
     const statusMap = { // 定义常量 statusMap
       // 开放状态 / Open statuses
-      'new': 'open', // 设置 new 字段
-      'NEW': 'open', // 设置 NEW 字段
-      'open': 'open', // 设置 open 字段
-      'OPEN': 'open', // 设置 OPEN 字段
-      'partially_filled': 'open', // 设置 partially_filled 字段
-      'PARTIALLY_FILLED': 'open', // 设置 PARTIALLY_FILLED 字段
+      'new': 'open', // new开放状态
+      'NEW': 'open', // NEW
+      'open': 'open', // 开盘
+      'OPEN': 'open', // 开盘
+      'partially_filled': 'open', // partiallyfilled
+      'PARTIALLY_FILLED': 'open', // PARTIALLYFILLED
 
       // 完成状态 / Closed statuses
-      'filled': 'closed', // 设置 filled 字段
-      'FILLED': 'closed', // 设置 FILLED 字段
-      'closed': 'closed', // 设置 closed 字段
-      'CLOSED': 'closed', // 设置 CLOSED 字段
+      'filled': 'closed', // filled完成状态
+      'FILLED': 'closed', // FILLED
+      'closed': 'closed', // closed
+      'CLOSED': 'closed', // CLOSED权限
 
       // 取消状态 / Canceled statuses
-      'canceled': 'canceled', // 设置 canceled 字段
-      'CANCELED': 'canceled', // 设置 CANCELED 字段
-      'cancelled': 'canceled', // 设置 cancelled 字段
-      'CANCELLED': 'canceled', // 设置 CANCELLED 字段
+      'canceled': 'canceled', // canceled取消状态
+      'CANCELED': 'canceled', // CANCELED
+      'cancelled': 'canceled', // cancelled
+      'CANCELLED': 'canceled', // CANCELLED
 
       // 拒绝状态 / Rejected statuses
-      'rejected': 'rejected', // 设置 rejected 字段
-      'REJECTED': 'rejected', // 设置 REJECTED 字段
+      'rejected': 'rejected', // rejected拒绝状态
+      'REJECTED': 'rejected', // REJECTED
 
       // 过期状态 / Expired statuses
-      'expired': 'expired', // 设置 expired 字段
-      'EXPIRED': 'expired', // 设置 EXPIRED 字段
+      'expired': 'expired', // expired过期状态
+      'EXPIRED': 'expired', // EXPIRED
     }; // 结束代码块
 
     // 返回映射后的状态，默认为 open / Return mapped status, default to open
@@ -1529,25 +1529,25 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
       // 保存精度信息 / Save precision info
       this.precisions[symbol] = { // 访问 precisions
         // 价格精度 / Price precision
-        price: market.precision?.price || 8, // 设置 price 字段
+        price: market.precision?.price || 8, // 价格
 
         // 数量精度 / Amount precision
-        amount: market.precision?.amount || 8, // 设置 amount 字段
+        amount: market.precision?.amount || 8, // 数量精度
 
         // 最小订单数量 / Minimum order amount
-        minAmount: market.limits?.amount?.min || 0, // 设置 minAmount 字段
+        minAmount: market.limits?.amount?.min || 0, // 最小订单数量
 
         // 最大订单数量 / Maximum order amount
-        maxAmount: market.limits?.amount?.max || Infinity, // 设置 maxAmount 字段
+        maxAmount: market.limits?.amount?.max || Infinity, // 最大订单数量
 
         // 最小价格 / Minimum price
-        minPrice: market.limits?.price?.min || 0, // 设置 minPrice 字段
+        minPrice: market.limits?.price?.min || 0, // 最小价格
 
         // 最大价格 / Maximum price
-        maxPrice: market.limits?.price?.max || Infinity, // 设置 maxPrice 字段
+        maxPrice: market.limits?.price?.max || Infinity, // 最大价格
 
         // 最小成本/名义价值 / Minimum cost/notional
-        minCost: market.limits?.cost?.min || 0, // 设置 minCost 字段
+        minCost: market.limits?.cost?.min || 0, // 最小成本/名义价值
       }; // 结束代码块
     } // 结束代码块
   } // 结束代码块

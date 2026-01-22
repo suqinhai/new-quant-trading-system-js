@@ -181,13 +181,13 @@ async function main() { // 定义函数 main
     setInterval(() => { // 设置周期任务
       const status = service.getStatus(); // 定义常量 status
       console.log(`${LOG_PREFIX} 状态 / Status:`, { // 控制台输出
-        uptime: Math.round(status.uptime / 1000) + 's', // 设置 uptime 字段
-        tickers: status.stats.tickersPublished, // 设置 tickers 字段
-        depths: status.stats.depthsPublished, // 设置 depths 字段
-        trades: status.stats.tradesPublished, // 设置 trades 字段
-        fundings: status.stats.fundingsPublished, // 设置 fundings 字段
-        klines: status.stats.klinesPublished, // 设置 klines 字段
-        errors: status.stats.errors, // 设置 errors 字段
+        uptime: Math.round(status.uptime / 1000) + 's', // uptime
+        tickers: status.stats.tickersPublished, // tickers
+        depths: status.stats.depthsPublished, // depths
+        trades: status.stats.tradesPublished, // 成交
+        fundings: status.stats.fundingsPublished, // fundings
+        klines: status.stats.klinesPublished, // klines
+        errors: status.stats.errors, // 错误列表
       }); // 结束代码块
     }, 60000); // 每分钟 / Every minute
 

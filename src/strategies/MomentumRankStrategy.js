@@ -34,11 +34,11 @@ import { // 导入依赖
  * Momentum metric types
  */
 export const MOMENTUM_METRICS = { // 导出常量 MOMENTUM_METRICS
-  RETURNS: 'returns',           // 累计收益率
-  SHARPE: 'sharpe',             // 夏普比
-  MOMENTUM: 'momentum',         // 价格动量 (ROC)
+  RETURNS: 'returns',           // RETURNS
+  SHARPE: 'sharpe',             // SHARPE
+  MOMENTUM: 'momentum',         // 动量
   RSI: 'rsi',                   // RSI
-  RISK_ADJUSTED: 'risk_adjusted', // 风险调整后收益
+  RISK_ADJUSTED: 'risk_adjusted', // 风险ADJUSTED
 }; // 结束代码块
 
 /**
@@ -51,11 +51,11 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 策略名称 / Strategy name
-  name: 'MomentumRankStrategy', // 设置 name 字段
+  name: 'MomentumRankStrategy', // name
 
   // 监控的交易对列表 / Symbols to monitor
   // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
-  symbols: [ // 设置 symbols 字段
+  symbols: [ // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
     'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT', // 执行语句
     'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT', // 执行语句
     'LINK/USDT', 'UNI/USDT', 'ATOM/USDT', 'LTC/USDT', 'ETC/USDT', // 执行语句
@@ -66,26 +66,26 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 动量计算周期 (K线数量) / Momentum calculation period
-  lookbackPeriod: 20, // 设置 lookbackPeriod 字段
+  lookbackPeriod: 20, // 动量计算周期 (K线数量)
 
   // 短期动量周期 / Short-term momentum period
-  shortMomentumPeriod: 5, // 设置 shortMomentumPeriod 字段
+  shortMomentumPeriod: 5, // 短期动量周期
 
   // 长期动量周期 / Long-term momentum period
-  longMomentumPeriod: 60, // 设置 longMomentumPeriod 字段
+  longMomentumPeriod: 60, // 长期动量周期
 
   // 动量指标 / Momentum metric
-  momentumMetric: MOMENTUM_METRICS.RETURNS, // 设置 momentumMetric 字段
+  momentumMetric: MOMENTUM_METRICS.RETURNS, // 动量指标
 
   // 是否使用复合动量 / Use composite momentum
-  useCompositeMomentum: true, // 设置 useCompositeMomentum 字段
+  useCompositeMomentum: true, // 是否使用复合动量
 
   // 复合动量权重 / Composite momentum weights
-  compositeMomentumWeights: { // 设置 compositeMomentumWeights 字段
-    returns: 0.4,       // 收益率权重
-    sharpe: 0.3,        // 夏普比权重
-    momentum: 0.2,      // 动量权重
-    rsi: 0.1,           // RSI权重
+  compositeMomentumWeights: { // composite动量Weights
+    returns: 0.4,       // returns
+    sharpe: 0.3,        // sharpe
+    momentum: 0.2,      // 动量
+    rsi: 0.1,           // RSI
   }, // 结束代码块
 
   // ============================================
@@ -93,35 +93,35 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 选取 Top N 个做多 / Select top N for long
-  topN: 3, // 设置 topN 字段
+  topN: 3, // 选取 Top N 个做多
 
   // 选取 Bottom N 个做空 / Select bottom N for short
-  bottomN: 3, // 设置 bottomN 字段
+  bottomN: 3, // 选取 Bottom N 个做空
 
   // 排名方向 / Ranking direction
-  rankDirection: RANK_DIRECTION.DESCENDING, // 设置 rankDirection 字段
+  rankDirection: RANK_DIRECTION.DESCENDING, // rankDirection
 
   // 最小排名变化触发再平衡 / Min rank change to trigger rebalance
-  minRankChangeToRebalance: 2, // 设置 minRankChangeToRebalance 字段
+  minRankChangeToRebalance: 2, // 最小排名变化触发再平衡
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 仓位类型 / Position type
-  positionType: POSITION_TYPE.LONG_SHORT, // 设置 positionType 字段
+  positionType: POSITION_TYPE.LONG_SHORT, // 持仓类型仓位类型
 
   // 单个资产最大仓位比例 / Max position per asset
-  maxPositionPerAsset: 0.15, // 设置 maxPositionPerAsset 字段
+  maxPositionPerAsset: 0.15, // 单个资产最大仓位比例
 
   // 单边总仓位比例 / Total position per side
-  maxPositionPerSide: 0.5, // 设置 maxPositionPerSide 字段
+  maxPositionPerSide: 0.5, // 单边总仓位比例
 
   // 是否等权重 / Equal weight
-  equalWeight: true, // 设置 equalWeight 字段
+  equalWeight: true, // equalWeight
 
   // 是否市场中性 / Market neutral
-  marketNeutral: false, // 设置 marketNeutral 字段
+  marketNeutral: false, // 市场Neutral
 
   // ============================================
   // 再平衡配置 / Rebalancing Configuration
@@ -131,68 +131,68 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   rebalancePeriod: 1 * 60 * 60 * 1000, // 每小时 / Every hour
 
   // 是否在排名显著变化时再平衡 / Rebalance on significant rank change
-  rebalanceOnRankChange: true, // 设置 rebalanceOnRankChange 字段
+  rebalanceOnRankChange: true, // 是否在排名显著变化时再平衡
 
   // 动量反转阈值 (排名变化) / Momentum reversal threshold
-  momentumReversalThreshold: 5, // 设置 momentumReversalThreshold 字段
+  momentumReversalThreshold: 5, // 动量反转阈值 (排名变化)
 
   // ============================================
   // 动量增强配置 / Momentum Enhancement Configuration
   // ============================================
 
   // 是否使用动量增强 / Use momentum enhancement
-  useMomentumEnhancement: true, // 设置 useMomentumEnhancement 字段
+  useMomentumEnhancement: true, // 是否使用动量增强
 
   // 动量加速因子阈值 / Momentum acceleration threshold
-  momentumAccelerationThreshold: 0.02, // 设置 momentumAccelerationThreshold 字段
+  momentumAccelerationThreshold: 0.02, // 动量加速因子阈值
 
   // 动量减速因子阈值 / Momentum deceleration threshold
-  momentumDecelerationThreshold: -0.02, // 设置 momentumDecelerationThreshold 字段
+  momentumDecelerationThreshold: -0.02, // 动量减速因子阈值
 
   // 是否过滤动量反转 / Filter momentum reversals
-  filterMomentumReversals: true, // 设置 filterMomentumReversals 字段
+  filterMomentumReversals: true, // 是否过滤动量反转
 
   // ============================================
   // 波动率过滤配置 / Volatility Filter Configuration
   // ============================================
 
   // 是否使用波动率过滤 / Use volatility filter
-  useVolatilityFilter: true, // 设置 useVolatilityFilter 字段
+  useVolatilityFilter: true, // 是否使用波动率过滤
 
   // 最小波动率 / Minimum volatility
-  minVolatility: 0.01, // 设置 minVolatility 字段
+  minVolatility: 0.01, // 最小波动率
 
   // 最大波动率 / Maximum volatility
-  maxVolatility: 0.20, // 设置 maxVolatility 字段
+  maxVolatility: 0.20, // 最大波动率
 
   // 波动率调整权重 / Volatility-adjusted weights
-  volatilityAdjustedWeights: true, // 设置 volatilityAdjustedWeights 字段
+  volatilityAdjustedWeights: true, // 波动率AdjustedWeights
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
   // 单资产止损 / Per-asset stop loss
-  stopLoss: 0.08, // 设置 stopLoss 字段
+  stopLoss: 0.08, // 单资产止损
 
   // 单资产止盈 / Per-asset take profit
-  takeProfit: 0.20, // 设置 takeProfit 字段
+  takeProfit: 0.20, // 单资产止盈
 
   // 组合最大回撤 / Portfolio max drawdown
-  maxDrawdown: 0.15, // 设置 maxDrawdown 字段
+  maxDrawdown: 0.15, // 最大回撤
 
   // 是否使用跟踪止损 / Use trailing stop
-  useTrailingStop: true, // 设置 useTrailingStop 字段
+  useTrailingStop: true, // 是否使用跟踪止损
 
   // 跟踪止损比例 / Trailing stop ratio
-  trailingStopRatio: 0.05, // 设置 trailingStopRatio 字段
+  trailingStopRatio: 0.05, // 跟踪止损比例
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[MomentumRank]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[MomentumRank]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -332,10 +332,10 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
 
       ranking.push({ // 调用 ranking.push
         symbol, // 执行语句
-        value: momentumScore, // 设置 value 字段
+        value: momentumScore, // value
         metrics, // 执行语句
         acceleration, // 执行语句
-        volatility: metrics.volatility, // 设置 volatility 字段
+        volatility: metrics.volatility, // 波动率
       }); // 结束代码块
     } // 结束代码块
 
@@ -375,8 +375,8 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
 
     // 添加当前动量 / Add current momentum
     history.push({ // 调用 history.push
-      momentum: currentMomentum, // 设置 momentum 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      momentum: currentMomentum, // 动量
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近10个记录 / Keep last 10 records
@@ -430,7 +430,7 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
             // 动量仍在增加但不够快，减少权重 / Momentum still increasing but not fast, reduce weight
             longAssets.push({ // 调用 longAssets.push
               ...candidate, // 展开对象或数组
-              weight: (candidate.weight || this.config.maxPositionPerAsset) * 0.7, // 设置 weight 字段
+              weight: (candidate.weight || this.config.maxPositionPerAsset) * 0.7, // weight
             }); // 结束代码块
           } // 结束代码块
         } else { // 执行语句
@@ -455,7 +455,7 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
             // 动量仍在减少但不够快，减少权重 / Momentum still decreasing but not fast, reduce weight
             shortAssets.push({ // 调用 shortAssets.push
               ...candidate, // 展开对象或数组
-              weight: (candidate.weight || this.config.maxPositionPerAsset) * 0.7, // 设置 weight 字段
+              weight: (candidate.weight || this.config.maxPositionPerAsset) * 0.7, // weight
             }); // 结束代码块
           } // 结束代码块
         } else { // 执行语句
@@ -476,12 +476,12 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
 
       longAssets = longAssets.map(a => ({ // 赋值 longAssets
         ...a, // 展开对象或数组
-        weight: (a.weight || this.config.maxPositionPerAsset) * longScale, // 设置 weight 字段
+        weight: (a.weight || this.config.maxPositionPerAsset) * longScale, // weight
       })); // 结束代码块
 
       shortAssets = shortAssets.map(a => ({ // 赋值 shortAssets
         ...a, // 展开对象或数组
-        weight: (a.weight || this.config.maxPositionPerAsset) * shortScale, // 设置 weight 字段
+        weight: (a.weight || this.config.maxPositionPerAsset) * shortScale, // weight
       })); // 结束代码块
     } // 结束代码块
 
@@ -520,7 +520,7 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
       const volWeight = (1 / vol) / invVolSum; // 定义常量 volWeight
       return { // 返回结果
         ...a, // 展开对象或数组
-        weight: Math.min(totalWeight * volWeight, this.config.maxPositionPerAsset), // 设置 weight 字段
+        weight: Math.min(totalWeight * volWeight, this.config.maxPositionPerAsset), // weight
       }; // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -535,10 +535,10 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
    */
   _checkRankChanges(currentRanking) { // 调用 _checkRankChanges
     const changes = { // 定义常量 changes
-      significant: false, // 设置 significant 字段
-      newTopN: [], // 设置 newTopN 字段
-      newBottomN: [], // 设置 newBottomN 字段
-      reversals: [], // 设置 reversals 字段
+      significant: false, // significant
+      newTopN: [], // newTopN
+      newBottomN: [], // newBottomN
+      reversals: [], // reversals
     }; // 结束代码块
 
     if (this.previousRanking.length === 0) { // 条件判断 this.previousRanking.length === 0
@@ -572,10 +572,10 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
       // 检查动量反转 / Check momentum reversal
       if (Math.abs(rankChange) >= this.config.momentumReversalThreshold) { // 条件判断 Math.abs(rankChange) >= this.config.momentumR...
         changes.reversals.push({ // 调用 changes.reversals.push
-          symbol: item.symbol, // 设置 symbol 字段
+          symbol: item.symbol, // 交易对
           prevRank, // 执行语句
-          currentRank: item.rank, // 设置 currentRank 字段
-          change: rankChange, // 设置 change 字段
+          currentRank: item.rank, // currentRank
+          change: rankChange, // 修改
         }); // 结束代码块
         changes.significant = true; // 赋值 changes.significant
       } // 结束代码块
@@ -702,17 +702,17 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
 
     return { // 返回结果
       ...baseStatus, // 展开对象或数组
-      momentumMetric: this.config.momentumMetric, // 设置 momentumMetric 字段
-      useCompositeMomentum: this.config.useCompositeMomentum, // 设置 useCompositeMomentum 字段
-      marketNeutral: this.config.marketNeutral, // 设置 marketNeutral 字段
-      momentumAcceleration: Object.fromEntries(this.momentumAcceleration), // 设置 momentumAcceleration 字段
-      activePositions: Array.from(this.portfolioManager.currentPositions.entries()).map(([symbol, pos]) => ({ // 设置 activePositions 字段
+      momentumMetric: this.config.momentumMetric, // 动量指标
+      useCompositeMomentum: this.config.useCompositeMomentum, // 是否使用Composite动量
+      marketNeutral: this.config.marketNeutral, // 市场Neutral
+      momentumAcceleration: Object.fromEntries(this.momentumAcceleration), // 动量Acceleration
+      activePositions: Array.from(this.portfolioManager.currentPositions.entries()).map(([symbol, pos]) => ({ // 活跃持仓
         symbol, // 执行语句
-        side: pos.side, // 设置 side 字段
-        weight: pos.weight, // 设置 weight 字段
-        rank: pos.rank, // 设置 rank 字段
-        entryPrice: this.entryPrices.get(symbol), // 设置 entryPrice 字段
-        currentPrice: this.assetManager.getMetrics(symbol)?.latestPrice, // 设置 currentPrice 字段
+        side: pos.side, // 方向
+        weight: pos.weight, // weight
+        rank: pos.rank, // rank
+        entryPrice: this.entryPrices.get(symbol), // 入场价格
+        currentPrice: this.assetManager.getMetrics(symbol)?.latestPrice, // current价格
       })), // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -727,16 +727,16 @@ export class MomentumRankStrategy extends CrossSectionalStrategy { // 导出类 
     const ranking = this.getCurrentRanking(); // 定义常量 ranking
 
     return ranking.map(item => ({ // 返回结果
-      symbol: item.symbol, // 设置 symbol 字段
-      rank: item.rank, // 设置 rank 字段
-      momentumScore: item.value, // 设置 momentumScore 字段
-      acceleration: this.momentumAcceleration.get(item.symbol) || 0, // 设置 acceleration 字段
-      volatility: item.volatility, // 设置 volatility 字段
-      returns: item.metrics?.returns, // 设置 returns 字段
-      sharpe: item.metrics?.sharpe, // 设置 sharpe 字段
-      rsi: item.metrics?.rsi, // 设置 rsi 字段
-      isLong: item.rank <= this.config.topN, // 设置 isLong 字段
-      isShort: item.rank > ranking.length - this.config.bottomN, // 设置 isShort 字段
+      symbol: item.symbol, // 交易对
+      rank: item.rank, // rank
+      momentumScore: item.value, // 动量分数
+      acceleration: this.momentumAcceleration.get(item.symbol) || 0, // acceleration
+      volatility: item.volatility, // 波动率
+      returns: item.metrics?.returns, // returns
+      sharpe: item.metrics?.sharpe, // sharpe
+      rsi: item.metrics?.rsi, // RSI
+      isLong: item.rank <= this.config.topN, // 是否Long
+      isShort: item.rank > ranking.length - this.config.bottomN, // 是否Short
     })); // 结束代码块
   } // 结束代码块
 } // 结束代码块

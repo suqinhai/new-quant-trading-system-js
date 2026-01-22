@@ -200,16 +200,16 @@ function createLoggerModule(config = {}) { // 定义函数 createLoggerModule
     getStats() { // 调用 getStats
       return { // 返回结果
         // PnL 日志记录器状态 / PnL Logger stats
-        pnlLogger: pnlLogger.getStats(), // 设置 pnlLogger 字段
+        pnlLogger: pnlLogger.getStats(), // PnL 日志记录器状态
 
         // Telegram 通知器状态 / Telegram Notifier stats
-        telegram: telegramNotifier.getStats(), // 设置 telegram 字段
+        telegram: telegramNotifier.getStats(), // Telegram 通知器状态
 
         // 警报管理器状态 / Alert Manager stats
-        alertManager: alertManager.getStats(), // 设置 alertManager 字段
+        alertManager: alertManager.getStats(), // 告警Manager警报管理器状态
 
         // 指标导出器状态 / Metrics Exporter stats
-        metricsExporter: metricsExporter.getStats(), // 设置 metricsExporter 字段
+        metricsExporter: metricsExporter.getStats(), // 指标Exporter指标导出器状态
       }; // 结束代码块
     }, // 结束代码块
 

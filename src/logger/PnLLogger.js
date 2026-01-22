@@ -50,7 +50,7 @@ const LOG_TYPE = { // 定义常量 LOG_TYPE
   PNL: 'pnl',               // PnL 日志 / PnL log
   TRADE: 'trade',           // 交易日志 / Trade log
   POSITION: 'position',     // 持仓日志 / Position log
-  BALANCE: 'balance',       // 余额日志 / Balance log
+  BALANCE: 'balance',       // 余额权限
   SIGNAL: 'signal',         // 信号日志 / Signal log
   RISK: 'risk',             // 风控日志 / Risk log
   SYSTEM: 'system',         // 系统日志 / System log
@@ -67,64 +67,64 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 日志根目录 / Log root directory
-  logDir: './logs', // 设置 logDir 字段
+  logDir: './logs', // 日志Dir
 
   // PnL 日志子目录 / PnL log subdirectory
-  pnlDir: 'pnl', // 设置 pnlDir 字段
+  pnlDir: 'pnl', // PnL 日志子目录
 
   // 交易日志子目录 / Trade log subdirectory
-  tradeDir: 'trades', // 设置 tradeDir 字段
+  tradeDir: 'trades', // 交易Dir
 
   // 系统日志子目录 / System log subdirectory
-  systemDir: 'system', // 设置 systemDir 字段
+  systemDir: 'system', // 系统Dir
 
   // ============================================
   // 日志文件配置 / Log File Configuration
   // ============================================
 
   // PnL 日志文件前缀 / PnL log file prefix
-  pnlFilePrefix: 'pnl', // 设置 pnlFilePrefix 字段
+  pnlFilePrefix: 'pnl', // PnL 日志文件前缀
 
   // 交易日志文件前缀 / Trade log file prefix
-  tradeFilePrefix: 'trades', // 设置 tradeFilePrefix 字段
+  tradeFilePrefix: 'trades', // 交易日志文件前缀
 
   // 系统日志文件前缀 / System log file prefix
-  systemFilePrefix: 'system', // 设置 systemFilePrefix 字段
+  systemFilePrefix: 'system', // 系统日志文件前缀
 
   // 日志文件扩展名 / Log file extension
-  fileExtension: '.log', // 设置 fileExtension 字段
+  fileExtension: '.log', // 文件Extension
 
   // ============================================
   // 日志轮转配置 / Log Rotation Configuration
   // ============================================
 
   // 是否按日期轮转 / Rotate by date
-  rotateByDate: true, // 设置 rotateByDate 字段
+  rotateByDate: true, // rotateByDate
 
   // 日期格式 / Date format (YYYY-MM-DD)
-  dateFormat: 'YYYY-MM-DD', // 设置 dateFormat 字段
+  dateFormat: 'YYYY-MM-DD', // date格式
 
   // 最大保留天数 / Max retention days
-  maxRetentionDays: 30, // 设置 maxRetentionDays 字段
+  maxRetentionDays: 30, // 最大保留天数
 
   // 最大单文件大小 (字节) / Max single file size (bytes)
-  maxFileSize: 100 * 1024 * 1024,  // 100MB
+  maxFileSize: 100 * 1024 * 1024,  // 最大单文件大小 (字节)
 
   // ============================================
   // 日志格式配置 / Log Format Configuration
   // ============================================
 
   // 日志级别 / Log level
-  level: LOG_LEVEL.INFO, // 设置 level 字段
+  level: LOG_LEVEL.INFO, // 级别
 
   // 是否美化输出 (开发环境) / Pretty print (development)
-  prettyPrint: false, // 设置 prettyPrint 字段
+  prettyPrint: false, // 是否美化输出 (开发环境)
 
   // 时间戳格式 / Timestamp format
-  timestampFormat: 'iso',  // 'iso' | 'epoch' | 'unix'
+  timestampFormat: 'iso',  // 时间戳格式
 
   // 是否包含堆栈跟踪 / Include stack trace
-  includeStackTrace: true, // 设置 includeStackTrace 字段
+  includeStackTrace: true, // 是否包含堆栈跟踪
 
   // ============================================
   // 实时记录配置 / Real-time Logging Configuration
@@ -144,10 +144,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用 Grafana 兼容模式 / Enable Grafana-compatible mode
-  grafanaCompatible: true, // 设置 grafanaCompatible 字段
+  grafanaCompatible: true, // 是否启用 Grafana 兼容模式
 
   // 指标标签 / Metric labels
-  metricLabels: { // 设置 metricLabels 字段
+  metricLabels: { // 指标Labels
     app: 'quant-trading-system',  // 应用名称 / Application name
     env: 'production',             // 环境 / Environment
   }, // 结束代码块
@@ -333,25 +333,25 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // pino 配置选项 / pino configuration options
     const pinoOptions = { // 定义常量 pinoOptions
       // 日志级别 / Log level
-      level: this.config.level, // 设置 level 字段
+      level: this.config.level, // 级别
 
       // 消息字段名 (统一为 message) / Message key (unified as message)
-      messageKey: 'message', // 设置 messageKey 字段
+      messageKey: 'message', // 消息字段名 (统一为 message)
 
       // 基础字段 / Base fields
-      base: { // 设置 base 字段
+      base: { // base
         // 日志类型 / Log type
-        logType: type, // 设置 logType 字段
+        logType: type, // 日志类型
 
         // 应用名称 / Application name
-        app: this.config.metricLabels.app, // 设置 app 字段
+        app: this.config.metricLabels.app, // app
 
         // 环境 / Environment
-        env: this.config.metricLabels.env, // 设置 env 字段
+        env: this.config.metricLabels.env, // env
       }, // 结束代码块
 
       // 时间戳配置 / Timestamp configuration
-      timestamp: () => { // 设置 timestamp 字段
+      timestamp: () => { // 时间戳
         // 根据配置格式化时间戳 / Format timestamp based on config
         if (this.config.timestampFormat === 'iso') { // 条件判断 this.config.timestampFormat === 'iso'
           return `,"time":"${new Date().toISOString()}"`; // 返回结果
@@ -363,9 +363,9 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       }, // 结束代码块
 
       // 格式化器 / Formatters
-      formatters: { // 设置 formatters 字段
+      formatters: { // formatters
         // 级别格式化 / Level formatter
-        level: (label) => { // 设置 level 字段
+        level: (label) => { // 级别
           return { level: label }; // 返回结果
         }, // 结束代码块
       }, // 结束代码块
@@ -376,9 +376,9 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       // 创建带美化的日志器 / Create logger with pretty print
       return pino({ // 返回结果
         ...pinoOptions, // 展开对象或数组
-        transport: { // 设置 transport 字段
-          target: 'pino-pretty', // 设置 target 字段
-          options: { // 设置 options 字段
+        transport: { // transport
+          target: 'pino-pretty', // target
+          options: { // options
             colorize: true,            // 颜色输出 / Colorize output
             translateTime: 'SYS:standard',  // 时间格式 / Time format
           }, // 结束代码块
@@ -422,7 +422,7 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
         prefix = this.config.tradeFilePrefix; // 赋值 prefix
         break; // 跳出循环或分支
       case 'system': // 分支 'system'
-      default: // 默认分支
+      default: // 默认
         subDir = this.config.systemDir; // 赋值 subDir
         prefix = this.config.systemFilePrefix; // 赋值 prefix
         break; // 跳出循环或分支
@@ -521,10 +521,10 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
 
     // 重置定时器引用 / Reset timer references
     this.timers = { // 设置 timers
-      pnl: null, // 设置 pnl 字段
-      position: null, // 设置 position 字段
-      balance: null, // 设置 balance 字段
-      rotation: null, // 设置 rotation 字段
+      pnl: null, // 盈亏
+      position: null, // 持仓
+      balance: null, // 余额
+      rotation: null, // rotation
     }; // 结束代码块
 
     // 记录停止日志 / Log shutdown
@@ -568,25 +568,25 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       // 构建 PnL 数据 / Build PnL data
       const pnlData = { // 定义常量 pnlData
         // 记录类型 / Record type
-        type: LOG_TYPE.PNL, // 设置 type 字段
+        type: LOG_TYPE.PNL, // 类型记录类型
 
         // 时间戳 (毫秒) / Timestamp (ms)
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳 (毫秒)
 
         // 每日权益 / Daily equity
-        dailyEquity: status.dailyEquity, // 设置 dailyEquity 字段
+        dailyEquity: status.dailyEquity, // 每日Equity
 
         // 当前回撤 / Current drawdown
-        drawdown: status.dailyEquity?.currentDrawdown || 0, // 设置 drawdown 字段
+        drawdown: status.dailyEquity?.currentDrawdown || 0, // 回撤
 
         // 风险级别 / Risk level
-        riskLevel: status.riskLevel, // 设置 riskLevel 字段
+        riskLevel: status.riskLevel, // 风险级别
 
         // 交易状态 / Trading status
-        tradingAllowed: status.tradingAllowed, // 设置 tradingAllowed 字段
+        tradingAllowed: status.tradingAllowed, // 交易Allowed交易状态
 
         // 账户数据 / Account data
-        accounts: status.accounts?.map(acc => ({ // 设置 accounts 字段
+        accounts: status.accounts?.map(acc => ({ // accounts
           exchange: acc.exchange,           // 交易所 / Exchange
           equity: acc.equity,               // 权益 / Equity
           usedMargin: acc.usedMargin,       // 已用保证金 / Used margin
@@ -619,8 +619,8 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
   logPnL(pnlData) { // 调用 logPnL
     // 添加类型和时间戳 / Add type and timestamp
     const logData = { // 定义常量 logData
-      type: LOG_TYPE.PNL, // 设置 type 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      type: LOG_TYPE.PNL, // 类型
+      timestamp: Date.now(), // 时间戳
       ...pnlData, // 展开对象或数组
     }; // 结束代码块
 
@@ -656,16 +656,16 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       // 构建持仓数据 / Build position data
       const positionData = { // 定义常量 positionData
         // 记录类型 / Record type
-        type: LOG_TYPE.POSITION, // 设置 type 字段
+        type: LOG_TYPE.POSITION, // 类型记录类型
 
         // 时间戳 / Timestamp
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
 
         // 仓位数量 / Position count
-        count: positions.length, // 设置 count 字段
+        count: positions.length, // 仓位数量
 
         // 仓位列表 / Position list
-        positions: positions.map(pos => ({ // 设置 positions 字段
+        positions: positions.map(pos => ({ // 仓位列表
           symbol: pos.symbol,           // 交易对 / Symbol
           side: pos.side,               // 方向 / Side
           size: pos.openSize,           // 大小 / Size
@@ -707,19 +707,19 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       // 构建余额数据 / Build balance data
       const balanceData = { // 定义常量 balanceData
         // 记录类型 / Record type
-        type: LOG_TYPE.BALANCE, // 设置 type 字段
+        type: LOG_TYPE.BALANCE, // 类型记录类型
 
         // 时间戳 / Timestamp
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
 
         // 账户余额列表 / Account balance list
-        balances: status.accounts || [], // 设置 balances 字段
+        balances: status.accounts || [], // 账户余额列表
 
         // 总权益 / Total equity
-        totalEquity: status.accounts?.reduce((sum, acc) => sum + (acc.equity || 0), 0) || 0, // 设置 totalEquity 字段
+        totalEquity: status.accounts?.reduce((sum, acc) => sum + (acc.equity || 0), 0) || 0, // 总Equity
 
         // 总已用保证金 / Total used margin
-        totalUsedMargin: status.accounts?.reduce((sum, acc) => sum + (acc.usedMargin || 0), 0) || 0, // 设置 totalUsedMargin 字段
+        totalUsedMargin: status.accounts?.reduce((sum, acc) => sum + (acc.usedMargin || 0), 0) || 0, // 总Used保证金
       }; // 结束代码块
 
       // 记录到 PnL 日志 / Log to PnL log
@@ -746,40 +746,40 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建交易日志数据 / Build trade log data
     const tradeData = { // 定义常量 tradeData
       // 记录类型 / Record type
-      type: LOG_TYPE.TRADE, // 设置 type 字段
+      type: LOG_TYPE.TRADE, // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 交易 ID / Trade ID
-      tradeId: trade.id || trade.orderId, // 设置 tradeId 字段
+      tradeId: trade.id || trade.orderId, // 交易ID
 
       // 交易对 / Symbol
-      symbol: trade.symbol, // 设置 symbol 字段
+      symbol: trade.symbol, // 交易对
 
       // 方向 / Side
-      side: trade.side, // 设置 side 字段
+      side: trade.side, // 方向
 
       // 数量 / Amount
-      amount: trade.amount || trade.filled, // 设置 amount 字段
+      amount: trade.amount || trade.filled, // 数量
 
       // 价格 / Price
-      price: trade.price || trade.average, // 设置 price 字段
+      price: trade.price || trade.average, // 价格
 
       // 费用 / Fee
-      fee: trade.fee, // 设置 fee 字段
+      fee: trade.fee, // 手续费
 
       // 交易所 / Exchange
-      exchange: trade.exchange, // 设置 exchange 字段
+      exchange: trade.exchange, // 交易所
 
       // PnL (如果有) / PnL (if available)
-      pnl: trade.pnl, // 设置 pnl 字段
+      pnl: trade.pnl, // PnL (如果有)
 
       // 订单类型 / Order type
-      orderType: trade.type, // 设置 orderType 字段
+      orderType: trade.type, // 订单类型
 
       // 额外信息 / Extra info
-      info: trade.info, // 设置 info 字段
+      info: trade.info, // info
     }; // 结束代码块
 
     // 记录到交易日志 / Log to trade log
@@ -803,40 +803,40 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建订单日志数据 / Build order log data
     const orderData = { // 定义常量 orderData
       // 记录类型 / Record type
-      type: LOG_TYPE.TRADE, // 设置 type 字段
+      type: LOG_TYPE.TRADE, // 类型记录类型
 
       // 子类型 / Subtype
-      subtype: 'order', // 设置 subtype 字段
+      subtype: 'order', // subtype子类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 动作 / Action
       action, // 执行语句
 
       // 订单 ID / Order ID
-      orderId: order.id || order.clientOrderId, // 设置 orderId 字段
+      orderId: order.id || order.clientOrderId, // 订单ID
 
       // 交易对 / Symbol
-      symbol: order.symbol, // 设置 symbol 字段
+      symbol: order.symbol, // 交易对
 
       // 方向 / Side
-      side: order.side, // 设置 side 字段
+      side: order.side, // 方向
 
       // 数量 / Amount
-      amount: order.amount, // 设置 amount 字段
+      amount: order.amount, // 数量
 
       // 价格 / Price
-      price: order.price, // 设置 price 字段
+      price: order.price, // 价格
 
       // 状态 / Status
-      status: order.status, // 设置 status 字段
+      status: order.status, // 状态
 
       // 已成交数量 / Filled amount
-      filled: order.filled, // 设置 filled 字段
+      filled: order.filled, // 已成交数量
 
       // 交易所 / Exchange
-      exchange: order.exchange || order.exchangeId, // 设置 exchange 字段
+      exchange: order.exchange || order.exchangeId, // 交易所
     }; // 结束代码块
 
     // 记录到交易日志 / Log to trade log
@@ -857,37 +857,37 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建信号日志数据 / Build signal log data
     const signalData = { // 定义常量 signalData
       // 记录类型 / Record type
-      type: LOG_TYPE.SIGNAL, // 设置 type 字段
+      type: LOG_TYPE.SIGNAL, // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 策略名称 / Strategy name
-      strategy: signal.strategy || 'unknown', // 设置 strategy 字段
+      strategy: signal.strategy || 'unknown', // 策略
 
       // 交易对 / Symbol
-      symbol: signal.symbol, // 设置 symbol 字段
+      symbol: signal.symbol, // 交易对
 
       // 信号类型 (buy/sell/hold) / Signal type
-      signalType: signal.type || signal.side, // 设置 signalType 字段
+      signalType: signal.type || signal.side, // 信号类型 (buy/sell/hold)
 
       // 信号强度 (可选) / Signal strength (optional)
-      strength: signal.strength, // 设置 strength 字段
+      strength: signal.strength, // 信号强度 (可选)
 
       // 信号原因 / Signal reason
-      reason: signal.reason, // 设置 reason 字段
+      reason: signal.reason, // reason
 
       // 当前价格 / Current price
-      price: signal.price, // 设置 price 字段
+      price: signal.price, // 价格
 
       // 建议数量 / Suggested amount
-      amount: signal.amount, // 设置 amount 字段
+      amount: signal.amount, // 建议数量
 
       // 指标数据 (可选) / Indicator data (optional)
-      indicators: signal.indicators, // 设置 indicators 字段
+      indicators: signal.indicators, // 指标数据 (可选)
 
       // 额外信息 / Extra info
-      extra: signal.extra, // 设置 extra 字段
+      extra: signal.extra, // extra
     }; // 结束代码块
 
     // 记录到交易日志 / Log to trade log
@@ -911,41 +911,41 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建行情日志数据 / Build market data log
     const marketData = { // 定义常量 marketData
       // 记录类型 / Record type
-      type: 'market_data', // 设置 type 字段
+      type: 'market_data', // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 交易对 / Symbol
-      symbol: data.symbol, // 设置 symbol 字段
+      symbol: data.symbol, // 交易对
 
       // 数据类型 (ticker/candle/orderbook/fundingRate) / Data type
-      dataType: data.dataType, // 设置 dataType 字段
+      dataType: data.dataType, // 数据类型 (ticker/candle/orderbook/fundingRate)
 
       // 交易所 / Exchange
-      exchange: data.exchange, // 设置 exchange 字段
+      exchange: data.exchange, // 交易所
 
       // 价格信息 / Price info
-      price: data.price || data.close || data.last, // 设置 price 字段
+      price: data.price || data.close || data.last, // 价格
 
       // 成交量 (如果有) / Volume (if available)
-      volume: data.volume, // 设置 volume 字段
+      volume: data.volume, // 成交量 (如果有)
 
       // 买卖价 (如果有) / Bid/Ask (if available)
-      bid: data.bid, // 设置 bid 字段
-      ask: data.ask, // 设置 ask 字段
+      bid: data.bid, // 买卖价 (如果有)
+      ask: data.ask, // ask
 
       // K 线数据 (如果有) / Candle data (if available)
-      open: data.open, // 设置 open 字段
-      high: data.high, // 设置 high 字段
-      low: data.low, // 设置 low 字段
-      close: data.close, // 设置 close 字段
+      open: data.open, // K 线数据 (如果有)
+      high: data.high, // 最高
+      low: data.low, // 最低
+      close: data.close, // 收盘
 
       // 资金费率 (如果有) / Funding rate (if available)
-      fundingRate: data.fundingRate, // 设置 fundingRate 字段
+      fundingRate: data.fundingRate, // 资金费率 (如果有)
 
       // 额外信息 / Extra info
-      extra: data.extra, // 设置 extra 字段
+      extra: data.extra, // extra
     }; // 结束代码块
 
     // 记录到系统日志 / Log to system log
@@ -962,31 +962,31 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建统计日志数据 / Build stats log data
     const statsData = { // 定义常量 statsData
       // 记录类型 / Record type
-      type: 'market_stats', // 设置 type 字段
+      type: 'market_stats', // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 统计时间范围 / Stats time range
-      period: stats.period || '1m', // 设置 period 字段
+      period: stats.period || '1m', // 周期
 
       // Ticker 更新计数 / Ticker update count
-      tickerCount: stats.tickerCount || 0, // 设置 tickerCount 字段
+      tickerCount: stats.tickerCount || 0, // Ticker 更新计数
 
       // K 线更新计数 / Candle update count
-      candleCount: stats.candleCount || 0, // 设置 candleCount 字段
+      candleCount: stats.candleCount || 0, // candle数量
 
       // 订单簿更新计数 / Orderbook update count
-      orderbookCount: stats.orderbookCount || 0, // 设置 orderbookCount 字段
+      orderbookCount: stats.orderbookCount || 0, // orderbook数量
 
       // 资金费率更新计数 / Funding rate update count
-      fundingRateCount: stats.fundingRateCount || 0, // 设置 fundingRateCount 字段
+      fundingRateCount: stats.fundingRateCount || 0, // 资金费率更新计数
 
       // 交易对列表 / Symbol list
-      symbols: stats.symbols || [], // 设置 symbols 字段
+      symbols: stats.symbols || [], // 交易对列表
 
       // 交易所列表 / Exchange list
-      exchanges: stats.exchanges || [], // 设置 exchanges 字段
+      exchanges: stats.exchanges || [], // 交易所列表
     }; // 结束代码块
 
     // 记录到系统日志 / Log to system log
@@ -1009,10 +1009,10 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建系统日志数据 / Build system log data
     const logData = { // 定义常量 logData
       // 记录类型 / Record type
-      type: LOG_TYPE.SYSTEM, // 设置 type 字段
+      type: LOG_TYPE.SYSTEM, // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 消息 / Message
       message, // 执行语句
@@ -1041,7 +1041,7 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       case LOG_LEVEL.FATAL: // 分支 LOG_LEVEL.FATAL
         this.loggers.system.fatal(logData); // 访问 loggers
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         this.loggers.system.info(logData); // 访问 loggers
     } // 结束代码块
 
@@ -1060,10 +1060,10 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建风控日志数据 / Build risk log data
     const riskData = { // 定义常量 riskData
       // 记录类型 / Record type
-      type: LOG_TYPE.RISK, // 设置 type 字段
+      type: LOG_TYPE.RISK, // 类型记录类型
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 事件类型 / Event type
       event, // 执行语句
@@ -1100,19 +1100,19 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
     // 构建指标数据 / Build metric data
     const metricData = { // 定义常量 metricData
       // 记录类型 / Record type
-      type: LOG_TYPE.METRIC, // 设置 type 字段
+      type: LOG_TYPE.METRIC, // 类型记录类型
 
       // 时间戳 (纳秒，Grafana Loki 格式) / Timestamp (nanoseconds, Grafana Loki format)
-      timestamp: Date.now() * 1000000, // 设置 timestamp 字段
+      timestamp: Date.now() * 1000000, // 时间戳 (纳秒，Grafana Loki 格式)
 
       // 指标名称 / Metric name
-      metric: name, // 设置 metric 字段
+      metric: name, // 指标
 
       // 指标值 / Metric value
       value, // 执行语句
 
       // 合并标签 / Merged labels
-      labels: { // 设置 labels 字段
+      labels: { // labels
         ...this.config.metricLabels, // 展开对象或数组
         ...labels, // 展开对象或数组
       }, // 结束代码块
@@ -1236,13 +1236,13 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
       ...this.stats, // 展开对象或数组
 
       // 是否运行中 / Whether running
-      running: this.running, // 设置 running 字段
+      running: this.running, // running
 
       // 当前日期 / Current date
-      currentDate: this.currentDate, // 设置 currentDate 字段
+      currentDate: this.currentDate, // currentDate
 
       // 日志目录 / Log directory
-      logDir: this.config.logDir, // 设置 logDir 字段
+      logDir: this.config.logDir, // 日志Dir
     }; // 结束代码块
   } // 结束代码块
 
@@ -1254,9 +1254,9 @@ export class PnLLogger extends EventEmitter { // 导出类 PnLLogger
    */
   getLogFilePaths() { // 调用 getLogFilePaths
     return { // 返回结果
-      pnl: this._getLogFilePath('pnl'), // 设置 pnl 字段
-      trade: this._getLogFilePath('trade'), // 设置 trade 字段
-      system: this._getLogFilePath('system'), // 设置 system 字段
+      pnl: this._getLogFilePath('pnl'), // 盈亏
+      trade: this._getLogFilePath('trade'), // 交易
+      system: this._getLogFilePath('system'), // 系统
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

@@ -21,7 +21,7 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
   constructor(params = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super({ // 调用父类
-      name: 'GridStrategy', // 设置 name 字段
+      name: 'GridStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -330,11 +330,11 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
    */
   getGridStatus() { // 调用 getGridStatus
     return this.grids.map(grid => ({ // 返回结果
-      id: grid.id, // 设置 id 字段
-      price: grid.price, // 设置 price 字段
-      buyTriggered: grid.buyTriggered, // 设置 buyTriggered 字段
-      sellTriggered: grid.sellTriggered, // 设置 sellTriggered 字段
-      position: grid.position, // 设置 position 字段
+      id: grid.id, // ID
+      price: grid.price, // 价格
+      buyTriggered: grid.buyTriggered, // buyTriggered
+      sellTriggered: grid.sellTriggered, // sellTriggered
+      position: grid.position, // 持仓
     })); // 结束代码块
   } // 结束代码块
 

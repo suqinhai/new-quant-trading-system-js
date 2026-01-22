@@ -17,16 +17,16 @@ import Redis from 'ioredis'; // 导入模块 ioredis
  * Redis key prefix configuration (consistent with MarketDataService)
  */
 const REDIS_KEYS = { // 定义常量 REDIS_KEYS
-  TICKER: 'market:ticker', // 设置 TICKER 字段
-  DEPTH: 'market:depth', // 设置 DEPTH 字段
-  TRADE: 'market:trade', // 设置 TRADE 字段
-  FUNDING: 'market:funding', // 设置 FUNDING 字段
-  KLINE: 'market:kline', // 设置 KLINE 字段
-  SERVICE_STATUS: 'market:service:status', // 设置 SERVICE_STATUS 字段
-  SERVICE_HEARTBEAT: 'market:service:heartbeat', // 设置 SERVICE_HEARTBEAT 字段
-  SUBSCRIBE_REQUEST: 'market:subscribe:request', // 设置 SUBSCRIBE_REQUEST 字段
+  TICKER: 'market:ticker', // TICKER权限
+  DEPTH: 'market:depth', // DEPTH权限
+  TRADE: 'market:trade', // 交易权限
+  FUNDING: 'market:funding', // 资金费率权限
+  KLINE: 'market:kline', // KLINE权限
+  SERVICE_STATUS: 'market:service:status', // SERVICE状态权限
+  SERVICE_HEARTBEAT: 'market:service:heartbeat', // SERVICEHEARTBEAT权限
+  SUBSCRIBE_REQUEST: 'market:subscribe:request', // SUBSCRIBEREQUEST权限
   // 统一发布频道 (与 MarketDataEngine 一致) / Unified publish channel (consistent with MarketDataEngine)
-  UNIFIED_CHANNEL: 'market_data', // 设置 UNIFIED_CHANNEL 字段
+  UNIFIED_CHANNEL: 'market_data', // 统一发布频道 (与 MarketDataEngine 一致)
 }; // 结束代码块
 
 /**
@@ -34,17 +34,17 @@ const REDIS_KEYS = { // 定义常量 REDIS_KEYS
  * Default configuration
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
-  redis: { // 设置 redis 字段
-    host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-    password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-    db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  redis: { // redis
+    host: process.env.REDIS_HOST || 'localhost', // 主机
+    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+    password: process.env.REDIS_PASSWORD || null, // 密码
+    db: parseInt(process.env.REDIS_DB || '0', 10), // db
   }, // 结束代码块
   // 重连配置 / Reconnection configuration
-  reconnect: { // 设置 reconnect 字段
-    maxAttempts: 10, // 设置 maxAttempts 字段
-    baseDelay: 1000, // 设置 baseDelay 字段
-    maxDelay: 30000, // 设置 maxDelay 字段
+  reconnect: { // reconnect
+    maxAttempts: 10, // 最大次数
+    baseDelay: 1000, // base延迟
+    maxDelay: 30000, // 最大延迟
   }, // 结束代码块
 }; // 结束代码块
 
@@ -70,8 +70,8 @@ export class MarketDataSubscriber extends EventEmitter { // 导出类 MarketData
 
     // 合并配置 / Merge configuration
     this.config = { // 设置 config
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
-      reconnect: { ...DEFAULT_CONFIG.reconnect, ...config.reconnect }, // 设置 reconnect 字段
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // redis
+      reconnect: { ...DEFAULT_CONFIG.reconnect, ...config.reconnect }, // reconnect
     }; // 结束代码块
 
     // Redis 订阅客户端 / Redis subscribe client
@@ -94,14 +94,14 @@ export class MarketDataSubscriber extends EventEmitter { // 导出类 MarketData
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      messagesReceived: 0, // 设置 messagesReceived 字段
-      tickersReceived: 0, // 设置 tickersReceived 字段
-      depthsReceived: 0, // 设置 depthsReceived 字段
-      tradesReceived: 0, // 设置 tradesReceived 字段
-      fundingsReceived: 0, // 设置 fundingsReceived 字段
-      klinesReceived: 0, // 设置 klinesReceived 字段
-      errors: 0, // 设置 errors 字段
-      lastMessageAt: null, // 设置 lastMessageAt 字段
+      messagesReceived: 0, // messagesReceived
+      tickersReceived: 0, // tickersReceived
+      depthsReceived: 0, // depthsReceived
+      tradesReceived: 0, // 成交Received
+      fundingsReceived: 0, // fundingsReceived
+      klinesReceived: 0, // klinesReceived
+      errors: 0, // 错误列表
+      lastMessageAt: null, // last消息At
     }; // 结束代码块
 
     // 日志前缀 / Log prefix
@@ -123,11 +123,11 @@ export class MarketDataSubscriber extends EventEmitter { // 导出类 MarketData
     console.log(`${this.logPrefix} 正在连接 Redis... / Connecting to Redis...`); // 控制台输出
 
     const redisConfig = { // 定义常量 redisConfig
-      host: this.config.redis.host, // 设置 host 字段
-      port: this.config.redis.port, // 设置 port 字段
-      password: this.config.redis.password, // 设置 password 字段
-      db: this.config.redis.db, // 设置 db 字段
-      retryStrategy: (times) => { // 设置 retryStrategy 字段
+      host: this.config.redis.host, // 主机
+      port: this.config.redis.port, // 端口
+      password: this.config.redis.password, // 密码
+      db: this.config.redis.db, // db
+      retryStrategy: (times) => { // 重试策略
         if (times > this.config.reconnect.maxAttempts) { // 条件判断 times > this.config.reconnect.maxAttempts
           return null; // 停止重试 / Stop retrying
         } // 结束代码块
@@ -360,10 +360,10 @@ export class MarketDataSubscriber extends EventEmitter { // 导出类 MarketData
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      connected: this.connected, // 设置 connected 字段
-      serviceAlive: this.serviceAlive, // 设置 serviceAlive 字段
-      subscriptionsCount: this.subscriptions.size, // 设置 subscriptionsCount 字段
-      subscriptions: Array.from(this.subscriptions.keys()), // 设置 subscriptions 字段
+      connected: this.connected, // connected
+      serviceAlive: this.serviceAlive, // serviceAlive
+      subscriptionsCount: this.subscriptions.size, // subscriptions数量
+      subscriptions: Array.from(this.subscriptions.keys()), // subscriptions
     }; // 结束代码块
   } // 结束代码块
 
@@ -504,7 +504,7 @@ export class MarketDataSubscriber extends EventEmitter { // 导出类 MarketData
         exchange, // 执行语句
         symbol, // 执行语句
         dataTypes, // 执行语句
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       })); // 结束代码块
     } catch (error) { // 执行语句
       console.error(`${this.logPrefix} 发送订阅请求失败 / Failed to send subscribe request:`, error.message); // 控制台输出

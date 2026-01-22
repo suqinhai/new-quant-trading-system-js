@@ -37,10 +37,10 @@ setContextGetter(getContext); // 调用 setContextGetter
 export class ApiServer { // 导出类 ApiServer
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
-      port: config.port || parseInt(process.env.HTTP_PORT) || 3000, // 读取环境变量 HTTP_PORT
-      host: config.host || '0.0.0.0', // 设置 host 字段
-      corsOrigins: config.corsOrigins || ['http://localhost:5173', 'http://localhost:3000'], // 设置 corsOrigins 字段
-      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || 'your-secret-key', // 读取环境变量 JWT_SECRET
+      port: config.port || parseInt(process.env.HTTP_PORT) || 3000, // 端口
+      host: config.host || '0.0.0.0', // 主机
+      corsOrigins: config.corsOrigins || ['http://localhost:5173', 'http://localhost:3000'], // corsOrigins
+      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || 'your-secret-key', // jwt密钥
       ...config, // 展开对象或数组
     }; // 结束代码块
 
@@ -54,9 +54,9 @@ export class ApiServer { // 导出类 ApiServer
 
     // 初始化请求追踪管理器
     this.tracingManager = new RequestTracingManager({ // 设置 tracingManager
-      enabled: config.enableTracing !== false, // 设置 enabled 字段
-      slowRequestThreshold: config.slowRequestThreshold || 1000, // 设置 slowRequestThreshold 字段
-      excludePaths: ['/api/health', '/favicon.ico'], // 设置 excludePaths 字段
+      enabled: config.enableTracing !== false, // 启用
+      slowRequestThreshold: config.slowRequestThreshold || 1000, // slowRequest阈值
+      excludePaths: ['/api/health', '/favicon.ico'], // excludePaths
     }); // 结束代码块
 
     // 监听追踪事件
@@ -70,10 +70,10 @@ export class ApiServer { // 导出类 ApiServer
     // 记录慢请求
     this.tracingManager.on('slowRequest', (data) => { // 访问 tracingManager
       logger.warn('Slow request detected', { // 调用 logger.warn
-        method: data.method, // 设置 method 字段
-        path: data.path, // 设置 path 字段
-        duration: data.duration, // 设置 duration 字段
-        statusCode: data.statusCode, // 设置 statusCode 字段
+        method: data.method, // method
+        path: data.path, // 路径
+        duration: data.duration, // duration
+        statusCode: data.statusCode, // 状态代码
       }); // 结束代码块
     }); // 结束代码块
 
@@ -81,10 +81,10 @@ export class ApiServer { // 导出类 ApiServer
     this.tracingManager.on('requestEnd', (data) => { // 访问 tracingManager
       if (process.env.LOG_LEVEL === 'debug') { // 条件判断 process.env.LOG_LEVEL === 'debug'
         logger.debug('Request completed', { // 调用 logger.debug
-          method: data.method, // 设置 method 字段
-          path: data.path, // 设置 path 字段
-          statusCode: data.statusCode, // 设置 statusCode 字段
-          duration: data.duration, // 设置 duration 字段
+          method: data.method, // method
+          path: data.path, // 路径
+          statusCode: data.statusCode, // 状态代码
+          duration: data.duration, // duration
         }); // 结束代码块
       } // 结束代码块
     }); // 结束代码块
@@ -96,15 +96,15 @@ export class ApiServer { // 导出类 ApiServer
   setupMiddleware() { // 调用 setupMiddleware
     // 安全头
     this.app.use(helmet({ // 访问 app
-      contentSecurityPolicy: false, // 允许 CSP 由前端控制
+      contentSecurityPolicy: false, // contentSecurityPolicy
     })); // 结束代码块
 
     // CORS
     this.app.use(cors({ // 访问 app
-      origin: this.config.corsOrigins, // 设置 origin 字段
-      credentials: true, // 设置 credentials 字段
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // 设置 methods 字段
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Trace-ID', 'X-Timestamp', 'X-Signature'], // 设置 allowedHeaders 字段
+      origin: this.config.corsOrigins, // origin
+      credentials: true, // credentials
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // methods
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Trace-ID', 'X-Timestamp', 'X-Signature'], // allowedHeaders
     })); // 结束代码块
 
     // 压缩
@@ -142,9 +142,9 @@ export class ApiServer { // 导出类 ApiServer
     const authHeader = req.headers.authorization; // 定义常量 authHeader
     if (!authHeader || !authHeader.startsWith('Bearer ')) { // 条件判断 !authHeader || !authHeader.startsWith('Bearer ')
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: 'Authorization token required', // 设置 error 字段
-        code: 'UNAUTHORIZED', // 设置 code 字段
+        success: false, // 成功标记
+        error: 'Authorization token required', // 错误
+        code: 'UNAUTHORIZED', // 代码
       }); // 结束代码块
     } // 结束代码块
 
@@ -157,9 +157,9 @@ export class ApiServer { // 导出类 ApiServer
       next(); // 调用 next
     } catch (error) { // 执行语句
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: 'Invalid or expired token', // 设置 error 字段
-        code: 'UNAUTHORIZED', // 设置 code 字段
+        success: false, // 成功标记
+        error: 'Invalid or expired token', // 错误
+        code: 'UNAUTHORIZED', // 代码
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -197,9 +197,9 @@ export class ApiServer { // 导出类 ApiServer
     // 健康检查 (无需认证)
     this.app.get('/api/health', (req, res) => { // 访问 app
       res.json({ // 调用 res.json
-        status: 'healthy', // 设置 status 字段
-        timestamp: new Date().toISOString(), // 设置 timestamp 字段
-        uptime: process.uptime(), // 设置 uptime 字段
+        status: 'healthy', // 状态
+        timestamp: new Date().toISOString(), // 时间戳
+        uptime: process.uptime(), // uptime
       }); // 结束代码块
     }); // 结束代码块
 
@@ -231,10 +231,10 @@ export class ApiServer { // 导出类 ApiServer
     // 404 处理
     this.app.use('/api/*', (req, res) => { // 访问 app
       res.status(404).json({ // 调用 res.status
-        success: false, // 设置 success 字段
-        error: 'API endpoint not found', // 设置 error 字段
-        code: 'NOT_FOUND', // 设置 code 字段
-        path: req.path, // 设置 path 字段
+        success: false, // 成功标记
+        error: 'API endpoint not found', // 错误
+        code: 'NOT_FOUND', // 代码
+        path: req.path, // 路径
       }); // 结束代码块
     }); // 结束代码块
 
@@ -245,37 +245,37 @@ export class ApiServer { // 导出类 ApiServer
       // 限流错误
       if (err.type === 'RATE_LIMIT') { // 条件判断 err.type === 'RATE_LIMIT'
         return res.status(429).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Too many requests', // 设置 error 字段
-          code: 'RATE_LIMIT_EXCEEDED', // 设置 code 字段
-          retryAfter: err.retryAfter, // 设置 retryAfter 字段
+          success: false, // 成功标记
+          error: 'Too many requests', // 错误
+          code: 'RATE_LIMIT_EXCEEDED', // 代码
+          retryAfter: err.retryAfter, // 重试之后
         }); // 结束代码块
       } // 结束代码块
 
       // 认证错误
       if (err.type === 'AUTH_ERROR') { // 条件判断 err.type === 'AUTH_ERROR'
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: err.message, // 设置 error 字段
-          code: 'UNAUTHORIZED', // 设置 code 字段
+          success: false, // 成功标记
+          error: err.message, // 错误
+          code: 'UNAUTHORIZED', // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 权限错误
       if (err.type === 'PERMISSION_ERROR') { // 条件判断 err.type === 'PERMISSION_ERROR'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: err.message, // 设置 error 字段
-          code: 'FORBIDDEN', // 设置 code 字段
+          success: false, // 成功标记
+          error: err.message, // 错误
+          code: 'FORBIDDEN', // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 通用错误
       res.status(err.status || 500).json({ // 调用 res.status
-        success: false, // 设置 success 字段
-        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message, // 读取环境变量 NODE_ENV
-        code: 'INTERNAL_ERROR', // 设置 code 字段
-        requestId: req.requestId, // 设置 requestId 字段
+        success: false, // 成功标记
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message, // 错误
+        code: 'INTERNAL_ERROR', // 代码
+        requestId: req.requestId, // requestID
       }); // 结束代码块
     }); // 结束代码块
   } // 结束代码块

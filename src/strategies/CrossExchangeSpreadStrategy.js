@@ -36,12 +36,12 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * Supported exchanges
  */
 export const SUPPORTED_EXCHANGES = { // 导出常量 SUPPORTED_EXCHANGES
-  BINANCE: 'binance', // 设置 BINANCE 字段
-  BYBIT: 'bybit', // 设置 BYBIT 字段
-  OKX: 'okx', // 设置 OKX 字段
-  GATE: 'gate', // 设置 GATE 字段
-  HUOBI: 'huobi', // 设置 HUOBI 字段
-  KUCOIN: 'kucoin', // 设置 KUCOIN 字段
+  BINANCE: 'binance', // BINANCE交易所配置
+  BYBIT: 'bybit', // BYBIT交易所配置
+  OKX: 'okx', // OKX交易所配置
+  GATE: 'gate', // GATE交易所配置
+  HUOBI: 'huobi', // HUOBI
+  KUCOIN: 'kucoin', // KUCOIN交易所配置
 }; // 结束代码块
 
 /**
@@ -49,10 +49,10 @@ export const SUPPORTED_EXCHANGES = { // 导出常量 SUPPORTED_EXCHANGES
  * Spread types
  */
 export const SPREAD_TYPES = { // 导出常量 SPREAD_TYPES
-  SPOT_SPOT: 'spot_spot',           // 现货-现货
-  PERP_PERP: 'perp_perp',           // 永续-永续
-  SPOT_PERP: 'spot_perp',           // 现货-永续
-  FUTURES_SPOT: 'futures_spot',     // 期货-现货
+  SPOT_SPOT: 'spot_spot',           // SPOTSPOT
+  PERP_PERP: 'perp_perp',           // PERPPERP
+  SPOT_PERP: 'spot_perp',           // SPOTPERP
+  FUTURES_SPOT: 'futures_spot',     // FUTURESSPOT
 }; // 结束代码块
 
 /**
@@ -64,11 +64,11 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 基础配置 / Basic Configuration
   // ============================================
 
-  name: 'CrossExchangeSpreadStrategy', // 设置 name 字段
+  name: 'CrossExchangeSpreadStrategy', // name
 
   // 监控的交易对列表 / Symbols to monitor
   // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
-  symbols: [ // 设置 symbols 字段
+  symbols: [ // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
     'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT', // 执行语句
     'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT', // 执行语句
   ], // 结束数组或索引
@@ -76,125 +76,125 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 监控的交易所 / Exchanges to monitor
   // 注意: 需要与系统实际连接的交易所保持一致
   // Note: Should match exchanges actually connected by the system
-  exchanges: [ // 设置 exchanges 字段
+  exchanges: [ // Note: Should match exchanges actually connected by the system
     SUPPORTED_EXCHANGES.BINANCE, // 执行语句
     SUPPORTED_EXCHANGES.OKX, // 执行语句
     SUPPORTED_EXCHANGES.GATE, // 执行语句
   ], // 结束数组或索引
 
   // 价差类型 / Spread type
-  spreadType: SPREAD_TYPES.PERP_PERP, // 设置 spreadType 字段
+  spreadType: SPREAD_TYPES.PERP_PERP, // 价差类型
 
   // ============================================
   // 价差配置 / Spread Configuration
   // ============================================
 
   // 最小价差阈值 (开仓) / Minimum spread threshold (open)
-  minSpreadToOpen: 0.003,  // 0.3%
+  minSpreadToOpen: 0.003,  // 最小价差阈值 (开仓)
 
   // 平仓价差阈值 / Close spread threshold
-  closeSpreadThreshold: 0.001,  // 0.1%
+  closeSpreadThreshold: 0.001,  // 平仓价差阈值
 
   // 紧急平仓价差 (价差反向) / Emergency close spread (spread reversal)
-  emergencyCloseSpread: -0.002,  // -0.2%
+  emergencyCloseSpread: -0.002,  // 紧急平仓价差 (价差反向)
 
   // 最大价差 (避免异常数据) / Max spread (avoid anomalous data)
-  maxSpread: 0.05,  // 5%
+  maxSpread: 0.05,  // 最大价差 (避免异常数据)
 
   // ============================================
   // 排名配置 / Ranking Configuration
   // ============================================
 
   // 选取 Top N 个价差机会 / Select top N spread opportunities
-  topN: 5, // 设置 topN 字段
+  topN: 5, // 选取 Top N 个价差机会
 
   // 最小排名分数 / Minimum ranking score
-  minRankingScore: 0.002, // 设置 minRankingScore 字段
+  minRankingScore: 0.002, // 最小Ranking分数
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 单个套利机会最大仓位 / Max position per opportunity
-  maxPositionPerOpportunity: 0.08, // 设置 maxPositionPerOpportunity 字段
+  maxPositionPerOpportunity: 0.08, // 单个套利机会最大仓位
 
   // 总套利仓位 / Total arbitrage position
-  maxTotalPosition: 0.40, // 设置 maxTotalPosition 字段
+  maxTotalPosition: 0.40, // 最大总持仓
 
   // 最小仓位 / Minimum position
-  minPositionSize: 0.01, // 设置 minPositionSize 字段
+  minPositionSize: 0.01, // 最小持仓大小
 
   // 杠杆 / Leverage
-  leverage: 3, // 设置 leverage 字段
+  leverage: 3, // 杠杆
 
   // ============================================
   // 执行配置 / Execution Configuration
   // ============================================
 
   // 是否同时下单 / Simultaneous order execution
-  simultaneousExecution: true, // 设置 simultaneousExecution 字段
+  simultaneousExecution: true, // simultaneousExecution
 
   // 最大滑点 / Max slippage
-  maxSlippage: 0.001,  // 0.1%
+  maxSlippage: 0.001,  // 最大滑点
 
   // 订单类型 / Order type
-  orderType: 'market', // 设置 orderType 字段
+  orderType: 'market', // 订单类型
 
   // 订单超时 (毫秒) / Order timeout (ms)
-  orderTimeout: 5000, // 设置 orderTimeout 字段
+  orderTimeout: 5000, // 订单超时 (毫秒)
 
   // ============================================
   // 再平衡配置 / Rebalancing Configuration
   // ============================================
 
   // 价差检查间隔 (毫秒) / Spread check interval (ms)
-  spreadCheckInterval: 1000, // 设置 spreadCheckInterval 字段
+  spreadCheckInterval: 1000, // 价差检查间隔 (毫秒)
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
-  rebalancePeriod: 5 * 60 * 1000,  // 每5分钟
+  rebalancePeriod: 5 * 60 * 1000,  // 再平衡周期 (毫秒)
 
   // ============================================
   // 仓位平衡配置 / Position Balance Configuration
   // ============================================
 
   // 仓位不平衡阈值 / Position imbalance threshold
-  imbalanceThreshold: 0.05,  // 5%
+  imbalanceThreshold: 0.05,  // 仓位不平衡阈值
 
   // 自动再平衡 / Auto rebalance
-  autoRebalance: true, // 设置 autoRebalance 字段
+  autoRebalance: true, // 自动Rebalance
 
   // ============================================
   // 成本配置 / Cost Configuration
   // ============================================
 
   // 交易手续费 (taker) / Trading fee (taker)
-  tradingFee: 0.0005,  // 0.05%
+  tradingFee: 0.0005,  // 交易手续费 (taker)
 
   // 是否计算资金费差异 / Consider funding rate difference
-  considerFundingDiff: true, // 设置 considerFundingDiff 字段
+  considerFundingDiff: true, // 是否计算资金费差异
 
   // 提现/转账成本 / Withdrawal/transfer cost
-  transferCost: 0, // 设置 transferCost 字段
+  transferCost: 0, // 提现/转账成本
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
   // 单笔止损 / Per-trade stop loss
-  stopLoss: 0.02, // 设置 stopLoss 字段
+  stopLoss: 0.02, // 单笔止损
 
   // 最大持仓时间 (毫秒) / Max holding time (ms)
-  maxHoldingTime: 24 * 60 * 60 * 1000,  // 24小时
+  maxHoldingTime: 24 * 60 * 60 * 1000,  // 最大持仓时间 (毫秒)
 
   // 最大单日亏损 / Max daily loss
-  maxDailyLoss: 0.02, // 设置 maxDailyLoss 字段
+  maxDailyLoss: 0.02, // 最大每日亏损
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[CrossExchangeSpread]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[CrossExchangeSpread]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -247,12 +247,12 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
 
     // 保存价格 / Save price
     symbolPrices.set(exchange, { // 调用 symbolPrices.set
-      bid: priceData.bid || priceData.last, // 设置 bid 字段
-      ask: priceData.ask || priceData.last, // 设置 ask 字段
-      mid: (priceData.bid + priceData.ask) / 2 || priceData.last, // 设置 mid 字段
-      last: priceData.last, // 设置 last 字段
-      volume: priceData.volume || 0, // 设置 volume 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      bid: priceData.bid || priceData.last, // bid
+      ask: priceData.ask || priceData.last, // ask
+      mid: (priceData.bid + priceData.ask) / 2 || priceData.last, // mid
+      last: priceData.last, // last
+      volume: priceData.volume || 0, // 成交量
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 更新价差 / Update spreads
@@ -302,24 +302,24 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
           const key = `${symbol}:${ex1}:${ex2}`; // 定义常量 key
           this.spreads.set(key, { // 访问 spreads
             symbol, // 执行语句
-            buyExchange: ex1, // 设置 buyExchange 字段
-            sellExchange: ex2, // 设置 sellExchange 字段
-            spread: spread1to2, // 设置 spread 字段
-            buyPrice: price1.ask, // 设置 buyPrice 字段
-            sellPrice: price2.bid, // 设置 sellPrice 字段
-            timestamp: Date.now(), // 设置 timestamp 字段
+            buyExchange: ex1, // buy交易所
+            sellExchange: ex2, // sell交易所
+            spread: spread1to2, // 价差
+            buyPrice: price1.ask, // buy价格
+            sellPrice: price2.bid, // sell价格
+            timestamp: Date.now(), // 时间戳
           }); // 结束代码块
         } else { // 执行语句
           // 买ex2，卖ex1
           const key = `${symbol}:${ex2}:${ex1}`; // 定义常量 key
           this.spreads.set(key, { // 访问 spreads
             symbol, // 执行语句
-            buyExchange: ex2, // 设置 buyExchange 字段
-            sellExchange: ex1, // 设置 sellExchange 字段
-            spread: spread2to1, // 设置 spread 字段
-            buyPrice: price2.ask, // 设置 buyPrice 字段
-            sellPrice: price1.bid, // 设置 sellPrice 字段
-            timestamp: Date.now(), // 设置 timestamp 字段
+            buyExchange: ex2, // buy交易所
+            sellExchange: ex1, // sell交易所
+            spread: spread2to1, // 价差
+            buyPrice: price2.ask, // buy价格
+            sellPrice: price1.bid, // sell价格
+            timestamp: Date.now(), // 时间戳
           }); // 结束代码块
         } // 结束代码块
 
@@ -345,7 +345,7 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
     const history = this.spreadHistory.get(symbol); // 定义常量 history
     history.push({ // 调用 history.push
       spread, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近1000条 / Keep last 1000 records
@@ -372,7 +372,7 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
       opportunities.push({ // 调用 opportunities.push
         ...spread, // 展开对象或数组
         key, // 执行语句
-        netSpread: spread.spread - this.config.tradingFee * 2,  // 扣除双边手续费
+        netSpread: spread.spread - this.config.tradingFee * 2,  // net价差
       }); // 结束代码块
     } // 结束代码块
 
@@ -428,9 +428,9 @@ export class CrossExchangePriceManager extends EventEmitter { // 导出类 Cross
     return { // 返回结果
       mean, // 执行语句
       std, // 执行语句
-      min: Math.min(...spreads), // 设置 min 字段
-      max: Math.max(...spreads), // 设置 max 字段
-      count: spreads.length, // 设置 count 字段
+      min: Math.min(...spreads), // 最小
+      max: Math.max(...spreads), // 最大
+      count: spreads.length, // 数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -470,10 +470,10 @@ export class ArbitragePositionManager extends EventEmitter { // 导出类 Arbitr
 
     // 统计 / Statistics
     this.stats = { // 设置 stats
-      totalOpened: 0, // 设置 totalOpened 字段
-      totalClosed: 0, // 设置 totalClosed 字段
-      totalProfit: 0, // 设置 totalProfit 字段
-      totalLoss: 0, // 设置 totalLoss 字段
+      totalOpened: 0, // 总Opened
+      totalClosed: 0, // 总Closed
+      totalProfit: 0, // 总盈利
+      totalLoss: 0, // 总亏损
     }; // 结束代码块
   } // 结束代码块
 
@@ -490,17 +490,17 @@ export class ArbitragePositionManager extends EventEmitter { // 导出类 Arbitr
 
     const position = { // 定义常量 position
       id, // 执行语句
-      symbol: opportunity.symbol, // 设置 symbol 字段
-      buyExchange: opportunity.buyExchange, // 设置 buyExchange 字段
-      sellExchange: opportunity.sellExchange, // 设置 sellExchange 字段
-      buyPrice: opportunity.buyPrice, // 设置 buyPrice 字段
-      sellPrice: opportunity.sellPrice, // 设置 sellPrice 字段
-      openSpread: opportunity.spread, // 设置 openSpread 字段
+      symbol: opportunity.symbol, // 交易对
+      buyExchange: opportunity.buyExchange, // buy交易所
+      sellExchange: opportunity.sellExchange, // sell交易所
+      buyPrice: opportunity.buyPrice, // buy价格
+      sellPrice: opportunity.sellPrice, // sell价格
+      openSpread: opportunity.spread, // 开盘价差
       size, // 执行语句
-      openTime: Date.now(), // 设置 openTime 字段
-      status: 'active', // 设置 status 字段
-      realizedPnl: 0, // 设置 realizedPnl 字段
-      fundingIncome: 0, // 设置 fundingIncome 字段
+      openTime: Date.now(), // 开盘时间
+      status: 'active', // 状态
+      realizedPnl: 0, // 已实现盈亏
+      fundingIncome: 0, // 资金费率Income
     }; // 结束代码块
 
     this.positions.set(id, position); // 访问 positions
@@ -595,9 +595,9 @@ export class ArbitragePositionManager extends EventEmitter { // 导出类 Arbitr
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      activeCount: this.getActivePositions().length, // 设置 activeCount 字段
-      totalExposure: this.getTotalExposure(), // 设置 totalExposure 字段
-      netProfit: this.stats.totalProfit - this.stats.totalLoss, // 设置 netProfit 字段
+      activeCount: this.getActivePositions().length, // 活跃数量
+      totalExposure: this.getTotalExposure(), // 总Exposure
+      netProfit: this.stats.totalProfit - this.stats.totalLoss, // net盈利
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -714,10 +714,10 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
     // 更新价格管理器 / Update price manager
     if (data.symbol && data.exchange) { // 条件判断 data.symbol && data.exchange
       this.priceManager.updatePrice(data.symbol, data.exchange, { // 访问 priceManager
-        bid: data.bid, // 设置 bid 字段
-        ask: data.ask, // 设置 ask 字段
-        last: data.last, // 设置 last 字段
-        volume: data.volume, // 设置 volume 字段
+        bid: data.bid, // bid
+        ask: data.ask, // ask
+        last: data.last, // last
+        volume: data.volume, // 成交量
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -840,10 +840,10 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
       // 执行平仓 / Execute close
       if (shouldClose) { // 条件判断 shouldClose
         this.arbPositionManager.closePosition(position.id, { // 访问 arbPositionManager
-          buyClosePrice: buyPrice.bid, // 设置 buyClosePrice 字段
-          sellClosePrice: sellPrice.ask, // 设置 sellClosePrice 字段
-          closeSpread: currentSpread, // 设置 closeSpread 字段
-          reason: closeReason, // 设置 reason 字段
+          buyClosePrice: buyPrice.bid, // buy收盘价格
+          sellClosePrice: sellPrice.ask, // sell收盘价格
+          closeSpread: currentSpread, // 收盘价差
+          reason: closeReason, // reason
         }); // 结束代码块
 
         this.setSellSignal(`套利平仓: ${position.symbol} ${closeReason}`); // 调用 setSellSignal
@@ -861,16 +861,16 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
     const opportunities = this.priceManager.getAllSpreadOpportunities(); // 定义常量 opportunities
 
     return opportunities.map((opp, index) => ({ // 返回结果
-      symbol: opp.symbol, // 设置 symbol 字段
-      value: opp.netSpread, // 设置 value 字段
-      rank: index + 1, // 设置 rank 字段
-      buyExchange: opp.buyExchange, // 设置 buyExchange 字段
-      sellExchange: opp.sellExchange, // 设置 sellExchange 字段
-      spread: opp.spread, // 设置 spread 字段
-      netSpread: opp.netSpread, // 设置 netSpread 字段
-      buyPrice: opp.buyPrice, // 设置 buyPrice 字段
-      sellPrice: opp.sellPrice, // 设置 sellPrice 字段
-      stats: this.priceManager.getSpreadStats(opp.symbol), // 设置 stats 字段
+      symbol: opp.symbol, // 交易对
+      value: opp.netSpread, // value
+      rank: index + 1, // rank
+      buyExchange: opp.buyExchange, // buy交易所
+      sellExchange: opp.sellExchange, // sell交易所
+      spread: opp.spread, // 价差
+      netSpread: opp.netSpread, // net价差
+      buyPrice: opp.buyPrice, // buy价格
+      sellPrice: opp.sellPrice, // sell价格
+      stats: this.priceManager.getSpreadStats(opp.symbol), // stats
     })); // 结束代码块
   } // 结束代码块
 
@@ -923,15 +923,15 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
 
     return { // 返回结果
       ...baseStatus, // 展开对象或数组
-      spreadType: this.config.spreadType, // 设置 spreadType 字段
-      exchanges: this.config.exchanges, // 设置 exchanges 字段
-      arbitrageStats: arbStats, // 设置 arbitrageStats 字段
-      activeArbitrages: this.arbPositionManager.getActivePositions(), // 设置 activeArbitrages 字段
-      topOpportunities: opportunities.slice(0, 5).map(o => ({ // 设置 topOpportunities 字段
-        symbol: o.symbol, // 设置 symbol 字段
-        buyExchange: o.buyExchange, // 设置 buyExchange 字段
-        sellExchange: o.sellExchange, // 设置 sellExchange 字段
-        netSpread: (o.netSpread * 100).toFixed(3) + '%', // 设置 netSpread 字段
+      spreadType: this.config.spreadType, // 价差类型
+      exchanges: this.config.exchanges, // 交易所
+      arbitrageStats: arbStats, // 套利Stats
+      activeArbitrages: this.arbPositionManager.getActivePositions(), // 活跃Arbitrages
+      topOpportunities: opportunities.slice(0, 5).map(o => ({ // topOpportunities
+        symbol: o.symbol, // 交易对
+        buyExchange: o.buyExchange, // buy交易所
+        sellExchange: o.sellExchange, // sell交易所
+        netSpread: (o.netSpread * 100).toFixed(3) + '%', // net价差
       })), // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -980,8 +980,8 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
       symbol, // 执行语句
       buyExchange, // 执行语句
       sellExchange, // 执行语句
-      buyPrice: buyPrice.ask, // 设置 buyPrice 字段
-      sellPrice: sellPrice.bid, // 设置 sellPrice 字段
+      buyPrice: buyPrice.ask, // buy价格
+      sellPrice: sellPrice.bid, // sell价格
       spread, // 执行语句
     }, size); // 执行语句
   } // 结束代码块
@@ -1003,9 +1003,9 @@ export class CrossExchangeSpreadStrategy extends CrossSectionalStrategy { // 导
     const sellPrice = this.priceManager.getPrice(position.symbol, position.sellExchange); // 定义常量 sellPrice
 
     return this.arbPositionManager.closePosition(id, { // 返回结果
-      buyClosePrice: buyPrice?.bid || position.buyPrice, // 设置 buyClosePrice 字段
-      sellClosePrice: sellPrice?.ask || position.sellPrice, // 设置 sellClosePrice 字段
-      reason: 'manual', // 设置 reason 字段
+      buyClosePrice: buyPrice?.bid || position.buyPrice, // buy收盘价格
+      sellClosePrice: sellPrice?.ask || position.sellPrice, // sell收盘价格
+      reason: 'manual', // reason
     }); // 结束代码块
   } // 结束代码块
 

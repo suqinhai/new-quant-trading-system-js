@@ -72,10 +72,10 @@ import { // 导入依赖
  * Position Types
  */
 export const POSITION_TYPE = { // 导出常量 POSITION_TYPE
-  LONG_ONLY: 'long_only',           // 只做多
-  SHORT_ONLY: 'short_only',         // 只做空
-  LONG_SHORT: 'long_short',         // 多空对冲
-  MARKET_NEUTRAL: 'market_neutral', // 市场中性
+  LONG_ONLY: 'long_only',           // LONG仅
+  SHORT_ONLY: 'short_only',         // SHORT仅
+  LONG_SHORT: 'long_short',         // LONGSHORT
+  MARKET_NEUTRAL: 'market_neutral', // 市场NEUTRAL
 }; // 结束代码块
 
 /**
@@ -83,10 +83,10 @@ export const POSITION_TYPE = { // 导出常量 POSITION_TYPE
  * Weight Allocation Methods
  */
 export const WEIGHT_METHOD = { // 导出常量 WEIGHT_METHOD
-  EQUAL: 'equal',                     // 等权重
-  SCORE_WEIGHTED: 'score_weighted',   // 按得分加权
-  VOLATILITY_PARITY: 'vol_parity',    // 波动率平价
-  RISK_PARITY: 'risk_parity',         // 风险平价
+  EQUAL: 'equal',                     // EQUAL
+  SCORE_WEIGHTED: 'score_weighted',   // 分数WEIGHTED
+  VOLATILITY_PARITY: 'vol_parity',    // 波动率PARITY
+  RISK_PARITY: 'risk_parity',         // 风险PARITY
 }; // 结束代码块
 
 /**
@@ -106,7 +106,7 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: params.name || 'FactorInvestingStrategy', // 设置 name 字段
+      name: params.name || 'FactorInvestingStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -143,9 +143,9 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalRebalances: 0, // 设置 totalRebalances 字段
-      lastFactorValues: null, // 设置 lastFactorValues 字段
-      lastSelections: null, // 设置 lastSelections 字段
+      totalRebalances: 0, // 总Rebalances
+      lastFactorValues: null, // lastFactorValues
+      lastSelections: null, // lastSelections
     }; // 结束代码块
   } // 结束代码块
 
@@ -201,8 +201,8 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
 
     const assetInfo = this.assetData.get(symbol); // 定义常量 assetInfo
     assetInfo.fundingRates.push({ // 调用 assetInfo.fundingRates.push
-      rate: data.rate, // 设置 rate 字段
-      timestamp: data.timestamp || Date.now(), // 设置 timestamp 字段
+      rate: data.rate, // 频率
+      timestamp: data.timestamp || Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近 200 条 / Keep last 200
@@ -247,7 +247,7 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
         scores, // 执行语句
         selections, // 执行语句
         targetWeights, // 执行语句
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
     } catch (error) { // 执行语句
@@ -267,9 +267,9 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
       const assetInfo = this.assetData.get(symbol); // 定义常量 assetInfo
       if (assetInfo && assetInfo.candles.length > 0) { // 条件判断 assetInfo && assetInfo.candles.length > 0
         dataMap[symbol] = { // 执行语句
-          candles: assetInfo.candles, // 设置 candles 字段
-          fundingRates: assetInfo.fundingRates || [], // 设置 fundingRates 字段
-          trades: assetInfo.trades || [], // 设置 trades 字段
+          candles: assetInfo.candles, // candles
+          fundingRates: assetInfo.fundingRates || [], // 资金费率Rates
+          trades: assetInfo.trades || [], // 成交
         }; // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -308,8 +308,8 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
     } // 结束代码块
 
     return { // 返回结果
-      long: longAssets, // 设置 long 字段
-      short: shortAssets, // 设置 short 字段
+      long: longAssets, // long
+      short: shortAssets, // short
       rankings, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -384,7 +384,7 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
         } // 结束代码块
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         const defaultWeight = Math.min(1 / n, this.maxPositionPerAsset); // 定义常量 defaultWeight
         assets.forEach(a => weights.set(a.symbol, defaultWeight)); // 调用 assets.forEach
     } // 结束代码块
@@ -593,9 +593,9 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
     this.combiner = new FactorCombiner({ // 设置 combiner
       factorWeights, // 执行语句
       factorDirections, // 执行语句
-      normalizationMethod: this.factorConfig.normalization || NORMALIZATION_METHOD.ZSCORE, // 设置 normalizationMethod 字段
-      combinationMethod: this.factorConfig.combination || COMBINATION_METHOD.WEIGHTED_AVERAGE, // 设置 combinationMethod 字段
-      adjustForDirection: true, // 设置 adjustForDirection 字段
+      normalizationMethod: this.factorConfig.normalization || NORMALIZATION_METHOD.ZSCORE, // normalizationMethod
+      combinationMethod: this.factorConfig.combination || COMBINATION_METHOD.WEIGHTED_AVERAGE, // combinationMethod
+      adjustForDirection: true, // adjust用于Direction
     }); // 结束代码块
   } // 结束代码块
 
@@ -665,33 +665,33 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
   _buildFactorDirections() { // 调用 _buildFactorDirections
     return { // 返回结果
       // 动量因子 - 正向
-      'Momentum_1d': FACTOR_DIRECTION.POSITIVE, // 设置 Momentum_1d 字段
-      'Momentum_7d': FACTOR_DIRECTION.POSITIVE, // 设置 Momentum_7d 字段
-      'Momentum_30d': FACTOR_DIRECTION.POSITIVE, // 设置 Momentum_30d 字段
-      'RiskAdj_Momentum_7d': FACTOR_DIRECTION.POSITIVE, // 设置 RiskAdj_Momentum_7d 字段
+      'Momentum_1d': FACTOR_DIRECTION.POSITIVE, // 动量因子 - 正向
+      'Momentum_7d': FACTOR_DIRECTION.POSITIVE, // 动量7d
+      'Momentum_30d': FACTOR_DIRECTION.POSITIVE, // 动量30d
+      'RiskAdj_Momentum_7d': FACTOR_DIRECTION.POSITIVE, // 风险Adj动量7d
 
       // 波动率因子 - 负向 (低波动率 = 好)
-      'BB_Width_20': FACTOR_DIRECTION.NEGATIVE, // 设置 BB_Width_20 字段
-      'ATR_Ratio': FACTOR_DIRECTION.NEGATIVE, // 设置 ATR_Ratio 字段
-      'Keltner_Squeeze': FACTOR_DIRECTION.NEGATIVE, // 设置 Keltner_Squeeze 字段
+      'BB_Width_20': FACTOR_DIRECTION.NEGATIVE, // 波动率因子 - 负向 (低波动率 = 好)
+      'ATR_Ratio': FACTOR_DIRECTION.NEGATIVE, // ATR比例
+      'Keltner_Squeeze': FACTOR_DIRECTION.NEGATIVE, // Keltner挤压
 
       // 资金流向因子 - 正向
-      'MFI_14': FACTOR_DIRECTION.POSITIVE, // 设置 MFI_14 字段
-      'CMF_20': FACTOR_DIRECTION.POSITIVE, // 设置 CMF_20 字段
-      'OBV_Slope_20': FACTOR_DIRECTION.POSITIVE, // 设置 OBV_Slope_20 字段
+      'MFI_14': FACTOR_DIRECTION.POSITIVE, // 资金流向因子 - 正向
+      'CMF_20': FACTOR_DIRECTION.POSITIVE, // CMF20
+      'OBV_Slope_20': FACTOR_DIRECTION.POSITIVE, // OBVSlope20
 
       // 换手率因子 - 正向
-      'Vol_MA_Ratio_20': FACTOR_DIRECTION.POSITIVE, // 设置 Vol_MA_Ratio_20 字段
-      'Relative_Volume': FACTOR_DIRECTION.POSITIVE, // 设置 Relative_Volume 字段
+      'Vol_MA_Ratio_20': FACTOR_DIRECTION.POSITIVE, // 换手率因子 - 正向
+      'Relative_Volume': FACTOR_DIRECTION.POSITIVE, // Relative成交量
 
       // 资金费率因子 - 负向 (负费率 = 做多机会)
-      'Funding_Percentile': FACTOR_DIRECTION.NEGATIVE, // 设置 Funding_Percentile 字段
-      'Funding_Extreme_Signal': FACTOR_DIRECTION.NEGATIVE, // 设置 Funding_Extreme_Signal 字段
+      'Funding_Percentile': FACTOR_DIRECTION.NEGATIVE, // 资金费率因子 - 负向 (负费率 = 做多机会)
+      'Funding_Extreme_Signal': FACTOR_DIRECTION.NEGATIVE, // 资金费率极端信号
 
       // 大单因子 - 正向
-      'LargeOrder_Vol_Ratio': FACTOR_DIRECTION.POSITIVE, // 设置 LargeOrder_Vol_Ratio 字段
-      'LargeOrder_Imbalance': FACTOR_DIRECTION.POSITIVE, // 设置 LargeOrder_Imbalance 字段
-      'Whale_Activity': FACTOR_DIRECTION.POSITIVE, // 设置 Whale_Activity 字段
+      'LargeOrder_Vol_Ratio': FACTOR_DIRECTION.POSITIVE, // 大单因子 - 正向
+      'LargeOrder_Imbalance': FACTOR_DIRECTION.POSITIVE, // 大额订单Imbalance
+      'Whale_Activity': FACTOR_DIRECTION.POSITIVE, // WhaleActivity
     }; // 结束代码块
   } // 结束代码块
 
@@ -702,49 +702,49 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
   _getDefaultFactorConfig() { // 调用 _getDefaultFactorConfig
     return { // 返回结果
       // 动量因子
-      momentum: { // 设置 momentum 字段
-        enabled: true, // 设置 enabled 字段
-        totalWeight: 0.35, // 设置 totalWeight 字段
-        riskAdjusted: true, // 设置 riskAdjusted 字段
+      momentum: { // 动量
+        enabled: true, // 启用
+        totalWeight: 0.35, // 总Weight
+        riskAdjusted: true, // 风险Adjusted
       }, // 结束代码块
 
       // 波动率因子
-      volatility: { // 设置 volatility 字段
-        enabled: true, // 设置 enabled 字段
-        totalWeight: 0.15, // 设置 totalWeight 字段
-        squeeze: false, // 设置 squeeze 字段
+      volatility: { // 波动率
+        enabled: true, // 启用
+        totalWeight: 0.15, // 总Weight
+        squeeze: false, // 挤压
       }, // 结束代码块
 
       // 资金流向因子
-      moneyFlow: { // 设置 moneyFlow 字段
-        enabled: true, // 设置 enabled 字段
-        totalWeight: 0.2, // 设置 totalWeight 字段
-        obv: true, // 设置 obv 字段
+      moneyFlow: { // money流
+        enabled: true, // 启用
+        totalWeight: 0.2, // 总Weight
+        obv: true, // obv
       }, // 结束代码块
 
       // 换手率因子
-      turnover: { // 设置 turnover 字段
-        enabled: true, // 设置 enabled 字段
-        totalWeight: 0.15, // 设置 totalWeight 字段
-        abnormal: false, // 设置 abnormal 字段
+      turnover: { // turnover
+        enabled: true, // 启用
+        totalWeight: 0.15, // 总Weight
+        abnormal: false, // abnormal
       }, // 结束代码块
 
       // 资金费率因子
-      fundingRate: { // 设置 fundingRate 字段
-        enabled: false, // 设置 enabled 字段
-        totalWeight: 0.1, // 设置 totalWeight 字段
+      fundingRate: { // 资金费率频率
+        enabled: false, // 启用
+        totalWeight: 0.1, // 总Weight
       }, // 结束代码块
 
       // 大单因子
-      largeOrder: { // 设置 largeOrder 字段
-        enabled: false, // 设置 enabled 字段
-        totalWeight: 0.05, // 设置 totalWeight 字段
-        whale: false, // 设置 whale 字段
+      largeOrder: { // 大额订单
+        enabled: false, // 启用
+        totalWeight: 0.05, // 总Weight
+        whale: false, // whale
       }, // 结束代码块
 
       // 标准化和组合方法
-      normalization: NORMALIZATION_METHOD.ZSCORE, // 设置 normalization 字段
-      combination: COMBINATION_METHOD.WEIGHTED_AVERAGE, // 设置 combination 字段
+      normalization: NORMALIZATION_METHOD.ZSCORE, // 标准化和组合方法
+      combination: COMBINATION_METHOD.WEIGHTED_AVERAGE, // combination
     }; // 结束代码块
   } // 结束代码块
 
@@ -765,15 +765,15 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
    */
   getInfo() { // 调用 getInfo
     return { // 返回结果
-      name: this.name, // 设置 name 字段
-      symbols: this.symbols.length, // 设置 symbols 字段
-      positionType: this.positionType, // 设置 positionType 字段
-      topN: this.topN, // 设置 topN 字段
-      bottomN: this.bottomN, // 设置 bottomN 字段
-      weightMethod: this.weightMethod, // 设置 weightMethod 字段
-      registeredFactors: this.registry.getNames(), // 设置 registeredFactors 字段
-      lastRebalance: this.lastRebalanceTime, // 设置 lastRebalance 字段
-      totalRebalances: this.stats.totalRebalances, // 设置 totalRebalances 字段
+      name: this.name, // name
+      symbols: this.symbols.length, // 交易对列表
+      positionType: this.positionType, // 持仓类型
+      topN: this.topN, // topN
+      bottomN: this.bottomN, // bottomN
+      weightMethod: this.weightMethod, // weightMethod
+      registeredFactors: this.registry.getNames(), // registeredFactors
+      lastRebalance: this.lastRebalanceTime, // lastRebalance
+      totalRebalances: this.stats.totalRebalances, // 总Rebalances
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

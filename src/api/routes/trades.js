@@ -44,8 +44,8 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
           strategy, // 执行语句
           startDate, // 执行语句
           endDate, // 执行语句
-          limit: parseInt(pageSize), // 设置 limit 字段
-          offset: (page - 1) * pageSize, // 设置 offset 字段
+          limit: parseInt(pageSize), // 限制
+          offset: (page - 1) * pageSize, // offset
           sortBy, // 执行语句
           sortOrder, // 执行语句
         }); // 结束代码块
@@ -54,11 +54,11 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
       } // 结束代码块
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: trades, // 设置 data 字段
+        success: true, // 成功标记
+        data: trades, // 数据
         total, // 执行语句
-        page: parseInt(page), // 设置 page 字段
-        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+        page: parseInt(page), // page
+        pageSize: parseInt(pageSize), // page大小
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -74,18 +74,18 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
       const { startDate, endDate, symbol, strategy } = req.query; // 解构赋值
 
       let stats = { // 定义变量 stats
-        totalTrades: 0, // 设置 totalTrades 字段
-        buyCount: 0, // 设置 buyCount 字段
-        sellCount: 0, // 设置 sellCount 字段
-        totalVolume: 0, // 设置 totalVolume 字段
-        totalFees: 0, // 设置 totalFees 字段
-        totalPnL: 0, // 设置 totalPnL 字段
-        winCount: 0, // 设置 winCount 字段
-        lossCount: 0, // 设置 lossCount 字段
-        winRate: 0, // 设置 winRate 字段
-        avgPnL: 0, // 设置 avgPnL 字段
-        avgWin: 0, // 设置 avgWin 字段
-        avgLoss: 0, // 设置 avgLoss 字段
+        totalTrades: 0, // 总成交
+        buyCount: 0, // buy数量
+        sellCount: 0, // sell数量
+        totalVolume: 0, // 总成交量
+        totalFees: 0, // 总Fees
+        totalPnL: 0, // 总PnL
+        winCount: 0, // win数量
+        lossCount: 0, // 亏损数量
+        winRate: 0, // win频率
+        avgPnL: 0, // avgPnL
+        avgWin: 0, // avgWin
+        avgLoss: 0, // avg亏损
       }; // 结束代码块
 
       if (tradeRepository) { // 条件判断 tradeRepository
@@ -124,9 +124,9 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
 
       if (!trade) { // 条件判断 !trade
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Trade not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Trade not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -151,7 +151,7 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
           endDate, // 执行语句
           symbol, // 执行语句
           strategy, // 执行语句
-          limit: 10000, // 设置 limit 字段
+          limit: 10000, // 限制
         }); // 结束代码块
         trades = result.trades || []; // 赋值 trades
       } // 结束代码块
@@ -212,11 +212,11 @@ export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
       const list = orders.slice(offset, offset + parseInt(pageSize)); // 定义常量 list
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: list, // 设置 data 字段
+        success: true, // 成功标记
+        data: list, // 数据
         total, // 执行语句
-        page: parseInt(page), // 设置 page 字段
-        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+        page: parseInt(page), // page
+        pageSize: parseInt(pageSize), // page大小
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status

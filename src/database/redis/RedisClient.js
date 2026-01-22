@@ -17,14 +17,14 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 export const KEY_PREFIX = { // 导出常量 KEY_PREFIX
   ORDER: 'order',              // 订单 / Orders
-  ORDER_INDEX: 'order:idx',    // 订单索引 / Order indexes
+  ORDER_INDEX: 'order:idx',    // 订单INDEX权限
   POSITION: 'pos',             // 持仓 / Positions
-  POSITION_INDEX: 'pos:idx',   // 持仓索引 / Position indexes
+  POSITION_INDEX: 'pos:idx',   // 持仓INDEX权限
   TRADE: 'trade',              // 交易 / Trades
-  TRADE_INDEX: 'trade:idx',    // 交易索引 / Trade indexes
+  TRADE_INDEX: 'trade:idx',    // 交易INDEX权限
   STRATEGY: 'strategy',        // 策略状态 / Strategy states
-  CONFIG: 'config',            // 系统配置 / System config
-  BALANCE: 'balance',          // 余额快照 / Balance snapshots
+  CONFIG: 'config',            // 配置权限
+  BALANCE: 'balance',          // 余额权限
   AUDIT: 'audit',              // 审计日志 / Audit logs
   CANDLE: 'candle',            // K线缓存 / Candle cache
   LOCK: 'lock',                // 分布式锁 / Distributed locks
@@ -54,26 +54,26 @@ function buildRedisUrl() { // 定义函数 buildRedisUrl
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 连接 URL
-  url: buildRedisUrl(), // 设置 url 字段
+  url: buildRedisUrl(), // Redis 连接 URL
   // 数据库索引
-  database: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  database: parseInt(process.env.REDIS_DB || '0', 10), // database
   // 键前缀
-  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 读取环境变量 REDIS_PREFIX
+  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 密钥前缀
   // 连接超时 (ms)
-  connectTimeout: 10000, // 设置 connectTimeout 字段
+  connectTimeout: 10000, // 连接超时 (ms)
   // 命令超时 (ms)
-  commandTimeout: 5000, // 设置 commandTimeout 字段
+  commandTimeout: 5000, // 命令超时 (ms)
   // 重连策略
-  reconnectStrategy: (retries) => { // 设置 reconnectStrategy 字段
+  reconnectStrategy: (retries) => { // reconnect策略
     if (retries > 10) { // 条件判断 retries > 10
       return new Error('Max reconnection attempts reached'); // 返回结果
     } // 结束代码块
     return Math.min(retries * 100, 3000); // 返回结果
   }, // 结束代码块
   // 是否启用只读副本
-  enableReadReplica: false, // 设置 enableReadReplica 字段
+  enableReadReplica: false, // 是否启用只读副本
   // 只读副本 URL
-  readReplicaUrl: null, // 设置 readReplicaUrl 字段
+  readReplicaUrl: null, // 只读副本 URL
 }; // 结束代码块
 
 /**
@@ -101,11 +101,11 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
     try { // 尝试执行
       // 创建主客户端 / Create main client
       this.client = createClient({ // 设置 client
-        url: this.config.url, // 设置 url 字段
-        database: this.config.database, // 设置 database 字段
-        socket: { // 设置 socket 字段
-          connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
-          reconnectStrategy: this.config.reconnectStrategy, // 设置 reconnectStrategy 字段
+        url: this.config.url, // URL
+        database: this.config.database, // database
+        socket: { // socket
+          connectTimeout: this.config.connectTimeout, // connect超时
+          reconnectStrategy: this.config.reconnectStrategy, // reconnect策略
         }, // 结束代码块
       }); // 结束代码块
 
@@ -134,10 +134,10 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
       // 创建只读副本连接 (如果配置) / Create read replica connection (if configured)
       if (this.config.enableReadReplica && this.config.readReplicaUrl) { // 条件判断 this.config.enableReadReplica && this.config....
         this.readClient = createClient({ // 设置 readClient
-          url: this.config.readReplicaUrl, // 设置 url 字段
-          database: this.config.database, // 设置 database 字段
-          socket: { // 设置 socket 字段
-            connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
+          url: this.config.readReplicaUrl, // URL
+          database: this.config.database, // database
+          socket: { // socket
+            connectTimeout: this.config.connectTimeout, // connect超时
           }, // 结束代码块
         }); // 结束代码块
         await this.readClient.connect(); // 等待异步结果
@@ -352,8 +352,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
    */
   async zRangeByScore(key, min, max, options = {}) { // 执行语句
     const args = { // 定义常量 args
-      BY: 'SCORE', // 设置 BY 字段
-      LIMIT: options.limit ? { offset: options.offset || 0, count: options.limit } : undefined, // 设置 LIMIT 字段
+      BY: 'SCORE', // BY
+      LIMIT: options.limit ? { offset: options.offset || 0, count: options.limit } : undefined, // 限制
     }; // 结束代码块
     return this.getReadClient().zRange(key, min, max, args); // 返回结果
   } // 结束代码块
@@ -364,8 +364,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
    */
   async zRangeByScoreWithScores(key, min, max, options = {}) { // 执行语句
     const args = { // 定义常量 args
-      BY: 'SCORE', // 设置 BY 字段
-      LIMIT: options.limit ? { offset: options.offset || 0, count: options.limit } : undefined, // 设置 LIMIT 字段
+      BY: 'SCORE', // BY
+      LIMIT: options.limit ? { offset: options.offset || 0, count: options.limit } : undefined, // 限制
     }; // 结束代码块
     return this.getReadClient().zRangeWithScores(key, min, max, args); // 返回结果
   } // 结束代码块
@@ -556,8 +556,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
     const lockToken = token || `${Date.now()}-${Math.random().toString(36).slice(2)}`; // 定义常量 lockToken
 
     const result = await this.client.set(lockKey, lockToken, { // 定义常量 result
-      NX: true, // 设置 NX 字段
-      EX: ttl, // 设置 EX 字段
+      NX: true, // NX
+      EX: ttl, // EX
     }); // 结束代码块
 
     return result === 'OK' ? lockToken : null; // 返回结果
@@ -581,8 +581,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
     `; // 执行语句
 
     return this.client.eval(script, { // 返回结果
-      keys: [lockKey], // 设置 keys 字段
-      arguments: [token], // 设置 arguments 字段
+      keys: [lockKey], // keys
+      arguments: [token], // arguments
     }); // 结束代码块
   } // 结束代码块
 
@@ -605,8 +605,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
     `; // 执行语句
 
     return this.client.eval(script, { // 返回结果
-      keys: [lockKey], // 设置 keys 字段
-      arguments: [token, ttl.toString()], // 设置 arguments 字段
+      keys: [lockKey], // keys
+      arguments: [token, ttl.toString()], // arguments
     }); // 结束代码块
   } // 结束代码块
 
@@ -625,8 +625,8 @@ class RedisClient extends EventEmitter { // 定义类 RedisClient(继承EventEmi
     let cursor = 0; // 定义变量 cursor
     do { // 执行语句
       const result = await this.client.scan(cursor, { // 定义常量 result
-        MATCH: pattern, // 设置 MATCH 字段
-        COUNT: count, // 设置 COUNT 字段
+        MATCH: pattern, // MATCH
+        COUNT: count, // 数量
       }); // 结束代码块
       cursor = result.cursor; // 赋值 cursor
       for (const key of result.keys) { // 循环 const key of result.keys

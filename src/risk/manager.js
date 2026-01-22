@@ -47,8 +47,8 @@ const RISK_ACTION = { // 定义常量 RISK_ACTION
   NONE: 'none',                     // 无动作 / No action
   ALERT: 'alert',                   // 报警 / Alert
   REDUCE_POSITION: 'reduce',        // 减仓 / Reduce position
-  PAUSE_TRADING: 'pause',           // 暂停交易 / Pause trading
-  EMERGENCY_CLOSE: 'emergency',     // 紧急平仓 / Emergency close
+  PAUSE_TRADING: 'pause',           // 暂停交易权限
+  EMERGENCY_CLOSE: 'emergency',     // EMERGENCY平仓权限
 }; // 结束代码块
 
 /**
@@ -70,33 +70,33 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 紧急全平保证金率阈值 (35% = 0.35) / Emergency close margin rate threshold
-  emergencyMarginRate: 0.35, // 设置 emergencyMarginRate 字段
+  emergencyMarginRate: 0.35, // 紧急全平保证金率阈值 (35% = 0.35)
 
   // 警告保证金率阈值 (50% = 0.50) / Warning margin rate threshold
-  warningMarginRate: 0.50, // 设置 warningMarginRate 字段
+  warningMarginRate: 0.50, // 警告保证金率阈值 (50% = 0.50)
 
   // 危险保证金率阈值 (40% = 0.40) / Danger margin rate threshold
-  dangerMarginRate: 0.40, // 设置 dangerMarginRate 字段
+  dangerMarginRate: 0.40, // 危险保证金率阈值 (40% = 0.40)
 
   // ============================================
   // 仓位集中度配置 / Position Concentration Configuration
   // ============================================
 
   // 单币种最大仓位占比 (15% = 0.15) / Max single symbol position ratio
-  maxSinglePositionRatio: 0.15, // 设置 maxSinglePositionRatio 字段
+  maxSinglePositionRatio: 0.15, // 单币种最大仓位占比 (15% = 0.15)
 
   // 仓位集中度警告阈值 (10% = 0.10) / Position concentration warning threshold
-  positionWarningRatio: 0.10, // 设置 positionWarningRatio 字段
+  positionWarningRatio: 0.10, // 仓位集中度警告阈值 (10% = 0.10)
 
   // ============================================
   // 回撤配置 / Drawdown Configuration
   // ============================================
 
   // 当日最大回撤暂停交易阈值 (8% = 0.08) / Max daily drawdown to pause trading
-  maxDailyDrawdown: 0.08, // 设置 maxDailyDrawdown 字段
+  maxDailyDrawdown: 0.08, // 当日最大回撤暂停交易阈值 (8% = 0.08)
 
   // 回撤警告阈值 (5% = 0.05) / Drawdown warning threshold
-  drawdownWarningThreshold: 0.05, // 设置 drawdownWarningThreshold 字段
+  drawdownWarningThreshold: 0.05, // 回撤警告阈值 (5% = 0.05)
 
   // ============================================
   // 净值回撤配置 / Equity Drawdown Configuration
@@ -106,52 +106,52 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
 
   // 净值最大回撤阈值 (20% = 0.20) / Max equity drawdown threshold
   // 触发紧急全平 / Triggers emergency close
-  maxEquityDrawdown: 0.20, // 设置 maxEquityDrawdown 字段
+  maxEquityDrawdown: 0.20, // 最大Equity回撤
 
   // 净值回撤危险阈值 (15% = 0.15) / Equity drawdown danger threshold
   // 触发减仓 / Triggers position reduction
-  equityDrawdownDangerThreshold: 0.15, // 设置 equityDrawdownDangerThreshold 字段
+  equityDrawdownDangerThreshold: 0.15, // equity回撤Danger阈值
 
   // 净值回撤警告阈值 (10% = 0.10) / Equity drawdown warning threshold
   // 暂停新开仓 / Pauses new positions
-  equityDrawdownWarningThreshold: 0.10, // 设置 equityDrawdownWarningThreshold 字段
+  equityDrawdownWarningThreshold: 0.10, // 暂停新开仓
 
   // 净值回撤提醒阈值 (5% = 0.05) / Equity drawdown alert threshold
   // 发出警报 / Emits alert
-  equityDrawdownAlertThreshold: 0.05, // 设置 equityDrawdownAlertThreshold 字段
+  equityDrawdownAlertThreshold: 0.05, // equity回撤告警阈值
 
   // 是否启用净值回撤监控 / Enable equity drawdown monitoring
-  enableEquityDrawdownMonitor: true, // 设置 enableEquityDrawdownMonitor 字段
+  enableEquityDrawdownMonitor: true, // 是否启用净值回撤监控
 
   // 净值回撤减仓比例 (30% = 0.30) / Equity drawdown reduction ratio
-  equityDrawdownReduceRatio: 0.30, // 设置 equityDrawdownReduceRatio 字段
+  equityDrawdownReduceRatio: 0.30, // 净值回撤减仓比例 (30% = 0.30)
 
   // ============================================
   // BTC 急跌配置 / BTC Crash Configuration
   // ============================================
 
   // BTC 急跌阈值 (5分钟跌幅) / BTC crash threshold (5-minute drop)
-  btcCrashThreshold: -0.03,  // -3%
+  btcCrashThreshold: -0.03,  // BTC 急跌阈值 (5分钟跌幅)
 
   // BTC 急跌时山寨币减仓比例 / Altcoin reduction ratio on BTC crash
-  altcoinReduceRatio: 0.50,  // 50%
+  altcoinReduceRatio: 0.50,  // BTC 急跌时山寨币减仓比例
 
   // BTC 价格检查窗口 (毫秒) / BTC price check window (ms)
   btcPriceWindow: 5 * 60 * 1000,  // 5分钟 / 5 minutes
 
   // 山寨币列表 (非 BTC 的币) / Altcoin list (non-BTC coins)
   // 留空表示除 BTC 外都是山寨 / Empty means all except BTC are altcoins
-  altcoinSymbols: [], // 设置 altcoinSymbols 字段
+  altcoinSymbols: [], // 留空表示除 BTC 外都是山寨
 
   // ============================================
   // 强平价格配置 / Liquidation Price Configuration
   // ============================================
 
   // 维持保证金率 / Maintenance margin rate
-  maintenanceMarginRate: 0.004,  // 0.4%
+  maintenanceMarginRate: 0.004,  // maintenance保证金频率
 
   // 强平缓冲距离 (触发预警) / Liquidation buffer distance (trigger warning)
-  liquidationBuffer: 0.05,  // 5%
+  liquidationBuffer: 0.05,  // 强平缓冲距离 (触发预警)
 
   // ============================================
   // 监控配置 / Monitoring Configuration
@@ -171,10 +171,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[RiskMgr]', // 设置 logPrefix 字段
+  logPrefix: '[RiskMgr]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -232,44 +232,44 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 当日权益记录 / Daily equity record
     this.dailyEquity = { // 设置 dailyEquity
       // 今日起始权益 / Today's starting equity
-      startEquity: 0, // 设置 startEquity 字段
+      startEquity: 0, // 启动Equity
 
       // 今日最高权益 / Today's peak equity
-      peakEquity: 0, // 设置 peakEquity 字段
+      peakEquity: 0, // peakEquity
 
       // 今日开始时间戳 / Today's start timestamp
-      dayStart: this._getDayStart(), // 设置 dayStart 字段
+      dayStart: this._getDayStart(), // 天启动
 
       // 当前回撤 / Current drawdown
-      currentDrawdown: 0, // 设置 currentDrawdown 字段
+      currentDrawdown: 0, // current回撤
     }; // 结束代码块
 
     // 净值回撤监控 (历史最高点) / Equity drawdown monitoring (all-time high)
     // 不随日期重置 / Does not reset daily
     this.equityDrawdown = { // 设置 equityDrawdown
       // 历史最高净值 / All-time high equity
-      allTimeHighEquity: 0, // 设置 allTimeHighEquity 字段
+      allTimeHighEquity: 0, // all时间最高Equity
 
       // 历史最高净值时间 / All-time high timestamp
-      allTimeHighTime: 0, // 设置 allTimeHighTime 字段
+      allTimeHighTime: 0, // 历史最高净值时间
 
       // 当前净值回撤 / Current equity drawdown
-      currentDrawdown: 0, // 设置 currentDrawdown 字段
+      currentDrawdown: 0, // current回撤
 
       // 当前净值回撤金额 / Current equity drawdown amount
-      currentDrawdownAmount: 0, // 设置 currentDrawdownAmount 字段
+      currentDrawdownAmount: 0, // 当前净值回撤金额
 
       // 最大净值回撤 (历史) / Maximum equity drawdown (historical)
-      maxDrawdown: 0, // 设置 maxDrawdown 字段
+      maxDrawdown: 0, // 最大净值回撤 (历史)
 
       // 最大净值回撤时间 / Maximum drawdown timestamp
-      maxDrawdownTime: 0, // 设置 maxDrawdownTime 字段
+      maxDrawdownTime: 0, // 最大净值回撤时间
 
       // 最后更新时间 / Last update time
-      lastUpdateTime: 0, // 设置 lastUpdateTime 字段
+      lastUpdateTime: 0, // last更新时间
 
       // 回撤触发次数统计 / Drawdown trigger counts
-      triggerCounts: { // 设置 triggerCounts 字段
+      triggerCounts: { // 回撤触发次数统计
         alert: 0,      // 提醒次数 / Alert count
         warning: 0,    // 警告次数 / Warning count
         danger: 0,     // 危险次数 / Danger count
@@ -280,22 +280,22 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 风控状态 / Risk state
     this.state = { // 设置 state
       // 当前风险级别 / Current risk level
-      riskLevel: RISK_LEVEL.NORMAL, // 设置 riskLevel 字段
+      riskLevel: RISK_LEVEL.NORMAL, // 风险级别
 
       // 是否允许交易 / Whether trading is allowed
-      tradingAllowed: true, // 设置 tradingAllowed 字段
+      tradingAllowed: true, // 交易Allowed
 
       // 暂停交易原因 / Pause trading reason
-      pauseReason: null, // 设置 pauseReason 字段
+      pauseReason: null, // 暂停Reason
 
       // 风控触发历史 / Risk trigger history
-      triggers: [], // 设置 triggers 字段
+      triggers: [], // triggers
 
       // 最近一次检查时间 / Last check time
-      lastCheckTime: 0, // 设置 lastCheckTime 字段
+      lastCheckTime: 0, // 最近一次检查时间
 
       // 是否正在运行 / Whether running
-      running: false, // 设置 running 字段
+      running: false, // running
     }; // 结束代码块
 
     // 定时器引用 / Timer references
@@ -512,19 +512,19 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'marginRate', // 设置 type 字段
+      type: 'marginRate', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // 当前保证金率 / Current margin rate
-      marginRate: 0, // 设置 marginRate 字段
+      marginRate: 0, // 保证金频率
 
       // 阈值 / Threshold
-      threshold: this.config.emergencyMarginRate, // 设置 threshold 字段
+      threshold: this.config.emergencyMarginRate, // 阈值
 
       // 交易所详情 / Exchange details
-      details: [], // 设置 details 字段
+      details: [], // details
     }; // 结束代码块
 
     // 计算总保证金率 / Calculate total margin rate
@@ -548,10 +548,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
       // 记录详情 / Record details
       result.details.push({ // 调用 result.details.push
-        exchange: exchangeName, // 设置 exchange 字段
-        equity: accountInfo.equity, // 设置 equity 字段
-        usedMargin: accountInfo.usedMargin, // 设置 usedMargin 字段
-        marginRate: exchangeMarginRate, // 设置 marginRate 字段
+        exchange: exchangeName, // 交易所
+        equity: accountInfo.equity, // equity
+        usedMargin: accountInfo.usedMargin, // used保证金
+        marginRate: exchangeMarginRate, // 保证金频率
       }); // 结束代码块
     } // 结束代码块
 
@@ -619,16 +619,16 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'positionConcentration', // 设置 type 字段
+      type: 'positionConcentration', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // 超标币种列表 / Exceeded symbols list
-      exceededSymbols: [], // 设置 exceededSymbols 字段
+      exceededSymbols: [], // 超标币种列表
 
       // 阈值 / Threshold
-      threshold: this.config.maxSinglePositionRatio, // 设置 threshold 字段
+      threshold: this.config.maxSinglePositionRatio, // 阈值
     }; // 结束代码块
 
     // 计算总仓位价值 / Calculate total position value
@@ -676,7 +676,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
           symbol, // 执行语句
           value, // 执行语句
           ratio, // 执行语句
-          threshold: this.config.maxSinglePositionRatio, // 设置 threshold 字段
+          threshold: this.config.maxSinglePositionRatio, // 阈值
         }); // 结束代码块
 
         // 设置动作为警报 / Set action to alert
@@ -712,25 +712,25 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'dailyDrawdown', // 设置 type 字段
+      type: 'dailyDrawdown', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // 当前回撤 / Current drawdown
-      drawdown: 0, // 设置 drawdown 字段
+      drawdown: 0, // 回撤
 
       // 阈值 / Threshold
-      threshold: this.config.maxDailyDrawdown, // 设置 threshold 字段
+      threshold: this.config.maxDailyDrawdown, // 阈值
 
       // 今日起始权益 / Today's start equity
-      startEquity: this.dailyEquity.startEquity, // 设置 startEquity 字段
+      startEquity: this.dailyEquity.startEquity, // 启动Equity
 
       // 今日最高权益 / Today's peak equity
-      peakEquity: this.dailyEquity.peakEquity, // 设置 peakEquity 字段
+      peakEquity: this.dailyEquity.peakEquity, // peakEquity
 
       // 当前权益 / Current equity
-      currentEquity: 0, // 设置 currentEquity 字段
+      currentEquity: 0, // currentEquity
     }; // 结束代码块
 
     // 计算当前总权益 / Calculate current total equity
@@ -801,25 +801,25 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'equityDrawdown', // 设置 type 字段
+      type: 'equityDrawdown', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // 当前回撤 / Current drawdown
-      drawdown: 0, // 设置 drawdown 字段
+      drawdown: 0, // 回撤
 
       // 回撤金额 / Drawdown amount
-      drawdownAmount: 0, // 设置 drawdownAmount 字段
+      drawdownAmount: 0, // 回撤数量
 
       // 历史最高净值 / All-time high equity
-      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity, // 设置 allTimeHighEquity 字段
+      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity, // all时间最高Equity
 
       // 当前权益 / Current equity
-      currentEquity: 0, // 设置 currentEquity 字段
+      currentEquity: 0, // currentEquity
 
       // 阈值 / Threshold
-      threshold: this.config.maxEquityDrawdown, // 设置 threshold 字段
+      threshold: this.config.maxEquityDrawdown, // 阈值
     }; // 结束代码块
 
     // 如果未启用净值回撤监控，跳过 / If equity drawdown monitoring disabled, skip
@@ -945,19 +945,19 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'btcCrash', // 设置 type 字段
+      type: 'btcCrash', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // BTC 涨跌幅 / BTC change
-      btcChange: 0, // 设置 btcChange 字段
+      btcChange: 0, // btc修改
 
       // 阈值 / Threshold
-      threshold: this.config.btcCrashThreshold, // 设置 threshold 字段
+      threshold: this.config.btcCrashThreshold, // 阈值
 
       // 窗口时间 / Window time
-      windowMs: this.config.btcPriceWindow, // 设置 windowMs 字段
+      windowMs: this.config.btcPriceWindow, // 窗口毫秒
     }; // 结束代码块
 
     // 获取 BTC 当前价格 / Get BTC current price
@@ -973,8 +973,8 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
     // 添加到历史记录 / Add to history
     this.btcPriceHistory.push({ // 访问 btcPriceHistory
-      price: btcPrice.price, // 设置 price 字段
-      timestamp: now, // 设置 timestamp 字段
+      price: btcPrice.price, // 价格
+      timestamp: now, // 时间戳
     }); // 结束代码块
 
     // 清理过期的历史数据 / Clean up expired history data
@@ -1044,16 +1044,16 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 检查类型 / Check type
-      type: 'liquidationRisk', // 设置 type 字段
+      type: 'liquidationRisk', // 类型检查类型
 
       // 动作 / Action
-      action: RISK_ACTION.NONE, // 设置 action 字段
+      action: RISK_ACTION.NONE, // action
 
       // 接近强平的仓位 / Positions near liquidation
-      nearLiquidation: [], // 设置 nearLiquidation 字段
+      nearLiquidation: [], // near强平
 
       // 缓冲距离 / Buffer distance
-      buffer: this.config.liquidationBuffer, // 设置 buffer 字段
+      buffer: this.config.liquidationBuffer, // buffer
     }; // 结束代码块
 
     // 遍历所有强平价格 / Iterate all liquidation prices
@@ -1078,9 +1078,9 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
           // 添加到接近强平列表 / Add to near liquidation list
           result.nearLiquidation.push({ // 调用 result.nearLiquidation.push
             symbol, // 执行语句
-            side: POSITION_SIDE.LONG, // 设置 side 字段
+            side: POSITION_SIDE.LONG, // 方向
             currentPrice, // 执行语句
-            liquidationPrice: liqInfo.liquidationPrice, // 设置 liquidationPrice 字段
+            liquidationPrice: liqInfo.liquidationPrice, // 强平价格
             distance, // 执行语句
           }); // 结束代码块
 
@@ -1107,9 +1107,9 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
           // 添加到接近强平列表 / Add to near liquidation list
           result.nearLiquidation.push({ // 调用 result.nearLiquidation.push
             symbol, // 执行语句
-            side: POSITION_SIDE.SHORT, // 设置 side 字段
+            side: POSITION_SIDE.SHORT, // 方向
             currentPrice, // 执行语句
-            liquidationPrice: liqInfo.liquidationPrice, // 设置 liquidationPrice 字段
+            liquidationPrice: liqInfo.liquidationPrice, // 强平价格
             distance, // 执行语句
           }); // 结束代码块
 
@@ -1177,8 +1177,8 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
       // 发出警报 / Emit alert
       this.emit('alert', { // 调用 emit
-        type: 'executorUnavailable', // 设置 type 字段
-        message: '执行器不可用，需要手动平仓 / Executor unavailable, manual close required', // 设置 message 字段
+        type: 'executorUnavailable', // 类型
+        message: '执行器不可用，需要手动平仓 / Executor unavailable, manual close required', // 消息
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -1254,10 +1254,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
         // 如果有仓位需要减 / If position needs reduction
         if (reduceAmount > 0) { // 条件判断 reduceAmount > 0
           positionsToReduce.push({ // 调用 positionsToReduce.push
-            exchange: exchangeName, // 设置 exchange 字段
+            exchange: exchangeName, // 交易所
             symbol, // 执行语句
-            side: position.side, // 设置 side 字段
-            currentSize: Math.abs(position.contracts || position.size || 0), // 设置 currentSize 字段
+            side: position.side, // 方向
+            currentSize: Math.abs(position.contracts || position.size || 0), // current大小
             reduceAmount, // 执行语句
           }); // 结束代码块
         } // 结束代码块
@@ -1276,10 +1276,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
           // 调用执行器 / Call executor
           await this.executor.executeMarketOrder({ // 等待异步结果
-            symbol: pos.symbol, // 设置 symbol 字段
-            side: closeSide, // 设置 side 字段
-            amount: pos.reduceAmount, // 设置 amount 字段
-            reduceOnly: true, // 设置 reduceOnly 字段
+            symbol: pos.symbol, // 交易对
+            side: closeSide, // 方向
+            amount: pos.reduceAmount, // 数量
+            reduceOnly: true, // 减仓仅
           }); // 结束代码块
 
         } catch (error) { // 执行语句
@@ -1311,9 +1311,9 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 发出减仓事件 / Emit reduce event
     this.emit('reduceForEquityDrawdown', { // 调用 emit
       details, // 执行语句
-      ratio: reduceRatio, // 设置 ratio 字段
-      drawdown: details.drawdown, // 设置 drawdown 字段
-      drawdownAmount: details.drawdownAmount, // 设置 drawdownAmount 字段
+      ratio: reduceRatio, // 比例
+      drawdown: details.drawdown, // 回撤
+      drawdownAmount: details.drawdownAmount, // 回撤数量
     }); // 结束代码块
 
     // 收集需要减仓的仓位 / Collect positions to reduce
@@ -1329,9 +1329,9 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
         // 如果有仓位需要减 / If position needs reduction
         if (reduceAmount > 0) { // 条件判断 reduceAmount > 0
           positionsToReduce.push({ // 调用 positionsToReduce.push
-            exchange: exchangeName, // 设置 exchange 字段
+            exchange: exchangeName, // 交易所
             symbol, // 执行语句
-            side: position.side, // 设置 side 字段
+            side: position.side, // 方向
             currentSize, // 执行语句
             reduceAmount, // 执行语句
           }); // 结束代码块
@@ -1353,10 +1353,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
           // 调用执行器 / Call executor
           await this.executor.executeMarketOrder({ // 等待异步结果
-            symbol: pos.symbol, // 设置 symbol 字段
-            side: closeSide, // 设置 side 字段
-            amount: pos.reduceAmount, // 设置 amount 字段
-            reduceOnly: true, // 设置 reduceOnly 字段
+            symbol: pos.symbol, // 交易对
+            side: closeSide, // 方向
+            amount: pos.reduceAmount, // 数量
+            reduceOnly: true, // 减仓仅
           }); // 结束代码块
 
         } catch (error) { // 执行语句
@@ -1374,8 +1374,8 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
       // 发出警报 / Emit alert
       this.emit('alert', { // 调用 emit
-        type: 'executorUnavailable', // 设置 type 字段
-        message: '执行器不可用，需要手动减仓 / Executor unavailable, manual reduction required', // 设置 message 字段
+        type: 'executorUnavailable', // 类型
+        message: '执行器不可用，需要手动减仓 / Executor unavailable, manual reduction required', // 消息
         positionsToReduce, // 执行语句
       }); // 结束代码块
     } // 结束代码块
@@ -1498,7 +1498,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
       notional, // 执行语句
 
       // 计算时间 / Calculation time
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -1544,16 +1544,16 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
         // 提取关键数据 / Extract key data
         const accountInfo = { // 定义常量 accountInfo
           // 总权益 / Total equity
-          equity: balance.total?.USDT || balance.USDT?.total || 0, // 设置 equity 字段
+          equity: balance.total?.USDT || balance.USDT?.total || 0, // equity
 
           // 可用余额 / Available balance
-          available: balance.free?.USDT || balance.USDT?.free || 0, // 设置 available 字段
+          available: balance.free?.USDT || balance.USDT?.free || 0, // available
 
           // 已用保证金 / Used margin
-          usedMargin: balance.used?.USDT || balance.USDT?.used || 0, // 设置 usedMargin 字段
+          usedMargin: balance.used?.USDT || balance.USDT?.used || 0, // used保证金
 
           // 更新时间 / Update time
-          timestamp: Date.now(), // 设置 timestamp 字段
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
 
         // 保存账户数据 / Save account data
@@ -1632,10 +1632,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
       // 更新价格缓存 / Update price cache
       for (const [symbol, ticker] of Object.entries(tickers)) { // 循环 const [symbol, ticker] of Object.entries(tick...
         this.priceData.set(symbol, { // 访问 priceData
-          price: ticker.last || ticker.close, // 设置 price 字段
-          bid: ticker.bid, // 设置 bid 字段
-          ask: ticker.ask, // 设置 ask 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          price: ticker.last || ticker.close, // 价格
+          bid: ticker.bid, // bid
+          ask: ticker.ask, // ask
+          timestamp: Date.now(), // 时间戳
         }); // 结束代码块
       } // 结束代码块
 
@@ -1658,7 +1658,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 更新价格缓存 / Update price cache
     this.priceData.set(symbol, { // 访问 priceData
       price, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -1790,7 +1790,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
       type, // 执行语句
       reason, // 执行语句
       details, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     // 添加到历史 / Add to history
@@ -1825,7 +1825,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块
@@ -1872,50 +1872,50 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 返回状态对象 / Return status object
     return { // 返回结果
       // 运行状态 / Running status
-      running: this.state.running, // 设置 running 字段
+      running: this.state.running, // running运行状态
 
       // 风险级别 / Risk level
-      riskLevel: this.state.riskLevel, // 设置 riskLevel 字段
+      riskLevel: this.state.riskLevel, // 风险级别
 
       // 交易状态 / Trading status
-      tradingAllowed: this.state.tradingAllowed, // 设置 tradingAllowed 字段
-      pauseReason: this.state.pauseReason, // 设置 pauseReason 字段
+      tradingAllowed: this.state.tradingAllowed, // 交易Allowed交易状态
+      pauseReason: this.state.pauseReason, // 暂停Reason
 
       // 保证金信息 / Margin info
-      accounts: Array.from(this.accountData.entries()).map(([name, data]) => ({ // 设置 accounts 字段
-        exchange: name, // 设置 exchange 字段
+      accounts: Array.from(this.accountData.entries()).map(([name, data]) => ({ // accounts
+        exchange: name, // 交易所
         ...data, // 展开对象或数组
       })), // 结束代码块
 
       // 每日权益 / Daily equity
-      dailyEquity: { ...this.dailyEquity }, // 设置 dailyEquity 字段
+      dailyEquity: { ...this.dailyEquity }, // 每日Equity
 
       // 净值回撤 / Equity drawdown
-      equityDrawdown: { ...this.equityDrawdown }, // 设置 equityDrawdown 字段
+      equityDrawdown: { ...this.equityDrawdown }, // equity回撤
 
       // 强平价格 / Liquidation prices
-      liquidationPrices: Array.from(this.liquidationPrices.entries()).map(([symbol, data]) => ({ // 设置 liquidationPrices 字段
+      liquidationPrices: Array.from(this.liquidationPrices.entries()).map(([symbol, data]) => ({ // 强平Prices
         symbol, // 执行语句
         ...data, // 展开对象或数组
       })), // 结束代码块
 
       // 最近触发 / Recent triggers
-      recentTriggers: this.state.triggers.slice(-10), // 设置 recentTriggers 字段
+      recentTriggers: this.state.triggers.slice(-10), // recentTriggers
 
       // 最后检查时间 / Last check time
-      lastCheckTime: this.state.lastCheckTime, // 设置 lastCheckTime 字段
+      lastCheckTime: this.state.lastCheckTime, // lastCheck时间
 
       // 配置 / Configuration
-      config: { // 设置 config 字段
-        emergencyMarginRate: this.config.emergencyMarginRate, // 设置 emergencyMarginRate 字段
-        maxSinglePositionRatio: this.config.maxSinglePositionRatio, // 设置 maxSinglePositionRatio 字段
-        maxDailyDrawdown: this.config.maxDailyDrawdown, // 设置 maxDailyDrawdown 字段
-        btcCrashThreshold: this.config.btcCrashThreshold, // 设置 btcCrashThreshold 字段
+      config: { // 配置
+        emergencyMarginRate: this.config.emergencyMarginRate, // emergency保证金频率
+        maxSinglePositionRatio: this.config.maxSinglePositionRatio, // 最大Single持仓比例
+        maxDailyDrawdown: this.config.maxDailyDrawdown, // 最大每日回撤
+        btcCrashThreshold: this.config.btcCrashThreshold, // btcCrash阈值
         // 净值回撤配置 / Equity drawdown config
-        maxEquityDrawdown: this.config.maxEquityDrawdown, // 设置 maxEquityDrawdown 字段
-        equityDrawdownDangerThreshold: this.config.equityDrawdownDangerThreshold, // 设置 equityDrawdownDangerThreshold 字段
-        equityDrawdownWarningThreshold: this.config.equityDrawdownWarningThreshold, // 设置 equityDrawdownWarningThreshold 字段
-        enableEquityDrawdownMonitor: this.config.enableEquityDrawdownMonitor, // 设置 enableEquityDrawdownMonitor 字段
+        maxEquityDrawdown: this.config.maxEquityDrawdown, // 最大Equity回撤
+        equityDrawdownDangerThreshold: this.config.equityDrawdownDangerThreshold, // equity回撤Danger阈值
+        equityDrawdownWarningThreshold: this.config.equityDrawdownWarningThreshold, // equity回撤警告阈值
+        enableEquityDrawdownMonitor: this.config.enableEquityDrawdownMonitor, // 启用Equity回撤监控
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1934,9 +1934,9 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
   checkOrder(order) { // 调用 checkOrder
     // 结果对象 / Result object
     const result = { // 定义常量 result
-      allowed: true, // 设置 allowed 字段
-      reasons: [], // 设置 reasons 字段
-      warnings: [], // 设置 warnings 字段
+      allowed: true, // allowed
+      reasons: [], // reasons
+      warnings: [], // warnings
     }; // 结束代码块
 
     // 1. 检查交易是否被暂停 / Check if trading is paused
@@ -2025,42 +2025,42 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
   getEquityDrawdownStatus() { // 调用 getEquityDrawdownStatus
     return { // 返回结果
       // 是否启用 / Whether enabled
-      enabled: this.config.enableEquityDrawdownMonitor, // 设置 enabled 字段
+      enabled: this.config.enableEquityDrawdownMonitor, // 启用
 
       // 历史最高净值 / All-time high equity
-      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity, // 设置 allTimeHighEquity 字段
+      allTimeHighEquity: this.equityDrawdown.allTimeHighEquity, // all时间最高Equity
 
       // 历史最高净值时间 / All-time high timestamp
-      allTimeHighTime: this.equityDrawdown.allTimeHighTime, // 设置 allTimeHighTime 字段
+      allTimeHighTime: this.equityDrawdown.allTimeHighTime, // 历史最高净值时间
 
       // 当前净值回撤 (百分比) / Current drawdown (percentage)
-      currentDrawdown: this.equityDrawdown.currentDrawdown, // 设置 currentDrawdown 字段
+      currentDrawdown: this.equityDrawdown.currentDrawdown, // 当前净值回撤 (百分比)
 
       // 当前净值回撤金额 / Current drawdown amount
-      currentDrawdownAmount: this.equityDrawdown.currentDrawdownAmount, // 设置 currentDrawdownAmount 字段
+      currentDrawdownAmount: this.equityDrawdown.currentDrawdownAmount, // 当前净值回撤金额
 
       // 最大历史回撤 / Maximum historical drawdown
-      maxDrawdown: this.equityDrawdown.maxDrawdown, // 设置 maxDrawdown 字段
+      maxDrawdown: this.equityDrawdown.maxDrawdown, // 最大回撤
 
       // 最大回撤时间 / Maximum drawdown time
-      maxDrawdownTime: this.equityDrawdown.maxDrawdownTime, // 设置 maxDrawdownTime 字段
+      maxDrawdownTime: this.equityDrawdown.maxDrawdownTime, // 最大回撤时间
 
       // 触发次数统计 / Trigger counts
-      triggerCounts: { ...this.equityDrawdown.triggerCounts }, // 设置 triggerCounts 字段
+      triggerCounts: { ...this.equityDrawdown.triggerCounts }, // 触发次数统计
 
       // 阈值配置 / Threshold configuration
-      thresholds: { // 设置 thresholds 字段
-        alert: this.config.equityDrawdownAlertThreshold, // 设置 alert 字段
-        warning: this.config.equityDrawdownWarningThreshold, // 设置 warning 字段
-        danger: this.config.equityDrawdownDangerThreshold, // 设置 danger 字段
-        emergency: this.config.maxEquityDrawdown, // 设置 emergency 字段
+      thresholds: { // 阈值配置
+        alert: this.config.equityDrawdownAlertThreshold, // 告警
+        warning: this.config.equityDrawdownWarningThreshold, // 警告
+        danger: this.config.equityDrawdownDangerThreshold, // danger
+        emergency: this.config.maxEquityDrawdown, // emergency
       }, // 结束代码块
 
       // 当前风险级别 / Current risk level
-      riskLevel: this._getEquityDrawdownRiskLevel(), // 设置 riskLevel 字段
+      riskLevel: this._getEquityDrawdownRiskLevel(), // 风险级别
 
       // 最后更新时间 / Last update time
-      lastUpdateTime: this.equityDrawdown.lastUpdateTime, // 设置 lastUpdateTime 字段
+      lastUpdateTime: this.equityDrawdown.lastUpdateTime, // last更新时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -2111,10 +2111,10 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
   resetEquityDrawdownStats(resetAllTimeHigh = false) { // 调用 resetEquityDrawdownStats
     // 重置触发计数 / Reset trigger counts
     this.equityDrawdown.triggerCounts = { // 访问 equityDrawdown
-      alert: 0, // 设置 alert 字段
-      warning: 0, // 设置 warning 字段
-      danger: 0, // 设置 danger 字段
-      emergency: 0, // 设置 emergency 字段
+      alert: 0, // 告警
+      warning: 0, // 警告
+      danger: 0, // danger
+      emergency: 0, // emergency
     }; // 结束代码块
 
     // 重置最大回撤 / Reset max drawdown

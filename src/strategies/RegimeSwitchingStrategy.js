@@ -27,29 +27,29 @@ import { WeightedComboStrategy } from './WeightedComboStrategy.js'; // 导入模
  */
 const REGIME_STRATEGY_MAP = { // 定义常量 REGIME_STRATEGY_MAP
   [MarketRegime.TRENDING_UP]: { // 执行语句
-    strategies: ['SMA', 'MACD', 'WeightedCombo'], // 设置 strategies 字段
-    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 }, // 设置 weights 字段
-    description: '上涨趋势策略组', // 设置 description 字段
+    strategies: ['SMA', 'MACD', 'WeightedCombo'], // 策略
+    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 }, // weights
+    description: '上涨趋势策略组', // description
   }, // 结束代码块
   [MarketRegime.TRENDING_DOWN]: { // 执行语句
-    strategies: ['SMA', 'MACD', 'WeightedCombo'], // 设置 strategies 字段
-    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 }, // 设置 weights 字段
-    description: '下跌趋势策略组', // 设置 description 字段
+    strategies: ['SMA', 'MACD', 'WeightedCombo'], // 策略
+    weights: { SMA: 0.35, MACD: 0.25, WeightedCombo: 0.4 }, // weights
+    description: '下跌趋势策略组', // description
   }, // 结束代码块
   [MarketRegime.RANGING]: { // 执行语句
-    strategies: ['RSI', 'BollingerBands', 'Grid', 'WeightedCombo'], // 设置 strategies 字段
-    weights: { RSI: 0.2, BollingerBands: 0.25, Grid: 0.2, WeightedCombo: 0.35 }, // 设置 weights 字段
-    description: '震荡策略组', // 设置 description 字段
+    strategies: ['RSI', 'BollingerBands', 'Grid', 'WeightedCombo'], // 策略
+    weights: { RSI: 0.2, BollingerBands: 0.25, Grid: 0.2, WeightedCombo: 0.35 }, // weights
+    description: '震荡策略组', // description
   }, // 结束代码块
   [MarketRegime.HIGH_VOLATILITY]: { // 执行语句
-    strategies: ['ATRBreakout', 'WeightedCombo'], // 设置 strategies 字段
-    weights: { ATRBreakout: 0.5, WeightedCombo: 0.5 }, // 设置 weights 字段
-    description: '高波动策略组', // 设置 description 字段
+    strategies: ['ATRBreakout', 'WeightedCombo'], // 策略
+    weights: { ATRBreakout: 0.5, WeightedCombo: 0.5 }, // weights
+    description: '高波动策略组', // description
   }, // 结束代码块
   [MarketRegime.EXTREME]: { // 执行语句
-    strategies: [], // 设置 strategies 字段
-    weights: {}, // 设置 weights 字段
-    description: '风控模式 - 停止交易', // 设置 description 字段
+    strategies: [], // 策略
+    weights: {}, // weights
+    description: '风控模式 - 停止交易', // description
   }, // 结束代码块
 }; // 结束代码块
 
@@ -59,13 +59,13 @@ const REGIME_STRATEGY_MAP = { // 定义常量 REGIME_STRATEGY_MAP
  */
 function getStrategyClassMap() { // 定义函数 getStrategyClassMap
   return { // 返回结果
-    SMA: SMAStrategy, // 设置 SMA 字段
-    MACD: MACDStrategy, // 设置 MACD 字段
-    RSI: RSIStrategy, // 设置 RSI 字段
-    BollingerBands: BollingerBandsStrategy, // 设置 BollingerBands 字段
-    Grid: GridStrategy, // 设置 Grid 字段
-    ATRBreakout: ATRBreakoutStrategy, // 设置 ATRBreakout 字段
-    WeightedCombo: WeightedComboStrategy, // 设置 WeightedCombo 字段
+    SMA: SMAStrategy, // SMA
+    MACD: MACDStrategy, // MACD
+    RSI: RSIStrategy, // RSI
+    BollingerBands: BollingerBandsStrategy, // 布林带Bands
+    Grid: GridStrategy, // 网格
+    ATRBreakout: ATRBreakoutStrategy, // ATR突破
+    WeightedCombo: WeightedComboStrategy, // WeightedCombo
   }; // 结束代码块
 } // 结束代码块
 
@@ -79,7 +79,7 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: 'RegimeSwitchingStrategy', // 设置 name 字段
+      name: 'RegimeSwitchingStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -93,35 +93,35 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
     // Regime 检测器参数
     // ============================================
     this.regimeParams = { // 设置 regimeParams
-      adxPeriod: params.adxPeriod || 14, // 设置 adxPeriod 字段
-      adxTrendThreshold: params.adxTrendThreshold || 25, // 设置 adxTrendThreshold 字段
-      adxStrongTrendThreshold: params.adxStrongTrendThreshold || 40, // 设置 adxStrongTrendThreshold 字段
-      bbPeriod: params.bbPeriod || 20, // 设置 bbPeriod 字段
-      bbStdDev: params.bbStdDev || 2, // 设置 bbStdDev 字段
-      atrPeriod: params.atrPeriod || 14, // 设置 atrPeriod 字段
-      lowVolPercentile: params.lowVolPercentile || 25, // 设置 lowVolPercentile 字段
-      highVolPercentile: params.highVolPercentile || 80, // 设置 highVolPercentile 字段
-      extremeVolPercentile: params.extremeVolPercentile || 98, // 设置 extremeVolPercentile 字段
-      hurstPeriod: params.hurstPeriod || 100, // 设置 hurstPeriod 字段
-      minRegimeDuration: params.minRegimeDuration || 5, // 设置 minRegimeDuration 字段
+      adxPeriod: params.adxPeriod || 14, // ADX周期
+      adxTrendThreshold: params.adxTrendThreshold || 25, // ADXTrend阈值
+      adxStrongTrendThreshold: params.adxStrongTrendThreshold || 40, // ADXStrongTrend阈值
+      bbPeriod: params.bbPeriod || 20, // 布林带周期
+      bbStdDev: params.bbStdDev || 2, // 布林带标准差
+      atrPeriod: params.atrPeriod || 14, // ATR周期
+      lowVolPercentile: params.lowVolPercentile || 25, // 最低波动率Percentile
+      highVolPercentile: params.highVolPercentile || 80, // 最高波动率Percentile
+      extremeVolPercentile: params.extremeVolPercentile || 98, // 极端波动率Percentile
+      hurstPeriod: params.hurstPeriod || 100, // hurst周期
+      minRegimeDuration: params.minRegimeDuration || 5, // 最小状态Duration
     }; // 结束代码块
 
     // ============================================
     // 子策略参数
     // ============================================
     this.strategyParams = { // 设置 strategyParams
-      SMA: params.smaParams || { fastPeriod: 10, slowPeriod: 30 }, // 设置 SMA 字段
-      MACD: params.macdParams || { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 }, // 设置 MACD 字段
-      RSI: params.rsiParams || { period: 14, overbought: 70, oversold: 30 }, // 设置 RSI 字段
-      BollingerBands: params.bbParams || { period: 20, stdDev: 2 }, // 设置 BollingerBands 字段
-      Grid: params.gridParams || { gridCount: 10, gridSpacing: 0.01 }, // 设置 Grid 字段
-      ATRBreakout: params.atrBreakoutParams || { atrPeriod: 14, multiplier: 2 }, // 设置 ATRBreakout 字段
-      WeightedCombo: params.weightedComboParams || { // 设置 WeightedCombo 字段
-        strategyWeights: { SMA: 0.4, RSI: 0.2, MACD: 0.4 }, // 设置 strategyWeights 字段
-        buyThreshold: 0.6, // 设置 buyThreshold 字段
-        sellThreshold: 0.4, // 设置 sellThreshold 字段
-        dynamicWeights: true, // 设置 dynamicWeights 字段
-        circuitBreaker: true, // 设置 circuitBreaker 字段
+      SMA: params.smaParams || { fastPeriod: 10, slowPeriod: 30 }, // SMA
+      MACD: params.macdParams || { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 }, // MACD
+      RSI: params.rsiParams || { period: 14, overbought: 70, oversold: 30 }, // RSI
+      BollingerBands: params.bbParams || { period: 20, stdDev: 2 }, // 布林带Bands
+      Grid: params.gridParams || { gridCount: 10, gridSpacing: 0.01 }, // 网格
+      ATRBreakout: params.atrBreakoutParams || { atrPeriod: 14, multiplier: 2 }, // ATR突破
+      WeightedCombo: params.weightedComboParams || { // WeightedCombo
+        strategyWeights: { SMA: 0.4, RSI: 0.2, MACD: 0.4 }, // 策略Weights
+        buyThreshold: 0.6, // buy阈值
+        sellThreshold: 0.4, // sell阈值
+        dynamicWeights: true, // dynamicWeights
+        circuitBreaker: true, // circuitBreaker
       }, // 结束代码块
     }; // 结束代码块
 
@@ -155,8 +155,8 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
     this._currentRegime = MarketRegime.RANGING; // 设置 _currentRegime
     this._signalHistory = []; // 设置 _signalHistory
     this._regimeStats = { // 设置 _regimeStats
-      changes: 0, // 设置 changes 字段
-      byRegime: {}, // 设置 byRegime 字段
+      changes: 0, // 变更
+      byRegime: {}, // by状态
     }; // 结束代码块
   } // 结束代码块
 
@@ -243,8 +243,8 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
       try { // 尝试执行
         const params = { // 定义常量 params
           ...this.strategyParams[strategyName], // 展开对象或数组
-          symbol: this.symbol, // 设置 symbol 字段
-          positionPercent: this.basePositionPercent, // 设置 positionPercent 字段
+          symbol: this.symbol, // 交易对
+          positionPercent: this.basePositionPercent, // 持仓百分比
         }; // 结束代码块
 
         const strategy = new StrategyClass(params); // 定义常量 strategy
@@ -259,9 +259,9 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
         }); // 结束代码块
 
         this._subStrategies[strategyName] = { // 访问 _subStrategies
-          instance: strategy, // 设置 instance 字段
-          lastSignal: null, // 设置 lastSignal 字段
-          active: false, // 设置 active 字段
+          instance: strategy, // instance
+          lastSignal: null, // last信号
+          active: false, // 活跃
         }; // 结束代码块
 
         this.log(`子策略 [${strategyName}] 初始化完成`); // 调用 log
@@ -337,9 +337,9 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
         const signal = strategyData.instance.getSignal(); // 定义常量 signal
         if (signal) { // 条件判断 signal
           signals.push({ // 调用 signals.push
-            strategy: strategyName, // 设置 strategy 字段
+            strategy: strategyName, // 策略
             signal, // 执行语句
-            weight: this._getStrategyWeight(strategyName), // 设置 weight 字段
+            weight: this._getStrategyWeight(strategyName), // weight
           }); // 结束代码块
         } // 结束代码块
       } catch (error) { // 执行语句
@@ -442,16 +442,16 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
     if (strategyData) { // 条件判断 strategyData
       strategyData.lastSignal = { // 赋值 strategyData.lastSignal
         ...signal, // 展开对象或数组
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
     } // 结束代码块
 
     // 记录信号历史
     this._signalHistory.push({ // 访问 _signalHistory
-      strategy: strategyName, // 设置 strategy 字段
+      strategy: strategyName, // 策略
       signal, // 执行语句
-      regime: this._currentRegime, // 设置 regime 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      regime: this._currentRegime, // 状态
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近 100 条
@@ -477,7 +477,7 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
       case 'any': // 分支 'any'
         return this._anyAggregation(signals); // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return this._weightedAggregation(signals); // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -503,17 +503,17 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
 
     if (buyWeight >= this.weightedThreshold && buyWeight > sellWeight) { // 条件判断 buyWeight >= this.weightedThreshold && buyWei...
       return { // 返回结果
-        type: 'buy', // 设置 type 字段
-        reason: `Weighted(${buyWeight.toFixed(2)}): ${reasons.join(', ')}`, // 设置 reason 字段
-        weight: buyWeight, // 设置 weight 字段
+        type: 'buy', // 类型
+        reason: `Weighted(${buyWeight.toFixed(2)}): ${reasons.join(', ')}`, // reason
+        weight: buyWeight, // weight
       }; // 结束代码块
     } // 结束代码块
 
     if (sellWeight >= this.weightedThreshold && sellWeight > buyWeight) { // 条件判断 sellWeight >= this.weightedThreshold && sellW...
       return { // 返回结果
-        type: 'sell', // 设置 type 字段
-        reason: `Weighted(${sellWeight.toFixed(2)}): ${reasons.join(', ')}`, // 设置 reason 字段
-        weight: sellWeight, // 设置 weight 字段
+        type: 'sell', // 类型
+        reason: `Weighted(${sellWeight.toFixed(2)}): ${reasons.join(', ')}`, // reason
+        weight: sellWeight, // weight
       }; // 结束代码块
     } // 结束代码块
 
@@ -543,17 +543,17 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
 
     if (buyCount >= majority) { // 条件判断 buyCount >= majority
       return { // 返回结果
-        type: 'buy', // 设置 type 字段
-        reason: `Majority(${buyCount}/${signals.length}): ${reasons.join(', ')}`, // 设置 reason 字段
-        count: buyCount, // 设置 count 字段
+        type: 'buy', // 类型
+        reason: `Majority(${buyCount}/${signals.length}): ${reasons.join(', ')}`, // reason
+        count: buyCount, // 数量
       }; // 结束代码块
     } // 结束代码块
 
     if (sellCount >= majority) { // 条件判断 sellCount >= majority
       return { // 返回结果
-        type: 'sell', // 设置 type 字段
-        reason: `Majority(${sellCount}/${signals.length}): ${reasons.join(', ')}`, // 设置 reason 字段
-        count: sellCount, // 设置 count 字段
+        type: 'sell', // 类型
+        reason: `Majority(${sellCount}/${signals.length}): ${reasons.join(', ')}`, // reason
+        count: sellCount, // 数量
       }; // 结束代码块
     } // 结束代码块
 
@@ -569,9 +569,9 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
     const sellSignal = signals.find(s => s.signal.type === 'sell'); // 定义函数 sellSignal
     if (sellSignal) { // 条件判断 sellSignal
       return { // 返回结果
-        type: 'sell', // 设置 type 字段
-        reason: `Any: ${sellSignal.strategy} SELL`, // 设置 reason 字段
-        strategy: sellSignal.strategy, // 设置 strategy 字段
+        type: 'sell', // 类型
+        reason: `Any: ${sellSignal.strategy} SELL`, // reason
+        strategy: sellSignal.strategy, // 策略
       }; // 结束代码块
     } // 结束代码块
 
@@ -579,9 +579,9 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
     const buySignal = signals.find(s => s.signal.type === 'buy'); // 定义函数 buySignal
     if (buySignal) { // 条件判断 buySignal
       return { // 返回结果
-        type: 'buy', // 设置 type 字段
-        reason: `Any: ${buySignal.strategy} BUY`, // 设置 reason 字段
-        strategy: buySignal.strategy, // 设置 strategy 字段
+        type: 'buy', // 类型
+        reason: `Any: ${buySignal.strategy} BUY`, // reason
+        strategy: buySignal.strategy, // 策略
       }; // 结束代码块
     } // 结束代码块
 
@@ -650,7 +650,7 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
         return { positionSizing: 0.5, riskLevel: 'high' }; // 返回结果
       case MarketRegime.EXTREME: // 分支 MarketRegime.EXTREME
         return { positionSizing: 0, riskLevel: 'extreme' }; // 返回结果
-      default: // 默认分支
+      default: // 默认
         return { positionSizing: 0.5, riskLevel: 'unknown' }; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -715,12 +715,12 @@ export class RegimeSwitchingStrategy extends BaseStrategy { // 导出类 RegimeS
    */
   getRegimeStats() { // 调用 getRegimeStats
     return { // 返回结果
-      currentRegime: this._currentRegime, // 设置 currentRegime 字段
-      activeStrategies: this._activeStrategies, // 设置 activeStrategies 字段
-      regimeChanges: this._regimeStats.changes, // 设置 regimeChanges 字段
-      regimeDistribution: this._regimeStats.byRegime, // 设置 regimeDistribution 字段
-      signalCount: this._signalHistory.length, // 设置 signalCount 字段
-      detectorStats: this._regimeDetector?.getStats(), // 设置 detectorStats 字段
+      currentRegime: this._currentRegime, // current状态
+      activeStrategies: this._activeStrategies, // 活跃策略
+      regimeChanges: this._regimeStats.changes, // 状态变更
+      regimeDistribution: this._regimeStats.byRegime, // 状态Distribution
+      signalCount: this._signalHistory.length, // 信号数量
+      detectorStats: this._regimeDetector?.getStats(), // detectorStats
     }; // 结束代码块
   } // 结束代码块
 

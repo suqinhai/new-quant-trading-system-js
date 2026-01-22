@@ -16,11 +16,11 @@ import path from 'path'; // 导入模块 path
  * 关闭阶段
  */
 const ShutdownPhase = { // 定义常量 ShutdownPhase
-  RUNNING: 'running', // 设置 RUNNING 字段
-  STOPPING: 'stopping', // 设置 STOPPING 字段
-  DRAINING: 'draining', // 设置 DRAINING 字段
-  CLEANUP: 'cleanup', // 设置 CLEANUP 字段
-  STOPPED: 'stopped', // 设置 STOPPED 字段
+  RUNNING: 'running', // RUNNING
+  STOPPING: 'stopping', // STOPPING权限
+  DRAINING: 'draining', // DRAINING
+  CLEANUP: 'cleanup', // CLEANUP
+  STOPPED: 'stopped', // STOPPED权限
 }; // 结束代码块
 
 /**
@@ -33,17 +33,17 @@ class GracefulShutdown extends EventEmitter { // 定义类 GracefulShutdown(继�
 
     this.config = { // 设置 config
       // 关闭超时时间 (ms)
-      timeout: config.timeout || 30000, // 设置 timeout 字段
+      timeout: config.timeout || 30000, // 关闭超时时间 (ms)
       // 强制退出超时
-      forceExitTimeout: config.forceExitTimeout || 5000, // 设置 forceExitTimeout 字段
+      forceExitTimeout: config.forceExitTimeout || 5000, // force出场超时
       // 是否监听信号
-      handleSignals: config.handleSignals ?? true, // 设置 handleSignals 字段
+      handleSignals: config.handleSignals ?? true, // handle信号
       // 要处理的信号
-      signals: config.signals || ['SIGTERM', 'SIGINT', 'SIGHUP'], // 设置 signals 字段
+      signals: config.signals || ['SIGTERM', 'SIGINT', 'SIGHUP'], // 信号
       // 是否在未捕获异常时关闭
-      exitOnUncaughtException: config.exitOnUncaughtException ?? true, // 设置 exitOnUncaughtException 字段
+      exitOnUncaughtException: config.exitOnUncaughtException ?? true, // 是否在未捕获异常时关闭
       // 是否在未处理 Promise 拒绝时关闭
-      exitOnUnhandledRejection: config.exitOnUnhandledRejection ?? true, // 设置 exitOnUnhandledRejection 字段
+      exitOnUnhandledRejection: config.exitOnUnhandledRejection ?? true, // 是否在未处理 Promise 拒绝时关闭
     }; // 结束代码块
 
     // 当前阶段
@@ -115,7 +115,7 @@ class GracefulShutdown extends EventEmitter { // 定义类 GracefulShutdown(继�
       handler, // 执行语句
       priority, // 执行语句
       timeout, // 执行语句
-      phase: options.phase || 'cleanup', // 设置 phase 字段
+      phase: options.phase || 'cleanup', // phase
     }); // 结束代码块
 
     return () => this.unregister(name); // 返回结果
@@ -242,10 +242,10 @@ class GracefulShutdown extends EventEmitter { // 定义类 GracefulShutdown(继�
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      phase: this.phase, // 设置 phase 字段
-      isShuttingDown: this.isShuttingDown, // 设置 isShuttingDown 字段
-      shutdownReason: this.shutdownReason, // 设置 shutdownReason 字段
-      registeredHandlers: Array.from(this.handlers.keys()), // 设置 registeredHandlers 字段
+      phase: this.phase, // phase
+      isShuttingDown: this.isShuttingDown, // 是否ShuttingDown
+      shutdownReason: this.shutdownReason, // shutdownReason
+      registeredHandlers: Array.from(this.handlers.keys()), // registeredHandlers
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -257,9 +257,9 @@ class GracefulShutdown extends EventEmitter { // 定义类 GracefulShutdown(继�
 class StatePersistence { // 定义类 StatePersistence
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
-      stateDir: config.stateDir || './data/state', // 设置 stateDir 字段
-      saveInterval: config.saveInterval || 60000, // 设置 saveInterval 字段
-      enableAutoSave: config.enableAutoSave ?? true, // 设置 enableAutoSave 字段
+      stateDir: config.stateDir || './data/state', // stateDir
+      saveInterval: config.saveInterval || 60000, // save间隔
+      enableAutoSave: config.enableAutoSave ?? true, // 启用自动Save
     }; // 结束代码块
 
     this.state = new Map(); // 设置 state
@@ -315,7 +315,7 @@ class StatePersistence { // 定义类 StatePersistence
   set(key, value) { // 调用 set
     this.state.set(key, { // 访问 state
       value, // 执行语句
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
     this.isDirty = true; // 设置 isDirty
   } // 结束代码块
@@ -353,7 +353,7 @@ class StatePersistence { // 定义类 StatePersistence
       fs.writeFileSync(filename, JSON.stringify({ // 调用 fs.writeFileSync
         key, // 执行语句
         ...entry, // 展开对象或数组
-        savedAt: Date.now(), // 设置 savedAt 字段
+        savedAt: Date.now(), // savedAt
       }, null, 2)); // 执行语句
       return true; // 返回结果
     } catch (error) { // 执行语句
@@ -396,8 +396,8 @@ class StatePersistence { // 定义类 StatePersistence
       const data = JSON.parse(content); // 定义常量 data
 
       this.state.set(key, { // 访问 state
-        value: data.value, // 设置 value 字段
-        updatedAt: data.updatedAt, // 设置 updatedAt 字段
+        value: data.value, // value
+        updatedAt: data.updatedAt, // updatedAt
       }); // 结束代码块
 
       return data.value; // 返回结果
@@ -453,9 +453,9 @@ class StatePersistence { // 定义类 StatePersistence
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      count: this.state.size, // 设置 count 字段
-      isDirty: this.isDirty, // 设置 isDirty 字段
-      keys: this.keys(), // 设置 keys 字段
+      count: this.state.size, // 数量
+      isDirty: this.isDirty, // 是否Dirty
+      keys: this.keys(), // keys
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -489,8 +489,8 @@ function createLifecycleManager(config = {}) { // 定义函数 createLifecycleMa
      */
     registerComponent(name, stopFn, options = {}) { // 调用 registerComponent
       return shutdown.register(name, stopFn, { // 返回结果
-        priority: options.priority || 50, // 设置 priority 字段
-        phase: options.phase || 'stopping', // 设置 phase 字段
+        priority: options.priority || 50, // priority
+        phase: options.phase || 'stopping', // phase
         ...options, // 展开对象或数组
       }); // 结束代码块
     }, // 结束代码块
@@ -530,8 +530,8 @@ function createLifecycleManager(config = {}) { // 定义函数 createLifecycleMa
      */
     getStatus() { // 调用 getStatus
       return { // 返回结果
-        shutdown: shutdown.getStatus(), // 设置 shutdown 字段
-        persistence: persistence.getStats(), // 设置 persistence 字段
+        shutdown: shutdown.getStatus(), // shutdown
+        persistence: persistence.getStats(), // persistence
       }; // 结束代码块
     }, // 结束代码块
   }; // 结束代码块

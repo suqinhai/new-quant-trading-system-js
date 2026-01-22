@@ -31,45 +31,45 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     // 告警配置 / Alert configuration
     this.config = { // 设置 config
       // 是否启用邮件告警 / Whether to enable email alerts
-      enableEmail: config.enableEmail || false, // 设置 enableEmail 字段
+      enableEmail: config.enableEmail || false, // 是否启用邮件告警
 
       // 是否启用 Telegram 告警 / Whether to enable Telegram alerts
-      enableTelegram: config.enableTelegram || false, // 设置 enableTelegram 字段
+      enableTelegram: config.enableTelegram || false, // 是否启用 Telegram 告警
 
       // 是否启用钉钉告警 / Whether to enable DingTalk alerts
-      enableDingTalk: config.enableDingTalk || false, // 设置 enableDingTalk 字段
+      enableDingTalk: config.enableDingTalk || false, // 是否启用钉钉告警
 
       // 是否启用 Webhook 告警 / Whether to enable Webhook alerts
-      enableWebhook: config.enableWebhook || false, // 设置 enableWebhook 字段
+      enableWebhook: config.enableWebhook || false, // 是否启用 Webhook 告警
 
       // 邮件配置 / Email configuration
-      email: { // 设置 email 字段
-        host: config.smtpHost || process.env.SMTP_HOST, // 读取环境变量 SMTP_HOST
-        port: config.smtpPort || process.env.SMTP_PORT || 587, // 读取环境变量 SMTP_PORT
-        user: config.smtpUser || process.env.SMTP_USER, // 读取环境变量 SMTP_USER
-        pass: config.smtpPass || process.env.SMTP_PASS, // 读取环境变量 SMTP_PASS
-        to: config.alertEmailTo || process.env.ALERT_EMAIL_TO, // 读取环境变量 ALERT_EMAIL_TO
+      email: { // 邮箱
+        host: config.smtpHost || process.env.SMTP_HOST, // 主机
+        port: config.smtpPort || process.env.SMTP_PORT || 587, // 端口
+        user: config.smtpUser || process.env.SMTP_USER, // 用户
+        pass: config.smtpPass || process.env.SMTP_PASS, // pass
+        to: config.alertEmailTo || process.env.ALERT_EMAIL_TO, // to
       }, // 结束代码块
 
       // Telegram 配置 / Telegram configuration
-      telegram: { // 设置 telegram 字段
-        botToken: config.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN, // 读取环境变量 TELEGRAM_BOT_TOKEN
-        chatId: config.telegramChatId || process.env.TELEGRAM_CHAT_ID, // 读取环境变量 TELEGRAM_CHAT_ID
+      telegram: { // Telegram 配置
+        botToken: config.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN, // 机器人令牌
+        chatId: config.telegramChatId || process.env.TELEGRAM_CHAT_ID, // 聊天ID
       }, // 结束代码块
 
       // 钉钉配置 / DingTalk configuration
-      dingtalk: { // 设置 dingtalk 字段
-        webhook: config.dingtalkWebhook || process.env.DINGTALK_WEBHOOK, // 读取环境变量 DINGTALK_WEBHOOK
-        secret: config.dingtalkSecret || process.env.DINGTALK_SECRET, // 读取环境变量 DINGTALK_SECRET
+      dingtalk: { // dingtalk
+        webhook: config.dingtalkWebhook || process.env.DINGTALK_WEBHOOK, // webhook
+        secret: config.dingtalkSecret || process.env.DINGTALK_SECRET, // 密钥
       }, // 结束代码块
 
       // Webhook 配置 / Webhook configuration
-      webhook: { // 设置 webhook 字段
-        url: config.webhookUrl || process.env.ALERT_WEBHOOK_URL, // 读取环境变量 ALERT_WEBHOOK_URL
+      webhook: { // Webhook 配置
+        url: config.webhookUrl || process.env.ALERT_WEBHOOK_URL, // URL
       }, // 结束代码块
 
       // 告警冷却时间 (毫秒) / Alert cooldown (milliseconds)
-      cooldown: config.cooldown || 60000,  // 1 分钟
+      cooldown: config.cooldown || 60000,  // 告警冷却时间 (毫秒)
     }; // 结束代码块
 
     // 邮件发送器 / Email transporter
@@ -109,13 +109,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
     // 创建告警记录 / Create alert record
     const alertRecord = { // 定义常量 alertRecord
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2), // 设置 id 字段
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2), // ID
       level, // 执行语句
       title, // 执行语句
       message, // 执行语句
       data, // 执行语句
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
-      results: {}, // 设置 results 字段
+      timestamp: new Date().toISOString(), // 时间戳
+      results: {}, // results
     }; // 结束代码块
 
     // 确定发送渠道 / Determine channels to send
@@ -155,8 +155,8 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     for (const result of results) { // 循环 const result of results
       if (result.status === 'fulfilled') { // 条件判断 result.status === 'fulfilled'
         alertRecord.results[result.value.channel] = { // 执行语句
-          success: result.value.success, // 设置 success 字段
-          error: result.value.error, // 设置 error 字段
+          success: result.value.success, // 成功标记
+          error: result.value.error, // 错误
         }; // 结束代码块
       } else { // 执行语句
         console.error('[AlertManager] 发送失败 / Send failed:', result.reason); // 控制台输出
@@ -235,12 +235,12 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
     try { // 尝试执行
       this.emailTransporter = nodemailer.createTransport({ // 设置 emailTransporter
-        host: this.config.email.host, // 设置 host 字段
-        port: this.config.email.port, // 设置 port 字段
-        secure: this.config.email.port === 465, // 设置 secure 字段
-        auth: { // 设置 auth 字段
-          user: this.config.email.user, // 设置 user 字段
-          pass: this.config.email.pass, // 设置 pass 字段
+        host: this.config.email.host, // 主机
+        port: this.config.email.port, // 端口
+        secure: this.config.email.port === 465, // secure
+        auth: { // auth
+          user: this.config.email.user, // 用户
+          pass: this.config.email.pass, // pass
         }, // 结束代码块
       }); // 结束代码块
 
@@ -267,8 +267,8 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
       // 发送邮件 / Send email
       await this.emailTransporter.sendMail({ // 等待异步结果
-        from: this.config.email.user, // 设置 from 字段
-        to: this.config.email.to, // 设置 to 字段
+        from: this.config.email.user, // from
+        to: this.config.email.to, // to
         subject, // 执行语句
         html, // 执行语句
       }); // 结束代码块
@@ -298,9 +298,9 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
       // 发送消息 / Send message
       await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, { // 等待异步结果
-        chat_id: chatId, // 设置 chat_id 字段
+        chat_id: chatId, // 聊天ID
         text, // 执行语句
-        parse_mode: 'HTML', // 设置 parse_mode 字段
+        parse_mode: 'HTML', // parse模式
       }); // 结束代码块
 
       return { success: true }; // 返回结果
@@ -325,10 +325,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     try { // 尝试执行
       // 构建消息 / Build message
       const message = { // 定义常量 message
-        msgtype: 'markdown', // 设置 msgtype 字段
-        markdown: { // 设置 markdown 字段
-          title: alert.title, // 设置 title 字段
-          text: this._buildDingTalkMessage(alert), // 设置 text 字段
+        msgtype: 'markdown', // msgtype
+        markdown: { // markdown
+          title: alert.title, // title
+          text: this._buildDingTalkMessage(alert), // text
         }, // 结束代码块
       }; // 结束代码块
 
@@ -357,11 +357,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     try { // 尝试执行
       // 发送请求 / Send request
       await axios.post(url, { // 等待异步结果
-        level: alert.level, // 设置 level 字段
-        title: alert.title, // 设置 title 字段
-        message: alert.message, // 设置 message 字段
-        data: alert.data, // 设置 data 字段
-        timestamp: alert.timestamp, // 设置 timestamp 字段
+        level: alert.level, // 级别
+        title: alert.title, // title
+        message: alert.message, // 消息
+        data: alert.data, // 数据
+        timestamp: alert.timestamp, // 时间戳
       }); // 结束代码块
 
       return { success: true }; // 返回结果
@@ -378,10 +378,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
    */
   _buildEmailHtml(alert) { // 调用 _buildEmailHtml
     const levelColors = { // 定义常量 levelColors
-      info: '#17a2b8', // 设置 info 字段
-      warning: '#ffc107', // 设置 warning 字段
-      error: '#dc3545', // 设置 error 字段
-      critical: '#ff0000', // 设置 critical 字段
+      info: '#17a2b8', // info
+      warning: '#ffc107', // 警告
+      error: '#dc3545', // 错误
+      critical: '#ff0000', // critical
     }; // 结束代码块
 
     const color = levelColors[alert.level] || '#6c757d'; // 定义常量 color
@@ -415,10 +415,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
    */
   _buildTelegramMessage(alert) { // 调用 _buildTelegramMessage
     const levelEmojis = { // 定义常量 levelEmojis
-      info: 'ℹ️', // 设置 info 字段
-      warning: '⚠️', // 设置 warning 字段
-      error: '❌', // 设置 error 字段
-      critical: '🚨', // 设置 critical 字段
+      info: 'ℹ️', // info
+      warning: '⚠️', // 警告
+      error: '❌', // 错误
+      critical: '🚨', // critical
     }; // 结束代码块
 
     const emoji = levelEmojis[alert.level] || '📢'; // 定义常量 emoji
@@ -442,10 +442,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
    */
   _buildDingTalkMessage(alert) { // 调用 _buildDingTalkMessage
     const levelEmojis = { // 定义常量 levelEmojis
-      info: '💡', // 设置 info 字段
-      warning: '⚠️', // 设置 warning 字段
-      error: '❌', // 设置 error 字段
-      critical: '🚨', // 设置 critical 字段
+      info: '💡', // info
+      warning: '⚠️', // 警告
+      error: '❌', // 错误
+      critical: '🚨', // critical
     }; // 结束代码块
 
     const emoji = levelEmojis[alert.level] || '📢'; // 定义常量 emoji
@@ -476,7 +476,7 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
         return ['email', 'telegram', 'dingtalk']; // 返回结果
       case 'warning': // 分支 'warning'
         return ['telegram', 'dingtalk']; // 返回结果
-      default: // 默认分支
+      default: // 默认
         return ['webhook']; // 返回结果
     } // 结束代码块
   } // 结束代码块

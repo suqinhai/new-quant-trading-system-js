@@ -837,10 +837,10 @@ export class SafeSlidingWindowCounter { // 导出类 SafeSlidingWindowCounter
       const wasJustAdded = timestamps && timestamps.some(ts => now - ts < 100); // 定义函数 wasJustAdded
 
       return { // 返回结果
-        allowed: wasJustAdded && count <= limit, // 设置 allowed 字段
+        allowed: wasJustAdded && count <= limit, // allowed
         count, // 执行语句
-        remaining: Math.max(0, limit - count), // 设置 remaining 字段
-        reset: timestamps && timestamps.length > 0 ? timestamps[0] + this._windowMs : now + this._windowMs, // 设置 reset 字段
+        remaining: Math.max(0, limit - count), // remaining
+        reset: timestamps && timestamps.length > 0 ? timestamps[0] + this._windowMs : now + this._windowMs, // reset
       }; // 结束代码块
     }); // 结束代码块
   } // 结束代码块

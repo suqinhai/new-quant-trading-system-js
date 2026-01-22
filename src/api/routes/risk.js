@@ -23,26 +23,26 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
   router.get('/config', async (req, res) => { // 调用 router.get
     try { // 尝试执行
       let config = { // 定义变量 config
-        maxLossPerTrade: 0.02, // 设置 maxLossPerTrade 字段
-        maxDailyLoss: 0.05, // 设置 maxDailyLoss 字段
-        maxPositions: 10, // 设置 maxPositions 字段
-        maxPositionSize: 0.2, // 设置 maxPositionSize 字段
-        maxLeverage: 3, // 设置 maxLeverage 字段
-        defaultStopLoss: 0.05, // 设置 defaultStopLoss 字段
-        defaultTakeProfit: 0.1, // 设置 defaultTakeProfit 字段
-        enableTrailingStop: false, // 设置 enableTrailingStop 字段
-        trailingStopDistance: 0.03, // 设置 trailingStopDistance 字段
-        cooldownPeriod: 60000, // 设置 cooldownPeriod 字段
+        maxLossPerTrade: 0.02, // 最大亏损每笔交易
+        maxDailyLoss: 0.05, // 最大每日亏损
+        maxPositions: 10, // 最大持仓
+        maxPositionSize: 0.2, // 最大持仓大小
+        maxLeverage: 3, // 最大杠杆
+        defaultStopLoss: 0.05, // 默认止损
+        defaultTakeProfit: 0.1, // 默认止盈
+        enableTrailingStop: false, // 启用跟踪止损
+        trailingStopDistance: 0.03, // 跟踪止损距离
+        cooldownPeriod: 60000, // 冷却周期
       }; // 结束代码块
 
       let state = { // 定义变量 state
-        tradingAllowed: true, // 设置 tradingAllowed 字段
-        dailyPnL: 0, // 设置 dailyPnL 字段
-        dailyTradeCount: 0, // 设置 dailyTradeCount 字段
-        currentPositions: 0, // 设置 currentPositions 字段
-        consecutiveLosses: 0, // 设置 consecutiveLosses 字段
-        lastTradeTime: null, // 设置 lastTradeTime 字段
-        triggerCount: 0, // 设置 triggerCount 字段
+        tradingAllowed: true, // 交易Allowed
+        dailyPnL: 0, // 每日PnL
+        dailyTradeCount: 0, // 每日交易数量
+        currentPositions: 0, // current持仓
+        consecutiveLosses: 0, // consecutiveLosses
+        lastTradeTime: null, // last交易时间
+        triggerCount: 0, // trigger数量
       }; // 结束代码块
 
       if (riskManager) { // 条件判断 riskManager
@@ -67,23 +67,23 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
       // 验证权限
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 验证参数范围
       const validations = { // 定义常量 validations
-        maxLossPerTrade: { min: 0.001, max: 0.5 }, // 设置 maxLossPerTrade 字段
-        maxDailyLoss: { min: 0.01, max: 1 }, // 设置 maxDailyLoss 字段
-        maxPositions: { min: 1, max: 100 }, // 设置 maxPositions 字段
-        maxPositionSize: { min: 0.01, max: 1 }, // 设置 maxPositionSize 字段
-        maxLeverage: { min: 1, max: 125 }, // 设置 maxLeverage 字段
-        defaultStopLoss: { min: 0.001, max: 0.5 }, // 设置 defaultStopLoss 字段
-        defaultTakeProfit: { min: 0.001, max: 1 }, // 设置 defaultTakeProfit 字段
-        trailingStopDistance: { min: 0.001, max: 0.5 }, // 设置 trailingStopDistance 字段
-        cooldownPeriod: { min: 0, max: 3600000 }, // 设置 cooldownPeriod 字段
+        maxLossPerTrade: { min: 0.001, max: 0.5 }, // 最大亏损每笔交易
+        maxDailyLoss: { min: 0.01, max: 1 }, // 最大每日亏损
+        maxPositions: { min: 1, max: 100 }, // 最大持仓
+        maxPositionSize: { min: 0.01, max: 1 }, // 最大持仓大小
+        maxLeverage: { min: 1, max: 125 }, // 最大杠杆
+        defaultStopLoss: { min: 0.001, max: 0.5 }, // 默认止损
+        defaultTakeProfit: { min: 0.001, max: 1 }, // 默认止盈
+        trailingStopDistance: { min: 0.001, max: 0.5 }, // 跟踪止损距离
+        cooldownPeriod: { min: 0, max: 3600000 }, // 冷却周期
       }; // 结束代码块
 
       for (const [key, value] of Object.entries(updates)) { // 循环 const [key, value] of Object.entries(updates)
@@ -91,9 +91,9 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
           const { min, max } = validations[key]; // 解构赋值
           if (typeof value === 'number' && (value < min || value > max)) { // 条件判断 typeof value === 'number' && (value < min || ...
             return res.status(400).json({ // 返回结果
-              success: false, // 设置 success 字段
-              error: `${key} must be between ${min} and ${max}`, // 设置 error 字段
-              code: 'VALIDATION_ERROR' // 设置 code 字段
+              success: false, // 成功标记
+              error: `${key} must be between ${min} and ${max}`, // 错误
+              code: 'VALIDATION_ERROR' // 代码
             }); // 结束代码块
           } // 结束代码块
         } // 结束代码块
@@ -116,10 +116,10 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
   router.get('/limits', async (req, res) => { // 调用 router.get
     try { // 尝试执行
       let limits = { // 定义变量 limits
-        maxDailyTrades: 100, // 设置 maxDailyTrades 字段
-        maxConsecutiveLosses: 5, // 设置 maxConsecutiveLosses 字段
-        maxOrderAmount: 10000, // 设置 maxOrderAmount 字段
-        blacklistedSymbols: [], // 设置 blacklistedSymbols 字段
+        maxDailyTrades: 100, // 最大每日成交
+        maxConsecutiveLosses: 5, // 最大ConsecutiveLosses
+        maxOrderAmount: 10000, // 最大订单数量
+        blacklistedSymbols: [], // blacklisted交易对列表
       }; // 结束代码块
 
       if (riskManager?.getLimits) { // 条件判断 riskManager?.getLimits
@@ -142,9 +142,9 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
 
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -187,11 +187,11 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
       const list = alerts.slice(offset, offset + parseInt(pageSize)); // 定义常量 list
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: list, // 设置 data 字段
+        success: true, // 成功标记
+        data: list, // 数据
         total, // 执行语句
-        page: parseInt(page), // 设置 page 字段
-        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+        page: parseInt(page), // page
+        pageSize: parseInt(pageSize), // page大小
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -224,9 +224,9 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
     try { // 尝试执行
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -250,9 +250,9 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
 
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 

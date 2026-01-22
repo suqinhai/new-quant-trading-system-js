@@ -18,11 +18,11 @@ import Redis from 'ioredis'; // 导入模块 ioredis
  */
 const REDIS_KEYS = { // 定义常量 REDIS_KEYS
   // 通知请求频道 / Notification request channel
-  NOTIFICATION_REQUEST: 'notification:request', // 设置 NOTIFICATION_REQUEST 字段
+  NOTIFICATION_REQUEST: 'notification:request', // NOTIFICATIONREQUEST权限
 
   // 服务状态 / Service status
-  SERVICE_STATUS: 'notification:service:status', // 设置 SERVICE_STATUS 字段
-  SERVICE_HEARTBEAT: 'notification:service:heartbeat', // 设置 SERVICE_HEARTBEAT 字段
+  SERVICE_STATUS: 'notification:service:status', // SERVICE状态权限
+  SERVICE_HEARTBEAT: 'notification:service:heartbeat', // SERVICEHEARTBEAT权限
 }; // 结束代码块
 
 /**
@@ -30,12 +30,12 @@ const REDIS_KEYS = { // 定义常量 REDIS_KEYS
  * Message types
  */
 export const MESSAGE_TYPE = { // 导出常量 MESSAGE_TYPE
-  ALERT: 'alert', // 设置 ALERT 字段
-  TRADE: 'trade', // 设置 TRADE 字段
-  POSITION: 'position', // 设置 POSITION 字段
-  DAILY_REPORT: 'daily', // 设置 DAILY_REPORT 字段
-  SYSTEM: 'system', // 设置 SYSTEM 字段
-  PERFORMANCE: 'performance', // 设置 PERFORMANCE 字段
+  ALERT: 'alert', // 告警
+  TRADE: 'trade', // 交易
+  POSITION: 'position', // 持仓
+  DAILY_REPORT: 'daily', // 每日REPORT
+  SYSTEM: 'system', // 系统
+  PERFORMANCE: 'performance', // PERFORMANCE
 }; // 结束代码块
 
 /**
@@ -43,11 +43,11 @@ export const MESSAGE_TYPE = { // 导出常量 MESSAGE_TYPE
  * Message priority
  */
 export const MESSAGE_PRIORITY = { // 导出常量 MESSAGE_PRIORITY
-  LOW: 0, // 设置 LOW 字段
-  NORMAL: 1, // 设置 NORMAL 字段
-  HIGH: 2, // 设置 HIGH 字段
-  URGENT: 3, // 设置 URGENT 字段
-  CRITICAL: 4, // 设置 CRITICAL 字段
+  LOW: 0, // 最低
+  NORMAL: 1, // NORMAL
+  HIGH: 2, // 最高
+  URGENT: 3, // URGENT
+  CRITICAL: 4, // CRITICAL
 }; // 结束代码块
 
 /**
@@ -56,21 +56,21 @@ export const MESSAGE_PRIORITY = { // 导出常量 MESSAGE_PRIORITY
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 配置 / Redis configuration
-  redis: { // 设置 redis 字段
-    host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-    password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-    db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  redis: { // Redis 配置
+    host: process.env.REDIS_HOST || 'localhost', // 主机
+    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+    password: process.env.REDIS_PASSWORD || null, // 密码
+    db: parseInt(process.env.REDIS_DB || '0', 10), // db
   }, // 结束代码块
 
   // 来源标识 / Source identifier
-  source: process.env.INSTANCE_NAME || process.env.SERVICE_NAME || 'unknown', // 读取环境变量 INSTANCE_NAME
+  source: process.env.INSTANCE_NAME || process.env.SERVICE_NAME || 'unknown', // 来源
 
   // 是否在服务不可用时回退到本地日志 / Fallback to local log when service unavailable
-  fallbackToLog: true, // 设置 fallbackToLog 字段
+  fallbackToLog: true, // 是否在服务不可用时回退到本地日志
 
   // 服务检查间隔 (毫秒) / Service check interval (ms)
-  serviceCheckInterval: 30000, // 设置 serviceCheckInterval 字段
+  serviceCheckInterval: 30000, // 服务检查间隔 (毫秒)
 }; // 结束代码块
 
 /**
@@ -87,10 +87,10 @@ export class NotificationClient { // 导出类 NotificationClient
   constructor(config = {}) { // 构造函数
     // 合并配置 / Merge configuration
     this.config = { // 设置 config
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
-      source: config.source || DEFAULT_CONFIG.source, // 设置 source 字段
-      fallbackToLog: config.fallbackToLog !== undefined ? config.fallbackToLog : DEFAULT_CONFIG.fallbackToLog, // 设置 fallbackToLog 字段
-      serviceCheckInterval: config.serviceCheckInterval || DEFAULT_CONFIG.serviceCheckInterval, // 设置 serviceCheckInterval 字段
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // redis
+      source: config.source || DEFAULT_CONFIG.source, // 来源
+      fallbackToLog: config.fallbackToLog !== undefined ? config.fallbackToLog : DEFAULT_CONFIG.fallbackToLog, // fallbackTo日志
+      serviceCheckInterval: config.serviceCheckInterval || DEFAULT_CONFIG.serviceCheckInterval, // serviceCheck间隔
     }; // 结束代码块
 
     // Redis 客户端 / Redis client
@@ -125,11 +125,11 @@ export class NotificationClient { // 导出类 NotificationClient
     try { // 尝试执行
       // 创建 Redis 连接 / Create Redis connection
       this.redis = new Redis({ // 设置 redis
-        host: this.config.redis.host, // 设置 host 字段
-        port: this.config.redis.port, // 设置 port 字段
-        password: this.config.redis.password, // 设置 password 字段
-        db: this.config.redis.db, // 设置 db 字段
-        retryStrategy: (times) => Math.min(times * 100, 3000), // 设置 retryStrategy 字段
+        host: this.config.redis.host, // 主机
+        port: this.config.redis.port, // 端口
+        password: this.config.redis.password, // 密码
+        db: this.config.redis.db, // db
+        retryStrategy: (times) => Math.min(times * 100, 3000), // 重试策略
       }); // 结束代码块
 
       // 等待连接 / Wait for connection
@@ -206,9 +206,9 @@ export class NotificationClient { // 导出类 NotificationClient
       type, // 执行语句
       message, // 执行语句
       priority, // 执行语句
-      source: this.config.source, // 设置 source 字段
+      source: this.config.source, // 来源
       data, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     // 如果未连接，尝试连接 / If not connected, try to connect
@@ -258,9 +258,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendAlert(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      type: MESSAGE_TYPE.ALERT, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.HIGH, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.HIGH, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -275,9 +275,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendTrade(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.TRADE, // 设置 type 字段
+      type: MESSAGE_TYPE.TRADE, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.NORMAL, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -292,9 +292,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendPosition(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.POSITION, // 设置 type 字段
+      type: MESSAGE_TYPE.POSITION, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.NORMAL, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -309,9 +309,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendDailyReport(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.DAILY_REPORT, // 设置 type 字段
+      type: MESSAGE_TYPE.DAILY_REPORT, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.LOW, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.LOW, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -326,9 +326,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendSystem(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.SYSTEM, // 设置 type 字段
+      type: MESSAGE_TYPE.SYSTEM, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.NORMAL, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -343,9 +343,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendPerformance(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.PERFORMANCE, // 设置 type 字段
+      type: MESSAGE_TYPE.PERFORMANCE, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.LOW, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.LOW, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -360,9 +360,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendUrgent(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      type: MESSAGE_TYPE.ALERT, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.URGENT, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.URGENT, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -377,9 +377,9 @@ export class NotificationClient { // 导出类 NotificationClient
    */
   async sendCritical(message, data = {}) { // 执行语句
     return this.send({ // 返回结果
-      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      type: MESSAGE_TYPE.ALERT, // 类型
       message, // 执行语句
-      priority: MESSAGE_PRIORITY.CRITICAL, // 设置 priority 字段
+      priority: MESSAGE_PRIORITY.CRITICAL, // priority
       data, // 执行语句
     }); // 结束代码块
   } // 结束代码块

@@ -133,7 +133,7 @@ export function quickAnalyze(orderBook, symbol, side, size) { // 导出函数 qu
     depthAnalysis, // 执行语句
     liquidityAssessment, // 执行语句
     impactEstimation, // 执行语句
-    recommendation: getQuickRecommendation(liquidityAssessment, impactEstimation), // 设置 recommendation 字段
+    recommendation: getQuickRecommendation(liquidityAssessment, impactEstimation), // recommendation
   }; // 结束代码块
 } // 结束代码块
 

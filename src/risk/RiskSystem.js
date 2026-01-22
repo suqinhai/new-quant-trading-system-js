@@ -29,11 +29,11 @@ import { RiskManager } from './RiskManager.js'; // 导入模块 ./RiskManager.js
  * Risk system status
  */
 const SYSTEM_STATUS = { // 定义常量 SYSTEM_STATUS
-  INITIALIZING: 'initializing', // 设置 INITIALIZING 字段
-  RUNNING: 'running', // 设置 RUNNING 字段
-  PAUSED: 'paused', // 设置 PAUSED 字段
-  STOPPED: 'stopped', // 设置 STOPPED 字段
-  ERROR: 'error', // 设置 ERROR 字段
+  INITIALIZING: 'initializing', // INITIALIZING
+  RUNNING: 'running', // RUNNING
+  PAUSED: 'paused', // PAUSED
+  STOPPED: 'stopped', // STOPPED权限
+  ERROR: 'error', // 错误
 }; // 结束代码块
 
 /**
@@ -42,20 +42,20 @@ const SYSTEM_STATUS = { // 定义常量 SYSTEM_STATUS
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 是否启用黑天鹅保护 / Enable black swan protection
-  enableBlackSwanProtection: true, // 设置 enableBlackSwanProtection 字段
+  enableBlackSwanProtection: true, // 是否启用黑天鹅保护
 
   // 是否启用流动性监控 / Enable liquidity monitoring
-  enableLiquidityMonitoring: true, // 设置 enableLiquidityMonitoring 字段
+  enableLiquidityMonitoring: true, // 是否启用流动性监控
 
   // 是否启用跨账户风控 / Enable multi-account risk management
-  enableMultiAccountRisk: true, // 设置 enableMultiAccountRisk 字段
+  enableMultiAccountRisk: true, // 是否启用跨账户风控
 
   // 是否启用组合风控 / Enable portfolio risk management
-  enablePortfolioRisk: true, // 设置 enablePortfolioRisk 字段
+  enablePortfolioRisk: true, // 是否启用组合风控
 
   // 日志配置 / Logging configuration
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[RiskSystem]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[RiskSystem]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -84,11 +84,11 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
 
     // 风控模块实例 / Risk module instances
     this.modules = { // 设置 modules
-      blackSwanProtector: null, // 设置 blackSwanProtector 字段
-      liquidityMonitor: null, // 设置 liquidityMonitor 字段
-      multiAccountAggregator: null, // 设置 multiAccountAggregator 字段
-      portfolioRiskManager: null, // 设置 portfolioRiskManager 字段
-      accountRiskManagers: new Map(), // 账户级别风控管理器
+      blackSwanProtector: null, // blackSwanProtector
+      liquidityMonitor: null, // liquidity监控
+      multiAccountAggregator: null, // multi账户Aggregator
+      portfolioRiskManager: null, // portfolio风险Manager
+      accountRiskManagers: new Map(), // 账户风险Managers
     }; // 结束代码块
 
     // 执行器引用 / Executor reference
@@ -99,11 +99,11 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
 
     // 统计数据 / Statistics
     this.statistics = { // 设置 statistics
-      totalChecks: 0, // 设置 totalChecks 字段
-      triggeredEvents: 0, // 设置 triggeredEvents 字段
-      blockedOrders: 0, // 设置 blockedOrders 字段
-      emergencyActions: 0, // 设置 emergencyActions 字段
-      startTime: Date.now(), // 设置 startTime 字段
+      totalChecks: 0, // 总Checks
+      triggeredEvents: 0, // triggeredEvents
+      blockedOrders: 0, // blocked订单
+      emergencyActions: 0, // emergencyActions
+      startTime: Date.now(), // 启动时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -171,8 +171,8 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
       this.log('统一风控系统初始化完成 / Unified risk system initialized', 'info'); // 调用 log
 
       this.emit('initialized', { // 调用 emit
-        modules: this.getModuleStatus(), // 设置 modules 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        modules: this.getModuleStatus(), // modules
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
     } catch (error) { // 执行语句
@@ -410,9 +410,9 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
     // 更新组合风控管理器 / Update portfolio risk manager
     if (this.modules.portfolioRiskManager) { // 条件判断 this.modules.portfolioRiskManager
       this.modules.portfolioRiskManager.updateStrategyState(accountId, { // 访问 modules
-        equity: data.equity, // 设置 equity 字段
-        positionValue: data.positionValue, // 设置 positionValue 字段
-        positions: data.positions, // 设置 positions 字段
+        equity: data.equity, // equity
+        positionValue: data.positionValue, // 持仓Value
+        positions: data.positions, // 持仓
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -462,10 +462,10 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
     this.statistics.totalChecks++; // 访问 statistics
 
     const result = { // 定义常量 result
-      allowed: true, // 设置 allowed 字段
-      reasons: [], // 设置 reasons 字段
-      warnings: [], // 设置 warnings 字段
-      checks: {}, // 设置 checks 字段
+      allowed: true, // allowed
+      reasons: [], // reasons
+      warnings: [], // warnings
+      checks: {}, // checks
     }; // 结束代码块
 
     const { accountId, symbol, side, amount, price } = order; // 解构赋值
@@ -516,7 +516,7 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
     // 4. 检查组合风控 / Check portfolio risk
     if (this.modules.portfolioRiskManager && result.allowed) { // 条件判断 this.modules.portfolioRiskManager && result.a...
       const portfolioCheck = this.modules.portfolioRiskManager.checkOrder({ // 定义常量 portfolioCheck
-        strategyId: accountId, // 设置 strategyId 字段
+        strategyId: accountId, // 策略ID
         symbol, // 执行语句
         side, // 执行语句
         amount, // 执行语句
@@ -670,16 +670,16 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
    */
   getModuleStatus() { // 调用 getModuleStatus
     return { // 返回结果
-      blackSwanProtector: this.modules.blackSwanProtector // 设置 blackSwanProtector 字段
+      blackSwanProtector: this.modules.blackSwanProtector // blackSwanProtector
         ? this.modules.blackSwanProtector.getStatus() // 执行语句
         : null, // 执行语句
-      liquidityMonitor: this.modules.liquidityMonitor // 设置 liquidityMonitor 字段
+      liquidityMonitor: this.modules.liquidityMonitor // liquidity监控
         ? this.modules.liquidityMonitor.getStatus() // 执行语句
         : null, // 执行语句
-      multiAccountAggregator: this.modules.multiAccountAggregator // 设置 multiAccountAggregator 字段
+      multiAccountAggregator: this.modules.multiAccountAggregator // multi账户Aggregator
         ? this.modules.multiAccountAggregator.getGlobalStatus() // 执行语句
         : null, // 执行语句
-      portfolioRiskManager: this.modules.portfolioRiskManager // 设置 portfolioRiskManager 字段
+      portfolioRiskManager: this.modules.portfolioRiskManager // portfolio风险Manager
         ? this.modules.portfolioRiskManager.getStatus() // 执行语句
         : null, // 执行语句
     }; // 结束代码块
@@ -693,24 +693,24 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
    */
   getRiskReport() { // 调用 getRiskReport
     return { // 返回结果
-      timestamp: Date.now(), // 设置 timestamp 字段
-      systemStatus: this.status, // 设置 systemStatus 字段
-      statistics: { ...this.statistics }, // 设置 statistics 字段
-      modules: { // 设置 modules 字段
-        blackSwan: this.modules.blackSwanProtector // 设置 blackSwan 字段
+      timestamp: Date.now(), // 时间戳
+      systemStatus: this.status, // 系统状态
+      statistics: { ...this.statistics }, // statistics
+      modules: { // modules
+        blackSwan: this.modules.blackSwanProtector // blackSwan
           ? this.modules.blackSwanProtector.getStatus() // 执行语句
           : null, // 执行语句
-        liquidity: this.modules.liquidityMonitor // 设置 liquidity 字段
+        liquidity: this.modules.liquidityMonitor // liquidity
           ? this.modules.liquidityMonitor.getStatus() // 执行语句
           : null, // 执行语句
-        multiAccount: this.modules.multiAccountAggregator // 设置 multiAccount 字段
+        multiAccount: this.modules.multiAccountAggregator // multi账户
           ? this.modules.multiAccountAggregator.getRiskReport() // 执行语句
           : null, // 执行语句
-        portfolio: this.modules.portfolioRiskManager // 设置 portfolio 字段
+        portfolio: this.modules.portfolioRiskManager // portfolio
           ? this.modules.portfolioRiskManager.getRiskReport() // 执行语句
           : null, // 执行语句
       }, // 结束代码块
-      recentEvents: this.eventHistory.slice(-50), // 设置 recentEvents 字段
+      recentEvents: this.eventHistory.slice(-50), // recentEvents
     }; // 结束代码块
   } // 结束代码块
 
@@ -747,7 +747,7 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
       module, // 执行语句
       type, // 执行语句
       data, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 限制历史长度 / Limit history length
@@ -776,7 +776,7 @@ export class RiskSystem extends EventEmitter { // 导出类 RiskSystem
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

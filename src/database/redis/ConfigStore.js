@@ -36,11 +36,11 @@ import { KEY_PREFIX } from './RedisClient.js'; // 导入模块 ./RedisClient.js
  */
 const DEFAULT_OPTIONS = { // 定义常量 DEFAULT_OPTIONS
   // 是否保留历史版本 / Whether to keep history versions
-  keepHistory: true, // 设置 keepHistory 字段
+  keepHistory: true, // 是否保留历史版本
   // 历史版本最大数量 / Max history versions
-  maxHistoryVersions: 100, // 设置 maxHistoryVersions 字段
+  maxHistoryVersions: 100, // 历史版本最大数量
   // 配置锁超时时间 (秒) / Config lock TTL (seconds)
-  lockTTL: 30, // 设置 lockTTL 字段
+  lockTTL: 30, // 配置锁超时时间 (秒)
 }; // 结束代码块
 
 /**
@@ -129,11 +129,11 @@ class ConfigStore { // 定义类 ConfigStore
         const oldValue = await this.redis.hGet(this._dataKey(), key); // 定义常量 oldValue
         if (oldValue) { // 条件判断 oldValue
           multi.zAdd(this._historyKey(key), { // 调用 multi.zAdd
-            score: parseInt(currentMeta.updatedAt, 10), // 设置 score 字段
-            value: JSON.stringify({ // 设置 value 字段
-              value: JSON.parse(oldValue), // 设置 value 字段
-              version: currentVersion, // 设置 version 字段
-              timestamp: parseInt(currentMeta.updatedAt, 10), // 设置 timestamp 字段
+            score: parseInt(currentMeta.updatedAt, 10), // 分数
+            value: JSON.stringify({ // value
+              value: JSON.parse(oldValue), // value
+              version: currentVersion, // version
+              timestamp: parseInt(currentMeta.updatedAt, 10), // 时间戳
             }), // 结束代码块
           }); // 结束代码块
 
@@ -151,8 +151,8 @@ class ConfigStore { // 定义类 ConfigStore
 
       // 更新元数据 / Update metadata
       multi.hSet(this._metaKey(key), { // 调用 multi.hSet
-        updatedAt: String(timestamp), // 设置 updatedAt 字段
-        version: String(newVersion), // 设置 version 字段
+        updatedAt: String(timestamp), // updatedAt
+        version: String(newVersion), // version
         description, // 执行语句
       }); // 结束代码块
 
@@ -318,9 +318,9 @@ class ConfigStore { // 定义类 ConfigStore
     } // 结束代码块
 
     return { // 返回结果
-      updatedAt: parseInt(meta.updatedAt, 10), // 设置 updatedAt 字段
-      version: parseInt(meta.version, 10), // 设置 version 字段
-      description: meta.description || '', // 设置 description 字段
+      updatedAt: parseInt(meta.updatedAt, 10), // updatedAt
+      version: parseInt(meta.version, 10), // version
+      description: meta.description || '', // description
     }; // 结束代码块
   } // 结束代码块
 
@@ -424,7 +424,7 @@ class ConfigStore { // 定义类 ConfigStore
     } // 结束代码块
 
     return this.set(key, value, { // 返回结果
-      description: `Rollback to version ${version}`, // 设置 description 字段
+      description: `Rollback to version ${version}`, // description
     }); // 结束代码块
   } // 结束代码块
 
@@ -537,7 +537,7 @@ class ConfigStore { // 定义类 ConfigStore
     } // 结束代码块
 
     return { // 返回结果
-      configCount: count, // 设置 configCount 字段
+      configCount: count, // 配置数量
       totalHistoryVersions, // 执行语句
       keys, // 执行语句
     }; // 结束代码块
@@ -572,10 +572,10 @@ class ConfigStore { // 定义类 ConfigStore
     } // 结束代码块
 
     return { // 返回结果
-      version: 1, // 设置 version 字段
-      exportedAt: Date.now(), // 设置 exportedAt 字段
+      version: 1, // version
+      exportedAt: Date.now(), // exportedAt
       configs, // 执行语句
-      metadata: metas, // 设置 metadata 字段
+      metadata: metas, // 元数据
     }; // 结束代码块
   } // 结束代码块
 

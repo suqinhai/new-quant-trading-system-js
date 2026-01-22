@@ -70,9 +70,9 @@ class BacktestRunner { // 定义类 BacktestRunner
 
     // 创建回测引擎 / Create backtest engine
     const engine = new BacktestEngine({ // 定义常量 engine
-      initialCapital: initialCapital || parseFloat(process.env.BACKTEST_INITIAL_CAPITAL) || 10000, // 读取环境变量 BACKTEST_INITIAL_CAPITAL
-      commissionRate: commissionRate || 0.001, // 设置 commissionRate 字段
-      slippage: slippage || 0.0005, // 设置 slippage 字段
+      initialCapital: initialCapital || parseFloat(process.env.BACKTEST_INITIAL_CAPITAL) || 10000, // 初始资金
+      commissionRate: commissionRate || 0.001, // 手续费频率
+      slippage: slippage || 0.0005, // 滑点
     }); // 结束代码块
 
     // 加载策略 / Load strategy
@@ -207,26 +207,26 @@ class BacktestRunner { // 定义类 BacktestRunner
 
     // 构建保存数据 / Build save data
     const saveData = { // 定义常量 saveData
-      config: { // 设置 config 字段
-        symbol: config.symbol, // 设置 symbol 字段
-        timeframe: config.timeframe, // 设置 timeframe 字段
-        startDate: config.startDate, // 设置 startDate 字段
-        endDate: config.endDate, // 设置 endDate 字段
-        initialCapital: config.initialCapital, // 设置 initialCapital 字段
+      config: { // 配置
+        symbol: config.symbol, // 交易对
+        timeframe: config.timeframe, // 周期
+        startDate: config.startDate, // 启动Date
+        endDate: config.endDate, // endDate
+        initialCapital: config.initialCapital, // 初始资金
       }, // 结束代码块
-      summary: { // 设置 summary 字段
-        initialCapital: result.initialCapital, // 设置 initialCapital 字段
-        finalEquity: result.finalEquity, // 设置 finalEquity 字段
-        totalReturn: result.totalReturn, // 设置 totalReturn 字段
-        totalTrades: result.totalTrades, // 设置 totalTrades 字段
-        winRate: result.winRate, // 设置 winRate 字段
-        profitFactor: result.profitFactor, // 设置 profitFactor 字段
-        maxDrawdownPercent: result.maxDrawdownPercent, // 设置 maxDrawdownPercent 字段
-        sharpeRatio: result.sharpeRatio, // 设置 sharpeRatio 字段
+      summary: { // summary
+        initialCapital: result.initialCapital, // 初始资金
+        finalEquity: result.finalEquity, // finalEquity
+        totalReturn: result.totalReturn, // 总Return
+        totalTrades: result.totalTrades, // 总成交
+        winRate: result.winRate, // win频率
+        profitFactor: result.profitFactor, // 盈利Factor
+        maxDrawdownPercent: result.maxDrawdownPercent, // 最大回撤百分比
+        sharpeRatio: result.sharpeRatio, // sharpe比例
       }, // 结束代码块
-      trades: result.trades, // 设置 trades 字段
-      equityCurve: result.equityCurve, // 设置 equityCurve 字段
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
+      trades: result.trades, // 成交
+      equityCurve: result.equityCurve, // equityCurve
+      timestamp: new Date().toISOString(), // 时间戳
     }; // 结束代码块
 
     // 写入文件 / Write file
@@ -292,12 +292,12 @@ if (isMainModule) { // 条件判断 isMainModule
 
   // 配置 / Configuration
   const config = { // 定义常量 config
-    strategy: getArg(['--strategy', '-s']), // 设置 strategy 字段
-    symbol: getArg(['--symbol']) || 'BTC/USDT', // 设置 symbol 字段
-    timeframe: getArg(['--timeframe']) || '1h', // 设置 timeframe 字段
-    startDate: getArg(['--start']) || process.env.BACKTEST_START_DATE, // 读取环境变量 BACKTEST_START_DATE
-    endDate: getArg(['--end']) || process.env.BACKTEST_END_DATE, // 读取环境变量 BACKTEST_END_DATE
-    initialCapital: parseFloat(getArg(['--capital'])) || parseFloat(process.env.BACKTEST_INITIAL_CAPITAL) || 10000, // 读取环境变量 BACKTEST_INITIAL_CAPITAL
+    strategy: getArg(['--strategy', '-s']), // 策略
+    symbol: getArg(['--symbol']) || 'BTC/USDT', // 交易对
+    timeframe: getArg(['--timeframe']) || '1h', // 周期
+    startDate: getArg(['--start']) || process.env.BACKTEST_START_DATE, // 启动Date
+    endDate: getArg(['--end']) || process.env.BACKTEST_END_DATE, // endDate
+    initialCapital: parseFloat(getArg(['--capital'])) || parseFloat(process.env.BACKTEST_INITIAL_CAPITAL) || 10000, // 初始资金
   }; // 结束代码块
 
   // 验证必要参数 / Validate required parameters

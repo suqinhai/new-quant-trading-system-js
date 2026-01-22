@@ -43,23 +43,23 @@ class AuthManager { // 定义类 AuthManager
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
       // JWT 密钥 (应从环境变量获取)
-      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'), // 读取环境变量 JWT_SECRET
+      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'), // JWT 密钥 (应从环境变量获取)
       // JWT 过期时间 (毫秒)
-      jwtExpiry: config.jwtExpiry || JWT_EXPIRY, // 设置 jwtExpiry 字段
+      jwtExpiry: config.jwtExpiry || JWT_EXPIRY, // JWT 过期时间 (毫秒)
       // 刷新令牌过期时间
-      refreshTokenExpiry: config.refreshTokenExpiry || REFRESH_TOKEN_EXPIRY, // 设置 refreshTokenExpiry 字段
+      refreshTokenExpiry: config.refreshTokenExpiry || REFRESH_TOKEN_EXPIRY, // 刷新令牌过期时间
       // 密码哈希迭代次数
-      hashIterations: config.hashIterations || 100000, // 设置 hashIterations 字段
+      hashIterations: config.hashIterations || 100000, // 密码哈希迭代次数
       // 密码最小长度
-      minPasswordLength: config.minPasswordLength || 8, // 设置 minPasswordLength 字段
+      minPasswordLength: config.minPasswordLength || 8, // 最小密码Length
       // 登录失败锁定阈值
-      maxLoginAttempts: config.maxLoginAttempts || 5, // 设置 maxLoginAttempts 字段
+      maxLoginAttempts: config.maxLoginAttempts || 5, // 登录失败锁定阈值
       // 锁定时间 (毫秒)
-      lockoutDuration: config.lockoutDuration || 900000, // 15分钟
+      lockoutDuration: config.lockoutDuration || 900000, // 锁定时间 (毫秒)
       // 是否启用 IP 检查
-      enableIpCheck: config.enableIpCheck ?? true, // 设置 enableIpCheck 字段
+      enableIpCheck: config.enableIpCheck ?? true, // 是否启用 IP 检查
       // 会话并发限制
-      maxConcurrentSessions: config.maxConcurrentSessions || 3, // 设置 maxConcurrentSessions 字段
+      maxConcurrentSessions: config.maxConcurrentSessions || 3, // 最大ConcurrentSessions
     }; // 结束代码块
 
     // 用户存储 (生产环境应使用数据库)
@@ -129,13 +129,13 @@ class AuthManager { // 定义类 AuthManager
     // Thread-safe sync write for user storage
     this.users.setSync(username, { // 访问 users
       username, // 执行语句
-      passwordHash: hash, // 设置 passwordHash 字段
+      passwordHash: hash, // 密码Hash
       salt, // 执行语句
-      role: options.role || 'user', // 设置 role 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
-      lastLogin: null, // 设置 lastLogin 字段
-      failedAttempts: 0, // 设置 failedAttempts 字段
-      lockedUntil: null, // 设置 lockedUntil 字段
+      role: options.role || 'user', // role
+      createdAt: Date.now(), // createdAt
+      lastLogin: null, // lastLogin
+      failedAttempts: 0, // failed次数
+      lockedUntil: null, // lockedUntil
     }); // 结束代码块
 
     return { username, role: options.role || 'user' }; // 返回结果
@@ -184,8 +184,8 @@ class AuthManager { // 定义类 AuthManager
         if (failedAttempts >= this.config.maxLoginAttempts) { // 条件判断 failedAttempts >= this.config.maxLoginAttempts
           return { // 返回结果
             ...u, // 展开对象或数组
-            failedAttempts: 0, // 设置 failedAttempts 字段
-            lockedUntil: Date.now() + this.config.lockoutDuration, // 设置 lockedUntil 字段
+            failedAttempts: 0, // failed次数
+            lockedUntil: Date.now() + this.config.lockoutDuration, // lockedUntil
           }; // 结束代码块
         } // 结束代码块
         return { ...u, failedAttempts }; // 返回结果
@@ -200,9 +200,9 @@ class AuthManager { // 定义类 AuthManager
     // 使用原子更新重置失败计数 / Atomic update to reset failed count
     await this.users.update(username, (u) => ({ // 等待异步结果
       ...u, // 展开对象或数组
-      failedAttempts: 0, // 设置 failedAttempts 字段
-      lockedUntil: null, // 设置 lockedUntil 字段
-      lastLogin: Date.now(), // 设置 lastLogin 字段
+      failedAttempts: 0, // failed次数
+      lockedUntil: null, // lockedUntil
+      lastLogin: Date.now(), // lastLogin
     })); // 结束代码块
 
     return { valid: true, user: { username: user.username, role: user.role } }; // 返回结果
@@ -215,16 +215,16 @@ class AuthManager { // 定义类 AuthManager
    */
   generateToken(payload) { // 调用 generateToken
     const header = { // 定义常量 header
-      alg: JWT_ALGORITHM, // 设置 alg 字段
-      typ: 'JWT', // 设置 typ 字段
+      alg: JWT_ALGORITHM, // alg
+      typ: 'JWT', // typ
     }; // 结束代码块
 
     const now = Date.now(); // 定义常量 now
     const tokenPayload = { // 定义常量 tokenPayload
       ...payload, // 展开对象或数组
-      iat: now, // 设置 iat 字段
-      exp: now + this.config.jwtExpiry, // 设置 exp 字段
-      jti: crypto.randomBytes(16).toString('hex'), // 设置 jti 字段
+      iat: now, // iat
+      exp: now + this.config.jwtExpiry, // exp
+      jti: crypto.randomBytes(16).toString('hex'), // jti
     }; // 结束代码块
 
     // 编码 header 和 payload
@@ -308,8 +308,8 @@ class AuthManager { // 定义类 AuthManager
     await this.refreshTokens.set(refreshToken, { // 等待异步结果
       username, // 执行语句
       clientIp, // 执行语句
-      createdAt: Date.now(), // 设置 createdAt 字段
-      expiresAt: Date.now() + this.config.refreshTokenExpiry, // 设置 expiresAt 字段
+      createdAt: Date.now(), // createdAt
+      expiresAt: Date.now() + this.config.refreshTokenExpiry, // expiresAt
     }); // 结束代码块
 
     // 清理该用户的旧刷新令牌 (限制并发会话)
@@ -351,8 +351,8 @@ class AuthManager { // 定义类 AuthManager
 
     // 生成新的访问令牌
     const accessToken = this.generateToken({ // 定义常量 accessToken
-      sub: user.username, // 设置 sub 字段
-      role: user.role, // 设置 role 字段
+      sub: user.username, // sub
+      role: user.role, // role
     }); // 结束代码块
 
     return { success: true, accessToken }; // 返回结果
@@ -454,7 +454,7 @@ class AuthManager { // 定义类 AuthManager
     await this.users.update(username, (user) => ({ // 等待异步结果
       ...user, // 展开对象或数组
       salt, // 执行语句
-      passwordHash: hash, // 设置 passwordHash 字段
+      passwordHash: hash, // 密码Hash
     })); // 结束代码块
 
     // 撤销所有刷新令牌 (强制重新登录) - 线程安全
@@ -495,9 +495,9 @@ function createAuthMiddleware(authManager, options = {}) { // 定义函数 creat
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) { // 条件判断 !authHeader || !authHeader.startsWith('Bearer ')
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: 'Authorization required', // 设置 error 字段
-        code: 'AUTH_REQUIRED', // 设置 code 字段
+        success: false, // 成功标记
+        error: 'Authorization required', // 错误
+        code: 'AUTH_REQUIRED', // 代码
       }); // 结束代码块
     } // 结束代码块
 
@@ -508,9 +508,9 @@ function createAuthMiddleware(authManager, options = {}) { // 定义函数 creat
 
     if (!result.valid) { // 条件判断 !result.valid
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: result.error, // 设置 error 字段
-        code: 'AUTH_INVALID', // 设置 code 字段
+        success: false, // 成功标记
+        error: result.error, // 错误
+        code: 'AUTH_INVALID', // 代码
       }); // 结束代码块
     } // 结束代码块
 
@@ -531,8 +531,8 @@ function createLoginHandler(authManager) { // 定义函数 createLoginHandler
 
     if (!username || !password) { // 条件判断 !username || !password
       return res.status(400).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: 'Username and password required', // 设置 error 字段
+        success: false, // 成功标记
+        error: 'Username and password required', // 错误
       }); // 结束代码块
     } // 结束代码块
 
@@ -547,25 +547,25 @@ function createLoginHandler(authManager) { // 定义函数 createLoginHandler
 
     if (!result.valid) { // 条件判断 !result.valid
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: result.error, // 设置 error 字段
+        success: false, // 成功标记
+        error: result.error, // 错误
       }); // 结束代码块
     } // 结束代码块
 
     // 生成令牌 (async)
     const accessToken = authManager.generateToken({ // 定义常量 accessToken
-      sub: result.user.username, // 设置 sub 字段
-      role: result.user.role, // 设置 role 字段
+      sub: result.user.username, // sub
+      role: result.user.role, // role
     }); // 结束代码块
 
     const refreshToken = await authManager.generateRefreshToken(username, clientIp); // 定义常量 refreshToken
 
     res.json({ // 调用 res.json
-      success: true, // 设置 success 字段
+      success: true, // 成功标记
       accessToken, // 执行语句
       refreshToken, // 执行语句
-      expiresIn: authManager.config.jwtExpiry, // 设置 expiresIn 字段
-      user: result.user, // 设置 user 字段
+      expiresIn: authManager.config.jwtExpiry, // expires在
+      user: result.user, // 用户
     }); // 结束代码块
   }; // 结束代码块
 } // 结束代码块
@@ -581,8 +581,8 @@ function createRefreshHandler(authManager) { // 定义函数 createRefreshHandle
 
     if (!refreshToken) { // 条件判断 !refreshToken
       return res.status(400).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: 'Refresh token required', // 设置 error 字段
+        success: false, // 成功标记
+        error: 'Refresh token required', // 错误
       }); // 结束代码块
     } // 结束代码块
 
@@ -596,15 +596,15 @@ function createRefreshHandler(authManager) { // 定义函数 createRefreshHandle
 
     if (!result.success) { // 条件判断 !result.success
       return res.status(401).json({ // 返回结果
-        success: false, // 设置 success 字段
-        error: result.error, // 设置 error 字段
+        success: false, // 成功标记
+        error: result.error, // 错误
       }); // 结束代码块
     } // 结束代码块
 
     res.json({ // 调用 res.json
-      success: true, // 设置 success 字段
-      accessToken: result.accessToken, // 设置 accessToken 字段
-      expiresIn: authManager.config.jwtExpiry, // 设置 expiresIn 字段
+      success: true, // 成功标记
+      accessToken: result.accessToken, // access令牌
+      expiresIn: authManager.config.jwtExpiry, // expires在
     }); // 结束代码块
   }; // 结束代码块
 } // 结束代码块
@@ -626,8 +626,8 @@ function createLogoutHandler(authManager) { // 定义函数 createLogoutHandler
     } // 结束代码块
 
     res.json({ // 调用 res.json
-      success: true, // 设置 success 字段
-      message: 'Logged out successfully', // 设置 message 字段
+      success: true, // 成功标记
+      message: 'Logged out successfully', // 消息
     }); // 结束代码块
   }; // 结束代码块
 } // 结束代码块

@@ -64,71 +64,71 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 健康检查间隔 (毫秒) / Health check interval (ms)
-  healthCheckInterval: 10000,         // 10秒
+  healthCheckInterval: 10000,         // 健康检查间隔 (毫秒)
 
   // 健康检查超时 (毫秒) / Health check timeout (ms)
-  healthCheckTimeout: 5000,           // 5秒
+  healthCheckTimeout: 5000,           // 健康检查超时 (毫秒)
 
   // 连续失败次数触发故障 / Consecutive failures to trigger failure
-  failureThreshold: 3, // 设置 failureThreshold 字段
+  failureThreshold: 3, // 连续失败次数触发故障
 
   // 连续成功次数恢复健康 / Consecutive successes to recover
-  recoveryThreshold: 3, // 设置 recoveryThreshold 字段
+  recoveryThreshold: 3, // 连续成功次数恢复健康
 
   // ============================================
   // 延迟阈值 / Latency Thresholds
   // ============================================
 
   // 延迟警告阈值 (毫秒) / Latency warning threshold (ms)
-  latencyWarningThreshold: 500, // 设置 latencyWarningThreshold 字段
+  latencyWarningThreshold: 500, // 延迟警告阈值 (毫秒)
 
   // 延迟严重阈值 (毫秒) / Latency critical threshold (ms)
-  latencyCriticalThreshold: 2000, // 设置 latencyCriticalThreshold 字段
+  latencyCriticalThreshold: 2000, // 延迟严重阈值 (毫秒)
 
   // 延迟移动平均窗口 / Latency moving average window
-  latencyWindowSize: 20, // 设置 latencyWindowSize 字段
+  latencyWindowSize: 20, // 延迟移动平均窗口
 
   // ============================================
   // 故障切换配置 / Failover Configuration
   // ============================================
 
   // 启用自动故障切换 / Enable automatic failover
-  enableAutoFailover: true, // 设置 enableAutoFailover 字段
+  enableAutoFailover: true, // 启用自动故障切换
 
   // 切换后冷却时间 (毫秒) / Cooldown after failover (ms)
-  failoverCooldown: 60000,            // 1分钟
+  failoverCooldown: 60000,            // 切换后冷却时间 (毫秒)
 
   // 启用自动恢复 / Enable automatic recovery
-  enableAutoRecovery: true, // 设置 enableAutoRecovery 字段
+  enableAutoRecovery: true, // 启用自动Recovery
 
   // 恢复前等待时间 (毫秒) / Wait time before recovery (ms)
-  recoveryWaitTime: 300000,           // 5分钟
+  recoveryWaitTime: 300000,           // 恢复前等待时间 (毫秒)
 
   // ============================================
   // 重试配置 / Retry Configuration
   // ============================================
 
   // 最大重试次数 / Maximum retry count
-  maxRetries: 3, // 设置 maxRetries 字段
+  maxRetries: 3, // 最大重试次数
 
   // 重试间隔 (毫秒) / Retry interval (ms)
-  retryInterval: 1000, // 设置 retryInterval 字段
+  retryInterval: 1000, // 重试间隔 (毫秒)
 
   // 重试间隔增长因子 / Retry interval growth factor
-  retryBackoffFactor: 2, // 设置 retryBackoffFactor 字段
+  retryBackoffFactor: 2, // 重试间隔增长因子
 
   // ============================================
   // 监控配置 / Monitoring Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[ExchangeFailover]', // 设置 logPrefix 字段
+  logPrefix: '[ExchangeFailover]', // 日志前缀
 
   // 统计历史保留数量 / Statistics history retention count
-  statsHistoryLength: 1000, // 设置 statsHistoryLength 字段
+  statsHistoryLength: 1000, // 统计历史保留数量
 }; // 结束代码块
 
 // ============================================
@@ -278,33 +278,33 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
 
     const exchange = { // 定义常量 exchange
       id, // 执行语句
-      name: name || id, // 设置 name 字段
+      name: name || id, // name
       client, // 执行语句
       priority, // 执行语句
-      healthCheckFn: healthCheckFn || this._defaultHealthCheck.bind(this), // 设置 healthCheckFn 字段
-      registeredAt: Date.now(), // 设置 registeredAt 字段
-      lastActiveAt: Date.now(), // 设置 lastActiveAt 字段
+      healthCheckFn: healthCheckFn || this._defaultHealthCheck.bind(this), // healthCheckFn
+      registeredAt: Date.now(), // registeredAt
+      lastActiveAt: Date.now(), // last活跃At
     }; // 结束代码块
 
     this.exchanges.set(id, exchange); // 访问 exchanges
 
     // 初始化健康状态 / Initialize health status
     this.healthStatus.set(id, { // 访问 healthStatus
-      status: EXCHANGE_STATUS.UNKNOWN, // 设置 status 字段
-      consecutiveFailures: 0, // 设置 consecutiveFailures 字段
-      consecutiveSuccesses: 0, // 设置 consecutiveSuccesses 字段
-      lastCheckTime: null, // 设置 lastCheckTime 字段
-      lastSuccessTime: null, // 设置 lastSuccessTime 字段
-      lastFailureTime: null, // 设置 lastFailureTime 字段
-      lastError: null, // 设置 lastError 字段
+      status: EXCHANGE_STATUS.UNKNOWN, // 状态
+      consecutiveFailures: 0, // consecutiveFailures
+      consecutiveSuccesses: 0, // consecutiveSuccesses
+      lastCheckTime: null, // lastCheck时间
+      lastSuccessTime: null, // last成功标记时间
+      lastFailureTime: null, // lastFailure时间
+      lastError: null, // last错误
     }); // 结束代码块
 
     // 初始化延迟统计 / Initialize latency stats
     this.latencyStats.set(id, { // 访问 latencyStats
-      latencies: [], // 设置 latencies 字段
-      avgLatency: 0, // 设置 avgLatency 字段
-      minLatency: Infinity, // 设置 minLatency 字段
-      maxLatency: 0, // 设置 maxLatency 字段
+      latencies: [], // latencies
+      avgLatency: 0, // avgLatency
+      minLatency: Infinity, // 最小Latency
+      maxLatency: 0, // 最大Latency
     }); // 结束代码块
 
     // 初始化错误历史 / Initialize error history
@@ -428,9 +428,9 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
       health.lastCheckTime = Date.now(); // 赋值 health.lastCheckTime
       health.lastFailureTime = Date.now(); // 赋值 health.lastFailureTime
       health.lastError = { // 赋值 health.lastError
-        type: failureType, // 设置 type 字段
-        message: error.message, // 设置 message 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        type: failureType, // 类型
+        message: error.message, // 消息
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
 
       // 确定状态 / Determine status
@@ -446,9 +446,9 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
     // 发出健康状态更新事件 / Emit health status update event
     this.emit('healthStatusUpdated', { // 调用 emit
       exchangeId, // 执行语句
-      status: health.status, // 设置 status 字段
-      latency: this.latencyStats.get(exchangeId).avgLatency, // 设置 latency 字段
-      consecutiveFailures: health.consecutiveFailures, // 设置 consecutiveFailures 字段
+      status: health.status, // 状态
+      latency: this.latencyStats.get(exchangeId).avgLatency, // latency
+      consecutiveFailures: health.consecutiveFailures, // consecutiveFailures
     }); // 结束代码块
   } // 结束代码块
 
@@ -562,7 +562,7 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
     errors.push({ // 调用 errors.push
       type, // 执行语句
       message, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 限制历史长度 / Limit history length
@@ -659,11 +659,11 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
 
     // 记录切换历史 / Record failover history
     const failoverRecord = { // 定义常量 failoverRecord
-      fromExchange: oldPrimaryId, // 设置 fromExchange 字段
-      toExchange: newPrimaryId, // 设置 toExchange 字段
+      fromExchange: oldPrimaryId, // from交易所
+      toExchange: newPrimaryId, // to交易所
       reason, // 执行语句
       details, // 执行语句
-      timestamp: now, // 设置 timestamp 字段
+      timestamp: now, // 时间戳
     }; // 结束代码块
 
     this.failoverHistory.push(failoverRecord); // 访问 failoverHistory
@@ -843,9 +843,9 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
           if (health) { // 条件判断 health
             health.consecutiveFailures++; // 执行语句
             health.lastError = { // 赋值 health.lastError
-              type: failureType, // 设置 type 字段
-              message: error.message, // 设置 message 字段
-              timestamp: Date.now(), // 设置 timestamp 字段
+              type: failureType, // 类型
+              message: error.message, // 消息
+              timestamp: Date.now(), // 时间戳
             }; // 结束代码块
           } // 结束代码块
 
@@ -943,23 +943,23 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
 
       exchangeList.push({ // 调用 exchangeList.push
         id, // 执行语句
-        name: exchange.name, // 设置 name 字段
-        priority: exchange.priority, // 设置 priority 字段
-        isPrimary: id === this.primaryExchangeId, // 设置 isPrimary 字段
-        status: health ? health.status : EXCHANGE_STATUS.UNKNOWN, // 设置 status 字段
-        avgLatency: latency ? latency.avgLatency : null, // 设置 avgLatency 字段
-        consecutiveFailures: health ? health.consecutiveFailures : 0, // 设置 consecutiveFailures 字段
-        lastActiveAt: exchange.lastActiveAt, // 设置 lastActiveAt 字段
+        name: exchange.name, // name
+        priority: exchange.priority, // priority
+        isPrimary: id === this.primaryExchangeId, // 是否Primary
+        status: health ? health.status : EXCHANGE_STATUS.UNKNOWN, // 状态
+        avgLatency: latency ? latency.avgLatency : null, // avgLatency
+        consecutiveFailures: health ? health.consecutiveFailures : 0, // consecutiveFailures
+        lastActiveAt: exchange.lastActiveAt, // last活跃At
       }); // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      primaryExchangeId: this.primaryExchangeId, // 设置 primaryExchangeId 字段
-      exchangeCount: this.exchanges.size, // 设置 exchangeCount 字段
-      exchanges: exchangeList.sort((a, b) => a.priority - b.priority), // 设置 exchanges 字段
-      lastFailoverTime: this.lastFailoverTime, // 设置 lastFailoverTime 字段
-      failoverCount: this.failoverHistory.length, // 设置 failoverCount 字段
+      running: this.running, // running
+      primaryExchangeId: this.primaryExchangeId, // primary交易所ID
+      exchangeCount: this.exchanges.size, // 交易所数量
+      exchanges: exchangeList.sort((a, b) => a.priority - b.priority), // 交易所
+      lastFailoverTime: this.lastFailoverTime, // lastFailover时间
+      failoverCount: this.failoverHistory.length, // failover数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -1003,7 +1003,7 @@ export class ExchangeFailover extends EventEmitter { // 导出类 ExchangeFailov
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

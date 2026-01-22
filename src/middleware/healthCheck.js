@@ -14,21 +14,21 @@ import os from 'os'; // 导入模块 os
  * 健康检查状态
  */
 const HealthStatus = { // 定义常量 HealthStatus
-  HEALTHY: 'healthy', // 设置 HEALTHY 字段
-  DEGRADED: 'degraded', // 设置 DEGRADED 字段
-  UNHEALTHY: 'unhealthy', // 设置 UNHEALTHY 字段
+  HEALTHY: 'healthy', // HEALTHY
+  DEGRADED: 'degraded', // DEGRADED
+  UNHEALTHY: 'unhealthy', // UNHEALTHY
 }; // 结束代码块
 
 /**
  * 健康检查组件
  */
 const ComponentType = { // 定义常量 ComponentType
-  DATABASE: 'database', // 设置 DATABASE 字段
-  EXCHANGE: 'exchange', // 设置 EXCHANGE 字段
-  REDIS: 'redis', // 设置 REDIS 字段
-  MEMORY: 'memory', // 设置 MEMORY 字段
-  DISK: 'disk', // 设置 DISK 字段
-  NETWORK: 'network', // 设置 NETWORK 字段
+  DATABASE: 'database', // DATABASE
+  EXCHANGE: 'exchange', // 交易所
+  REDIS: 'redis', // REDIS
+  MEMORY: 'memory', // 内存
+  DISK: 'disk', // DISK
+  NETWORK: 'network', // 网络
 }; // 结束代码块
 
 /**
@@ -39,17 +39,17 @@ class HealthChecker { // 定义类 HealthChecker
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
       // 内存阈值 (MB)
-      memoryThresholdMB: config.memoryThresholdMB || 500, // 设置 memoryThresholdMB 字段
+      memoryThresholdMB: config.memoryThresholdMB || 500, // 内存阈值 (MB)
       // 内存使用率警告阈值
-      memoryWarningPercent: config.memoryWarningPercent || 80, // 设置 memoryWarningPercent 字段
+      memoryWarningPercent: config.memoryWarningPercent || 80, // 内存使用率警告阈值
       // 内存使用率严重阈值
-      memoryCriticalPercent: config.memoryCriticalPercent || 95, // 设置 memoryCriticalPercent 字段
+      memoryCriticalPercent: config.memoryCriticalPercent || 95, // 内存使用率严重阈值
       // 响应时间警告阈值 (ms)
-      responseTimeWarningMs: config.responseTimeWarningMs || 1000, // 设置 responseTimeWarningMs 字段
+      responseTimeWarningMs: config.responseTimeWarningMs || 1000, // 响应时间警告阈值 (ms)
       // 响应时间严重阈值 (ms)
-      responseTimeCriticalMs: config.responseTimeCriticalMs || 5000, // 设置 responseTimeCriticalMs 字段
+      responseTimeCriticalMs: config.responseTimeCriticalMs || 5000, // 响应时间严重阈值 (ms)
       // 组件检查超时 (ms)
-      componentTimeout: config.componentTimeout || 5000, // 设置 componentTimeout 字段
+      componentTimeout: config.componentTimeout || 5000, // 组件检查超时 (ms)
     }; // 结束代码块
 
     // 注册的组件检查器
@@ -110,8 +110,8 @@ class HealthChecker { // 定义类 HealthChecker
         } catch (error) { // 执行语句
           return { // 返回结果
             name, // 执行语句
-            status: HealthStatus.UNHEALTHY, // 设置 status 字段
-            message: error.message, // 设置 message 字段
+            status: HealthStatus.UNHEALTHY, // 状态
+            message: error.message, // 消息
           }; // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -136,11 +136,11 @@ class HealthChecker { // 定义类 HealthChecker
     const overallStatus = this._calculateOverallStatus(componentResults); // 定义常量 overallStatus
 
     const result = { // 定义常量 result
-      status: overallStatus, // 设置 status 字段
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
-      uptime: Math.floor((Date.now() - this.startTime) / 1000), // 设置 uptime 字段
-      responseTime: Date.now() - startTime, // 设置 responseTime 字段
-      version: process.env.npm_package_version || '1.0.0', // 读取环境变量
+      status: overallStatus, // 状态
+      timestamp: new Date().toISOString(), // 时间戳
+      uptime: Math.floor((Date.now() - this.startTime) / 1000), // uptime
+      responseTime: Date.now() - startTime, // response时间
+      version: process.env.npm_package_version || '1.0.0', // version
       components, // 执行语句
     }; // 结束代码块
 
@@ -157,9 +157,9 @@ class HealthChecker { // 定义类 HealthChecker
    */
   liveness() { // 调用 liveness
     return { // 返回结果
-      status: HealthStatus.HEALTHY, // 设置 status 字段
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
-      uptime: Math.floor((Date.now() - this.startTime) / 1000), // 设置 uptime 字段
+      status: HealthStatus.HEALTHY, // 状态
+      timestamp: new Date().toISOString(), // 时间戳
+      uptime: Math.floor((Date.now() - this.startTime) / 1000), // uptime
     }; // 结束代码块
   } // 结束代码块
 
@@ -187,8 +187,8 @@ class HealthChecker { // 定义类 HealthChecker
           } // 结束代码块
         } catch (error) { // 执行语句
           results[name] = { // 执行语句
-            status: HealthStatus.UNHEALTHY, // 设置 status 字段
-            message: error.message, // 设置 message 字段
+            status: HealthStatus.UNHEALTHY, // 状态
+            message: error.message, // 消息
           }; // 结束代码块
           isReady = false; // 赋值 isReady
         } // 结束代码块
@@ -203,9 +203,9 @@ class HealthChecker { // 定义类 HealthChecker
     } // 结束代码块
 
     return { // 返回结果
-      status: isReady ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY, // 设置 status 字段
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
-      components: results, // 设置 components 字段
+      status: isReady ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY, // 状态
+      timestamp: new Date().toISOString(), // 时间戳
+      components: results, // components
     }; // 结束代码块
   } // 结束代码块
 
@@ -237,12 +237,12 @@ class HealthChecker { // 定义类 HealthChecker
     return { // 返回结果
       status, // 执行语句
       message, // 执行语句
-      details: { // 设置 details 字段
+      details: { // details
         heapUsedMB, // 执行语句
         heapTotalMB, // 执行语句
         rssMB, // 执行语句
         usagePercent, // 执行语句
-        externalMB: Math.round(memUsage.external / 1024 / 1024), // 设置 externalMB 字段
+        externalMB: Math.round(memUsage.external / 1024 / 1024), // externalMB
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -270,13 +270,13 @@ class HealthChecker { // 定义类 HealthChecker
     return { // 返回结果
       status, // 执行语句
       message, // 执行语句
-      details: { // 设置 details 字段
-        loadAverage: loadAvg.map(l => l.toFixed(2)), // 设置 loadAverage 字段
+      details: { // details
+        loadAverage: loadAvg.map(l => l.toFixed(2)), // load平均
         cpuCount, // 执行语句
-        freeMem: Math.round(os.freemem() / 1024 / 1024), // 设置 freeMem 字段
-        totalMem: Math.round(os.totalmem() / 1024 / 1024), // 设置 totalMem 字段
-        platform: os.platform(), // 设置 platform 字段
-        nodeVersion: process.version, // 设置 nodeVersion 字段
+        freeMem: Math.round(os.freemem() / 1024 / 1024), // freeMem
+        totalMem: Math.round(os.totalmem() / 1024 / 1024), // 总Mem
+        platform: os.platform(), // platform
+        nodeVersion: process.version, // nodeVersion
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -331,9 +331,9 @@ function createHealthRoutes(healthChecker) { // 定义函数 createHealthRoutes
         res.status(statusCode).json(result); // 调用 res.status
       } catch (error) { // 执行语句
         res.status(503).json({ // 调用 res.status
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          timestamp: new Date().toISOString(), // 设置 timestamp 字段
-          error: error.message, // 设置 error 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          timestamp: new Date().toISOString(), // 时间戳
+          error: error.message, // 错误
         }); // 结束代码块
       } // 结束代码块
     }, // 结束代码块
@@ -356,9 +356,9 @@ function createHealthRoutes(healthChecker) { // 定义函数 createHealthRoutes
         res.status(statusCode).json(result); // 调用 res.status
       } catch (error) { // 执行语句
         res.status(503).json({ // 调用 res.status
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          timestamp: new Date().toISOString(), // 设置 timestamp 字段
-          error: error.message, // 设置 error 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          timestamp: new Date().toISOString(), // 时间戳
+          error: error.message, // 错误
         }); // 结束代码块
       } // 结束代码块
     }, // 结束代码块
@@ -417,12 +417,12 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
         return { // 返回结果
           status, // 执行语句
           message, // 执行语句
-          details: { latency, serverTime }, // 设置 details 字段
+          details: { latency, serverTime }, // details
         }; // 结束代码块
       } catch (error) { // 执行语句
         return { // 返回结果
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          message: `${name} connection failed: ${error.message}`, // 设置 message 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          message: `${name} connection failed: ${error.message}`, // 消息
         }; // 结束代码块
       } // 结束代码块
     }; // 结束代码块
@@ -446,13 +446,13 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
 
         return { // 返回结果
           status, // 执行语句
-          message: 'Redis is connected', // 设置 message 字段
-          details: { latency }, // 设置 details 字段
+          message: 'Redis is connected', // 消息
+          details: { latency }, // details
         }; // 结束代码块
       } catch (error) { // 执行语句
         return { // 返回结果
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          message: `Redis connection failed: ${error.message}`, // 设置 message 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          message: `Redis connection failed: ${error.message}`, // 消息
         }; // 结束代码块
       } // 结束代码块
     }; // 结束代码块
@@ -481,13 +481,13 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
 
         return { // 返回结果
           status, // 执行语句
-          message: 'Database is connected', // 设置 message 字段
-          details: { latency }, // 设置 details 字段
+          message: 'Database is connected', // 消息
+          details: { latency }, // details
         }; // 结束代码块
       } catch (error) { // 执行语句
         return { // 返回结果
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          message: `Database connection failed: ${error.message}`, // 设置 message 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          message: `Database connection failed: ${error.message}`, // 消息
         }; // 结束代码块
       } // 结束代码块
     }; // 结束代码块
@@ -506,8 +506,8 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
         const timeoutId = setTimeout(() => controller.abort(), timeout); // 定义函数 timeoutId
 
         const response = await fetch(url, { // 定义常量 response
-          method: 'GET', // 设置 method 字段
-          signal: controller.signal, // 设置 signal 字段
+          method: 'GET', // method
+          signal: controller.signal, // 信号
         }); // 结束代码块
 
         clearTimeout(timeoutId); // 调用 clearTimeout
@@ -515,9 +515,9 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
 
         if (!response.ok) { // 条件判断 !response.ok
           return { // 返回结果
-            status: HealthStatus.UNHEALTHY, // 设置 status 字段
-            message: `HTTP check failed: ${response.status}`, // 设置 message 字段
-            details: { latency, statusCode: response.status }, // 设置 details 字段
+            status: HealthStatus.UNHEALTHY, // 状态
+            message: `HTTP check failed: ${response.status}`, // 消息
+            details: { latency, statusCode: response.status }, // details
           }; // 结束代码块
         } // 结束代码块
 
@@ -528,13 +528,13 @@ const ComponentCheckers = { // 定义常量 ComponentCheckers
 
         return { // 返回结果
           status, // 执行语句
-          message: 'HTTP endpoint is healthy', // 设置 message 字段
-          details: { latency, statusCode: response.status }, // 设置 details 字段
+          message: 'HTTP endpoint is healthy', // 消息
+          details: { latency, statusCode: response.status }, // details
         }; // 结束代码块
       } catch (error) { // 执行语句
         return { // 返回结果
-          status: HealthStatus.UNHEALTHY, // 设置 status 字段
-          message: `HTTP check failed: ${error.message}`, // 设置 message 字段
+          status: HealthStatus.UNHEALTHY, // 状态
+          message: `HTTP check failed: ${error.message}`, // 消息
         }; // 结束代码块
       } // 结束代码块
     }; // 结束代码块

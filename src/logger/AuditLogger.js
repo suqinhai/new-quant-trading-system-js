@@ -18,54 +18,54 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 const AuditEventType = { // 定义常量 AuditEventType
   // 认证相关
-  AUTH_SUCCESS: 'auth_success', // 设置 AUTH_SUCCESS 字段
-  AUTH_FAILED: 'auth_failed', // 设置 AUTH_FAILED 字段
-  API_KEY_CREATED: 'api_key_created', // 设置 API_KEY_CREATED 字段
-  API_KEY_REVOKED: 'api_key_revoked', // 设置 API_KEY_REVOKED 字段
+  AUTH_SUCCESS: 'auth_success', // AUTH成功标记
+  AUTH_FAILED: 'auth_failed', // AUTHFAILED
+  API_KEY_CREATED: 'api_key_created', // API密钥CREATED权限
+  API_KEY_REVOKED: 'api_key_revoked', // API密钥REVOKED
 
   // API 访问
-  API_ACCESS: 'api_access', // 设置 API_ACCESS 字段
-  IP_BLOCKED: 'ip_blocked', // 设置 IP_BLOCKED 字段
-  RATE_LIMITED: 'rate_limited', // 设置 RATE_LIMITED 字段
+  API_ACCESS: 'api_access', // APIACCESS
+  IP_BLOCKED: 'ip_blocked', // IPBLOCKED
+  RATE_LIMITED: 'rate_limited', // 频率LIMITED
 
   // 交易相关
-  ORDER_CREATED: 'order_created', // 设置 ORDER_CREATED 字段
-  ORDER_FILLED: 'order_filled', // 设置 ORDER_FILLED 字段
-  ORDER_CANCELLED: 'order_cancelled', // 设置 ORDER_CANCELLED 字段
-  ORDER_FAILED: 'order_failed', // 设置 ORDER_FAILED 字段
-  POSITION_OPENED: 'position_opened', // 设置 POSITION_OPENED 字段
-  POSITION_CLOSED: 'position_closed', // 设置 POSITION_CLOSED 字段
+  ORDER_CREATED: 'order_created', // 订单CREATED权限
+  ORDER_FILLED: 'order_filled', // 订单FILLED
+  ORDER_CANCELLED: 'order_cancelled', // 订单CANCELLED
+  ORDER_FAILED: 'order_failed', // 订单FAILED
+  POSITION_OPENED: 'position_opened', // 持仓OPENED
+  POSITION_CLOSED: 'position_closed', // 持仓CLOSED权限
 
   // 风控相关
-  RISK_ALERT: 'risk_alert', // 设置 RISK_ALERT 字段
-  RISK_LIMIT_HIT: 'risk_limit_hit', // 设置 RISK_LIMIT_HIT 字段
-  TRADING_DISABLED: 'trading_disabled', // 设置 TRADING_DISABLED 字段
-  TRADING_ENABLED: 'trading_enabled', // 设置 TRADING_ENABLED 字段
+  RISK_ALERT: 'risk_alert', // 风险告警
+  RISK_LIMIT_HIT: 'risk_limit_hit', // 风险限制HIT
+  TRADING_DISABLED: 'trading_disabled', // 交易DISABLED权限
+  TRADING_ENABLED: 'trading_enabled', // 交易启用权限
 
   // 资金相关
-  WITHDRAWAL_REQUEST: 'withdrawal_request', // 设置 WITHDRAWAL_REQUEST 字段
-  DEPOSIT_DETECTED: 'deposit_detected', // 设置 DEPOSIT_DETECTED 字段
-  BALANCE_CHANGE: 'balance_change', // 设置 BALANCE_CHANGE 字段
+  WITHDRAWAL_REQUEST: 'withdrawal_request', // WITHDRAWALREQUEST
+  DEPOSIT_DETECTED: 'deposit_detected', // DEPOSITDETECTED
+  BALANCE_CHANGE: 'balance_change', // 余额修改权限
 
   // 系统相关
-  SYSTEM_START: 'system_start', // 设置 SYSTEM_START 字段
-  SYSTEM_STOP: 'system_stop', // 设置 SYSTEM_STOP 字段
-  CONFIG_CHANGE: 'config_change', // 设置 CONFIG_CHANGE 字段
-  ERROR_CRITICAL: 'error_critical', // 设置 ERROR_CRITICAL 字段
+  SYSTEM_START: 'system_start', // 系统启动权限
+  SYSTEM_STOP: 'system_stop', // 系统停止权限
+  CONFIG_CHANGE: 'config_change', // 配置修改权限
+  ERROR_CRITICAL: 'error_critical', // 错误CRITICAL
 
   // 策略相关
-  STRATEGY_STARTED: 'strategy_started', // 设置 STRATEGY_STARTED 字段
-  STRATEGY_STOPPED: 'strategy_stopped', // 设置 STRATEGY_STOPPED 字段
-  SIGNAL_GENERATED: 'signal_generated', // 设置 SIGNAL_GENERATED 字段
+  STRATEGY_STARTED: 'strategy_started', // 策略STARTED权限
+  STRATEGY_STOPPED: 'strategy_stopped', // 策略STOPPED权限
+  SIGNAL_GENERATED: 'signal_generated', // 信号GENERATED
 }; // 结束代码块
 
 /**
  * 审计日志级别
  */
 const AuditLevel = { // 定义常量 AuditLevel
-  INFO: 'info', // 设置 INFO 字段
-  WARNING: 'warning', // 设置 WARNING 字段
-  CRITICAL: 'critical', // 设置 CRITICAL 字段
+  INFO: 'info', // INFO
+  WARNING: 'warning', // 警告
+  CRITICAL: 'critical', // CRITICAL
 }; // 结束代码块
 
 /**
@@ -78,28 +78,28 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
 
     this.config = { // 设置 config
       // 日志目录
-      logDir: config.logDir || process.env.AUDIT_LOG_DIR || './logs/audit', // 读取环境变量 AUDIT_LOG_DIR
+      logDir: config.logDir || process.env.AUDIT_LOG_DIR || './logs/audit', // 日志Dir
       // 日志文件前缀
-      filePrefix: config.filePrefix || 'audit', // 设置 filePrefix 字段
+      filePrefix: config.filePrefix || 'audit', // 文件前缀
       // 单个文件最大大小 (字节)
-      maxFileSize: config.maxFileSize || 50 * 1024 * 1024, // 50MB
+      maxFileSize: config.maxFileSize || 50 * 1024 * 1024, // 单个文件最大大小 (字节)
       // 最大保留天数
-      maxRetentionDays: config.maxRetentionDays || 90, // 设置 maxRetentionDays 字段
+      maxRetentionDays: config.maxRetentionDays || 90, // 最大保留天数
       // 是否启用加密
-      enableEncryption: config.enableEncryption ?? false, // 设置 enableEncryption 字段
+      enableEncryption: config.enableEncryption ?? false, // 启用Encryption
       // 加密密钥 (应从安全存储获取)
-      encryptionKey: config.encryptionKey || process.env.AUDIT_ENCRYPTION_KEY, // 读取环境变量 AUDIT_ENCRYPTION_KEY
+      encryptionKey: config.encryptionKey || process.env.AUDIT_ENCRYPTION_KEY, // 加密密钥 (应从安全存储获取)
       // 是否启用签名 (防篡改)
-      enableIntegrity: config.enableIntegrity ?? true, // 设置 enableIntegrity 字段
+      enableIntegrity: config.enableIntegrity ?? true, // 是否启用签名 (防篡改)
       // 签名密钥
-      integrityKey: config.integrityKey || process.env.AUDIT_INTEGRITY_KEY || 'audit-integrity-key', // 读取环境变量 AUDIT_INTEGRITY_KEY
+      integrityKey: config.integrityKey || process.env.AUDIT_INTEGRITY_KEY || 'audit-integrity-key', // integrity密钥
       // 是否输出到控制台
-      consoleOutput: config.consoleOutput ?? (process.env.NODE_ENV !== 'production'), // 读取环境变量 NODE_ENV
+      consoleOutput: config.consoleOutput ?? (process.env.NODE_ENV !== 'production'), // 是否输出到控制台
       // 批量写入配置
-      batchSize: config.batchSize || 100, // 设置 batchSize 字段
-      flushInterval: config.flushInterval || 5000, // 5秒
+      batchSize: config.batchSize || 100, // 批次大小
+      flushInterval: config.flushInterval || 5000, // flush间隔
       // 敏感字段 (需要脱敏) - 全部使用小写，因为检查时会转换为小写
-      sensitiveFields: new Set(config.sensitiveFields || [ // 设置 sensitiveFields 字段
+      sensitiveFields: new Set(config.sensitiveFields || [ // 敏感字段 (需要脱敏) - 全部使用小写，因为检查时会转换为小写
         'password', 'secret', 'apikey', 'privatekey', 'token', // 执行语句
         'apisecret', 'passphrase', 'credential', 'accesstoken', // 执行语句
         'refreshtoken', 'secretkey', 'privatekey', 'authorization', // 执行语句
@@ -123,10 +123,10 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
 
     // 统计
     this.stats = { // 设置 stats
-      totalLogs: 0, // 设置 totalLogs 字段
-      logsToday: 0, // 设置 logsToday 字段
-      errorCount: 0, // 设置 errorCount 字段
-      lastLogTime: null, // 设置 lastLogTime 字段
+      totalLogs: 0, // 总Logs
+      logsToday: 0, // logsToday
+      errorCount: 0, // 错误数量
+      lastLogTime: null, // last日志时间
     }; // 结束代码块
 
     // 启动定时刷新
@@ -151,16 +151,16 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
 
     // 构建审计记录
     const record = { // 定义常量 record
-      id: this._generateId(), // 设置 id 字段
+      id: this._generateId(), // ID
       timestamp, // 执行语句
       eventType, // 执行语句
       level, // 执行语句
-      data: sanitizedData, // 设置 data 字段
-      metadata: { // 设置 metadata 字段
-        hostname: process.env.HOSTNAME || 'localhost', // 读取环境变量 HOSTNAME
-        pid: process.pid, // 设置 pid 字段
-        version: process.env.npm_package_version || '1.0.0', // 读取环境变量
-        env: process.env.NODE_ENV || 'development', // 读取环境变量 NODE_ENV
+      data: sanitizedData, // 数据
+      metadata: { // 元数据
+        hostname: process.env.HOSTNAME || 'localhost', // hostname
+        pid: process.pid, // pid
+        version: process.env.npm_package_version || '1.0.0', // version
+        env: process.env.NODE_ENV || 'development', // env
       }, // 结束代码块
     }; // 结束代码块
 
@@ -221,14 +221,14 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   logApiAccess(req, res, duration) { // 调用 logApiAccess
     return this.log(AuditEventType.API_ACCESS, { // 返回结果
-      method: req.method, // 设置 method 字段
-      path: req.path, // 设置 path 字段
-      query: req.query, // 设置 query 字段
-      ip: req.ip || req.connection?.remoteAddress, // 设置 ip 字段
-      userAgent: req.headers['user-agent'], // 设置 userAgent 字段
-      statusCode: res.statusCode, // 设置 statusCode 字段
+      method: req.method, // method
+      path: req.path, // 路径
+      query: req.query, // query
+      ip: req.ip || req.connection?.remoteAddress, // ip
+      userAgent: req.headers['user-agent'], // 用户Agent
+      statusCode: res.statusCode, // 状态代码
       duration, // 执行语句
-      apiKey: req.headers['x-api-key'] ? '***' + req.headers['x-api-key'].slice(-4) : null, // 设置 apiKey 字段
+      apiKey: req.headers['x-api-key'] ? '***' + req.headers['x-api-key'].slice(-4) : null, // API密钥
     }); // 结束代码块
   } // 结束代码块
 
@@ -237,24 +237,24 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   logOrder(action, orderData) { // 调用 logOrder
     const eventType = { // 定义常量 eventType
-      created: AuditEventType.ORDER_CREATED, // 设置 created 字段
-      filled: AuditEventType.ORDER_FILLED, // 设置 filled 字段
-      cancelled: AuditEventType.ORDER_CANCELLED, // 设置 cancelled 字段
-      failed: AuditEventType.ORDER_FAILED, // 设置 failed 字段
+      created: AuditEventType.ORDER_CREATED, // created
+      filled: AuditEventType.ORDER_FILLED, // filled
+      cancelled: AuditEventType.ORDER_CANCELLED, // cancelled
+      failed: AuditEventType.ORDER_FAILED, // failed
     }[action] || 'order_unknown'; // 执行语句
 
     return this.log(eventType, { // 返回结果
-      orderId: orderData.id || orderData.orderId, // 设置 orderId 字段
-      symbol: orderData.symbol, // 设置 symbol 字段
-      side: orderData.side, // 设置 side 字段
-      type: orderData.type, // 设置 type 字段
-      amount: orderData.amount, // 设置 amount 字段
-      price: orderData.price, // 设置 price 字段
-      status: orderData.status, // 设置 status 字段
-      exchange: orderData.exchange, // 设置 exchange 字段
-      error: orderData.error, // 设置 error 字段
+      orderId: orderData.id || orderData.orderId, // 订单ID
+      symbol: orderData.symbol, // 交易对
+      side: orderData.side, // 方向
+      type: orderData.type, // 类型
+      amount: orderData.amount, // 数量
+      price: orderData.price, // 价格
+      status: orderData.status, // 状态
+      exchange: orderData.exchange, // 交易所
+      error: orderData.error, // 错误
     }, { // 执行语句
-      level: action === 'failed' ? AuditLevel.WARNING : AuditLevel.INFO, // 设置 level 字段
+      level: action === 'failed' ? AuditLevel.WARNING : AuditLevel.INFO, // 级别
     }); // 结束代码块
   } // 结束代码块
 
@@ -263,7 +263,7 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   logRiskEvent(eventType, data) { // 调用 logRiskEvent
     return this.log(eventType, data, { // 返回结果
-      level: [ // 设置 level 字段
+      level: [ // 级别
         AuditEventType.RISK_LIMIT_HIT, // 执行语句
         AuditEventType.TRADING_DISABLED, // 执行语句
       ].includes(eventType) ? AuditLevel.CRITICAL : AuditLevel.WARNING, // 执行语句
@@ -354,10 +354,10 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   async verifyIntegrity(filePath) { // 执行语句
     const result = { // 定义常量 result
-      valid: true, // 设置 valid 字段
-      totalRecords: 0, // 设置 totalRecords 字段
-      invalidRecords: [], // 设置 invalidRecords 字段
-      chainBroken: false, // 设置 chainBroken 字段
+      valid: true, // 有效
+      totalRecords: 0, // 总Records
+      invalidRecords: [], // 无效Records
+      chainBroken: false, // chainBroken
     }; // 结束代码块
 
     try { // 尝试执行
@@ -384,8 +384,8 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
         if (prevHash !== null && record.prevHash !== prevHash) { // 条件判断 prevHash !== null && record.prevHash !== prev...
           result.chainBroken = true; // 赋值 result.chainBroken
           result.invalidRecords.push({ // 调用 result.invalidRecords.push
-            line: i + 1, // 设置 line 字段
-            error: 'Chain broken - prevHash mismatch', // 设置 error 字段
+            line: i + 1, // line
+            error: 'Chain broken - prevHash mismatch', // 错误
           }); // 结束代码块
           result.valid = false; // 赋值 result.valid
         } // 结束代码块
@@ -394,8 +394,8 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
         const expectedHash = this._computeHash({ ...record, hash: undefined }); // 定义常量 expectedHash
         if (record.hash !== expectedHash) { // 条件判断 record.hash !== expectedHash
           result.invalidRecords.push({ // 调用 result.invalidRecords.push
-            line: i + 1, // 设置 line 字段
-            error: 'Hash mismatch - record may be tampered', // 设置 error 字段
+            line: i + 1, // line
+            error: 'Hash mismatch - record may be tampered', // 错误
           }); // 结束代码块
           result.valid = false; // 赋值 result.valid
         } // 结束代码块
@@ -416,8 +416,8 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      bufferSize: this.buffer.length, // 设置 bufferSize 字段
-      currentFile: this.currentFile, // 设置 currentFile 字段
+      bufferSize: this.buffer.length, // buffer大小
+      currentFile: this.currentFile, // current文件
     }; // 结束代码块
   } // 结束代码块
 
@@ -470,12 +470,12 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   _computeHash(record) { // 调用 _computeHash
     const data = JSON.stringify({ // 定义常量 data
-      id: record.id, // 设置 id 字段
-      timestamp: record.timestamp, // 设置 timestamp 字段
-      eventType: record.eventType, // 设置 eventType 字段
-      level: record.level, // 设置 level 字段
-      data: record.data, // 设置 data 字段
-      prevHash: record.prevHash, // 设置 prevHash 字段
+      id: record.id, // ID
+      timestamp: record.timestamp, // 时间戳
+      eventType: record.eventType, // 事件类型
+      level: record.level, // 级别
+      data: record.data, // 数据
+      prevHash: record.prevHash, // prevHash
     }); // 结束代码块
 
     return crypto // 返回结果
@@ -549,9 +549,9 @@ class AuditLogger extends EventEmitter { // 定义类 AuditLogger(继承EventEmi
    */
   _consoleOutput(record) { // 调用 _consoleOutput
     const levelColors = { // 定义常量 levelColors
-      info: '\x1b[36m',    // 青色
-      warning: '\x1b[33m', // 黄色
-      critical: '\x1b[31m', // 红色
+      info: '\x1b[36m',    // info
+      warning: '\x1b[33m', // 警告
+      critical: '\x1b[31m', // critical
     }; // 结束代码块
     const reset = '\x1b[0m'; // 定义常量 reset
     const color = levelColors[record.level] || ''; // 定义常量 color

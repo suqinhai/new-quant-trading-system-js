@@ -25,7 +25,7 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
   constructor(params = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super({ // 调用父类
-      name: 'MultiTimeframeStrategy', // 设置 name 字段
+      name: 'MultiTimeframeStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -268,12 +268,12 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
     // ============================================
     if (!this.current15mCandle) { // 条件判断 !this.current15mCandle
       this.current15mCandle = { // 设置 current15mCandle
-        timestamp: candle.timestamp, // 设置 timestamp 字段
-        open: candle.open, // 设置 open 字段
-        high: candle.high, // 设置 high 字段
-        low: candle.low, // 设置 low 字段
-        close: candle.close, // 设置 close 字段
-        volume: candle.volume, // 设置 volume 字段
+        timestamp: candle.timestamp, // 时间戳
+        open: candle.open, // 开盘
+        high: candle.high, // 最高
+        low: candle.low, // 最低
+        close: candle.close, // 收盘
+        volume: candle.volume, // 成交量
       }; // 结束代码块
       this.candle15mCount = 1; // 设置 candle15mCount
     } else { // 执行语句
@@ -299,12 +299,12 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
     // ============================================
     if (!this.current1hCandle) { // 条件判断 !this.current1hCandle
       this.current1hCandle = { // 设置 current1hCandle
-        timestamp: candle.timestamp, // 设置 timestamp 字段
-        open: candle.open, // 设置 open 字段
-        high: candle.high, // 设置 high 字段
-        low: candle.low, // 设置 low 字段
-        close: candle.close, // 设置 close 字段
-        volume: candle.volume, // 设置 volume 字段
+        timestamp: candle.timestamp, // 时间戳
+        open: candle.open, // 开盘
+        high: candle.high, // 最高
+        low: candle.low, // 最低
+        close: candle.close, // 收盘
+        volume: candle.volume, // 成交量
       }; // 结束代码块
       this.candle1hCount = 1; // 设置 candle1hCount
     } else { // 执行语句
@@ -510,9 +510,9 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
 
     if (triggered) { // 条件判断 triggered
       return { // 返回结果
-        direction: this.h1Trend, // 设置 direction 字段
+        direction: this.h1Trend, // direction
         trigger, // 执行语句
-        reason: `1H=${this.h1Trend}, 15M=pullback, 5M=${trigger}`, // 设置 reason 字段
+        reason: `1H=${this.h1Trend}, 15M=pullback, 5M=${trigger}`, // reason
       }; // 结束代码块
     } // 结束代码块
 

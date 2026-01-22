@@ -75,7 +75,7 @@ const contextFormat = winston.format((info) => { // 定义函数 contextFormat
 const customFormat = winston.format.combine( // 定义常量 customFormat
   // 添加时间戳 / Add timestamp
   winston.format.timestamp({ // 调用 winston.format.timestamp
-    format: 'YYYY-MM-DD HH:mm:ss.SSS', // 设置 format 字段
+    format: 'YYYY-MM-DD HH:mm:ss.SSS', // 格式
   }), // 结束代码块
 
   // 添加错误堆栈 / Add error stack
@@ -129,7 +129,7 @@ const consoleFormat = winston.format.combine( // 定义常量 consoleFormat
 
   // 添加时间戳 / Add timestamp
   winston.format.timestamp({ // 调用 winston.format.timestamp
-    format: 'HH:mm:ss.SSS', // 设置 format 字段
+    format: 'HH:mm:ss.SSS', // 格式
   }), // 结束代码块
 
   // 注入请求上下文 / Inject request context
@@ -178,16 +178,16 @@ export function createLogger(name, options = {}) { // 导出函数 createLogger
   // 默认配置 / Default configuration
   const config = { // 定义常量 config
     // 日志级别 / Log level
-    level: options.level || process.env.LOG_LEVEL || 'info', // 读取环境变量 LOG_LEVEL
+    level: options.level || process.env.LOG_LEVEL || 'info', // 级别
 
     // 是否输出到控制台 / Whether to output to console
-    console: options.console !== false, // 设置 console 字段
+    console: options.console !== false, // 是否输出到控制台
 
     // 是否输出到文件 / Whether to output to file
-    file: options.file !== false, // 设置 file 字段
+    file: options.file !== false, // 文件
 
     // 日志文件前缀 / Log file prefix
-    filePrefix: options.filePrefix || name || 'app', // 设置 filePrefix 字段
+    filePrefix: options.filePrefix || name || 'app', // 文件前缀
   }; // 结束代码块
 
   // 传输器列表 / Transports list
@@ -197,7 +197,7 @@ export function createLogger(name, options = {}) { // 导出函数 createLogger
   if (config.console) { // 条件判断 config.console
     transports.push( // 调用 transports.push
       new winston.transports.Console({ // 创建 winston 实例
-        format: consoleFormat, // 设置 format 字段
+        format: consoleFormat, // 格式
       }) // 结束代码块
     ); // 结束调用或参数
   } // 结束代码块
@@ -207,31 +207,31 @@ export function createLogger(name, options = {}) { // 导出函数 createLogger
     // 普通日志文件 / Normal log file
     transports.push( // 调用 transports.push
       new winston.transports.File({ // 创建 winston 实例
-        filename: path.join(LOG_DIR, `${config.filePrefix}.log`), // 设置 filename 字段
-        format: customFormat, // 设置 format 字段
-        maxsize: 10 * 1024 * 1024,  // 10MB
-        maxFiles: 5, // 设置 maxFiles 字段
-        tailable: true, // 设置 tailable 字段
+        filename: path.join(LOG_DIR, `${config.filePrefix}.log`), // filename
+        format: customFormat, // 格式
+        maxsize: 10 * 1024 * 1024,  // maxsize
+        maxFiles: 5, // 最大文件
+        tailable: true, // tailable
       }) // 结束代码块
     ); // 结束调用或参数
 
     // 错误日志文件 / Error log file
     transports.push( // 调用 transports.push
       new winston.transports.File({ // 创建 winston 实例
-        filename: path.join(LOG_DIR, `${config.filePrefix}-error.log`), // 设置 filename 字段
-        format: customFormat, // 设置 format 字段
-        level: 'error', // 设置 level 字段
-        maxsize: 10 * 1024 * 1024,  // 10MB
-        maxFiles: 5, // 设置 maxFiles 字段
-        tailable: true, // 设置 tailable 字段
+        filename: path.join(LOG_DIR, `${config.filePrefix}-error.log`), // filename
+        format: customFormat, // 格式
+        level: 'error', // 级别
+        maxsize: 10 * 1024 * 1024,  // maxsize
+        maxFiles: 5, // 最大文件
+        tailable: true, // tailable
       }) // 结束代码块
     ); // 结束调用或参数
   } // 结束代码块
 
   // 创建日志记录器 / Create logger
   const logger = winston.createLogger({ // 定义常量 logger
-    level: config.level, // 设置 level 字段
-    defaultMeta: { service: name }, // 设置 defaultMeta 字段
+    level: config.level, // 级别
+    defaultMeta: { service: name }, // 默认Meta
     transports, // 执行语句
   }); // 结束代码块
 
@@ -249,7 +249,7 @@ export const logger = createLogger('quant-trading'); // 导出常量 logger
  * Trading logger instance
  */
 export const tradingLogger = createLogger('trading', { // 导出常量 tradingLogger
-  filePrefix: 'trading', // 设置 filePrefix 字段
+  filePrefix: 'trading', // 文件前缀
 }); // 结束代码块
 
 /**
@@ -257,7 +257,7 @@ export const tradingLogger = createLogger('trading', { // 导出常量 tradingLo
  * Strategy logger instance
  */
 export const strategyLogger = createLogger('strategy', { // 导出常量 strategyLogger
-  filePrefix: 'strategy', // 设置 filePrefix 字段
+  filePrefix: 'strategy', // 文件前缀
 }); // 结束代码块
 
 /**
@@ -265,7 +265,7 @@ export const strategyLogger = createLogger('strategy', { // 导出常量 strateg
  * Risk logger instance
  */
 export const riskLogger = createLogger('risk', { // 导出常量 riskLogger
-  filePrefix: 'risk', // 设置 filePrefix 字段
+  filePrefix: 'risk', // 文件前缀
 }); // 结束代码块
 
 /**
@@ -273,8 +273,8 @@ export const riskLogger = createLogger('risk', { // 导出常量 riskLogger
  * Performance logger instance
  */
 export const perfLogger = createLogger('performance', { // 导出常量 perfLogger
-  filePrefix: 'performance', // 设置 filePrefix 字段
-  level: 'debug', // 设置 level 字段
+  filePrefix: 'performance', // 文件前缀
+  level: 'debug', // 级别
 }); // 结束代码块
 
 // 默认导出 / Default export

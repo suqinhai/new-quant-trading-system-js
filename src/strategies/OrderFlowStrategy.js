@@ -26,7 +26,7 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: 'OrderFlowStrategy', // 设置 name 字段
+      name: 'OrderFlowStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -183,8 +183,8 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
 
     // 更新 VWAP 数据 / Update VWAP data
     this._vwapData.push({ // 访问 _vwapData
-      price: (candle.high + candle.low + candle.close) / 3, // Typical Price
-      volume: candle.volume, // 设置 volume 字段
+      price: (candle.high + candle.low + candle.close) / 3, // 价格
+      volume: candle.volume, // 成交量
     }); // 结束代码块
     if (this._vwapData.length > this.vwapPeriod) { // 条件判断 this._vwapData.length > this.vwapPeriod
       this._vwapData.shift(); // 访问 _vwapData
@@ -252,8 +252,8 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
     } // 结束代码块
 
     return { // 返回结果
-      takerBuyVolume: candle.volume * buyRatio, // 设置 takerBuyVolume 字段
-      takerSellVolume: candle.volume * sellRatio, // 设置 takerSellVolume 字段
+      takerBuyVolume: candle.volume * buyRatio, // 主动成交Buy成交量
+      takerSellVolume: candle.volume * sellRatio, // 主动成交Sell成交量
     }; // 结束代码块
   } // 结束代码块
 
@@ -371,8 +371,8 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
 
     return { // 返回结果
       ratio, // 执行语句
-      buyVolume: this._largeOrderBuyVolume, // 设置 buyVolume 字段
-      sellVolume: this._largeOrderSellVolume, // 设置 sellVolume 字段
+      buyVolume: this._largeOrderBuyVolume, // buy成交量
+      sellVolume: this._largeOrderSellVolume, // sell成交量
       direction, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -439,23 +439,23 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
    */
   _generateSignals(indicators, candle) { // 调用 _generateSignals
     const signals = { // 定义常量 signals
-      bullish: [], // 设置 bullish 字段
-      bearish: [], // 设置 bearish 字段
+      bullish: [], // bullish
+      bearish: [], // bearish
     }; // 结束代码块
 
     // 1. 成交量突增信号 / Volume spike signal
     if (indicators.volumeSpike && indicators.volumeSpike.isSpike) { // 条件判断 indicators.volumeSpike && indicators.volumeSp...
       if (indicators.volumeSpike.direction === 'bullish') { // 条件判断 indicators.volumeSpike.direction === 'bullish'
         signals.bullish.push({ // 调用 signals.bullish.push
-          type: 'volumeSpike', // 设置 type 字段
-          strength: Math.min(indicators.volumeSpike.ratio / this.volumeSpikeMultiplier, 2), // 设置 strength 字段
-          reason: `放量上涨 ${indicators.volumeSpike.ratio.toFixed(1)}x`, // 设置 reason 字段
+          type: 'volumeSpike', // 类型
+          strength: Math.min(indicators.volumeSpike.ratio / this.volumeSpikeMultiplier, 2), // strength
+          reason: `放量上涨 ${indicators.volumeSpike.ratio.toFixed(1)}x`, // reason
         }); // 结束代码块
       } else if (indicators.volumeSpike.direction === 'bearish') { // 执行语句
         signals.bearish.push({ // 调用 signals.bearish.push
-          type: 'volumeSpike', // 设置 type 字段
-          strength: Math.min(indicators.volumeSpike.ratio / this.volumeSpikeMultiplier, 2), // 设置 strength 字段
-          reason: `放量下跌 ${indicators.volumeSpike.ratio.toFixed(1)}x`, // 设置 reason 字段
+          type: 'volumeSpike', // 类型
+          strength: Math.min(indicators.volumeSpike.ratio / this.volumeSpikeMultiplier, 2), // strength
+          reason: `放量下跌 ${indicators.volumeSpike.ratio.toFixed(1)}x`, // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -468,16 +468,16 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
       if (indicators.vwapDeviation.direction === 'above' && dev > this.vwapDeviationThreshold) { // 条件判断 indicators.vwapDeviation.direction === 'above...
         // 强势突破 VWAP
         signals.bullish.push({ // 调用 signals.bullish.push
-          type: 'vwapDeviation', // 设置 type 字段
-          strength: Math.min(Math.abs(dev) / this.vwapDeviationThreshold, 2), // 设置 strength 字段
-          reason: `价格高于VWAP ${dev.toFixed(2)}%`, // 设置 reason 字段
+          type: 'vwapDeviation', // 类型
+          strength: Math.min(Math.abs(dev) / this.vwapDeviationThreshold, 2), // strength
+          reason: `价格高于VWAP ${dev.toFixed(2)}%`, // reason
         }); // 结束代码块
       } else if (indicators.vwapDeviation.direction === 'below' && dev < -this.vwapDeviationThreshold) { // 执行语句
         // 跌破 VWAP
         signals.bearish.push({ // 调用 signals.bearish.push
-          type: 'vwapDeviation', // 设置 type 字段
-          strength: Math.min(Math.abs(dev) / this.vwapDeviationThreshold, 2), // 设置 strength 字段
-          reason: `价格低于VWAP ${dev.toFixed(2)}%`, // 设置 reason 字段
+          type: 'vwapDeviation', // 类型
+          strength: Math.min(Math.abs(dev) / this.vwapDeviationThreshold, 2), // strength
+          reason: `价格低于VWAP ${dev.toFixed(2)}%`, // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -486,15 +486,15 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
     if (indicators.largeOrderRatio) { // 条件判断 indicators.largeOrderRatio
       if (indicators.largeOrderRatio.direction === 'bullish') { // 条件判断 indicators.largeOrderRatio.direction === 'bul...
         signals.bullish.push({ // 调用 signals.bullish.push
-          type: 'largeOrderRatio', // 设置 type 字段
-          strength: indicators.largeOrderRatio.ratio, // 设置 strength 字段
-          reason: `大单买入占比 ${(indicators.largeOrderRatio.ratio * 100).toFixed(1)}%`, // 设置 reason 字段
+          type: 'largeOrderRatio', // 类型
+          strength: indicators.largeOrderRatio.ratio, // strength
+          reason: `大单买入占比 ${(indicators.largeOrderRatio.ratio * 100).toFixed(1)}%`, // reason
         }); // 结束代码块
       } else if (indicators.largeOrderRatio.direction === 'bearish') { // 执行语句
         signals.bearish.push({ // 调用 signals.bearish.push
-          type: 'largeOrderRatio', // 设置 type 字段
-          strength: 1 - indicators.largeOrderRatio.ratio, // 设置 strength 字段
-          reason: `大单卖出占比 ${((1 - indicators.largeOrderRatio.ratio) * 100).toFixed(1)}%`, // 设置 reason 字段
+          type: 'largeOrderRatio', // 类型
+          strength: 1 - indicators.largeOrderRatio.ratio, // strength
+          reason: `大单卖出占比 ${((1 - indicators.largeOrderRatio.ratio) * 100).toFixed(1)}%`, // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -503,15 +503,15 @@ export class OrderFlowStrategy extends BaseStrategy { // 导出类 OrderFlowStra
     if (indicators.takerBuyRatio) { // 条件判断 indicators.takerBuyRatio
       if (indicators.takerBuyRatio.direction === 'bullish') { // 条件判断 indicators.takerBuyRatio.direction === 'bullish'
         signals.bullish.push({ // 调用 signals.bullish.push
-          type: 'takerBuyRatio', // 设置 type 字段
-          strength: indicators.takerBuyRatio.ratio, // 设置 strength 字段
-          reason: `主动买入占比 ${(indicators.takerBuyRatio.ratio * 100).toFixed(1)}%`, // 设置 reason 字段
+          type: 'takerBuyRatio', // 类型
+          strength: indicators.takerBuyRatio.ratio, // strength
+          reason: `主动买入占比 ${(indicators.takerBuyRatio.ratio * 100).toFixed(1)}%`, // reason
         }); // 结束代码块
       } else if (indicators.takerBuyRatio.direction === 'bearish') { // 执行语句
         signals.bearish.push({ // 调用 signals.bearish.push
-          type: 'takerBuyRatio', // 设置 type 字段
-          strength: 1 - indicators.takerBuyRatio.ratio, // 设置 strength 字段
-          reason: `主动卖出占比 ${((1 - indicators.takerBuyRatio.ratio) * 100).toFixed(1)}%`, // 设置 reason 字段
+          type: 'takerBuyRatio', // 类型
+          strength: 1 - indicators.takerBuyRatio.ratio, // strength
+          reason: `主动卖出占比 ${((1 - indicators.takerBuyRatio.ratio) * 100).toFixed(1)}%`, // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块

@@ -24,7 +24,7 @@ export class SMAStrategy extends BaseStrategy { // 导出类 SMAStrategy
   constructor(params = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super({ // 调用父类
-      name: 'SMAStrategy', // 设置 name 字段
+      name: 'SMAStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -160,7 +160,7 @@ export class SMAStrategy extends BaseStrategy { // 导出类 SMAStrategy
     // 使用 technicalindicators 库计算 / Use technicalindicators library
     const result = SMA.calculate({ // 定义常量 result
       period, // 执行语句
-      values: data, // 设置 values 字段
+      values: data, // values
     }); // 结束代码块
     return result.at(-1); // 返回结果
   } // 结束代码块

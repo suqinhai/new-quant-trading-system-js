@@ -38,7 +38,7 @@ const PORTFOLIO_STATUS = { // 定义常量 PORTFOLIO_STATUS
   PAUSED: 'paused',               // 已暂停 / Paused
   REBALANCING: 'rebalancing',     // 再平衡中 / Rebalancing
   EMERGENCY: 'emergency',         // 紧急状态 / Emergency
-  STOPPED: 'stopped',             // 已停止 / Stopped
+  STOPPED: 'stopped',             // STOPPED权限
 }; // 结束代码块
 
 /**
@@ -51,13 +51,13 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 总资金 / Total capital
-  totalCapital: 100000, // 设置 totalCapital 字段
+  totalCapital: 100000, // 总资金
 
   // 默认资金分配方法 / Default allocation method
-  allocationMethod: ALLOCATION_METHOD.RISK_PARITY, // 设置 allocationMethod 字段
+  allocationMethod: ALLOCATION_METHOD.RISK_PARITY, // 默认资金分配方法
 
   // 自动再平衡 / Auto rebalancing
-  autoRebalance: true, // 设置 autoRebalance 字段
+  autoRebalance: true, // 自动Rebalance
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
   rebalancePeriod: 24 * 60 * 60 * 1000, // 每天 / Daily
@@ -67,42 +67,42 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 低相关性阈值 / Low correlation threshold
-  lowCorrelationThreshold: 0.3, // 设置 lowCorrelationThreshold 字段
+  lowCorrelationThreshold: 0.3, // 低相关性阈值
 
   // 高相关性警告阈值 / High correlation warning threshold
-  highCorrelationWarning: 0.7, // 设置 highCorrelationWarning 字段
+  highCorrelationWarning: 0.7, // 高相关性警告阈值
 
   // 相关性滚动窗口 / Correlation rolling window
-  correlationWindow: 30, // 设置 correlationWindow 字段
+  correlationWindow: 30, // correlation窗口
 
   // ============================================
   // 风控配置 / Risk Configuration
   // ============================================
 
   // 最大组合回撤 / Maximum portfolio drawdown
-  maxPortfolioDrawdown: 0.15, // 设置 maxPortfolioDrawdown 字段
+  maxPortfolioDrawdown: 0.15, // 最大Portfolio回撤
 
   // 最大总仓位 / Maximum total position ratio
-  maxTotalPositionRatio: 0.60, // 设置 maxTotalPositionRatio 字段
+  maxTotalPositionRatio: 0.60, // 最大总持仓比例
 
   // 单策略最大仓位 / Maximum single strategy position
-  maxSingleStrategyRatio: 0.25, // 设置 maxSingleStrategyRatio 字段
+  maxSingleStrategyRatio: 0.25, // 最大Single策略比例
 
   // ============================================
   // 监控配置 / Monitoring Configuration
   // ============================================
 
   // 状态更新间隔 (毫秒) / Status update interval (ms)
-  statusUpdateInterval: 10000, // 设置 statusUpdateInterval 字段
+  statusUpdateInterval: 10000, // 状态更新间隔 (毫秒)
 
   // 报告生成间隔 (毫秒) / Report generation interval (ms)
-  reportInterval: 60000, // 设置 reportInterval 字段
+  reportInterval: 60000, // 报告生成间隔 (毫秒)
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[PortfolioMgr]', // 设置 logPrefix 字段
+  logPrefix: '[PortfolioMgr]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -147,15 +147,15 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
     // 组合统计 / Portfolio statistics
     this.statistics = { // 设置 statistics
-      totalEquity: this.config.totalCapital, // 设置 totalEquity 字段
-      totalPositionValue: 0, // 设置 totalPositionValue 字段
-      realizedPnL: 0, // 设置 realizedPnL 字段
-      unrealizedPnL: 0, // 设置 unrealizedPnL 字段
-      totalTrades: 0, // 设置 totalTrades 字段
-      winRate: 0, // 设置 winRate 字段
-      sharpeRatio: 0, // 设置 sharpeRatio 字段
-      maxDrawdown: 0, // 设置 maxDrawdown 字段
-      currentDrawdown: 0, // 设置 currentDrawdown 字段
+      totalEquity: this.config.totalCapital, // 总Equity
+      totalPositionValue: 0, // 总持仓Value
+      realizedPnL: 0, // 已实现PnL
+      unrealizedPnL: 0, // 未实现PnL
+      totalTrades: 0, // 总成交
+      winRate: 0, // win频率
+      sharpeRatio: 0, // sharpe比例
+      maxDrawdown: 0, // 最大回撤
+      currentDrawdown: 0, // current回撤
     }; // 结束代码块
 
     // 收益历史 / Returns history
@@ -181,35 +181,35 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
     // 1. 初始化相关性分析器 / Initialize correlation analyzer
     this.correlationAnalyzer = new CorrelationAnalyzer({ // 设置 correlationAnalyzer
-      rollingWindow: this.config.correlationWindow, // 设置 rollingWindow 字段
-      lowCorrelationThreshold: this.config.lowCorrelationThreshold, // 设置 lowCorrelationThreshold 字段
-      highCorrelationWarning: this.config.highCorrelationWarning, // 设置 highCorrelationWarning 字段
-      verbose: this.config.verbose, // 设置 verbose 字段
+      rollingWindow: this.config.correlationWindow, // 滚动窗口
+      lowCorrelationThreshold: this.config.lowCorrelationThreshold, // 最低Correlation阈值
+      highCorrelationWarning: this.config.highCorrelationWarning, // 最高Correlation警告
+      verbose: this.config.verbose, // 详细日志
     }); // 结束代码块
 
     // 2. 初始化资金分配器 / Initialize capital allocator
     this.capitalAllocator = new CapitalAllocator({ // 设置 capitalAllocator
-      totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-      defaultMethod: this.config.allocationMethod, // 设置 defaultMethod 字段
-      rebalancePeriod: this.config.rebalancePeriod, // 设置 rebalancePeriod 字段
-      maxWeight: this.config.maxSingleStrategyRatio, // 设置 maxWeight 字段
-      verbose: this.config.verbose, // 设置 verbose 字段
+      totalCapital: this.config.totalCapital, // 总资金
+      defaultMethod: this.config.allocationMethod, // 默认Method
+      rebalancePeriod: this.config.rebalancePeriod, // rebalance周期
+      maxWeight: this.config.maxSingleStrategyRatio, // 最大Weight
+      verbose: this.config.verbose, // 详细日志
     }); // 结束代码块
 
     // 3. 初始化组合风控管理器 / Initialize portfolio risk manager
     this.portfolioRiskManager = new PortfolioRiskManager({ // 设置 portfolioRiskManager
-      maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 设置 maxPortfolioDrawdown 字段
-      maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 设置 maxTotalPositionRatio 字段
-      maxSingleStrategyRatio: this.config.maxSingleStrategyRatio, // 设置 maxSingleStrategyRatio 字段
-      verbose: this.config.verbose, // 设置 verbose 字段
+      maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 最大Portfolio回撤
+      maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 最大总持仓比例
+      maxSingleStrategyRatio: this.config.maxSingleStrategyRatio, // 最大Single策略比例
+      verbose: this.config.verbose, // 详细日志
     }); // 结束代码块
 
     // 初始化风控管理器 / Initialize risk manager
     await this.portfolioRiskManager.init({ // 等待异步结果
-      correlationAnalyzer: this.correlationAnalyzer, // 设置 correlationAnalyzer 字段
-      capitalAllocator: this.capitalAllocator, // 设置 capitalAllocator 字段
-      executor: this.executor, // 设置 executor 字段
-      initialEquity: this.config.totalCapital, // 设置 initialEquity 字段
+      correlationAnalyzer: this.correlationAnalyzer, // correlationAnalyzer
+      capitalAllocator: this.capitalAllocator, // 资金Allocator
+      executor: this.executor, // executor
+      initialEquity: this.config.totalCapital, // 初始Equity
     }); // 结束代码块
 
     // 4. 绑定事件 / Bind events
@@ -306,15 +306,15 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
     // 添加到策略列表 / Add to strategy list
     this.strategies.set(strategyId, { // 访问 strategies
-      instance: strategyInstance, // 设置 instance 字段
+      instance: strategyInstance, // instance
       config, // 执行语句
-      state: { // 设置 state 字段
-        equity: 0, // 设置 equity 字段
-        positionValue: 0, // 设置 positionValue 字段
-        positions: [], // 设置 positions 字段
-        pnl: 0, // 设置 pnl 字段
-        trades: [], // 设置 trades 字段
-        returns: [], // 设置 returns 字段
+      state: { // state
+        equity: 0, // equity
+        positionValue: 0, // 持仓Value
+        positions: [], // 持仓
+        pnl: 0, // 盈亏
+        trades: [], // 成交
+        returns: [], // returns
       }, // 结束代码块
     }); // 结束代码块
 
@@ -324,11 +324,11 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
     // 更新资金分配器的策略统计 / Update capital allocator strategy stats
     this.capitalAllocator.updateStrategyStats(strategyId, { // 访问 capitalAllocator
-      expectedReturn: config.expectedReturn || 0.1, // 设置 expectedReturn 字段
-      volatility: config.volatility || 0.15, // 设置 volatility 字段
-      winRate: config.winRate || 0.5, // 设置 winRate 字段
-      avgWin: config.avgWin || 1, // 设置 avgWin 字段
-      avgLoss: config.avgLoss || 1, // 设置 avgLoss 字段
+      expectedReturn: config.expectedReturn || 0.1, // expectedReturn
+      volatility: config.volatility || 0.15, // 波动率
+      winRate: config.winRate || 0.5, // win频率
+      avgWin: config.avgWin || 1, // avgWin
+      avgLoss: config.avgLoss || 1, // avg亏损
     }); // 结束代码块
 
     // 绑定策略事件 / Bind strategy events
@@ -401,11 +401,11 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
     // 更新资金分配器的策略统计 / Update capital allocator stats
     if (state.winRate !== undefined || state.volatility !== undefined) { // 条件判断 state.winRate !== undefined || state.volatili...
       this.capitalAllocator.updateStrategyStats(strategyId, { // 访问 capitalAllocator
-        winRate: state.winRate, // 设置 winRate 字段
-        volatility: state.volatility, // 设置 volatility 字段
-        expectedReturn: state.expectedReturn, // 设置 expectedReturn 字段
-        avgWin: state.avgWin, // 设置 avgWin 字段
-        avgLoss: state.avgLoss, // 设置 avgLoss 字段
+        winRate: state.winRate, // win频率
+        volatility: state.volatility, // 波动率
+        expectedReturn: state.expectedReturn, // expectedReturn
+        avgWin: state.avgWin, // avgWin
+        avgLoss: state.avgLoss, // avg亏损
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -427,7 +427,7 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
     // 添加到交易历史 / Add to trade history
     strategy.state.trades.push({ // 调用 strategy.state.trades.push
       ...trade, // 展开对象或数组
-      timestamp: trade.timestamp || Date.now(), // 设置 timestamp 字段
+      timestamp: trade.timestamp || Date.now(), // 时间戳
     }); // 结束代码块
 
     // 更新统计 / Update statistics
@@ -501,7 +501,7 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
             currentWeight, // 执行语句
             newWeight, // 执行语句
             change, // 执行语句
-            amount: change * this.config.totalCapital, // 设置 amount 字段
+            amount: change * this.config.totalCapital, // 数量
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -674,9 +674,9 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
     // 记录权益曲线 / Record equity curve
     this.equityCurve.push({ // 访问 equityCurve
-      timestamp: Date.now(), // 设置 timestamp 字段
-      equity: this.statistics.totalEquity, // 设置 equity 字段
-      positionValue: totalPositionValue, // 设置 positionValue 字段
+      timestamp: Date.now(), // 时间戳
+      equity: this.statistics.totalEquity, // equity
+      positionValue: totalPositionValue, // 持仓Value
     }); // 结束代码块
 
     // 限制历史长度 / Limit history length
@@ -718,44 +718,44 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
    */
   getFullReport() { // 调用 getFullReport
     return { // 返回结果
-      timestamp: Date.now(), // 设置 timestamp 字段
-      status: this.status, // 设置 status 字段
+      timestamp: Date.now(), // 时间戳
+      status: this.status, // 状态
 
       // 组合概览 / Portfolio overview
-      portfolio: { // 设置 portfolio 字段
-        totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-        totalEquity: this.statistics.totalEquity, // 设置 totalEquity 字段
-        totalPositionValue: this.statistics.totalPositionValue, // 设置 totalPositionValue 字段
-        positionRatio: this.statistics.totalPositionValue / this.statistics.totalEquity, // 设置 positionRatio 字段
-        realizedPnL: this.statistics.realizedPnL, // 设置 realizedPnL 字段
-        totalReturn: (this.statistics.totalEquity - this.config.totalCapital) / this.config.totalCapital, // 设置 totalReturn 字段
+      portfolio: { // portfolio
+        totalCapital: this.config.totalCapital, // 总资金
+        totalEquity: this.statistics.totalEquity, // 总Equity
+        totalPositionValue: this.statistics.totalPositionValue, // 总持仓Value
+        positionRatio: this.statistics.totalPositionValue / this.statistics.totalEquity, // 持仓比例
+        realizedPnL: this.statistics.realizedPnL, // 已实现PnL
+        totalReturn: (this.statistics.totalEquity - this.config.totalCapital) / this.config.totalCapital, // 总Return
       }, // 结束代码块
 
       // 策略概览 / Strategy overview
-      strategies: Object.fromEntries( // 设置 strategies 字段
+      strategies: Object.fromEntries( // 策略
         [...this.strategies].map(([id, s]) => [id, { // 定义箭头函数
-          equity: s.state.equity, // 设置 equity 字段
-          positionValue: s.state.positionValue, // 设置 positionValue 字段
-          pnl: s.state.pnl, // 设置 pnl 字段
-          trades: s.state.trades.length, // 设置 trades 字段
+          equity: s.state.equity, // equity
+          positionValue: s.state.positionValue, // 持仓Value
+          pnl: s.state.pnl, // 盈亏
+          trades: s.state.trades.length, // 成交
         }]) // 执行语句
       ), // 结束调用或参数
 
       // 资金分配 / Capital allocation
-      allocation: this.capitalAllocator.getCurrentAllocation(), // 设置 allocation 字段
+      allocation: this.capitalAllocator.getCurrentAllocation(), // allocation
 
       // 相关性分析 / Correlation analysis
-      correlation: { // 设置 correlation 字段
-        matrix: this.correlationAnalyzer.correlationMatrix, // 设置 matrix 字段
-        lowCorrelationPairs: this.correlationAnalyzer.findLowCorrelationPairs(), // 设置 lowCorrelationPairs 字段
-        highCorrelationPairs: this.correlationAnalyzer.findHighCorrelationPairs(), // 设置 highCorrelationPairs 字段
+      correlation: { // correlation
+        matrix: this.correlationAnalyzer.correlationMatrix, // matrix
+        lowCorrelationPairs: this.correlationAnalyzer.findLowCorrelationPairs(), // 最低CorrelationPairs
+        highCorrelationPairs: this.correlationAnalyzer.findHighCorrelationPairs(), // 最高CorrelationPairs
       }, // 结束代码块
 
       // 风险状态 / Risk status
-      risk: this.portfolioRiskManager.getStatus(), // 设置 risk 字段
+      risk: this.portfolioRiskManager.getStatus(), // 风险风险状态
 
       // 权益曲线 (最近100个点) / Equity curve (last 100 points)
-      equityCurve: this.equityCurve.slice(-100), // 设置 equityCurve 字段
+      equityCurve: this.equityCurve.slice(-100), // 权益曲线 (最近100个点)
     }; // 结束代码块
   } // 结束代码块
 
@@ -767,20 +767,20 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      status: this.status, // 设置 status 字段
-      strategyCount: this.strategies.size, // 设置 strategyCount 字段
-      strategies: [...this.strategies.keys()], // 设置 strategies 字段
-      statistics: this.statistics, // 设置 statistics 字段
-      config: { // 设置 config 字段
-        totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-        allocationMethod: this.config.allocationMethod, // 设置 allocationMethod 字段
-        maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 设置 maxPortfolioDrawdown 字段
-        maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 设置 maxTotalPositionRatio 字段
+      status: this.status, // 状态
+      strategyCount: this.strategies.size, // 策略数量
+      strategies: [...this.strategies.keys()], // 策略
+      statistics: this.statistics, // statistics
+      config: { // 配置
+        totalCapital: this.config.totalCapital, // 总资金
+        allocationMethod: this.config.allocationMethod, // allocationMethod
+        maxPortfolioDrawdown: this.config.maxPortfolioDrawdown, // 最大Portfolio回撤
+        maxTotalPositionRatio: this.config.maxTotalPositionRatio, // 最大总持仓比例
       }, // 结束代码块
-      modules: { // 设置 modules 字段
-        correlationAnalyzer: this.correlationAnalyzer.getStatus(), // 设置 correlationAnalyzer 字段
-        capitalAllocator: this.capitalAllocator.getStatus(), // 设置 capitalAllocator 字段
-        portfolioRiskManager: this.portfolioRiskManager.getStatus(), // 设置 portfolioRiskManager 字段
+      modules: { // modules
+        correlationAnalyzer: this.correlationAnalyzer.getStatus(), // correlationAnalyzer
+        capitalAllocator: this.capitalAllocator.getStatus(), // 资金Allocator
+        portfolioRiskManager: this.portfolioRiskManager.getStatus(), // portfolio风险Manager
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -907,7 +907,7 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

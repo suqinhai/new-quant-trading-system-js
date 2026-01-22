@@ -16,11 +16,11 @@ import { EventEmitter } from 'events'; // 导入模块 events
  * 日志级别
  */
 const LogLevel = { // 定义常量 LogLevel
-  DEBUG: 0, // 设置 DEBUG 字段
-  INFO: 1, // 设置 INFO 字段
-  WARN: 2, // 设置 WARN 字段
-  ERROR: 3, // 设置 ERROR 字段
-  FATAL: 4, // 设置 FATAL 字段
+  DEBUG: 0, // DEBUG
+  INFO: 1, // INFO
+  WARN: 2, // WARN
+  ERROR: 3, // 错误
+  FATAL: 4, // FATAL
 }; // 结束代码块
 
 const LogLevelNames = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']; // 定义常量 LogLevelNames
@@ -35,29 +35,29 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
 
     this.config = { // 设置 config
       // 日志级别
-      level: config.level || 'info', // 设置 level 字段
+      level: config.level || 'info', // 级别
       // 日志格式
-      format: config.format || 'json', // 设置 format 字段
+      format: config.format || 'json', // 格式
       // 日志目录
-      logDir: config.logDir || './logs', // 设置 logDir 字段
+      logDir: config.logDir || './logs', // 日志Dir
       // 日志文件名前缀
-      filePrefix: config.filePrefix || 'app', // 设置 filePrefix 字段
+      filePrefix: config.filePrefix || 'app', // 文件前缀
       // 最大文件大小 (bytes)
-      maxFileSize: config.maxFileSize || 10 * 1024 * 1024, // 设置 maxFileSize 字段
+      maxFileSize: config.maxFileSize || 10 * 1024 * 1024, // 最大文件大小 (bytes)
       // 最大文件数
-      maxFiles: config.maxFiles || 10, // 设置 maxFiles 字段
+      maxFiles: config.maxFiles || 10, // 最大文件
       // 是否输出到控制台
-      console: config.console ?? true, // 设置 console 字段
+      console: config.console ?? true, // 是否输出到控制台
       // 是否输出到文件
-      file: config.file ?? true, // 设置 file 字段
+      file: config.file ?? true, // 文件
       // 是否包含时间戳
-      timestamp: config.timestamp ?? true, // 设置 timestamp 字段
+      timestamp: config.timestamp ?? true, // 时间戳
       // 是否包含调用位置
-      includeLocation: config.includeLocation ?? false, // 设置 includeLocation 字段
+      includeLocation: config.includeLocation ?? false, // 是否包含调用位置
       // 上下文
-      context: config.context || {}, // 设置 context 字段
+      context: config.context || {}, // context
       // 敏感字段
-      sensitiveFields: config.sensitiveFields || [ // 设置 sensitiveFields 字段
+      sensitiveFields: config.sensitiveFields || [ // sensitiveFields
         'password', 'secret', 'apiKey', 'token', 'authorization', // 执行语句
         'apikey', 'api_key', 'api_secret', 'secretKey', 'secret_key', // 执行语句
         'accessToken', 'access_token', 'refreshToken', 'refresh_token', // 执行语句
@@ -68,7 +68,7 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
         'sessionId', 'session_id', 'cookie', 'jwt', 'bearer', // 执行语句
       ], // 结束数组或索引
       // 敏感值模式 (正则匹配)
-      sensitivePatterns: config.sensitivePatterns || [ // 设置 sensitivePatterns 字段
+      sensitivePatterns: config.sensitivePatterns || [ // 敏感值模式 (正则匹配)
         /^[A-Za-z0-9]{32,}$/,  // 长字符串可能是密钥
         /^\d{10,}:[A-Za-z0-9_-]{30,}$/,  // Telegram Bot Token 格式
         /^sk-[A-Za-z0-9]{20,}$/,  // API Key 格式
@@ -171,9 +171,9 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
       const files = fs.readdirSync(this.config.logDir) // 定义常量 files
         .filter(f => f.startsWith(this.config.filePrefix) && f.endsWith('.log')) // 定义箭头函数
         .map(f => ({ // 定义箭头函数
-          name: f, // 设置 name 字段
-          path: path.join(this.config.logDir, f), // 设置 path 字段
-          mtime: fs.statSync(path.join(this.config.logDir, f)).mtime, // 设置 mtime 字段
+          name: f, // name
+          path: path.join(this.config.logDir, f), // 路径
+          mtime: fs.statSync(path.join(this.config.logDir, f)).mtime, // mtime
         })) // 结束代码块
         .sort((a, b) => b.mtime - a.mtime); // 定义箭头函数
 
@@ -193,7 +193,7 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
    */
   _formatEntry(level, message, data = {}) { // 调用 _formatEntry
     const entry = { // 定义常量 entry
-      level: LogLevelNames[level], // 设置 level 字段
+      level: LogLevelNames[level], // 级别
       message, // 执行语句
       ...this.config.context, // 展开对象或数组
       ...this._sanitizeData(data), // 展开对象或数组
@@ -334,9 +334,9 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
         const match = line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/); // 定义常量 match
         if (match) { // 条件判断 match
           return { // 返回结果
-            function: match[1], // 定义函数
-            file: match[2], // 设置 file 字段
-            line: parseInt(match[3], 10), // 设置 line 字段
+            function: match[1], // function
+            file: match[2], // 文件
+            line: parseInt(match[3], 10), // line
           }; // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -389,7 +389,7 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
       case LogLevel.WARN: return console.warn; // 分支 LogLevel.WARN: return console.warn;
       case LogLevel.ERROR: // 分支 LogLevel.ERROR
       case LogLevel.FATAL: return console.error; // 分支 LogLevel.FATAL: return console.error;
-      default: return console.log; // 默认分支
+      default: return console.log; // 默认
     } // 结束代码块
   } // 结束代码块
 
@@ -425,9 +425,9 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
     // 如果 data 是 Error 对象，提取信息
     if (data instanceof Error) { // 条件判断 data instanceof Error
       data = { // 赋值 data
-        error: data.message, // 设置 error 字段
-        stack: data.stack, // 设置 stack 字段
-        name: data.name, // 设置 name 字段
+        error: data.message, // 错误
+        stack: data.stack, // stack
+        name: data.name, // name
       }; // 结束代码块
     } // 结束代码块
     this._write(LogLevel.ERROR, message, data); // 调用 _write
@@ -439,9 +439,9 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
   fatal(message, data = {}) { // 调用 fatal
     if (data instanceof Error) { // 条件判断 data instanceof Error
       data = { // 赋值 data
-        error: data.message, // 设置 error 字段
-        stack: data.stack, // 设置 stack 字段
-        name: data.name, // 设置 name 字段
+        error: data.message, // 错误
+        stack: data.stack, // stack
+        name: data.name, // name
       }; // 结束代码块
     } // 结束代码块
     this._write(LogLevel.FATAL, message, data); // 调用 _write
@@ -471,16 +471,16 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
 
     const childContext = { // 定义常量 childContext
       ...this.config.context, // 展开对象或数组
-      logger: name, // 设置 logger 字段
+      logger: name, // 日志
       ...context, // 展开对象或数组
     }; // 结束代码块
 
     const childLogger = new Logger({ // 定义常量 childLogger
       ...this.config, // 展开对象或数组
-      context: childContext, // 设置 context 字段
+      context: childContext, // context
       // 子日志器不创建新文件，共享父日志器的流
-      file: false, // 设置 file 字段
-      console: this.config.console, // 设置 console 字段
+      file: false, // 子日志器不创建新文件，共享父日志器的流
+      console: this.config.console, // console
     }); // 结束代码块
 
     // 将子日志器的输出转发到父日志器
@@ -488,7 +488,7 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
       this._write(this._getLevelValue(level), message, { // 调用 _write
         ...childContext, // 展开对象或数组
         ...data, // 展开对象或数组
-        _childLogger: name, // 设置 _childLogger 字段
+        _childLogger: name, // child日志
       }); // 结束代码块
     }); // 结束代码块
 
@@ -508,8 +508,8 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
   time(label) { // 调用 time
     return { // 返回结果
       label, // 执行语句
-      start: process.hrtime.bigint(), // 设置 start 字段
-      end: () => { // 设置 end 字段
+      start: process.hrtime.bigint(), // 启动
+      end: () => { // end
         const end = process.hrtime.bigint(); // 定义常量 end
         const durationMs = Number(end - this.timers?.get(label)?.start || 0n) / 1e6; // 定义常量 durationMs
         this.info(`${label}`, { durationMs }); // 调用 info
@@ -619,12 +619,12 @@ class Logger extends EventEmitter { // 定义类 Logger(继承EventEmitter)
     } // 结束代码块
 
     return { // 返回结果
-      level: this.config.level, // 设置 level 字段
-      logDir: this.config.logDir, // 设置 logDir 字段
-      fileCount: files.length, // 设置 fileCount 字段
-      totalSizeMB: Math.round(totalSize / 1024 / 1024 * 100) / 100, // 设置 totalSizeMB 字段
-      currentFile: this.currentFile, // 设置 currentFile 字段
-      currentFileSizeMB: Math.round(this.currentFileSize / 1024 / 1024 * 100) / 100, // 设置 currentFileSizeMB 字段
+      level: this.config.level, // 级别
+      logDir: this.config.logDir, // 日志Dir
+      fileCount: files.length, // 文件数量
+      totalSizeMB: Math.round(totalSize / 1024 / 1024 * 100) / 100, // 总大小MB
+      currentFile: this.currentFile, // current文件
+      currentFileSizeMB: Math.round(this.currentFileSize / 1024 / 1024 * 100) / 100, // current文件大小MB
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

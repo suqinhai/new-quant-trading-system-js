@@ -32,12 +32,12 @@ import { toNumber } from '../utils/helpers.js'; // 导入模块 ../utils/helpers
  * 风控模式枚举
  */
 export const RiskMode = { // 导出常量 RiskMode
-  TARGET_VOLATILITY: 'target_volatility',   // 目标波动率
-  RISK_PARITY: 'risk_parity',               // 风险平价
-  MAX_DRAWDOWN: 'max_drawdown',             // 最大回撤控制
+  TARGET_VOLATILITY: 'target_volatility',   // TARGET波动率
+  RISK_PARITY: 'risk_parity',               // 风险PARITY
+  MAX_DRAWDOWN: 'max_drawdown',             // 最大回撤
   VOLATILITY_BREAKOUT: 'volatility_breakout', // 波动率突破
-  CORRELATION_MONITOR: 'correlation_monitor', // 相关性监控
-  COMBINED: 'combined',                     // 组合模式
+  CORRELATION_MONITOR: 'correlation_monitor', // CORRELATION监控
+  COMBINED: 'combined',                     // COMBINED
 }; // 结束代码块
 
 /**
@@ -56,14 +56,14 @@ export const RiskLevel = { // 导出常量 RiskLevel
  * 风控事件类型
  */
 export const RiskEvent = { // 导出常量 RiskEvent
-  VOLATILITY_SPIKE: 'volatility_spike', // 设置 VOLATILITY_SPIKE 字段
-  DRAWDOWN_WARNING: 'drawdown_warning', // 设置 DRAWDOWN_WARNING 字段
-  DRAWDOWN_BREACH: 'drawdown_breach', // 设置 DRAWDOWN_BREACH 字段
-  CORRELATION_SURGE: 'correlation_surge', // 设置 CORRELATION_SURGE 字段
-  RISK_LEVEL_CHANGE: 'risk_level_change', // 设置 RISK_LEVEL_CHANGE 字段
-  POSITION_REDUCED: 'position_reduced', // 设置 POSITION_REDUCED 字段
-  FORCED_LIQUIDATION: 'forced_liquidation', // 设置 FORCED_LIQUIDATION 字段
-  STRATEGY_SWITCH: 'strategy_switch', // 设置 STRATEGY_SWITCH 字段
+  VOLATILITY_SPIKE: 'volatility_spike', // 波动率尖峰
+  DRAWDOWN_WARNING: 'drawdown_warning', // 回撤警告
+  DRAWDOWN_BREACH: 'drawdown_breach', // 回撤BREACH
+  CORRELATION_SURGE: 'correlation_surge', // CORRELATIONSURGE
+  RISK_LEVEL_CHANGE: 'risk_level_change', // 风险级别修改
+  POSITION_REDUCED: 'position_reduced', // 持仓REDUCED
+  FORCED_LIQUIDATION: 'forced_liquidation', // FORCED强平
+  STRATEGY_SWITCH: 'strategy_switch', // 策略SWITCH
 }; // 结束代码块
 
 /**
@@ -73,71 +73,71 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
   // 基础参数
   // ============================================
-  symbol: 'BTC/USDT', // 设置 symbol 字段
-  positionPercent: 95, // 设置 positionPercent 字段
+  symbol: 'BTC/USDT', // 交易对
+  positionPercent: 95, // 持仓百分比
 
   // ============================================
   // 目标波动率参数 (Target Volatility)
   // ============================================
-  targetVolatility: 0.15,           // 目标年化波动率 15%
-  volatilityLookback: 20,           // 波动率计算周期
-  volatilityAdjustSpeed: 0.3,       // 调整速度 (0-1, 越大越快)
-  minPositionRatio: 0.1,            // 最小仓位比例 10%
-  maxPositionRatio: 1.5,            // 最大仓位比例 150% (可用杠杆)
+  targetVolatility: 0.15,           // target波动率
+  volatilityLookback: 20,           // 波动率回溯
+  volatilityAdjustSpeed: 0.3,       // 波动率AdjustSpeed
+  minPositionRatio: 0.1,            // 最小持仓比例
+  maxPositionRatio: 1.5,            // 最大持仓比例
 
   // ============================================
   // 波动率突破参数 (Volatility Breakout)
   // ============================================
   volatilityBreakoutThreshold: 2.0, // 波动率突破倍数 (当前/历史)
-  volatilityBreakoutLookback: 60,   // 历史波动率参考周期
-  forceReduceRatio: 0.5,            // 突破时强制降仓比例
+  volatilityBreakoutLookback: 60,   // 波动率突破回溯
+  forceReduceRatio: 0.5,            // force减仓比例
 
   // ============================================
   // 最大回撤控制参数 (Max Drawdown Control)
   // ============================================
-  maxDrawdown: 0.15,                // 最大回撤阈值 15%
-  warningDrawdown: 0.10,            // 预警回撤阈值 10%
-  criticalDrawdown: 0.20,           // 严重回撤阈值 20%
-  emergencyDrawdown: 0.25,          // 紧急回撤阈值 25%
-  drawdownReduceSpeed: 0.5,         // 回撤减仓速度
+  maxDrawdown: 0.15,                // 最大回撤
+  warningDrawdown: 0.10,            // 警告回撤
+  criticalDrawdown: 0.20,           // critical回撤
+  emergencyDrawdown: 0.25,          // emergency回撤
+  drawdownReduceSpeed: 0.5,         // 回撤减仓Speed
 
   // ============================================
   // 风险平价参数 (Risk Parity)
   // ============================================
-  targetRiskContribution: 'equal',  // 目标风险贡献: 'equal' 或自定义权重
-  riskParityRebalanceThreshold: 0.1, // 再平衡阈值 10%
-  correlationLookback: 30,          // 相关性计算周期
+  targetRiskContribution: 'equal',  // target风险Contribution
+  riskParityRebalanceThreshold: 0.1, // 风险ParityRebalance阈值
+  correlationLookback: 30,          // correlation回溯
 
   // ============================================
   // 相关性监控参数 (Correlation Monitor)
   // ============================================
-  correlationThreshold: 0.8,        // 高相关性阈值
-  correlationSpikeMultiplier: 1.5,  // 相关性骤升倍数
-  diversificationMinAssets: 3,      // 最少分散资产数
+  correlationThreshold: 0.8,        // correlation阈值
+  correlationSpikeMultiplier: 1.5,  // correlation尖峰倍数
+  diversificationMinAssets: 3,      // diversification最小Assets
 
   // ============================================
   // 风险等级阈值
   // ============================================
-  riskThresholds: { // 设置 riskThresholds 字段
-    safe: { volatilityRatio: 0.5, drawdown: 0.05 }, // 设置 safe 字段
-    normal: { volatilityRatio: 1.0, drawdown: 0.08 }, // 设置 normal 字段
-    elevated: { volatilityRatio: 1.5, drawdown: 0.12 }, // 设置 elevated 字段
-    high: { volatilityRatio: 2.0, drawdown: 0.18 }, // 设置 high 字段
-    critical: { volatilityRatio: 2.5, drawdown: 0.22 }, // 设置 critical 字段
+  riskThresholds: { // 风险Thresholds
+    safe: { volatilityRatio: 0.5, drawdown: 0.05 }, // safe
+    normal: { volatilityRatio: 1.0, drawdown: 0.08 }, // normal
+    elevated: { volatilityRatio: 1.5, drawdown: 0.12 }, // elevated
+    high: { volatilityRatio: 2.0, drawdown: 0.18 }, // 最高
+    critical: { volatilityRatio: 2.5, drawdown: 0.22 }, // critical
   }, // 结束代码块
 
   // ============================================
   // 策略切换参数
   // ============================================
-  enableStrategySwitching: true,    // 是否启用策略切换
-  lowRiskStrategy: null,            // 低风险策略实例
-  highRiskTolerance: 0.20,          // 高风险承受度
+  enableStrategySwitching: true,    // 启用策略Switching
+  lowRiskStrategy: null,            // 最低风险策略
+  highRiskTolerance: 0.20,          // 最高风险Tolerance
 
   // ============================================
   // 多资产支持
   // ============================================
-  assets: [],                       // 多资产列表
-  assetWeights: {},                 // 资产权重
+  assets: [],                       // assets
+  assetWeights: {},                 // 资产Weights
 }; // 结束代码块
 
 // ============================================
@@ -243,7 +243,7 @@ class VolatilityCalculator { // 定义类 VolatilityCalculator
 
     const ratio = current / historical; // 定义常量 ratio
     return { // 返回结果
-      isBreakout: ratio >= multiplier, // 设置 isBreakout 字段
+      isBreakout: ratio >= multiplier, // 是否突破
       ratio, // 执行语句
       current, // 执行语句
       historical, // 执行语句
@@ -339,7 +339,7 @@ class DrawdownMonitor { // 定义类 DrawdownMonitor
         return Math.max(0.5, ratio); // 返回结果
       case RiskLevel.NORMAL: // 分支 RiskLevel.NORMAL
         return 0.8; // 返回结果
-      default: // 默认分支
+      default: // 默认
         return 1.0; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -358,12 +358,12 @@ class DrawdownMonitor { // 定义类 DrawdownMonitor
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      currentDrawdown: this.calculateDrawdown(), // 设置 currentDrawdown 字段
-      maxHistoricalDrawdown: this.maxHistoricalDrawdown, // 设置 maxHistoricalDrawdown 字段
-      peakEquity: this.peakEquity, // 设置 peakEquity 字段
-      currentEquity: this.currentEquity, // 设置 currentEquity 字段
-      riskLevel: this.getRiskLevel(), // 设置 riskLevel 字段
-      recoveryProgress: this.getRecoveryProgress(), // 设置 recoveryProgress 字段
+      currentDrawdown: this.calculateDrawdown(), // current回撤
+      maxHistoricalDrawdown: this.maxHistoricalDrawdown, // 最大Historical回撤
+      peakEquity: this.peakEquity, // peakEquity
+      currentEquity: this.currentEquity, // currentEquity
+      riskLevel: this.getRiskLevel(), // 风险级别
+      recoveryProgress: this.getRecoveryProgress(), // recoveryProgress
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -485,16 +485,16 @@ class CorrelationMonitor { // 定义类 CorrelationMonitor
         spikes.push({ // 调用 spikes.push
           pair, // 执行语句
           current, // 执行语句
-          historical: mean, // 设置 historical 字段
-          spikeRatio: Math.abs(current) / (Math.abs(mean) + 0.01), // 设置 spikeRatio 字段
+          historical: mean, // historical
+          spikeRatio: Math.abs(current) / (Math.abs(mean) + 0.01), // 尖峰比例
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      hasSpike: spikes.length > 0, // 设置 hasSpike 字段
+      hasSpike: spikes.length > 0, // 是否有尖峰
       spikes, // 执行语句
-      avgCorrelation: this.getAverageCorrelation(), // 设置 avgCorrelation 字段
+      avgCorrelation: this.getAverageCorrelation(), // avgCorrelation
     }; // 结束代码块
   } // 结束代码块
 
@@ -530,10 +530,10 @@ class CorrelationMonitor { // 定义类 CorrelationMonitor
     const avgCorr = this.getAverageCorrelation(); // 定义常量 avgCorr
 
     return { // 返回结果
-      wellDiversified: avgCorr < 0.5 && highCorr.length === 0, // 设置 wellDiversified 字段
-      averageCorrelation: avgCorr, // 设置 averageCorrelation 字段
-      highCorrelationPairs: highCorr, // 设置 highCorrelationPairs 字段
-      recommendation: avgCorr >= 0.7 ? 'reduce_exposure' : // 设置 recommendation 字段
+      wellDiversified: avgCorr < 0.5 && highCorr.length === 0, // wellDiversified
+      averageCorrelation: avgCorr, // 平均Correlation
+      highCorrelationPairs: highCorr, // 最高CorrelationPairs
+      recommendation: avgCorr >= 0.7 ? 'reduce_exposure' : // recommendation
                       avgCorr >= 0.5 ? 'monitor_closely' : 'acceptable', // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -555,7 +555,7 @@ class TargetVolatilityManager { // 定义类 TargetVolatilityManager
 
     this.currentPositionRatio = 1.0; // 设置 currentPositionRatio
     this.volatilityCalculator = new VolatilityCalculator({ // 设置 volatilityCalculator
-      lookback: params.lookback || 20, // 设置 lookback 字段
+      lookback: params.lookback || 20, // 回溯
     }); // 结束代码块
   } // 结束代码块
 
@@ -570,9 +570,9 @@ class TargetVolatilityManager { // 定义类 TargetVolatilityManager
 
     if (!currentVol) { // 条件判断 !currentVol
       return { // 返回结果
-        targetRatio: this.currentPositionRatio, // 设置 targetRatio 字段
-        currentVolatility: null, // 设置 currentVolatility 字段
-        adjustment: 0, // 设置 adjustment 字段
+        targetRatio: this.currentPositionRatio, // target比例
+        currentVolatility: null, // current波动率
+        adjustment: 0, // adjustment
       }; // 结束代码块
     } // 结束代码块
 
@@ -590,12 +590,12 @@ class TargetVolatilityManager { // 定义类 TargetVolatilityManager
     this.currentPositionRatio = Math.max(this.minRatio, Math.min(this.maxRatio, this.currentPositionRatio)); // 设置 currentPositionRatio
 
     return { // 返回结果
-      targetRatio: this.currentPositionRatio, // 设置 targetRatio 字段
-      rawRatio: rawTargetRatio, // 设置 rawRatio 字段
-      currentVolatility: currentVol, // 设置 currentVolatility 字段
-      targetVolatility: this.targetVol, // 设置 targetVolatility 字段
+      targetRatio: this.currentPositionRatio, // target比例
+      rawRatio: rawTargetRatio, // raw比例
+      currentVolatility: currentVol, // current波动率
+      targetVolatility: this.targetVol, // target波动率
       adjustment, // 执行语句
-      needsRebalance: Math.abs(adjustment) > 0.05, // 设置 needsRebalance 字段
+      needsRebalance: Math.abs(adjustment) > 0.05, // needsRebalance
     }; // 结束代码块
   } // 结束代码块
 
@@ -604,9 +604,9 @@ class TargetVolatilityManager { // 定义类 TargetVolatilityManager
    */
   getState() { // 调用 getState
     return { // 返回结果
-      currentRatio: this.currentPositionRatio, // 设置 currentRatio 字段
-      targetVol: this.targetVol, // 设置 targetVol 字段
-      volatilityHistory: this.volatilityCalculator.volatilityHistory, // 设置 volatilityHistory 字段
+      currentRatio: this.currentPositionRatio, // current比例
+      targetVol: this.targetVol, // target波动率
+      volatilityHistory: this.volatilityCalculator.volatilityHistory, // 波动率历史
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -722,12 +722,12 @@ class RiskParityManager { // 定义类 RiskParityManager
     } // 结束代码块
 
     return { // 返回结果
-      needsRebalance: maxDeviation > this.rebalanceThreshold, // 设置 needsRebalance 字段
+      needsRebalance: maxDeviation > this.rebalanceThreshold, // needsRebalance
       maxDeviation, // 执行语句
       deviations, // 执行语句
       currentContributions, // 执行语句
       targetContribution, // 执行语句
-      suggestedWeights: this.calculateRiskParityWeights(), // 设置 suggestedWeights 字段
+      suggestedWeights: this.calculateRiskParityWeights(), // suggestedWeights
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -765,37 +765,37 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
 
     // 波动率计算器
     this.volatilityCalculator = new VolatilityCalculator({ // 设置 volatilityCalculator
-      lookback: this.config.volatilityLookback, // 设置 lookback 字段
+      lookback: this.config.volatilityLookback, // 回溯
     }); // 结束代码块
 
     // 回撤监控器
     this.drawdownMonitor = new DrawdownMonitor({ // 设置 drawdownMonitor
-      maxDrawdown: this.config.maxDrawdown, // 设置 maxDrawdown 字段
-      warningDrawdown: this.config.warningDrawdown, // 设置 warningDrawdown 字段
-      criticalDrawdown: this.config.criticalDrawdown, // 设置 criticalDrawdown 字段
-      emergencyDrawdown: this.config.emergencyDrawdown, // 设置 emergencyDrawdown 字段
+      maxDrawdown: this.config.maxDrawdown, // 最大回撤
+      warningDrawdown: this.config.warningDrawdown, // 警告回撤
+      criticalDrawdown: this.config.criticalDrawdown, // critical回撤
+      emergencyDrawdown: this.config.emergencyDrawdown, // emergency回撤
     }); // 结束代码块
 
     // 相关性监控器 (多资产)
     this.correlationMonitor = new CorrelationMonitor({ // 设置 correlationMonitor
-      lookback: this.config.correlationLookback, // 设置 lookback 字段
-      threshold: this.config.correlationThreshold, // 设置 threshold 字段
-      spikeMultiplier: this.config.correlationSpikeMultiplier, // 设置 spikeMultiplier 字段
+      lookback: this.config.correlationLookback, // 回溯
+      threshold: this.config.correlationThreshold, // 阈值
+      spikeMultiplier: this.config.correlationSpikeMultiplier, // 尖峰倍数
     }); // 结束代码块
 
     // 目标波动率管理器
     this.targetVolManager = new TargetVolatilityManager({ // 设置 targetVolManager
-      targetVolatility: this.config.targetVolatility, // 设置 targetVolatility 字段
-      adjustSpeed: this.config.volatilityAdjustSpeed, // 设置 adjustSpeed 字段
-      minPositionRatio: this.config.minPositionRatio, // 设置 minPositionRatio 字段
-      maxPositionRatio: this.config.maxPositionRatio, // 设置 maxPositionRatio 字段
-      lookback: this.config.volatilityLookback, // 设置 lookback 字段
+      targetVolatility: this.config.targetVolatility, // target波动率
+      adjustSpeed: this.config.volatilityAdjustSpeed, // adjustSpeed
+      minPositionRatio: this.config.minPositionRatio, // 最小持仓比例
+      maxPositionRatio: this.config.maxPositionRatio, // 最大持仓比例
+      lookback: this.config.volatilityLookback, // 回溯
     }); // 结束代码块
 
     // 风险平价管理器
     this.riskParityManager = new RiskParityManager({ // 设置 riskParityManager
-      rebalanceThreshold: this.config.riskParityRebalanceThreshold, // 设置 rebalanceThreshold 字段
-      lookback: this.config.correlationLookback, // 设置 lookback 字段
+      rebalanceThreshold: this.config.riskParityRebalanceThreshold, // rebalance阈值
+      lookback: this.config.correlationLookback, // 回溯
     }); // 结束代码块
 
     // ============================================
@@ -925,10 +925,10 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
    */
   _assessRisk() { // 调用 _assessRisk
     const assessment = { // 定义常量 assessment
-      overallLevel: RiskLevel.NORMAL, // 设置 overallLevel 字段
-      signals: [], // 设置 signals 字段
-      actions: [], // 设置 actions 字段
-      metrics: {}, // 设置 metrics 字段
+      overallLevel: RiskLevel.NORMAL, // overall级别
+      signals: [], // 信号
+      actions: [], // actions
+      metrics: {}, // 指标
     }; // 结束代码块
 
     // ============================================
@@ -941,23 +941,23 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       ); // 结束调用或参数
 
       assessment.metrics.volatility = { // 赋值 assessment.metrics.volatility
-        current: breakout.current, // 设置 current 字段
-        historical: breakout.historical, // 设置 historical 字段
-        ratio: breakout.ratio, // 设置 ratio 字段
-        isBreakout: breakout.isBreakout, // 设置 isBreakout 字段
-        percentile: this.volatilityCalculator.getPercentile(), // 设置 percentile 字段
+        current: breakout.current, // current
+        historical: breakout.historical, // historical
+        ratio: breakout.ratio, // 比例
+        isBreakout: breakout.isBreakout, // 是否突破
+        percentile: this.volatilityCalculator.getPercentile(), // percentile
       }; // 结束代码块
 
       if (breakout.isBreakout) { // 条件判断 breakout.isBreakout
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.VOLATILITY_SPIKE, // 设置 type 字段
-          severity: 'high', // 设置 severity 字段
-          message: `波动率突破 | 当前: ${(breakout.current * 100).toFixed(1)}% vs 历史: ${(breakout.historical * 100).toFixed(1)}% (${breakout.ratio.toFixed(1)}x)`, // 设置 message 字段
+          type: RiskEvent.VOLATILITY_SPIKE, // 类型
+          severity: 'high', // severity
+          message: `波动率突破 | 当前: ${(breakout.current * 100).toFixed(1)}% vs 历史: ${(breakout.historical * 100).toFixed(1)}% (${breakout.ratio.toFixed(1)}x)`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'reduce_position', // 设置 action 字段
-          ratio: this.config.forceReduceRatio, // 设置 ratio 字段
-          reason: 'volatility_breakout', // 设置 reason 字段
+          action: 'reduce_position', // action
+          ratio: this.config.forceReduceRatio, // 比例
+          reason: 'volatility_breakout', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -972,57 +972,57 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       const suggestedRatio = this.drawdownMonitor.getSuggestedPositionRatio(); // 定义常量 suggestedRatio
 
       assessment.metrics.drawdown = { // 赋值 assessment.metrics.drawdown
-        current: drawdownStats.currentDrawdown, // 设置 current 字段
-        max: drawdownStats.maxHistoricalDrawdown, // 设置 max 字段
-        riskLevel: ddRiskLevel, // 设置 riskLevel 字段
+        current: drawdownStats.currentDrawdown, // current
+        max: drawdownStats.maxHistoricalDrawdown, // 最大
+        riskLevel: ddRiskLevel, // 风险级别
         suggestedRatio, // 执行语句
-        recoveryProgress: drawdownStats.recoveryProgress, // 设置 recoveryProgress 字段
+        recoveryProgress: drawdownStats.recoveryProgress, // recoveryProgress
       }; // 结束代码块
 
       // 根据回撤等级生成信号
       if (ddRiskLevel === RiskLevel.EMERGENCY) { // 条件判断 ddRiskLevel === RiskLevel.EMERGENCY
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.FORCED_LIQUIDATION, // 设置 type 字段
-          severity: 'emergency', // 设置 severity 字段
-          message: `紧急回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}% - 强制清仓`, // 设置 message 字段
+          type: RiskEvent.FORCED_LIQUIDATION, // 类型
+          severity: 'emergency', // severity
+          message: `紧急回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}% - 强制清仓`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'close_all', // 设置 action 字段
-          ratio: 0, // 设置 ratio 字段
-          reason: 'emergency_drawdown', // 设置 reason 字段
+          action: 'close_all', // action
+          ratio: 0, // 比例
+          reason: 'emergency_drawdown', // reason
         }); // 结束代码块
       } else if (ddRiskLevel === RiskLevel.CRITICAL) { // 执行语句
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.DRAWDOWN_BREACH, // 设置 type 字段
-          severity: 'critical', // 设置 severity 字段
-          message: `严重回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}% - 大幅减仓`, // 设置 message 字段
+          type: RiskEvent.DRAWDOWN_BREACH, // 类型
+          severity: 'critical', // severity
+          message: `严重回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}% - 大幅减仓`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'reduce_position', // 设置 action 字段
-          ratio: suggestedRatio, // 设置 ratio 字段
-          reason: 'critical_drawdown', // 设置 reason 字段
+          action: 'reduce_position', // action
+          ratio: suggestedRatio, // 比例
+          reason: 'critical_drawdown', // reason
         }); // 结束代码块
       } else if (ddRiskLevel === RiskLevel.HIGH) { // 执行语句
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.DRAWDOWN_BREACH, // 设置 type 字段
-          severity: 'high', // 设置 severity 字段
-          message: `高回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}%`, // 设置 message 字段
+          type: RiskEvent.DRAWDOWN_BREACH, // 类型
+          severity: 'high', // severity
+          message: `高回撤 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}%`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'reduce_position', // 设置 action 字段
-          ratio: suggestedRatio, // 设置 ratio 字段
-          reason: 'high_drawdown', // 设置 reason 字段
+          action: 'reduce_position', // action
+          ratio: suggestedRatio, // 比例
+          reason: 'high_drawdown', // reason
         }); // 结束代码块
       } else if (ddRiskLevel === RiskLevel.ELEVATED) { // 执行语句
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.DRAWDOWN_WARNING, // 设置 type 字段
-          severity: 'elevated', // 设置 severity 字段
-          message: `回撤预警 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}%`, // 设置 message 字段
+          type: RiskEvent.DRAWDOWN_WARNING, // 类型
+          severity: 'elevated', // severity
+          message: `回撤预警 ${(drawdownStats.currentDrawdown * 100).toFixed(1)}%`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'reduce_position', // 设置 action 字段
-          ratio: suggestedRatio, // 设置 ratio 字段
-          reason: 'elevated_drawdown', // 设置 reason 字段
+          action: 'reduce_position', // action
+          ratio: suggestedRatio, // 比例
+          reason: 'elevated_drawdown', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1036,17 +1036,17 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       const tvUpdate = this.targetVolManager.update(this._priceHistory); // 定义常量 tvUpdate
 
       assessment.metrics.targetVolatility = { // 赋值 assessment.metrics.targetVolatility
-        current: tvUpdate.currentVolatility, // 设置 current 字段
-        target: tvUpdate.targetVolatility, // 设置 target 字段
-        currentRatio: tvUpdate.targetRatio, // 设置 currentRatio 字段
-        needsRebalance: tvUpdate.needsRebalance, // 设置 needsRebalance 字段
+        current: tvUpdate.currentVolatility, // current
+        target: tvUpdate.targetVolatility, // target
+        currentRatio: tvUpdate.targetRatio, // current比例
+        needsRebalance: tvUpdate.needsRebalance, // needsRebalance
       }; // 结束代码块
 
       if (tvUpdate.needsRebalance) { // 条件判断 tvUpdate.needsRebalance
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'adjust_position', // 设置 action 字段
-          ratio: tvUpdate.targetRatio, // 设置 ratio 字段
-          reason: 'target_volatility', // 设置 reason 字段
+          action: 'adjust_position', // action
+          ratio: tvUpdate.targetRatio, // 比例
+          reason: 'target_volatility', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1061,22 +1061,22 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       const diversification = this.correlationMonitor.getDiversificationAdvice(); // 定义常量 diversification
 
       assessment.metrics.correlation = { // 赋值 assessment.metrics.correlation
-        average: corrSpike.avgCorrelation, // 设置 average 字段
-        hasSpike: corrSpike.hasSpike, // 设置 hasSpike 字段
-        spikes: corrSpike.spikes, // 设置 spikes 字段
+        average: corrSpike.avgCorrelation, // 平均
+        hasSpike: corrSpike.hasSpike, // 是否有尖峰
+        spikes: corrSpike.spikes, // spikes
         diversification, // 执行语句
       }; // 结束代码块
 
       if (corrSpike.hasSpike) { // 条件判断 corrSpike.hasSpike
         assessment.signals.push({ // 调用 assessment.signals.push
-          type: RiskEvent.CORRELATION_SURGE, // 设置 type 字段
-          severity: 'elevated', // 设置 severity 字段
-          message: `相关性骤升 | 平均: ${(corrSpike.avgCorrelation * 100).toFixed(1)}%`, // 设置 message 字段
+          type: RiskEvent.CORRELATION_SURGE, // 类型
+          severity: 'elevated', // severity
+          message: `相关性骤升 | 平均: ${(corrSpike.avgCorrelation * 100).toFixed(1)}%`, // 消息
         }); // 结束代码块
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'reduce_exposure', // 设置 action 字段
-          ratio: 0.7, // 设置 ratio 字段
-          reason: 'correlation_surge', // 设置 reason 字段
+          action: 'reduce_exposure', // action
+          ratio: 0.7, // 比例
+          reason: 'correlation_surge', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1090,16 +1090,16 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       const rebalance = this.riskParityManager.checkRebalanceNeeded(); // 定义常量 rebalance
 
       assessment.metrics.riskParity = { // 赋值 assessment.metrics.riskParity
-        needsRebalance: rebalance.needsRebalance, // 设置 needsRebalance 字段
-        maxDeviation: rebalance.maxDeviation, // 设置 maxDeviation 字段
-        suggestedWeights: rebalance.suggestedWeights, // 设置 suggestedWeights 字段
+        needsRebalance: rebalance.needsRebalance, // needsRebalance
+        maxDeviation: rebalance.maxDeviation, // 最大偏离
+        suggestedWeights: rebalance.suggestedWeights, // suggestedWeights
       }; // 结束代码块
 
       if (rebalance.needsRebalance) { // 条件判断 rebalance.needsRebalance
         assessment.actions.push({ // 调用 assessment.actions.push
-          action: 'rebalance', // 设置 action 字段
-          weights: rebalance.suggestedWeights, // 设置 weights 字段
-          reason: 'risk_parity', // 设置 reason 字段
+          action: 'rebalance', // action
+          weights: rebalance.suggestedWeights, // weights
+          reason: 'risk_parity', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1126,9 +1126,9 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
     // 检测风险等级变化
     if (assessment.overallLevel !== this._currentRiskLevel) { // 条件判断 assessment.overallLevel !== this._currentRisk...
       assessment.signals.push({ // 调用 assessment.signals.push
-        type: RiskEvent.RISK_LEVEL_CHANGE, // 设置 type 字段
-        severity: 'info', // 设置 severity 字段
-        message: `风险等级变化: ${this._currentRiskLevel} → ${assessment.overallLevel}`, // 设置 message 字段
+        type: RiskEvent.RISK_LEVEL_CHANGE, // 类型
+        severity: 'info', // severity
+        message: `风险等级变化: ${this._currentRiskLevel} → ${assessment.overallLevel}`, // 消息
       }); // 结束代码块
       this._currentRiskLevel = assessment.overallLevel; // 设置 _currentRiskLevel
     } // 结束代码块
@@ -1164,10 +1164,10 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
     targetRatio = Math.max(0, Math.min(this.config.maxPositionRatio, targetRatio)); // 赋值 targetRatio
 
     return { // 返回结果
-      ratio: targetRatio, // 设置 ratio 字段
-      currentRatio: this._positionRatio, // 设置 currentRatio 字段
-      change: targetRatio - this._positionRatio, // 设置 change 字段
-      needsAdjustment: Math.abs(targetRatio - this._positionRatio) > 0.05, // 设置 needsAdjustment 字段
+      ratio: targetRatio, // 比例
+      currentRatio: this._positionRatio, // current比例
+      change: targetRatio - this._positionRatio, // 修改
+      needsAdjustment: Math.abs(targetRatio - this._positionRatio) > 0.05, // needsAdjustment
       reasons, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -1201,10 +1201,10 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       this._lastActionTime = now; // 设置 _lastActionTime
 
       this._recordEvent({ // 调用 _recordEvent
-        type: RiskEvent.FORCED_LIQUIDATION, // 设置 type 字段
-        timestamp: now, // 设置 timestamp 字段
-        targetRatio: 0, // 设置 targetRatio 字段
-        reasons: targetPosition.reasons, // 设置 reasons 字段
+        type: RiskEvent.FORCED_LIQUIDATION, // 类型
+        timestamp: now, // 时间戳
+        targetRatio: 0, // target比例
+        reasons: targetPosition.reasons, // reasons
       }); // 结束代码块
 
       this.log(`🚨 紧急清仓 | 原因: ${targetPosition.reasons.join(', ')}`); // 调用 log
@@ -1225,11 +1225,11 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
       this._lastActionTime = now; // 设置 _lastActionTime
 
       this._recordEvent({ // 调用 _recordEvent
-        type: RiskEvent.POSITION_REDUCED, // 设置 type 字段
-        timestamp: now, // 设置 timestamp 字段
-        fromRatio: this._positionRatio + reduceRatio * this._positionRatio, // 设置 fromRatio 字段
-        toRatio: targetPosition.ratio, // 设置 toRatio 字段
-        reasons: targetPosition.reasons, // 设置 reasons 字段
+        type: RiskEvent.POSITION_REDUCED, // 类型
+        timestamp: now, // 时间戳
+        fromRatio: this._positionRatio + reduceRatio * this._positionRatio, // from比例
+        toRatio: targetPosition.ratio, // to比例
+        reasons: targetPosition.reasons, // reasons
       }); // 结束代码块
 
       this.log(`📉 风控减仓 | ${((1 - targetPosition.ratio) * 100).toFixed(1)}% → ${(targetPosition.ratio * 100).toFixed(1)}% | 原因: ${targetPosition.reasons.join(', ')}`); // 调用 log
@@ -1268,11 +1268,11 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
         if (!this._isInLowRiskMode && this.config.lowRiskStrategy) { // 条件判断 !this._isInLowRiskMode && this.config.lowRisk...
           this._isInLowRiskMode = true; // 设置 _isInLowRiskMode
           this._recordEvent({ // 调用 _recordEvent
-            type: RiskEvent.STRATEGY_SWITCH, // 设置 type 字段
-            timestamp: now, // 设置 timestamp 字段
-            from: 'normal', // 设置 from 字段
-            to: 'low_risk', // 设置 to 字段
-            reason: assessment.overallLevel, // 设置 reason 字段
+            type: RiskEvent.STRATEGY_SWITCH, // 类型
+            timestamp: now, // 时间戳
+            from: 'normal', // from
+            to: 'low_risk', // to
+            reason: assessment.overallLevel, // reason
           }); // 结束代码块
           this.log(`🔄 切换至低风险策略`); // 调用 log
         } // 结束代码块
@@ -1280,11 +1280,11 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
         if (this._isInLowRiskMode) { // 条件判断 this._isInLowRiskMode
           this._isInLowRiskMode = false; // 设置 _isInLowRiskMode
           this._recordEvent({ // 调用 _recordEvent
-            type: RiskEvent.STRATEGY_SWITCH, // 设置 type 字段
-            timestamp: now, // 设置 timestamp 字段
-            from: 'low_risk', // 设置 from 字段
-            to: 'normal', // 设置 to 字段
-            reason: 'risk_normalized', // 设置 reason 字段
+            type: RiskEvent.STRATEGY_SWITCH, // 类型
+            timestamp: now, // 时间戳
+            from: 'low_risk', // from
+            to: 'normal', // to
+            reason: 'risk_normalized', // reason
           }); // 结束代码块
           this.log(`🔄 恢复正常策略`); // 调用 log
         } // 结束代码块
@@ -1357,13 +1357,13 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
    */
   getRiskStatus() { // 调用 getRiskStatus
     return { // 返回结果
-      level: this._currentRiskLevel, // 设置 level 字段
-      positionRatio: this._positionRatio, // 设置 positionRatio 字段
-      isLowRiskMode: this._isInLowRiskMode, // 设置 isLowRiskMode 字段
-      drawdown: this.drawdownMonitor.getStats(), // 设置 drawdown 字段
-      volatility: { // 设置 volatility 字段
-        current: this.volatilityCalculator.calculate(), // 设置 current 字段
-        percentile: this.volatilityCalculator.getPercentile(), // 设置 percentile 字段
+      level: this._currentRiskLevel, // 级别
+      positionRatio: this._positionRatio, // 持仓比例
+      isLowRiskMode: this._isInLowRiskMode, // 是否最低风险模式
+      drawdown: this.drawdownMonitor.getStats(), // 回撤
+      volatility: { // 波动率
+        current: this.volatilityCalculator.calculate(), // current
+        percentile: this.volatilityCalculator.getPercentile(), // percentile
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1383,14 +1383,14 @@ export class RiskDrivenStrategy extends BaseStrategy { // 导出类 RiskDrivenSt
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      riskLevel: this._currentRiskLevel, // 设置 riskLevel 字段
-      positionRatio: this._positionRatio, // 设置 positionRatio 字段
-      isLowRiskMode: this._isInLowRiskMode, // 设置 isLowRiskMode 字段
-      totalEvents: this._eventHistory.length, // 设置 totalEvents 字段
-      recentEvents: this._eventHistory.slice(-10), // 设置 recentEvents 字段
-      volatility: this.volatilityCalculator.getHistoricalMean(), // 设置 volatility 字段
-      drawdown: this.drawdownMonitor.getStats(), // 设置 drawdown 字段
-      targetVolState: this.targetVolManager.getState(), // 设置 targetVolState 字段
+      riskLevel: this._currentRiskLevel, // 风险级别
+      positionRatio: this._positionRatio, // 持仓比例
+      isLowRiskMode: this._isInLowRiskMode, // 是否最低风险模式
+      totalEvents: this._eventHistory.length, // 总Events
+      recentEvents: this._eventHistory.slice(-10), // recentEvents
+      volatility: this.volatilityCalculator.getHistoricalMean(), // 波动率
+      drawdown: this.drawdownMonitor.getStats(), // 回撤
+      targetVolState: this.targetVolManager.getState(), // target波动率State
     }; // 结束代码块
   } // 结束代码块
 

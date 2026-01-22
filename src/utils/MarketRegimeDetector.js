@@ -22,21 +22,21 @@ import { toNumber } from './helpers.js'; // 导入模块 ./helpers.js
  * 市场状态枚举
  */
 export const MarketRegime = { // 导出常量 MarketRegime
-  TRENDING_UP: 'trending_up',       // 上涨趋势
-  TRENDING_DOWN: 'trending_down',   // 下跌趋势
-  RANGING: 'ranging',               // 震荡盘整
-  HIGH_VOLATILITY: 'high_volatility', // 高波动
-  EXTREME: 'extreme',               // 极端情况 (风控模式)
+  TRENDING_UP: 'trending_up',       // TRENDINGUP
+  TRENDING_DOWN: 'trending_down',   // TRENDINGDOWN
+  RANGING: 'ranging',               // RANGING
+  HIGH_VOLATILITY: 'high_volatility', // 最高波动率
+  EXTREME: 'extreme',               // 极端
 }; // 结束代码块
 
 /**
  * 状态转换事件
  */
 export const RegimeEvent = { // 导出常量 RegimeEvent
-  REGIME_CHANGE: 'regime_change', // 设置 REGIME_CHANGE 字段
-  VOLATILITY_SPIKE: 'volatility_spike', // 设置 VOLATILITY_SPIKE 字段
-  TREND_REVERSAL: 'trend_reversal', // 设置 TREND_REVERSAL 字段
-  EXTREME_DETECTED: 'extreme_detected', // 设置 EXTREME_DETECTED 字段
+  REGIME_CHANGE: 'regime_change', // 状态修改
+  VOLATILITY_SPIKE: 'volatility_spike', // 波动率尖峰
+  TREND_REVERSAL: 'trend_reversal', // TRENDREVERSAL
+  EXTREME_DETECTED: 'extreme_detected', // 极端DETECTED
 }; // 结束代码块
 
 /**
@@ -116,9 +116,9 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
     // 统计信息
     this._stats = { // 设置 _stats
-      regimeChanges: 0, // 设置 regimeChanges 字段
-      lastChangeTime: null, // 设置 lastChangeTime 字段
-      regimeDurations: {}, // 设置 regimeDurations 字段
+      regimeChanges: 0, // 状态变更
+      lastChangeTime: null, // last修改时间
+      regimeDurations: {}, // 状态Durations
     }; // 结束代码块
   } // 结束代码块
 
@@ -140,10 +140,10 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
     if (history.length < requiredLength) { // 条件判断 history.length < requiredLength
       return { // 返回结果
-        regime: this._currentRegime, // 设置 regime 字段
-        confidence: 0, // 设置 confidence 字段
-        indicators: {}, // 设置 indicators 字段
-        reason: '数据不足', // 设置 reason 字段
+        regime: this._currentRegime, // 状态
+        confidence: 0, // confidence
+        indicators: {}, // indicators
+        reason: '数据不足', // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -164,9 +164,9 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
     // 记录历史
     this._regimeHistory.push({ // 访问 _regimeHistory
-      timestamp: candle.timestamp || Date.now(), // 设置 timestamp 字段
-      regime: this._currentRegime, // 设置 regime 字段
-      indicators: { ...indicators }, // 设置 indicators 字段
+      timestamp: candle.timestamp || Date.now(), // 时间戳
+      regime: this._currentRegime, // 状态
+      indicators: { ...indicators }, // indicators
     }); // 结束代码块
 
     // 保留最近 500 条记录
@@ -175,11 +175,11 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
     } // 结束代码块
 
     return { // 返回结果
-      regime: this._currentRegime, // 设置 regime 字段
-      prevRegime: this._prevRegime, // 设置 prevRegime 字段
-      confidence: this._calculateConfidence(indicators), // 设置 confidence 字段
+      regime: this._currentRegime, // 状态
+      prevRegime: this._prevRegime, // prev状态
+      confidence: this._calculateConfidence(indicators), // confidence
       indicators, // 执行语句
-      recommendation: this._getStrategyRecommendation(), // 设置 recommendation 字段
+      recommendation: this._getStrategyRecommendation(), // recommendation
     }; // 结束代码块
   } // 结束代码块
 
@@ -250,13 +250,13 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
       adx, // 执行语句
       pdi, // 执行语句
       mdi, // 执行语句
-      trendStrength: adx, // 设置 trendStrength 字段
-      trendDirection: pdi > mdi ? 'up' : 'down', // 设置 trendDirection 字段
+      trendStrength: adx, // trendStrength
+      trendDirection: pdi > mdi ? 'up' : 'down', // trendDirection
 
       // 波动率相关
       bbWidth, // 执行语句
       bbWidthPercentile, // 执行语句
-      atr: currentATR, // 设置 atr 字段
+      atr: currentATR, // ATR
       normalizedATR, // 执行语句
       atrPercentile, // 执行语句
       volatilityIndex, // 执行语句
@@ -269,12 +269,12 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
       // Hurst 指数
       hurst, // 执行语句
-      hurstSignal: hurst > this.hurstTrendThreshold ? 'trending' : // 设置 hurstSignal 字段
+      hurstSignal: hurst > this.hurstTrendThreshold ? 'trending' : // hurst信号
                    hurst < this.hurstMeanRevThreshold ? 'mean_reverting' : 'random', // 执行语句
 
       // 辅助指标
       rsi, // 执行语句
-      price: currentPrice, // 设置 price 字段
+      price: currentPrice, // 价格
     }; // 结束代码块
   } // 结束代码块
 
@@ -493,10 +493,10 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
     // 发出事件
     this.emit(RegimeEvent.REGIME_CHANGE, { // 调用 emit
-      from: this._prevRegime, // 设置 from 字段
-      to: newRegime, // 设置 to 字段
+      from: this._prevRegime, // from
+      to: newRegime, // to
       indicators, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 特定事件
@@ -513,8 +513,8 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
       (this._prevRegime === MarketRegime.TRENDING_DOWN && newRegime === MarketRegime.TRENDING_UP) // 执行语句
     ) { // 执行语句
       this.emit(RegimeEvent.TREND_REVERSAL, { // 调用 emit
-        from: this._prevRegime, // 设置 from 字段
-        to: newRegime, // 设置 to 字段
+        from: this._prevRegime, // from
+        to: newRegime, // to
         indicators // 执行语句
       }); // 结束代码块
     } // 结束代码块
@@ -562,50 +562,50 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
     switch (this._currentRegime) { // 分支选择 this._currentRegime
       case MarketRegime.TRENDING_UP: // 分支 MarketRegime.TRENDING_UP
         return { // 返回结果
-          strategies: ['SMA', 'MACD', 'ATRBreakout'], // 设置 strategies 字段
-          description: '趋势上涨市 → 推荐趋势跟踪策略', // 设置 description 字段
-          positionSizing: 1.0,  // 正常仓位
-          riskLevel: 'normal', // 设置 riskLevel 字段
+          strategies: ['SMA', 'MACD', 'ATRBreakout'], // 策略
+          description: '趋势上涨市 → 推荐趋势跟踪策略', // description
+          positionSizing: 1.0,  // 持仓Sizing
+          riskLevel: 'normal', // 风险级别
         }; // 结束代码块
 
       case MarketRegime.TRENDING_DOWN: // 分支 MarketRegime.TRENDING_DOWN
         return { // 返回结果
-          strategies: ['SMA', 'MACD'], // 设置 strategies 字段
-          description: '趋势下跌市 → 推荐趋势跟踪策略 (做空或观望)', // 设置 description 字段
-          positionSizing: 0.8, // 设置 positionSizing 字段
-          riskLevel: 'caution', // 设置 riskLevel 字段
+          strategies: ['SMA', 'MACD'], // 策略
+          description: '趋势下跌市 → 推荐趋势跟踪策略 (做空或观望)', // description
+          positionSizing: 0.8, // 持仓Sizing
+          riskLevel: 'caution', // 风险级别
         }; // 结束代码块
 
       case MarketRegime.RANGING: // 分支 MarketRegime.RANGING
         return { // 返回结果
-          strategies: ['Grid', 'BollingerBands', 'RSI'], // 设置 strategies 字段
-          description: '震荡市 → 推荐网格和均值回归策略', // 设置 description 字段
-          positionSizing: 0.7, // 设置 positionSizing 字段
-          riskLevel: 'normal', // 设置 riskLevel 字段
+          strategies: ['Grid', 'BollingerBands', 'RSI'], // 策略
+          description: '震荡市 → 推荐网格和均值回归策略', // description
+          positionSizing: 0.7, // 持仓Sizing
+          riskLevel: 'normal', // 风险级别
         }; // 结束代码块
 
       case MarketRegime.HIGH_VOLATILITY: // 分支 MarketRegime.HIGH_VOLATILITY
         return { // 返回结果
-          strategies: ['ATRBreakout', 'BollingerWidth'], // 设置 strategies 字段
-          description: '高波动市 → 推荐波动率突破策略，降低仓位', // 设置 description 字段
-          positionSizing: 0.5, // 设置 positionSizing 字段
-          riskLevel: 'high', // 设置 riskLevel 字段
+          strategies: ['ATRBreakout', 'BollingerWidth'], // 策略
+          description: '高波动市 → 推荐波动率突破策略，降低仓位', // description
+          positionSizing: 0.5, // 持仓Sizing
+          riskLevel: 'high', // 风险级别
         }; // 结束代码块
 
       case MarketRegime.EXTREME: // 分支 MarketRegime.EXTREME
         return { // 返回结果
-          strategies: [], // 设置 strategies 字段
-          description: '极端波动 → 进入风控模式，暂停开新仓', // 设置 description 字段
-          positionSizing: 0, // 设置 positionSizing 字段
-          riskLevel: 'extreme', // 设置 riskLevel 字段
+          strategies: [], // 策略
+          description: '极端波动 → 进入风控模式，暂停开新仓', // description
+          positionSizing: 0, // 持仓Sizing
+          riskLevel: 'extreme', // 风险级别
         }; // 结束代码块
 
-      default: // 默认分支
+      default: // 默认
         return { // 返回结果
-          strategies: ['SMA'], // 设置 strategies 字段
-          description: '未知状态 → 保守操作', // 设置 description 字段
-          positionSizing: 0.3, // 设置 positionSizing 字段
-          riskLevel: 'unknown', // 设置 riskLevel 字段
+          strategies: ['SMA'], // 策略
+          description: '未知状态 → 保守操作', // description
+          positionSizing: 0.3, // 持仓Sizing
+          riskLevel: 'unknown', // 风险级别
         }; // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -659,10 +659,10 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      currentRegime: this._currentRegime, // 设置 currentRegime 字段
-      regimeChanges: this._stats.regimeChanges, // 设置 regimeChanges 字段
-      lastChangeTime: this._stats.lastChangeTime, // 设置 lastChangeTime 字段
-      historyLength: this._regimeHistory.length, // 设置 historyLength 字段
+      currentRegime: this._currentRegime, // current状态
+      regimeChanges: this._stats.regimeChanges, // 状态变更
+      lastChangeTime: this._stats.lastChangeTime, // last修改时间
+      historyLength: this._regimeHistory.length, // 历史Length
     }; // 结束代码块
   } // 结束代码块
 
@@ -684,16 +684,16 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
 
     if (regime === MarketRegime.EXTREME) { // 条件判断 regime === MarketRegime.EXTREME
       return { // 返回结果
-        allowed: false, // 设置 allowed 字段
-        reason: '极端波动，风控模式', // 设置 reason 字段
-        recommendation: '等待市场稳定', // 设置 recommendation 字段
+        allowed: false, // allowed
+        reason: '极端波动，风控模式', // reason
+        recommendation: '等待市场稳定', // recommendation
       }; // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      allowed: true, // 设置 allowed 字段
+      allowed: true, // allowed
       regime, // 执行语句
-      positionMultiplier: this._getStrategyRecommendation().positionSizing, // 设置 positionMultiplier 字段
+      positionMultiplier: this._getStrategyRecommendation().positionSizing, // 持仓倍数
     }; // 结束代码块
   } // 结束代码块
 
@@ -712,9 +712,9 @@ export class MarketRegimeDetector extends EventEmitter { // 导出类 MarketRegi
     this._hurstHistory = []; // 设置 _hurstHistory
     this._indicators = {}; // 设置 _indicators
     this._stats = { // 设置 _stats
-      regimeChanges: 0, // 设置 regimeChanges 字段
-      lastChangeTime: null, // 设置 lastChangeTime 字段
-      regimeDurations: {}, // 设置 regimeDurations 字段
+      regimeChanges: 0, // 状态变更
+      lastChangeTime: null, // last修改时间
+      regimeDurations: {}, // 状态Durations
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

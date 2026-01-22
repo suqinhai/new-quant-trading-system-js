@@ -51,52 +51,52 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 总最大权益敞口 (USD) / Maximum total equity exposure (USD)
-  maxTotalEquity: 10000000, // $10M
+  maxTotalEquity: 10000000, // 总最大权益敞口 (USD)
 
   // 总最大仓位价值 (USD) / Maximum total position value (USD)
-  maxTotalPositionValue: 5000000, // $5M
+  maxTotalPositionValue: 5000000, // 总最大仓位价值 (USD)
 
   // 全局最大杠杆 / Global maximum leverage
-  maxGlobalLeverage: 3.0, // 设置 maxGlobalLeverage 字段
+  maxGlobalLeverage: 3.0, // 最大全局杠杆
 
   // 全局最大回撤 / Global maximum drawdown
-  maxGlobalDrawdown: 0.15, // 15%
+  maxGlobalDrawdown: 0.15, // 最大全局回撤
 
   // 单日最大亏损 / Maximum daily loss
-  maxDailyLoss: 0.05, // 5%
+  maxDailyLoss: 0.05, // 最大每日亏损
 
   // ============================================
   // 账户限额 / Per-Account Limits
   // ============================================
 
   // 单账户最大权益占比 / Maximum single account equity ratio
-  maxSingleAccountRatio: 0.40, // 40%
+  maxSingleAccountRatio: 0.40, // 单账户最大权益占比
 
   // 单账户最大仓位占比 / Maximum single account position ratio
-  maxSingleAccountPositionRatio: 0.30, // 30%
+  maxSingleAccountPositionRatio: 0.30, // 单账户最大仓位占比
 
   // ============================================
   // 相关性限制 / Correlation Limits
   // ============================================
 
   // 账户间高相关性阈值 / High correlation threshold between accounts
-  accountCorrelationThreshold: 0.70, // 设置 accountCorrelationThreshold 字段
+  accountCorrelationThreshold: 0.70, // 账户间高相关性阈值
 
   // 高相关账户对最大数量 / Maximum high correlation account pairs
-  maxHighCorrelationPairs: 2, // 设置 maxHighCorrelationPairs 字段
+  maxHighCorrelationPairs: 2, // 高相关账户对最大数量
 
   // ============================================
   // 集中度限制 / Concentration Limits
   // ============================================
 
   // 单一交易所最大敞口比例 / Maximum single exchange exposure ratio
-  maxSingleExchangeRatio: 0.50, // 50%
+  maxSingleExchangeRatio: 0.50, // 单一交易所最大敞口比例
 
   // 单一币种最大敞口比例 / Maximum single currency exposure ratio
-  maxSingleCurrencyRatio: 0.30, // 30%
+  maxSingleCurrencyRatio: 0.30, // 单一币种最大敞口比例
 
   // 单一交易对最大敞口比例 / Maximum single symbol exposure ratio
-  maxSingleSymbolRatio: 0.20, // 20%
+  maxSingleSymbolRatio: 0.20, // 单一交易对最大敞口比例
 
   // ============================================
   // 监控配置 / Monitoring Configuration
@@ -109,10 +109,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   accountTimeout: 60000, // 1分钟 / 1 minute
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[MultiAccountRisk]', // 设置 logPrefix 字段
+  logPrefix: '[MultiAccountRisk]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -146,15 +146,15 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
 
     // 全局状态 / Global state
     this.globalState = { // 设置 globalState
-      totalEquity: 0, // 设置 totalEquity 字段
-      totalPositionValue: 0, // 设置 totalPositionValue 字段
-      globalLeverage: 0, // 设置 globalLeverage 字段
-      globalDrawdown: 0, // 设置 globalDrawdown 字段
-      dailyPnL: 0, // 设置 dailyPnL 字段
-      dailyPnLPercent: 0, // 设置 dailyPnLPercent 字段
-      riskLevel: GLOBAL_RISK_LEVEL.NORMAL, // 设置 riskLevel 字段
-      tradingAllowed: true, // 设置 tradingAllowed 字段
-      pauseReason: null, // 设置 pauseReason 字段
+      totalEquity: 0, // 总Equity
+      totalPositionValue: 0, // 总持仓Value
+      globalLeverage: 0, // 全局杠杆
+      globalDrawdown: 0, // 全局回撤
+      dailyPnL: 0, // 每日PnL
+      dailyPnLPercent: 0, // 每日PnL百分比
+      riskLevel: GLOBAL_RISK_LEVEL.NORMAL, // 风险级别
+      tradingAllowed: true, // 交易Allowed
+      pauseReason: null, // 暂停Reason
     }; // 结束代码块
 
     // 峰值权益 (用于计算回撤) / Peak equity (for drawdown calculation)
@@ -253,22 +253,22 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   registerAccount(accountId, config = {}) { // 调用 registerAccount
     const account = { // 定义常量 account
-      id: accountId, // 设置 id 字段
-      exchange: config.exchange || 'unknown', // 设置 exchange 字段
-      subAccount: config.subAccount || null, // 设置 subAccount 字段
-      equity: config.initialEquity || 0, // 设置 equity 字段
-      availableBalance: config.initialEquity || 0, // 设置 availableBalance 字段
-      positions: [], // 设置 positions 字段
-      positionValue: 0, // 设置 positionValue 字段
-      unrealizedPnL: 0, // 设置 unrealizedPnL 字段
-      realizedPnL: 0, // 设置 realizedPnL 字段
-      dailyPnL: 0, // 设置 dailyPnL 字段
-      leverage: 0, // 设置 leverage 字段
-      status: ACCOUNT_STATUS.ACTIVE, // 设置 status 字段
-      lastUpdate: Date.now(), // 设置 lastUpdate 字段
-      registeredAt: Date.now(), // 设置 registeredAt 字段
-      riskBudget: config.riskBudget || 0, // 设置 riskBudget 字段
-      maxPositionRatio: config.maxPositionRatio || this.config.maxSingleAccountPositionRatio, // 设置 maxPositionRatio 字段
+      id: accountId, // ID
+      exchange: config.exchange || 'unknown', // 交易所
+      subAccount: config.subAccount || null, // sub账户
+      equity: config.initialEquity || 0, // equity
+      availableBalance: config.initialEquity || 0, // available余额
+      positions: [], // 持仓
+      positionValue: 0, // 持仓Value
+      unrealizedPnL: 0, // 未实现PnL
+      realizedPnL: 0, // 已实现PnL
+      dailyPnL: 0, // 每日PnL
+      leverage: 0, // 杠杆
+      status: ACCOUNT_STATUS.ACTIVE, // 状态
+      lastUpdate: Date.now(), // last更新
+      registeredAt: Date.now(), // registeredAt
+      riskBudget: config.riskBudget || 0, // 风险Budget
+      maxPositionRatio: config.maxPositionRatio || this.config.maxSingleAccountPositionRatio, // 最大持仓比例
     }; // 结束代码块
 
     this.accounts.set(accountId, account); // 访问 accounts
@@ -324,7 +324,7 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
     // 更新账户数据 / Update account data
     Object.assign(account, { // 调用 Object.assign
       ...data, // 展开对象或数组
-      lastUpdate: Date.now(), // 设置 lastUpdate 字段
+      lastUpdate: Date.now(), // last更新
     }); // 结束代码块
 
     // 计算仓位价值 / Calculate position value
@@ -534,9 +534,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkEquityLimit() { // 调用 _checkEquityLimit
     const result = { // 定义常量 result
-      type: 'equityLimit', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
+      type: 'equityLimit', // 类型
+      passed: true, // passed
+      message: null, // 消息
     }; // 结束代码块
 
     if (this.globalState.totalEquity > this.config.maxTotalEquity) { // 条件判断 this.globalState.totalEquity > this.config.ma...
@@ -557,9 +557,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkPositionLimit() { // 调用 _checkPositionLimit
     const result = { // 定义常量 result
-      type: 'positionLimit', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
+      type: 'positionLimit', // 类型
+      passed: true, // passed
+      message: null, // 消息
     }; // 结束代码块
 
     if (this.globalState.totalPositionValue > this.config.maxTotalPositionValue) { // 条件判断 this.globalState.totalPositionValue > this.co...
@@ -580,9 +580,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkGlobalLeverage() { // 调用 _checkGlobalLeverage
     const result = { // 定义常量 result
-      type: 'globalLeverage', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
+      type: 'globalLeverage', // 类型
+      passed: true, // passed
+      message: null, // 消息
     }; // 结束代码块
 
     if (this.globalState.globalLeverage > this.config.maxGlobalLeverage) { // 条件判断 this.globalState.globalLeverage > this.config...
@@ -603,9 +603,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkGlobalDrawdown() { // 调用 _checkGlobalDrawdown
     const result = { // 定义常量 result
-      type: 'globalDrawdown', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
+      type: 'globalDrawdown', // 类型
+      passed: true, // passed
+      message: null, // 消息
     }; // 结束代码块
 
     if (this.globalState.globalDrawdown > this.config.maxGlobalDrawdown) { // 条件判断 this.globalState.globalDrawdown > this.config...
@@ -626,9 +626,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkDailyLoss() { // 调用 _checkDailyLoss
     const result = { // 定义常量 result
-      type: 'dailyLoss', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
+      type: 'dailyLoss', // 类型
+      passed: true, // passed
+      message: null, // 消息
     }; // 结束代码块
 
     if (this.globalState.dailyPnLPercent < -this.config.maxDailyLoss) { // 条件判断 this.globalState.dailyPnLPercent < -this.conf...
@@ -649,10 +649,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkAccountConcentration() { // 调用 _checkAccountConcentration
     const result = { // 定义常量 result
-      type: 'accountConcentration', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
-      details: [], // 设置 details 字段
+      type: 'accountConcentration', // 类型
+      passed: true, // passed
+      message: null, // 消息
+      details: [], // details
     }; // 结束代码块
 
     for (const [accountId, account] of this.accounts) { // 循环 const [accountId, account] of this.accounts
@@ -663,7 +663,7 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
           result.details.push({ // 调用 result.details.push
             accountId, // 执行语句
             ratio, // 执行语句
-            limit: this.config.maxSingleAccountRatio, // 设置 limit 字段
+            limit: this.config.maxSingleAccountRatio, // 限制
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -721,10 +721,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
     } // 结束代码块
 
     this.exposureAnalysis = { // 设置 exposureAnalysis
-      byExchange: Object.fromEntries(byExchange), // 设置 byExchange 字段
-      byCurrency: Object.fromEntries(byCurrency), // 设置 byCurrency 字段
-      bySymbol: Object.fromEntries(bySymbol), // 设置 bySymbol 字段
-      totalPositionValue: this.globalState.totalPositionValue, // 设置 totalPositionValue 字段
+      byExchange: Object.fromEntries(byExchange), // by交易所
+      byCurrency: Object.fromEntries(byCurrency), // byCurrency
+      bySymbol: Object.fromEntries(bySymbol), // by交易对
+      totalPositionValue: this.globalState.totalPositionValue, // 总持仓Value
     }; // 结束代码块
     this.exposureAnalysisTime = now; // 设置 exposureAnalysisTime
   } // 结束代码块
@@ -738,10 +738,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkExposureConcentration() { // 调用 _checkExposureConcentration
     const result = { // 定义常量 result
-      type: 'exposureConcentration', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
-      details: [], // 设置 details 字段
+      type: 'exposureConcentration', // 类型
+      passed: true, // passed
+      message: null, // 消息
+      details: [], // details
     }; // 结束代码块
 
     if (!this.exposureAnalysis || this.globalState.totalPositionValue === 0) { // 条件判断 !this.exposureAnalysis || this.globalState.to...
@@ -755,10 +755,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
       const ratio = value / total; // 定义常量 ratio
       if (ratio > this.config.maxSingleExchangeRatio) { // 条件判断 ratio > this.config.maxSingleExchangeRatio
         result.details.push({ // 调用 result.details.push
-          type: 'exchange', // 设置 type 字段
-          name: exchange, // 设置 name 字段
+          type: 'exchange', // 类型
+          name: exchange, // name
           ratio, // 执行语句
-          limit: this.config.maxSingleExchangeRatio, // 设置 limit 字段
+          limit: this.config.maxSingleExchangeRatio, // 限制
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -768,10 +768,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
       const ratio = value / total; // 定义常量 ratio
       if (ratio > this.config.maxSingleCurrencyRatio) { // 条件判断 ratio > this.config.maxSingleCurrencyRatio
         result.details.push({ // 调用 result.details.push
-          type: 'currency', // 设置 type 字段
-          name: currency, // 设置 name 字段
+          type: 'currency', // 类型
+          name: currency, // name
           ratio, // 执行语句
-          limit: this.config.maxSingleCurrencyRatio, // 设置 limit 字段
+          limit: this.config.maxSingleCurrencyRatio, // 限制
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -781,10 +781,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
       const ratio = value / total; // 定义常量 ratio
       if (ratio > this.config.maxSingleSymbolRatio) { // 条件判断 ratio > this.config.maxSingleSymbolRatio
         result.details.push({ // 调用 result.details.push
-          type: 'symbol', // 设置 type 字段
-          name: symbol, // 设置 name 字段
+          type: 'symbol', // 类型
+          name: symbol, // name
           ratio, // 执行语句
-          limit: this.config.maxSingleSymbolRatio, // 设置 limit 字段
+          limit: this.config.maxSingleSymbolRatio, // 限制
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -807,10 +807,10 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   _checkAccountCorrelation() { // 调用 _checkAccountCorrelation
     const result = { // 定义常量 result
-      type: 'accountCorrelation', // 设置 type 字段
-      passed: true, // 设置 passed 字段
-      message: null, // 设置 message 字段
-      highCorrelationPairs: [], // 设置 highCorrelationPairs 字段
+      type: 'accountCorrelation', // 类型
+      passed: true, // passed
+      message: null, // 消息
+      highCorrelationPairs: [], // 最高CorrelationPairs
     }; // 结束代码块
 
     const accountIds = [...this.accounts.keys()]; // 定义常量 accountIds
@@ -835,7 +835,7 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
 
         if (Math.abs(correlation) >= this.config.accountCorrelationThreshold) { // 条件判断 Math.abs(correlation) >= this.config.accountC...
           result.highCorrelationPairs.push({ // 调用 result.highCorrelationPairs.push
-            accounts: [accountIds[i], accountIds[j]], // 设置 accounts 字段
+            accounts: [accountIds[i], accountIds[j]], // accounts
             correlation, // 执行语句
           }); // 结束代码块
         } // 结束代码块
@@ -933,9 +933,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
 
       this.emit('riskLevelChanged', { // 调用 emit
         previousLevel, // 执行语句
-        currentLevel: newLevel, // 设置 currentLevel 字段
-        failedChecks: failedResults, // 设置 failedChecks 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        currentLevel: newLevel, // current级别
+        failedChecks: failedResults, // failedChecks
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
       this.log(`全局风险级别变更: ${previousLevel} -> ${newLevel}`, 'info'); // 调用 log
@@ -968,9 +968,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
 
       // 发出紧急事件 / Emit emergency event
       this.emit('globalEmergency', { // 调用 emit
-        failures: criticalFailures, // 设置 failures 字段
-        globalState: { ...this.globalState }, // 设置 globalState 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        failures: criticalFailures, // failures
+        globalState: { ...this.globalState }, // 全局State
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
       // 记录风险事件 / Record risk event
@@ -1078,8 +1078,8 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
     this.riskEvents.push({ // 访问 riskEvents
       type, // 执行语句
       details, // 执行语句
-      globalState: { ...this.globalState }, // 设置 globalState 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      globalState: { ...this.globalState }, // 全局State
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 限制历史长度 / Limit history length
@@ -1102,9 +1102,9 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   checkOrder(accountId, order) { // 调用 checkOrder
     const result = { // 定义常量 result
-      allowed: true, // 设置 allowed 字段
-      reasons: [], // 设置 reasons 字段
-      warnings: [], // 设置 warnings 字段
+      allowed: true, // allowed
+      reasons: [], // reasons
+      warnings: [], // warnings
     }; // 结束代码块
 
     // 检查全局交易状态 / Check global trading status
@@ -1153,14 +1153,14 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   getGlobalStatus() { // 调用 getGlobalStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      globalState: { ...this.globalState }, // 设置 globalState 字段
-      accountCount: this.accounts.size, // 设置 accountCount 字段
-      activeAccountCount: [...this.accounts.values()].filter( // 设置 activeAccountCount 字段
+      running: this.running, // running
+      globalState: { ...this.globalState }, // 全局State
+      accountCount: this.accounts.size, // 账户数量
+      activeAccountCount: [...this.accounts.values()].filter( // 活跃账户数量
         (a) => a.status === ACCOUNT_STATUS.ACTIVE // 定义箭头函数
       ).length, // 执行语句
-      peakEquity: this.peakEquity, // 设置 peakEquity 字段
-      exposureAnalysis: this.exposureAnalysis, // 设置 exposureAnalysis 字段
+      peakEquity: this.peakEquity, // peakEquity
+      exposureAnalysis: this.exposureAnalysis, // exposureAnalysis
     }; // 结束代码块
   } // 结束代码块
 
@@ -1173,13 +1173,13 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
   getAccounts() { // 调用 getAccounts
     return [...this.accounts.entries()].map(([id, account]) => ({ // 返回结果
       id, // 执行语句
-      exchange: account.exchange, // 设置 exchange 字段
-      equity: account.equity, // 设置 equity 字段
-      positionValue: account.positionValue, // 设置 positionValue 字段
-      leverage: account.leverage, // 设置 leverage 字段
-      dailyPnL: account.dailyPnL, // 设置 dailyPnL 字段
-      status: account.status, // 设置 status 字段
-      lastUpdate: account.lastUpdate, // 设置 lastUpdate 字段
+      exchange: account.exchange, // 交易所
+      equity: account.equity, // equity
+      positionValue: account.positionValue, // 持仓Value
+      leverage: account.leverage, // 杠杆
+      dailyPnL: account.dailyPnL, // 每日PnL
+      status: account.status, // 状态
+      lastUpdate: account.lastUpdate, // last更新
     })); // 结束代码块
   } // 结束代码块
 
@@ -1191,26 +1191,26 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
    */
   getRiskReport() { // 调用 getRiskReport
     return { // 返回结果
-      timestamp: Date.now(), // 设置 timestamp 字段
-      global: { // 设置 global 字段
-        totalEquity: this.globalState.totalEquity, // 设置 totalEquity 字段
-        totalPositionValue: this.globalState.totalPositionValue, // 设置 totalPositionValue 字段
-        globalLeverage: this.globalState.globalLeverage, // 设置 globalLeverage 字段
-        globalDrawdown: this.globalState.globalDrawdown, // 设置 globalDrawdown 字段
-        dailyPnL: this.globalState.dailyPnL, // 设置 dailyPnL 字段
-        dailyPnLPercent: this.globalState.dailyPnLPercent, // 设置 dailyPnLPercent 字段
-        riskLevel: this.globalState.riskLevel, // 设置 riskLevel 字段
-        tradingAllowed: this.globalState.tradingAllowed, // 设置 tradingAllowed 字段
+      timestamp: Date.now(), // 时间戳
+      global: { // 全局
+        totalEquity: this.globalState.totalEquity, // 总Equity
+        totalPositionValue: this.globalState.totalPositionValue, // 总持仓Value
+        globalLeverage: this.globalState.globalLeverage, // 全局杠杆
+        globalDrawdown: this.globalState.globalDrawdown, // 全局回撤
+        dailyPnL: this.globalState.dailyPnL, // 每日PnL
+        dailyPnLPercent: this.globalState.dailyPnLPercent, // 每日PnL百分比
+        riskLevel: this.globalState.riskLevel, // 风险级别
+        tradingAllowed: this.globalState.tradingAllowed, // 交易Allowed
       }, // 结束代码块
-      accounts: this.getAccounts(), // 设置 accounts 字段
-      exposureAnalysis: this.exposureAnalysis, // 设置 exposureAnalysis 字段
-      recentEvents: this.riskEvents.slice(-20), // 设置 recentEvents 字段
-      limits: { // 设置 limits 字段
-        maxTotalEquity: this.config.maxTotalEquity, // 设置 maxTotalEquity 字段
-        maxTotalPositionValue: this.config.maxTotalPositionValue, // 设置 maxTotalPositionValue 字段
-        maxGlobalLeverage: this.config.maxGlobalLeverage, // 设置 maxGlobalLeverage 字段
-        maxGlobalDrawdown: this.config.maxGlobalDrawdown, // 设置 maxGlobalDrawdown 字段
-        maxDailyLoss: this.config.maxDailyLoss, // 设置 maxDailyLoss 字段
+      accounts: this.getAccounts(), // accounts
+      exposureAnalysis: this.exposureAnalysis, // exposureAnalysis
+      recentEvents: this.riskEvents.slice(-20), // recentEvents
+      limits: { // limits
+        maxTotalEquity: this.config.maxTotalEquity, // 最大总Equity
+        maxTotalPositionValue: this.config.maxTotalPositionValue, // 最大总持仓Value
+        maxGlobalLeverage: this.config.maxGlobalLeverage, // 最大全局杠杆
+        maxGlobalDrawdown: this.config.maxGlobalDrawdown, // 最大全局回撤
+        maxDailyLoss: this.config.maxDailyLoss, // 最大每日亏损
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1261,7 +1261,7 @@ export class MultiAccountRiskAggregator extends EventEmitter { // 导出类 Mult
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

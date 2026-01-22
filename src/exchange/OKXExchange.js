@@ -44,33 +44,33 @@ export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
   _createExchange() { // 调用 _createExchange
     // 调试：打印配置信息 / Debug: print config info
     console.log(`[${this.name}] 创建交易所实例，配置: / Creating exchange instance, config:`, { // 控制台输出
-      hasApiKey: !!this.config.apiKey, // 设置 hasApiKey 字段
-      hasSecret: !!this.config.secret, // 设置 hasSecret 字段
-      hasPassword: !!this.config.password, // 设置 hasPassword 字段
-      apiKeyType: typeof this.config.apiKey, // 设置 apiKeyType 字段
-      secretType: typeof this.config.secret, // 设置 secretType 字段
-      passwordType: typeof this.config.password, // 设置 passwordType 字段
+      hasApiKey: !!this.config.apiKey, // 是否有API密钥
+      hasSecret: !!this.config.secret, // 是否有密钥
+      hasPassword: !!this.config.password, // 是否有密码
+      apiKeyType: typeof this.config.apiKey, // API密钥类型
+      secretType: typeof this.config.secret, // 密钥类型
+      passwordType: typeof this.config.password, // 密码类型
     }); // 结束代码块
 
     // 构建基础配置 / Build base config
     const exchangeConfig = { // 定义常量 exchangeConfig
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit !== false, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit !== false, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout || 30000, // 设置 timeout 字段
+      timeout: this.config.timeout || 30000, // 超时设置 (毫秒)
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
         // spot = 现货 / Spot
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
         // option = 期权 / Options
-        defaultType: this.config.defaultType || 'swap', // 设置 defaultType 字段
+        defaultType: this.config.defaultType || 'swap', // option = 期权
 
         // 创建市价单时不需要价格 / Market order doesn't require price
-        createMarketBuyOrderRequiresPrice: false, // 设置 createMarketBuyOrderRequiresPrice 字段
+        createMarketBuyOrderRequiresPrice: false, // 创建市价单时不需要价格
 
         // 合并额外选项 / Merge additional options
         ...this.config.options, // 展开对象或数组
@@ -96,12 +96,12 @@ export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
 
     // 调试：打印最终配置 / Debug: print final config
     console.log(`[${this.name}] 最终交易所配置: / Final exchange config:`, { // 控制台输出
-      hasApiKey: !!exchangeConfig.apiKey, // 设置 hasApiKey 字段
-      hasSecret: !!exchangeConfig.secret, // 设置 hasSecret 字段
-      hasPassword: !!exchangeConfig.password, // 设置 hasPassword 字段
-      enableRateLimit: exchangeConfig.enableRateLimit, // 设置 enableRateLimit 字段
-      timeout: exchangeConfig.timeout, // 设置 timeout 字段
-      defaultType: exchangeConfig.options?.defaultType, // 设置 defaultType 字段
+      hasApiKey: !!exchangeConfig.apiKey, // 是否有API密钥
+      hasSecret: !!exchangeConfig.secret, // 是否有密钥
+      hasPassword: !!exchangeConfig.password, // 是否有密码
+      enableRateLimit: exchangeConfig.enableRateLimit, // 启用频率限制
+      timeout: exchangeConfig.timeout, // 超时
+      defaultType: exchangeConfig.options?.defaultType, // 默认类型
     }); // 结束代码块
 
     // 创建并返回 CCXT OKX 实例 / Create and return CCXT OKX instance
@@ -347,7 +347,7 @@ export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
     return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
       const params = { // 定义常量 params
-        ordType: algoType,  // 订单类型: conditional, oco, trigger, etc.
+        ordType: algoType,  // ord类型
       }; // 结束代码块
 
       // 如果指定了交易对 / If symbol is specified
@@ -396,7 +396,7 @@ export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
       // 调用 OKX API 取消算法订单 / Call OKX API to cancel algo order
       const result = await this.exchange.privatePostTradeCancelAlgos([{ // 定义常量 result
         algoId, // 执行语句
-        instId: this.exchange.marketId(symbol), // 设置 instId 字段
+        instId: this.exchange.marketId(symbol), // instID
       }]); // 执行语句
 
       // 发出算法订单取消事件 / Emit algo order cancelled event
@@ -429,7 +429,7 @@ export class OKXExchange extends BaseExchange { // 导出类 OKXExchange
     return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
       const params = { // 定义常量 params
-        instId: this.exchange.marketId(symbol), // 设置 instId 字段
+        instId: this.exchange.marketId(symbol), // instID
         tdMode: 'cross',  // 交易模式 / Trade mode
       }; // 结束代码块
 

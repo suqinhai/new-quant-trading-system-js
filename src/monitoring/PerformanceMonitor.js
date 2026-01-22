@@ -22,17 +22,17 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
 
     this.config = { // 设置 config
       // 采样间隔 (ms)
-      sampleInterval: config.sampleInterval || 5000, // 设置 sampleInterval 字段
+      sampleInterval: config.sampleInterval || 5000, // 采样间隔 (ms)
       // 保留的历史数据点数
-      historySize: config.historySize || 1000, // 设置 historySize 字段
+      historySize: config.historySize || 1000, // 保留的历史数据点数
       // 是否启用详细内存分析
-      detailedMemory: config.detailedMemory ?? false, // 设置 detailedMemory 字段
+      detailedMemory: config.detailedMemory ?? false, // 是否启用详细内存分析
       // 告警阈值
-      thresholds: { // 设置 thresholds 字段
-        memoryUsagePercent: config.thresholds?.memoryUsagePercent || 85, // 设置 memoryUsagePercent 字段
-        cpuUsagePercent: config.thresholds?.cpuUsagePercent || 80, // 设置 cpuUsagePercent 字段
-        eventLoopLagMs: config.thresholds?.eventLoopLagMs || 100, // 设置 eventLoopLagMs 字段
-        gcPauseMs: config.thresholds?.gcPauseMs || 100, // 设置 gcPauseMs 字段
+      thresholds: { // 告警阈值
+        memoryUsagePercent: config.thresholds?.memoryUsagePercent || 85, // 内存使用率
+        cpuUsagePercent: config.thresholds?.cpuUsagePercent || 80, // CPU使用率
+        eventLoopLagMs: config.thresholds?.eventLoopLagMs || 100, // 事件循环延迟(毫秒)
+        gcPauseMs: config.thresholds?.gcPauseMs || 100, // GC暂停(毫秒)
         ...config.thresholds, // 展开对象或数组
       }, // 结束代码块
     }; // 结束代码块
@@ -40,21 +40,21 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     // 指标存储
     this.metrics = { // 设置 metrics
       // 操作计时器
-      timers: new Map(), // 设置 timers 字段
+      timers: new Map(), // 计时器
       // 计数器
-      counters: new Map(), // 设置 counters 字段
+      counters: new Map(), // 计数器
       // 直方图 (用于延迟分布)
-      histograms: new Map(), // 设置 histograms 字段
+      histograms: new Map(), // 直方图 (用于延迟分布)
       // 仪表 (当前值)
-      gauges: new Map(), // 设置 gauges 字段
+      gauges: new Map(), // 仪表 (当前值)
     }; // 结束代码块
 
     // 历史数据
     this.history = { // 设置 history
-      memory: [], // 设置 memory 字段
-      cpu: [], // 设置 cpu 字段
-      eventLoop: [], // 设置 eventLoop 字段
-      custom: new Map(), // 设置 custom 字段
+      memory: [], // 内存
+      cpu: [], // CPU
+      eventLoop: [], // 事件循环
+      custom: new Map(), // 自定义
     }; // 结束代码块
 
     // 系统信息
@@ -73,9 +73,9 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
 
     // GC 监控 (如果可用)
     this.gcStats = { // 设置 gcStats
-      collections: 0, // 设置 collections 字段
-      totalPauseMs: 0, // 设置 totalPauseMs 字段
-      lastPauseMs: 0, // 设置 lastPauseMs 字段
+      collections: 0, // collections
+      totalPauseMs: 0, // 总暂停毫秒
+      lastPauseMs: 0, // last暂停毫秒
     }; // 结束代码块
 
     // 启动时间
@@ -88,12 +88,12 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
    */
   _getSystemInfo() { // 调用 _getSystemInfo
     return { // 返回结果
-      platform: os.platform(), // 设置 platform 字段
-      arch: os.arch(), // 设置 arch 字段
-      nodeVersion: process.version, // 设置 nodeVersion 字段
-      cpus: os.cpus().length, // 设置 cpus 字段
-      totalMemory: os.totalmem(), // 设置 totalMemory 字段
-      hostname: os.hostname(), // 设置 hostname 字段
+      platform: os.platform(), // platform
+      arch: os.arch(), // arch
+      nodeVersion: process.version, // nodeVersion
+      cpus: os.cpus().length, // cpus
+      totalMemory: os.totalmem(), // 总内存
+      hostname: os.hostname(), // hostname
     }; // 结束代码块
   } // 结束代码块
 
@@ -147,17 +147,17 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
 
       if (lag > 0) { // 条件判断 lag > 0
         this._addToHistory('eventLoop', { // 调用 _addToHistory
-          timestamp: Date.now(), // 设置 timestamp 字段
-          lagMs: Math.max(0, lag), // 设置 lagMs 字段
+          timestamp: Date.now(), // 时间戳
+          lagMs: Math.max(0, lag), // 延迟毫秒
         }); // 结束代码块
 
         // 检查阈值
         if (lag > this.config.thresholds.eventLoopLagMs) { // 条件判断 lag > this.config.thresholds.eventLoopLagMs
           this.emit('alert', { // 调用 emit
-            type: 'eventLoopLag', // 设置 type 字段
-            value: lag, // 设置 value 字段
-            threshold: this.config.thresholds.eventLoopLagMs, // 设置 threshold 字段
-            message: `Event loop lag ${lag.toFixed(2)}ms exceeds threshold`, // 设置 message 字段
+            type: 'eventLoopLag', // 类型
+            value: lag, // value
+            threshold: this.config.thresholds.eventLoopLagMs, // 阈值
+            message: `Event loop lag ${lag.toFixed(2)}ms exceeds threshold`, // 消息
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -190,8 +190,8 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
 
     this.emit('sample', { // 调用 emit
       timestamp, // 执行语句
-      memory: memoryMetrics, // 设置 memory 字段
-      cpu: cpuMetrics, // 设置 cpu 字段
+      memory: memoryMetrics, // 内存
+      cpu: cpuMetrics, // CPU
     }); // 结束代码块
   } // 结束代码块
 
@@ -205,31 +205,31 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     const freeMemory = os.freemem(); // 定义常量 freeMemory
 
     const metrics = { // 定义常量 metrics
-      heapUsed: memUsage.heapUsed, // 设置 heapUsed 字段
-      heapTotal: memUsage.heapTotal, // 设置 heapTotal 字段
-      external: memUsage.external, // 设置 external 字段
-      rss: memUsage.rss, // 设置 rss 字段
-      arrayBuffers: memUsage.arrayBuffers || 0, // 设置 arrayBuffers 字段
-      systemTotal: totalMemory, // 设置 systemTotal 字段
-      systemFree: freeMemory, // 设置 systemFree 字段
-      systemUsed: totalMemory - freeMemory, // 设置 systemUsed 字段
-      heapUsedPercent: (memUsage.heapUsed / memUsage.heapTotal) * 100, // 设置 heapUsedPercent 字段
-      systemUsedPercent: ((totalMemory - freeMemory) / totalMemory) * 100, // 设置 systemUsedPercent 字段
+      heapUsed: memUsage.heapUsed, // heapUsed
+      heapTotal: memUsage.heapTotal, // heap总
+      external: memUsage.external, // external
+      rss: memUsage.rss, // rss
+      arrayBuffers: memUsage.arrayBuffers || 0, // arrayBuffers
+      systemTotal: totalMemory, // 系统总
+      systemFree: freeMemory, // 系统Free
+      systemUsed: totalMemory - freeMemory, // 系统Used
+      heapUsedPercent: (memUsage.heapUsed / memUsage.heapTotal) * 100, // heapUsed百分比
+      systemUsedPercent: ((totalMemory - freeMemory) / totalMemory) * 100, // 系统Used百分比
     }; // 结束代码块
 
     // 详细 V8 堆统计
     if (this.config.detailedMemory) { // 条件判断 this.config.detailedMemory
       const heapStats = v8.getHeapStatistics(); // 定义常量 heapStats
       metrics.v8 = { // 赋值 metrics.v8
-        totalHeapSize: heapStats.total_heap_size, // 设置 totalHeapSize 字段
-        totalHeapSizeExecutable: heapStats.total_heap_size_executable, // 设置 totalHeapSizeExecutable 字段
-        totalPhysicalSize: heapStats.total_physical_size, // 设置 totalPhysicalSize 字段
-        usedHeapSize: heapStats.used_heap_size, // 设置 usedHeapSize 字段
-        heapSizeLimit: heapStats.heap_size_limit, // 设置 heapSizeLimit 字段
-        mallocedMemory: heapStats.malloced_memory, // 设置 mallocedMemory 字段
-        peakMallocedMemory: heapStats.peak_malloced_memory, // 设置 peakMallocedMemory 字段
-        numberOfNativeContexts: heapStats.number_of_native_contexts, // 设置 numberOfNativeContexts 字段
-        numberOfDetachedContexts: heapStats.number_of_detached_contexts, // 设置 numberOfDetachedContexts 字段
+        totalHeapSize: heapStats.total_heap_size, // 总Heap大小
+        totalHeapSizeExecutable: heapStats.total_heap_size_executable, // 总Heap大小Executable
+        totalPhysicalSize: heapStats.total_physical_size, // 总Physical大小
+        usedHeapSize: heapStats.used_heap_size, // usedHeap大小
+        heapSizeLimit: heapStats.heap_size_limit, // heap大小限制
+        mallocedMemory: heapStats.malloced_memory, // malloced内存
+        peakMallocedMemory: heapStats.peak_malloced_memory, // peakMalloced内存
+        numberOfNativeContexts: heapStats.number_of_native_contexts, // numberOfNativeContexts
+        numberOfDetachedContexts: heapStats.number_of_detached_contexts, // numberOfDetachedContexts
       }; // 结束代码块
     } // 结束代码块
 
@@ -262,13 +262,13 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     this.lastCpuTime = currentTime; // 设置 lastCpuTime
 
     return { // 返回结果
-      user: currentCpuUsage.user, // 设置 user 字段
-      system: currentCpuUsage.system, // 设置 system 字段
+      user: currentCpuUsage.user, // 用户
+      system: currentCpuUsage.system, // 系统
       userPercent, // 执行语句
       systemPercent, // 执行语句
       totalPercent, // 执行语句
       loadAverage, // 执行语句
-      cpuCount: os.cpus().length, // 设置 cpuCount 字段
+      cpuCount: os.cpus().length, // CPU数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -280,20 +280,20 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     // 内存使用率告警
     if (memoryMetrics.systemUsedPercent > this.config.thresholds.memoryUsagePercent) { // 条件判断 memoryMetrics.systemUsedPercent > this.config...
       this.emit('alert', { // 调用 emit
-        type: 'memoryUsage', // 设置 type 字段
-        value: memoryMetrics.systemUsedPercent, // 设置 value 字段
-        threshold: this.config.thresholds.memoryUsagePercent, // 设置 threshold 字段
-        message: `Memory usage ${memoryMetrics.systemUsedPercent.toFixed(1)}% exceeds threshold`, // 设置 message 字段
+        type: 'memoryUsage', // 类型
+        value: memoryMetrics.systemUsedPercent, // value
+        threshold: this.config.thresholds.memoryUsagePercent, // 阈值
+        message: `Memory usage ${memoryMetrics.systemUsedPercent.toFixed(1)}% exceeds threshold`, // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // CPU 使用率告警
     if (cpuMetrics.totalPercent > this.config.thresholds.cpuUsagePercent) { // 条件判断 cpuMetrics.totalPercent > this.config.thresho...
       this.emit('alert', { // 调用 emit
-        type: 'cpuUsage', // 设置 type 字段
-        value: cpuMetrics.totalPercent, // 设置 value 字段
-        threshold: this.config.thresholds.cpuUsagePercent, // 设置 threshold 字段
-        message: `CPU usage ${cpuMetrics.totalPercent.toFixed(1)}% exceeds threshold`, // 设置 message 字段
+        type: 'cpuUsage', // 类型
+        value: cpuMetrics.totalPercent, // value
+        threshold: this.config.thresholds.cpuUsagePercent, // 阈值
+        message: `CPU usage ${cpuMetrics.totalPercent.toFixed(1)}% exceeds threshold`, // 消息
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -342,11 +342,11 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
   recordTiming(name, durationMs) { // 调用 recordTiming
     if (!this.metrics.histograms.has(name)) { // 条件判断 !this.metrics.histograms.has(name)
       this.metrics.histograms.set(name, { // 访问 metrics
-        count: 0, // 设置 count 字段
-        sum: 0, // 设置 sum 字段
-        min: Infinity, // 设置 min 字段
-        max: -Infinity, // 设置 max 字段
-        values: [], // 设置 values 字段
+        count: 0, // 数量
+        sum: 0, // sum
+        min: Infinity, // 最小
+        max: -Infinity, // 最大
+        values: [], // values
       }); // 结束代码块
     } // 结束代码块
 
@@ -434,7 +434,7 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
   setGauge(name, value) { // 调用 setGauge
     this.metrics.gauges.set(name, { // 访问 metrics
       value, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -466,15 +466,15 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
 
     return { // 返回结果
       name, // 执行语句
-      count: histogram.count, // 设置 count 字段
-      min: histogram.min, // 设置 min 字段
-      max: histogram.max, // 设置 max 字段
-      mean: histogram.sum / histogram.count, // 设置 mean 字段
-      sum: histogram.sum, // 设置 sum 字段
-      p50: values[Math.floor(count * 0.5)] || 0, // 设置 p50 字段
-      p90: values[Math.floor(count * 0.9)] || 0, // 设置 p90 字段
-      p95: values[Math.floor(count * 0.95)] || 0, // 设置 p95 字段
-      p99: values[Math.floor(count * 0.99)] || 0, // 设置 p99 字段
+      count: histogram.count, // 数量
+      min: histogram.min, // 最小
+      max: histogram.max, // 最大
+      mean: histogram.sum / histogram.count, // mean
+      sum: histogram.sum, // sum
+      p50: values[Math.floor(count * 0.5)] || 0, // p50
+      p90: values[Math.floor(count * 0.9)] || 0, // p90
+      p95: values[Math.floor(count * 0.95)] || 0, // p95
+      p99: values[Math.floor(count * 0.99)] || 0, // p99
     }; // 结束代码块
   } // 结束代码块
 
@@ -551,15 +551,15 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     const cpuMetrics = this._collectCpuMetrics(); // 定义常量 cpuMetrics
 
     return { // 返回结果
-      timestamp: Date.now(), // 设置 timestamp 字段
-      uptime: Date.now() - this.startTime, // 设置 uptime 字段
-      system: this.systemInfo, // 设置 system 字段
-      memory: memoryMetrics, // 设置 memory 字段
-      cpu: cpuMetrics, // 设置 cpu 字段
-      counters: this.getAllCounters(), // 设置 counters 字段
-      gauges: this.getAllGauges(), // 设置 gauges 字段
-      timings: this.getAllTimingStats(), // 设置 timings 字段
-      gc: { ...this.gcStats }, // 设置 gc 字段
+      timestamp: Date.now(), // 时间戳
+      uptime: Date.now() - this.startTime, // uptime
+      system: this.systemInfo, // 系统
+      memory: memoryMetrics, // 内存
+      cpu: cpuMetrics, // CPU
+      counters: this.getAllCounters(), // 计数器
+      gauges: this.getAllGauges(), // 仪表
+      timings: this.getAllTimingStats(), // timings
+      gc: { ...this.gcStats }, // GC
     }; // 结束代码块
   } // 结束代码块
 
@@ -570,14 +570,14 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     const snapshot = this.getSnapshot(); // 定义常量 snapshot
 
     return { // 返回结果
-      uptime: snapshot.uptime, // 设置 uptime 字段
-      uptimeFormatted: this._formatUptime(snapshot.uptime), // 设置 uptimeFormatted 字段
-      memoryUsedMB: Math.round(snapshot.memory.heapUsed / 1024 / 1024 * 100) / 100, // 设置 memoryUsedMB 字段
-      memoryTotalMB: Math.round(snapshot.memory.heapTotal / 1024 / 1024 * 100) / 100, // 设置 memoryTotalMB 字段
-      memoryPercent: Math.round(snapshot.memory.heapUsedPercent * 10) / 10, // 设置 memoryPercent 字段
-      cpuPercent: Math.round(snapshot.cpu.totalPercent * 10) / 10, // 设置 cpuPercent 字段
-      counters: Object.keys(snapshot.counters).length, // 设置 counters 字段
-      timings: Object.keys(snapshot.timings).length, // 设置 timings 字段
+      uptime: snapshot.uptime, // uptime
+      uptimeFormatted: this._formatUptime(snapshot.uptime), // uptimeFormatted
+      memoryUsedMB: Math.round(snapshot.memory.heapUsed / 1024 / 1024 * 100) / 100, // 内存UsedMB
+      memoryTotalMB: Math.round(snapshot.memory.heapTotal / 1024 / 1024 * 100) / 100, // 内存总MB
+      memoryPercent: Math.round(snapshot.memory.heapUsedPercent * 10) / 10, // 内存百分比
+      cpuPercent: Math.round(snapshot.cpu.totalPercent * 10) / 10, // CPU百分比
+      counters: Object.keys(snapshot.counters).length, // 计数器
+      timings: Object.keys(snapshot.timings).length, // timings
     }; // 结束代码块
   } // 结束代码块
 
@@ -618,9 +618,9 @@ class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(
     this.history.custom.clear(); // 访问 history
 
     this.gcStats = { // 设置 gcStats
-      collections: 0, // 设置 collections 字段
-      totalPauseMs: 0, // 设置 totalPauseMs 字段
-      lastPauseMs: 0, // 设置 lastPauseMs 字段
+      collections: 0, // collections
+      totalPauseMs: 0, // 总暂停毫秒
+      lastPauseMs: 0, // last暂停毫秒
     }; // 结束代码块
 
     this.emit('reset'); // 调用 emit

@@ -244,9 +244,9 @@ export class FactorRegistry extends EventEmitter { // 导出类 FactorRegistry
    */
   getStats() { // 调用 getStats
     const stats = { // 定义常量 stats
-      totalFactors: this.factors.size, // 设置 totalFactors 字段
-      byCategory: {}, // 设置 byCategory 字段
-      factorStats: {}, // 设置 factorStats 字段
+      totalFactors: this.factors.size, // 总Factors
+      byCategory: {}, // byCategory
+      factorStats: {}, // factorStats
     }; // 结束代码块
 
     // 按类别统计 / Stats by category

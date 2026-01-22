@@ -60,45 +60,45 @@ import { StatisticalArbitrageStrategy } from './StatisticalArbitrageStrategy.js'
 function getStrategyClassMap() { // 定义函数 getStrategyClassMap
   return { // 返回结果
     // 基础趋势策略 / Basic trend strategies
-    SMA: SMAStrategy, // 设置 SMA 字段
-    RSI: RSIStrategy, // 设置 RSI 字段
-    MACD: MACDStrategy, // 设置 MACD 字段
-    BollingerBands: BollingerBandsStrategy, // 设置 BollingerBands 字段
-    ATRBreakout: ATRBreakoutStrategy, // 设置 ATRBreakout 字段
+    SMA: SMAStrategy, // SMA
+    RSI: RSIStrategy, // RSI
+    MACD: MACDStrategy, // MACD
+    BollingerBands: BollingerBandsStrategy, // 布林带Bands
+    ATRBreakout: ATRBreakoutStrategy, // ATR突破
 
     // 资金费率策略 / Funding rate strategies
-    FundingRate: FundingArbStrategy, // 设置 FundingRate 字段
-    FundingArb: FundingArbStrategy, // 设置 FundingArb 字段
-    FundingRateExtreme: FundingRateExtremeStrategy, // 设置 FundingRateExtreme 字段
+    FundingRate: FundingArbStrategy, // 资金费率频率
+    FundingArb: FundingArbStrategy, // 资金费率Arb
+    FundingRateExtreme: FundingRateExtremeStrategy, // 资金费率频率极端
 
     // 波动率策略 / Volatility strategies
-    BollingerWidth: BollingerWidthStrategy, // 设置 BollingerWidth 字段
-    VolatilityRegime: VolatilityRegimeStrategy, // 设置 VolatilityRegime 字段
+    BollingerWidth: BollingerWidthStrategy, // 布林带宽度
+    VolatilityRegime: VolatilityRegimeStrategy, // 波动率状态
 
     // 网格与订单流策略 / Grid and order flow strategies
-    Grid: GridStrategy, // 设置 Grid 字段
-    OrderFlow: OrderFlowStrategy, // 设置 OrderFlow 字段
+    Grid: GridStrategy, // 网格与订单流策略
+    OrderFlow: OrderFlowStrategy, // 订单流
 
     // 多周期与自适应策略 / Multi-timeframe and adaptive strategies
-    MultiTimeframe: MultiTimeframeStrategy, // 设置 MultiTimeframe 字段
-    MTF: MultiTimeframeStrategy, // 设置 MTF 字段
-    RegimeSwitching: RegimeSwitchingStrategy, // 设置 RegimeSwitching 字段
-    Adaptive: AdaptiveStrategy, // 设置 Adaptive 字段
+    MultiTimeframe: MultiTimeframeStrategy, // 多周期与自适应策略
+    MTF: MultiTimeframeStrategy, // MTF
+    RegimeSwitching: RegimeSwitchingStrategy, // 状态Switching
+    Adaptive: AdaptiveStrategy, // Adaptive
 
     // 风控驱动策略 / Risk-driven strategies
-    RiskDriven: RiskDrivenStrategy, // 设置 RiskDriven 字段
+    RiskDriven: RiskDrivenStrategy, // 风险Driven
 
     // 横截面策略 / Cross-sectional strategies
-    CrossSectional: CrossSectionalStrategy, // 设置 CrossSectional 字段
-    MomentumRank: MomentumRankStrategy, // 设置 MomentumRank 字段
-    Momentum: MomentumRankStrategy, // 设置 Momentum 字段
-    Rotation: RotationStrategy, // 设置 Rotation 字段
+    CrossSectional: CrossSectionalStrategy, // CrossSectional
+    MomentumRank: MomentumRankStrategy, // 动量Rank
+    Momentum: MomentumRankStrategy, // 动量
+    Rotation: RotationStrategy, // Rotation
 
     // 套利策略 / Arbitrage strategies
-    CrossExchangeSpread: CrossExchangeSpreadStrategy, // 设置 CrossExchangeSpread 字段
-    CrossExchange: CrossExchangeSpreadStrategy, // 设置 CrossExchange 字段
-    StatisticalArbitrage: StatisticalArbitrageStrategy, // 设置 StatisticalArbitrage 字段
-    StatArb: StatisticalArbitrageStrategy, // 设置 StatArb 字段
+    CrossExchangeSpread: CrossExchangeSpreadStrategy, // Cross交易所价差
+    CrossExchange: CrossExchangeSpreadStrategy, // Cross交易所
+    StatisticalArbitrage: StatisticalArbitrageStrategy, // 统计套利
+    StatArb: StatisticalArbitrageStrategy, // StatArb
   }; // 结束代码块
 } // 结束代码块
 
@@ -110,7 +110,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * SMA 策略信号转换
    * 基于均线距离计算得分
    */
-  SMA: (strategy, candle) => { // 设置 SMA 字段
+  SMA: (strategy, candle) => { // SMA
     const shortMA = strategy.getIndicator('shortMA'); // 定义常量 shortMA
     const longMA = strategy.getIndicator('longMA'); // 定义常量 longMA
 
@@ -133,7 +133,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * RSI = 50 → 0.5 (中性)
    * RSI > 70 → 0.0 (强烈看空)
    */
-  RSI: (strategy, candle) => { // 设置 RSI 字段
+  RSI: (strategy, candle) => { // RSI
     const rsi = strategy.getIndicator('rsi'); // 定义常量 rsi
 
     if (rsi === undefined || rsi === null) return 0.5; // 条件判断 rsi === undefined || rsi === null
@@ -148,7 +148,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * MACD 策略信号转换
    * 柱状图 > 0 看多, < 0 看空
    */
-  MACD: (strategy, candle) => { // 设置 MACD 字段
+  MACD: (strategy, candle) => { // MACD
     const histogram = strategy.getIndicator('histogram'); // 定义常量 histogram
 
     if (histogram === undefined || histogram === null) return 0.5; // 条件判断 histogram === undefined || histogram === null
@@ -167,7 +167,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * 价格在下轨附近 → 看多
    * 价格在上轨附近 → 看空
    */
-  BollingerBands: (strategy, candle) => { // 设置 BollingerBands 字段
+  BollingerBands: (strategy, candle) => { // 布林带Bands
     const upper = strategy.getIndicator('upper'); // 定义常量 upper
     const lower = strategy.getIndicator('lower'); // 定义常量 lower
     const middle = strategy.getIndicator('middle'); // 定义常量 middle
@@ -191,7 +191,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * ATR 突破策略信号转换
    */
-  ATRBreakout: (strategy, candle) => { // 设置 ATRBreakout 字段
+  ATRBreakout: (strategy, candle) => { // ATR突破
     const breakoutSignal = strategy.getIndicator('breakout'); // 定义常量 breakoutSignal
     const atrPercent = strategy.getIndicator('atrPercent'); // 定义常量 atrPercent
 
@@ -209,7 +209,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * 负费率 → 看多 (做多有利)
    * 正费率 → 看空 (做空有利)
    */
-  FundingRate: (strategy, candle) => { // 设置 FundingRate 字段
+  FundingRate: (strategy, candle) => { // 资金费率频率
     const fundingRate = strategy.getIndicator('fundingRate'); // 定义常量 fundingRate
 
     if (fundingRate === undefined || fundingRate === null) return 0.5; // 条件判断 fundingRate === undefined || fundingRate === ...
@@ -228,7 +228,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * 布林带宽度策略信号转换
    * 带宽收窄 → 即将突破，准备入场
    */
-  BollingerWidth: (strategy, candle) => { // 设置 BollingerWidth 字段
+  BollingerWidth: (strategy, candle) => { // 布林带宽度
     const width = strategy.getIndicator('width'); // 定义常量 width
     const avgWidth = strategy.getIndicator('avgWidth'); // 定义常量 avgWidth
     const squeeze = strategy.getIndicator('squeeze'); // 定义常量 squeeze
@@ -246,7 +246,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 波动率状态策略信号转换
    */
-  VolatilityRegime: (strategy, candle) => { // 设置 VolatilityRegime 字段
+  VolatilityRegime: (strategy, candle) => { // 波动率状态
     const regime = strategy.getIndicator('regime'); // 定义常量 regime
     const signal = strategy.getSignal(); // 定义常量 signal
 
@@ -262,7 +262,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 网格策略信号转换
    */
-  Grid: (strategy, candle) => { // 设置 Grid 字段
+  Grid: (strategy, candle) => { // 网格
     const gridLevel = strategy.getIndicator('gridLevel'); // 定义常量 gridLevel
     const signal = strategy.getSignal(); // 定义常量 signal
 
@@ -275,7 +275,7 @@ const SignalConverters = { // 定义常量 SignalConverters
    * 订单流策略信号转换
    * 基于买卖压力
    */
-  OrderFlow: (strategy, candle) => { // 设置 OrderFlow 字段
+  OrderFlow: (strategy, candle) => { // 订单流
     const buyPressure = strategy.getIndicator('buyPressure'); // 定义常量 buyPressure
     const sellPressure = strategy.getIndicator('sellPressure'); // 定义常量 sellPressure
     const imbalance = strategy.getIndicator('imbalance'); // 定义常量 imbalance
@@ -302,7 +302,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 多周期共振策略信号转换
    */
-  MultiTimeframe: (strategy, candle) => { // 设置 MultiTimeframe 字段
+  MultiTimeframe: (strategy, candle) => { // Multi周期
     const alignment = strategy.getIndicator('alignment'); // 定义常量 alignment
     const strength = strategy.getIndicator('strength'); // 定义常量 strength
 
@@ -325,7 +325,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * Regime 切换策略信号转换
    */
-  RegimeSwitching: (strategy, candle) => { // 设置 RegimeSwitching 字段
+  RegimeSwitching: (strategy, candle) => { // 状态Switching
     const regime = strategy.getIndicator('regime'); // 定义常量 regime
     const confidence = strategy.getIndicator('confidence') || 0.5; // 定义常量 confidence
 
@@ -343,7 +343,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 自适应策略信号转换
    */
-  Adaptive: (strategy, candle) => { // 设置 Adaptive 字段
+  Adaptive: (strategy, candle) => { // Adaptive
     const adaptiveScore = strategy.getIndicator('adaptiveScore'); // 定义常量 adaptiveScore
     if (adaptiveScore !== undefined) { // 条件判断 adaptiveScore !== undefined
       return Math.max(0, Math.min(1, adaptiveScore)); // 返回结果
@@ -358,7 +358,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 风控驱动策略信号转换
    */
-  RiskDriven: (strategy, candle) => { // 设置 RiskDriven 字段
+  RiskDriven: (strategy, candle) => { // 风险Driven
     const riskScore = strategy.getIndicator('riskScore'); // 定义常量 riskScore
     const signal = strategy.getSignal(); // 定义常量 signal
 
@@ -378,7 +378,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 横截面策略信号转换
    */
-  CrossSectional: (strategy, candle) => { // 设置 CrossSectional 字段
+  CrossSectional: (strategy, candle) => { // CrossSectional
     const rank = strategy.getIndicator('rank'); // 定义常量 rank
     const totalAssets = strategy.getIndicator('totalAssets') || 10; // 定义常量 totalAssets
 
@@ -397,7 +397,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 动量排名策略信号转换
    */
-  MomentumRank: (strategy, candle) => { // 设置 MomentumRank 字段
+  MomentumRank: (strategy, candle) => { // 动量Rank
     const momentum = strategy.getIndicator('momentum'); // 定义常量 momentum
     const rank = strategy.getIndicator('rank'); // 定义常量 rank
 
@@ -416,7 +416,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 轮动策略信号转换
    */
-  Rotation: (strategy, candle) => { // 设置 Rotation 字段
+  Rotation: (strategy, candle) => { // Rotation
     const strength = strategy.getIndicator('strength'); // 定义常量 strength
     const isLeader = strategy.getIndicator('isLeader'); // 定义常量 isLeader
 
@@ -435,7 +435,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 资金费率极值策略信号转换
    */
-  FundingRateExtreme: (strategy, candle) => { // 设置 FundingRateExtreme 字段
+  FundingRateExtreme: (strategy, candle) => { // 资金费率频率极端
     const fundingRate = strategy.getIndicator('fundingRate'); // 定义常量 fundingRate
     const isExtreme = strategy.getIndicator('isExtreme'); // 定义常量 isExtreme
     const extremeType = strategy.getIndicator('extremeType'); // 定义常量 extremeType
@@ -460,7 +460,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 跨交易所价差策略信号转换
    */
-  CrossExchangeSpread: (strategy, candle) => { // 设置 CrossExchangeSpread 字段
+  CrossExchangeSpread: (strategy, candle) => { // Cross交易所价差
     const spread = strategy.getIndicator('spread'); // 定义常量 spread
     const threshold = strategy.getIndicator('threshold') || 0.001; // 定义常量 threshold
 
@@ -480,7 +480,7 @@ const SignalConverters = { // 定义常量 SignalConverters
   /**
    * 统计套利策略信号转换
    */
-  StatisticalArbitrage: (strategy, candle) => { // 设置 StatisticalArbitrage 字段
+  StatisticalArbitrage: (strategy, candle) => { // 统计套利
     const zscore = strategy.getIndicator('zscore'); // 定义常量 zscore
     const signal = strategy.getSignal(); // 定义常量 signal
 
@@ -499,16 +499,16 @@ const SignalConverters = { // 定义常量 SignalConverters
   }, // 结束代码块
 
   // 别名映射到相同的转换器
-  FundingArb: (strategy, candle) => SignalConverters.FundingRate(strategy, candle), // 设置 FundingArb 字段
-  MTF: (strategy, candle) => SignalConverters.MultiTimeframe(strategy, candle), // 设置 MTF 字段
-  Momentum: (strategy, candle) => SignalConverters.MomentumRank(strategy, candle), // 设置 Momentum 字段
-  CrossExchange: (strategy, candle) => SignalConverters.CrossExchangeSpread(strategy, candle), // 设置 CrossExchange 字段
-  StatArb: (strategy, candle) => SignalConverters.StatisticalArbitrage(strategy, candle), // 设置 StatArb 字段
+  FundingArb: (strategy, candle) => SignalConverters.FundingRate(strategy, candle), // 别名映射到相同的转换器
+  MTF: (strategy, candle) => SignalConverters.MultiTimeframe(strategy, candle), // MTF
+  Momentum: (strategy, candle) => SignalConverters.MomentumRank(strategy, candle), // 动量
+  CrossExchange: (strategy, candle) => SignalConverters.CrossExchangeSpread(strategy, candle), // Cross交易所
+  StatArb: (strategy, candle) => SignalConverters.StatisticalArbitrage(strategy, candle), // StatArb
 
   /**
    * 默认转换器: 基于策略信号状态
    */
-  default: (strategy, candle) => { // 默认分支
+  default: (strategy, candle) => { // 默认
     const signal = strategy.getSignal(); // 定义常量 signal
 
     if (!signal) return 0.5; // 条件判断 !signal
@@ -530,7 +530,7 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: 'WeightedComboStrategy', // 设置 name 字段
+      name: 'WeightedComboStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -551,9 +551,9 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
     // 策略权重配置 { name: weight }
     // 示例: { SMA: 0.4, RSI: 0.2, FundingRate: 0.4 }
     this.strategyWeights = params.strategyWeights || { // 设置 strategyWeights
-      SMA: 0.4, // 设置 SMA 字段
-      RSI: 0.2, // 设置 RSI 字段
-      MACD: 0.4, // 设置 MACD 字段
+      SMA: 0.4, // SMA
+      RSI: 0.2, // RSI
+      MACD: 0.4, // MACD
     }; // 结束代码块
 
     // 交易阈值: 总分 >= threshold 买入 (降低阈值增加触发机会)
@@ -567,12 +567,12 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
     // ============================================
 
     this.strategyParams = { // 设置 strategyParams
-      SMA: params.smaParams || { shortPeriod: 10, longPeriod: 30 }, // 设置 SMA 字段
-      RSI: params.rsiParams || { period: 14, overbought: 70, oversold: 30 }, // 设置 RSI 字段
-      MACD: params.macdParams || { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 }, // 设置 MACD 字段
-      BollingerBands: params.bbParams || { period: 20, stdDev: 2 }, // 设置 BollingerBands 字段
-      ATRBreakout: params.atrParams || { period: 14, multiplier: 2 }, // 设置 ATRBreakout 字段
-      FundingRate: params.fundingParams || {}, // 设置 FundingRate 字段
+      SMA: params.smaParams || { shortPeriod: 10, longPeriod: 30 }, // SMA
+      RSI: params.rsiParams || { period: 14, overbought: 70, oversold: 30 }, // RSI
+      MACD: params.macdParams || { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 }, // MACD
+      BollingerBands: params.bbParams || { period: 20, stdDev: 2 }, // 布林带Bands
+      ATRBreakout: params.atrParams || { period: 14, multiplier: 2 }, // ATR突破
+      FundingRate: params.fundingParams || {}, // 资金费率频率
       ...params.customStrategyParams, // 展开对象或数组
     }; // 结束代码块
 
@@ -582,30 +582,30 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
 
     this.weightSystemConfig = { // 设置 weightSystemConfig
       // 动态权重
-      dynamicWeights: params.dynamicWeights !== false, // 设置 dynamicWeights 字段
-      adjustmentFactor: params.adjustmentFactor || 0.2, // 设置 adjustmentFactor 字段
-      evaluationPeriod: params.evaluationPeriod || 20, // 设置 evaluationPeriod 字段
-      minWeight: params.minWeight || 0.05, // 设置 minWeight 字段
-      maxWeight: params.maxWeight || 0.6, // 设置 maxWeight 字段
+      dynamicWeights: params.dynamicWeights !== false, // dynamicWeights
+      adjustmentFactor: params.adjustmentFactor || 0.2, // adjustmentFactor
+      evaluationPeriod: params.evaluationPeriod || 20, // evaluation周期
+      minWeight: params.minWeight || 0.05, // 最小Weight
+      maxWeight: params.maxWeight || 0.6, // 最大Weight
 
       // 相关性限制
-      correlationLimit: params.correlationLimit !== false, // 设置 correlationLimit 字段
-      maxCorrelation: params.maxCorrelation || 0.7, // 设置 maxCorrelation 字段
-      correlationPenaltyFactor: params.correlationPenaltyFactor || 0.5, // 设置 correlationPenaltyFactor 字段
-      correlationMatrix: params.correlationMatrix || { // 设置 correlationMatrix 字段
-        'SMA-MACD': 0.6,      // SMA 和 MACD 相关性较高
-        'SMA-RSI': 0.3,       // SMA 和 RSI 相关性中等
-        'RSI-BollingerBands': 0.4, // RSI 和布林带相关性中等
+      correlationLimit: params.correlationLimit !== false, // correlation限制
+      maxCorrelation: params.maxCorrelation || 0.7, // 最大Correlation
+      correlationPenaltyFactor: params.correlationPenaltyFactor || 0.5, // correlationPenaltyFactor
+      correlationMatrix: params.correlationMatrix || { // correlationMatrix
+        'SMA-MACD': 0.6,      // SMAMACD
+        'SMA-RSI': 0.3,       // SMARSI
+        'RSI-BollingerBands': 0.4, // RSI布林带Bands
       }, // 结束代码块
 
       // 熔断机制
-      circuitBreaker: params.circuitBreaker !== false, // 设置 circuitBreaker 字段
-      consecutiveLossLimit: params.consecutiveLossLimit || 5, // 设置 consecutiveLossLimit 字段
-      maxDrawdownLimit: params.maxDrawdownLimit || 0.15, // 设置 maxDrawdownLimit 字段
-      minWinRate: params.minWinRate || 0.3, // 设置 minWinRate 字段
-      evaluationWindow: params.evaluationWindow || 30, // 设置 evaluationWindow 字段
-      coolingPeriod: params.coolingPeriod || 3600000, // 1 小时
-      autoRecover: params.autoRecover !== false, // 设置 autoRecover 字段
+      circuitBreaker: params.circuitBreaker !== false, // circuitBreaker
+      consecutiveLossLimit: params.consecutiveLossLimit || 5, // consecutive亏损限制
+      maxDrawdownLimit: params.maxDrawdownLimit || 0.15, // 最大回撤限制
+      minWinRate: params.minWinRate || 0.3, // 最小Win频率
+      evaluationWindow: params.evaluationWindow || 30, // evaluation窗口
+      coolingPeriod: params.coolingPeriod || 3600000, // 冷却周期
+      autoRecover: params.autoRecover !== false, // 自动Recover
     }; // 结束代码块
 
     // ============================================
@@ -656,9 +656,9 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
    */
   _initWeightSystem() { // 调用 _initWeightSystem
     this._weightSystem = new SignalWeightingSystem({ // 设置 _weightSystem
-      threshold: this.buyThreshold, // 设置 threshold 字段
-      sellThreshold: this.sellThreshold, // 设置 sellThreshold 字段
-      baseWeights: this.strategyWeights, // 设置 baseWeights 字段
+      threshold: this.buyThreshold, // 阈值
+      sellThreshold: this.sellThreshold, // sell阈值
+      baseWeights: this.strategyWeights, // baseWeights
       ...this.weightSystemConfig, // 展开对象或数组
     }); // 结束代码块
 
@@ -681,13 +681,13 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
     // 创建空操作 engine，防止子策略报 "引擎未设置" 错误
     // Create noop engine to prevent "Engine not set" errors in sub-strategies
     const noopEngine = { // 定义常量 noopEngine
-      buy: () => null, // 设置 buy 字段
-      sell: () => null, // 设置 sell 字段
-      buyPercent: () => null, // 设置 buyPercent 字段
-      closePosition: () => null, // 设置 closePosition 字段
-      getPosition: () => null, // 设置 getPosition 字段
-      getEquity: () => 0, // 设置 getEquity 字段
-      getAvailableBalance: () => 0, // 设置 getAvailableBalance 字段
+      buy: () => null, // buy
+      sell: () => null, // sell
+      buyPercent: () => null, // buy百分比
+      closePosition: () => null, // 收盘持仓
+      getPosition: () => null, // get持仓
+      getEquity: () => 0, // getEquity
+      getAvailableBalance: () => 0, // getAvailable余额
     }; // 结束代码块
 
     for (const strategyName of Object.keys(this.strategyWeights)) { // 循环 const strategyName of Object.keys(this.strate...
@@ -701,10 +701,10 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
       try { // 尝试执行
         const params = { // 定义常量 params
           ...this.strategyParams[strategyName], // 展开对象或数组
-          symbol: this.symbol, // 设置 symbol 字段
-          positionPercent: this.positionPercent, // 设置 positionPercent 字段
+          symbol: this.symbol, // 交易对
+          positionPercent: this.positionPercent, // 持仓百分比
           // 禁止子策略自动交易
-          autoTrade: false, // 设置 autoTrade 字段
+          autoTrade: false, // 禁止子策略自动交易
         }; // 结束代码块
 
         const strategy = new StrategyClass(params); // 定义常量 strategy
@@ -717,8 +717,8 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
         await strategy.onInit(this._exchanges); // 等待异步结果
 
         this._subStrategies[strategyName] = { // 访问 _subStrategies
-          instance: strategy, // 设置 instance 字段
-          converter: SignalConverters[strategyName] || SignalConverters.default, // 设置 converter 字段
+          instance: strategy, // instance
+          converter: SignalConverters[strategyName] || SignalConverters.default, // converter
         }; // 结束代码块
 
         this.log(`子策略 [${strategyName}] 初始化完成`); // 调用 log
@@ -838,8 +838,8 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
 
         // 记录到权重系统
         this._weightSystem.recordSignal(strategyName, score, { // 访问 _weightSystem
-          price: candle.close, // 设置 price 字段
-          indicators: instance.indicators, // 设置 indicators 字段
+          price: candle.close, // 价格
+          indicators: instance.indicators, // indicators
         }); // 结束代码块
 
       } catch (error) { // 执行语句
@@ -903,21 +903,21 @@ export class WeightedComboStrategy extends BaseStrategy { // 导出类 WeightedC
     // 更新各策略表现
     for (const strategyName of Object.keys(this.strategyWeights)) { // 循环 const strategyName of Object.keys(this.strate...
       this._weightSystem.updatePerformance(strategyName, { // 访问 _weightSystem
-        profit: pnl, // 设置 profit 字段
+        profit: pnl, // 盈利
         win, // 执行语句
-        entryPrice: this._entryPrice, // 设置 entryPrice 字段
-        exitPrice: candle.close, // 设置 exitPrice 字段
+        entryPrice: this._entryPrice, // 入场价格
+        exitPrice: candle.close, // 出场价格
       }); // 结束代码块
     } // 结束代码块
 
     // 记录交易历史
     this._tradeHistory.push({ // 访问 _tradeHistory
-      entryPrice: this._entryPrice, // 设置 entryPrice 字段
-      exitPrice: candle.close, // 设置 exitPrice 字段
+      entryPrice: this._entryPrice, // 入场价格
+      exitPrice: candle.close, // 出场价格
       pnl, // 执行语句
       win, // 执行语句
       reason, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 执行平仓

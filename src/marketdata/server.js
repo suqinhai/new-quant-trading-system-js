@@ -49,17 +49,17 @@ class MarketDataServer { // 定义类 MarketDataServer
 
     // Socket.IO 服务器 / Socket.IO server
     this.io = new SocketIO(this.server, { // 设置 io
-      cors: { // 设置 cors 字段
+      cors: { // cors
         origin: '*',  // 允许所有来源 (生产环境应该限制) / Allow all origins (should be restricted in production)
-        methods: ['GET', 'POST'], // 设置 methods 字段
+        methods: ['GET', 'POST'], // methods
       }, // 结束代码块
     }); // 结束代码块
 
     // 数据聚合器 / Data aggregator
     this.aggregator = new DataAggregator({ // 设置 aggregator
-      enableAggregation: true, // 设置 enableAggregation 字段
-      enableArbitrageDetection: true, // 设置 enableArbitrageDetection 字段
-      arbitrageThreshold: 0.1, // 设置 arbitrageThreshold 字段
+      enableAggregation: true, // 启用Aggregation
+      enableArbitrageDetection: true, // 启用套利Detection
+      arbitrageThreshold: 0.1, // 套利阈值
     }); // 结束代码块
 
     // 已连接的客户端 / Connected clients
@@ -157,9 +157,9 @@ class MarketDataServer { // 定义类 MarketDataServer
       } // 结束代码块
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: tickers, // 设置 data 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        success: true, // 成功标记
+        data: tickers, // 数据
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     }); // 结束代码块
 
@@ -172,9 +172,9 @@ class MarketDataServer { // 定义类 MarketDataServer
       const tickers = this.aggregator.getTickers(symbol); // 定义常量 tickers
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: tickers, // 设置 data 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        success: true, // 成功标记
+        data: tickers, // 数据
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     }); // 结束代码块
 
@@ -187,9 +187,9 @@ class MarketDataServer { // 定义类 MarketDataServer
       const bestPrice = this.aggregator.getBestPrice(symbol); // 定义常量 bestPrice
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: bestPrice, // 设置 data 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        success: true, // 成功标记
+        data: bestPrice, // 数据
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     }); // 结束代码块
 
@@ -199,9 +199,9 @@ class MarketDataServer { // 定义类 MarketDataServer
       const opportunities = this.aggregator.getArbitrageOpportunities(); // 定义常量 opportunities
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: opportunities, // 设置 data 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        success: true, // 成功标记
+        data: opportunities, // 数据
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     }); // 结束代码块
 
@@ -213,15 +213,15 @@ class MarketDataServer { // 定义类 MarketDataServer
       for (const [name, engine] of this.aggregator.engines) { // 循环 const [name, engine] of this.aggregator.engines
         exchanges.push({ // 调用 exchanges.push
           name, // 执行语句
-          connected: engine.connected, // 设置 connected 字段
-          subscriptions: Array.from(engine.subscriptions), // 设置 subscriptions 字段
+          connected: engine.connected, // connected
+          subscriptions: Array.from(engine.subscriptions), // subscriptions
         }); // 结束代码块
       } // 结束代码块
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: exchanges, // 设置 data 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        success: true, // 成功标记
+        data: exchanges, // 数据
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     }); // 结束代码块
 
@@ -229,8 +229,8 @@ class MarketDataServer { // 定义类 MarketDataServer
     this.app.use((err, req, res, next) => { // 访问 app
       console.error('[MarketDataServer] Express 错误 / Express error:', err); // 控制台输出
       res.status(500).json({ // 调用 res.status
-        success: false, // 设置 success 字段
-        error: err.message, // 设置 error 字段
+        success: false, // 成功标记
+        error: err.message, // 错误
       }); // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -248,8 +248,8 @@ class MarketDataServer { // 定义类 MarketDataServer
       // 保存客户端信息 / Save client info
       this.clients.set(socket.id, { // 访问 clients
         socket, // 执行语句
-        subscriptions: new Set(), // 设置 subscriptions 字段
-        connectedAt: Date.now(), // 设置 connectedAt 字段
+        subscriptions: new Set(), // subscriptions
+        connectedAt: Date.now(), // connectedAt
       }); // 结束代码块
 
       // 订阅请求 / Subscribe request

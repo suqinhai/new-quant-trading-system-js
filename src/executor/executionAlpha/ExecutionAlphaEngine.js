@@ -54,7 +54,7 @@ export const ORDER_SIZE_CLASS = { // 导出常量 ORDER_SIZE_CLASS
  */
 export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   // 订单大小分类阈值（相对于日均量）/ Order size classification thresholds
-  sizeClassThresholds: { // 设置 sizeClassThresholds 字段
+  sizeClassThresholds: { // 订单大小分类阈值（相对于日均量）/ Order size classification thresholds
     tiny: 0.001,      // 0.1% 日均量 / 0.1% of daily volume
     small: 0.005,     // 0.5% 日均量 / 0.5% of daily volume
     medium: 0.02,     // 2% 日均量 / 2% of daily volume
@@ -62,7 +62,7 @@ export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   }, // 结束代码块
 
   // 策略选择权重 / Strategy selection weights
-  strategyWeights: { // 设置 strategyWeights 字段
+  strategyWeights: { // 策略Weights
     liquidity: 0.3,      // 流动性权重 / Liquidity weight
     slippageRisk: 0.3,   // 滑点风险权重 / Slippage risk weight
     urgency: 0.2,        // 紧急性权重 / Urgency weight
@@ -70,27 +70,27 @@ export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   }, // 结束代码块
 
   // 自动策略阈值 / Auto strategy thresholds
-  autoStrategyThresholds: { // 设置 autoStrategyThresholds 字段
+  autoStrategyThresholds: { // 自动策略阈值
     // 使用 TWAP/VWAP 的最小订单大小（相对于日均量）/ Min size for TWAP/VWAP
-    minSizeForAlgo: 0.01,  // 1%
+    minSizeForAlgo: 0.01,  // 使用 TWAP/VWAP 的最小订单大小（相对于日均量）/ Min size for TWAP/VWAP
     // 使用冰山单的最小订单大小 / Min size for iceberg
-    minSizeForIceberg: 0.02,  // 2%
+    minSizeForIceberg: 0.02,  // 使用冰山单的最小订单大小
   }, // 结束代码块
 
   // 默认 TWAP 执行时长（毫秒）/ Default TWAP duration (ms)
   defaultTWAPDuration: 30 * 60 * 1000,  // 30 分钟 / 30 minutes
 
   // 默认切片数 / Default slice count
-  defaultSliceCount: 20, // 设置 defaultSliceCount 字段
+  defaultSliceCount: 20, // 默认Slice数量
 
   // 是否启用自动延迟 / Enable auto delay
-  enableAutoDelay: true, // 设置 enableAutoDelay 字段
+  enableAutoDelay: true, // 是否启用自动延迟
 
   // 是否启用滑点记录 / Enable slippage recording
-  enableSlippageRecording: true, // 设置 enableSlippageRecording 字段
+  enableSlippageRecording: true, // 是否启用滑点记录
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 }; // 结束代码块
 
 // ============================================
@@ -134,12 +134,12 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalExecutions: 0, // 设置 totalExecutions 字段
-      directExecutions: 0, // 设置 directExecutions 字段
-      twapExecutions: 0, // 设置 twapExecutions 字段
-      vwapExecutions: 0, // 设置 vwapExecutions 字段
-      icebergExecutions: 0, // 设置 icebergExecutions 字段
-      avgSlippage: 0, // 设置 avgSlippage 字段
+      totalExecutions: 0, // 总Executions
+      directExecutions: 0, // directExecutions
+      twapExecutions: 0, // twapExecutions
+      vwapExecutions: 0, // VWAPExecutions
+      icebergExecutions: 0, // icebergExecutions
+      avgSlippage: 0, // avg滑点
       totalSaved: 0,  // 相对于直接市价单节省的成本 / Cost saved vs direct market orders
     }; // 结束代码块
 
@@ -165,12 +165,12 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
     // 初始化子组件 / Initialize sub-components
     this.twapVwapExecutor.init({ // 访问 twapVwapExecutor
       orderExecutor, // 执行语句
-      orderBookAnalyzer: this.orderBookAnalyzer, // 设置 orderBookAnalyzer 字段
+      orderBookAnalyzer: this.orderBookAnalyzer, // 订单BookAnalyzer
     }); // 结束代码块
 
     this.icebergExecutor.init({ // 访问 icebergExecutor
       orderExecutor, // 执行语句
-      orderBookAnalyzer: this.orderBookAnalyzer, // 设置 orderBookAnalyzer 字段
+      orderBookAnalyzer: this.orderBookAnalyzer, // 订单BookAnalyzer
     }); // 结束代码块
 
     // 如果有交易所，同步日均成交量 / If exchanges provided, sync daily volumes
@@ -270,7 +270,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
           break; // 跳出循环或分支
 
         case EXECUTION_STRATEGY.DIRECT: // 分支 EXECUTION_STRATEGY.DIRECT
-        default: // 默认分支
+        default: // 默认
           result = await this._executeDirect(executionId, params, marketAnalysis); // 赋值 result
           this.stats.directExecutions++; // 访问 stats
           break; // 跳出循环或分支
@@ -283,19 +283,19 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
         symbol, // 执行语句
         side, // 执行语句
         size, // 执行语句
-        strategy: selectedStrategy, // 设置 strategy 字段
+        strategy: selectedStrategy, // 策略
         urgency, // 执行语句
         startTime, // 执行语句
         endTime, // 执行语句
-        duration: endTime - startTime, // 设置 duration 字段
-        executedSize: result.executedSize || size, // 设置 executedSize 字段
-        avgPrice: result.avgPrice, // 设置 avgPrice 字段
-        slippage: result.slippage, // 设置 slippage 字段
-        success: result.success, // 设置 success 字段
-        marketAnalysis: { // 设置 marketAnalysis 字段
-          liquidityLevel: marketAnalysis.liquidityAssessment?.level, // 设置 liquidityLevel 字段
-          slippageRisk: marketAnalysis.slippageRisk?.riskLevel, // 设置 slippageRisk 字段
-          impactCost: marketAnalysis.impactEstimation?.impactBps, // 设置 impactCost 字段
+        duration: endTime - startTime, // duration
+        executedSize: result.executedSize || size, // executed大小
+        avgPrice: result.avgPrice, // avg价格
+        slippage: result.slippage, // 滑点
+        success: result.success, // 成功标记
+        marketAnalysis: { // 市场Analysis
+          liquidityLevel: marketAnalysis.liquidityAssessment?.level, // liquidity级别
+          slippageRisk: marketAnalysis.slippageRisk?.riskLevel, // 滑点风险
+          impactCost: marketAnalysis.impactEstimation?.impactBps, // impactCost
         }, // 结束代码块
       }; // 结束代码块
 
@@ -306,12 +306,12 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       if (this.config.enableSlippageRecording && result.slippage !== undefined) { // 条件判断 this.config.enableSlippageRecording && result...
         this.slippageAnalyzer.recordSlippage({ // 访问 slippageAnalyzer
           symbol, // 执行语句
-          slippage: result.slippage, // 设置 slippage 字段
+          slippage: result.slippage, // 滑点
           side, // 执行语句
           size, // 执行语句
-          expectedPrice: result.expectedPrice, // 设置 expectedPrice 字段
-          actualPrice: result.avgPrice, // 设置 actualPrice 字段
-          spread: marketAnalysis.depthAnalysis?.spread, // 设置 spread 字段
+          expectedPrice: result.expectedPrice, // expected价格
+          actualPrice: result.avgPrice, // actual价格
+          spread: marketAnalysis.depthAnalysis?.spread, // 价差
         }); // 结束代码块
       } // 结束代码块
 
@@ -320,10 +320,10 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
 
       // 返回结果 / Return result
       return { // 返回结果
-        success: true, // 设置 success 字段
+        success: true, // 成功标记
         executionId, // 执行语句
         ...result, // 展开对象或数组
-        strategy: selectedStrategy, // 设置 strategy 字段
+        strategy: selectedStrategy, // 策略
         marketAnalysis, // 执行语句
       }; // 结束代码块
 
@@ -336,7 +336,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
         symbol, // 执行语句
         side, // 执行语句
         size, // 执行语句
-        error: error.message, // 设置 error 字段
+        error: error.message, // 错误
       }); // 结束代码块
 
       throw error; // 抛出异常
@@ -383,7 +383,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       symbol, // 执行语句
       orderSize, // 执行语句
       side, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 盘口分析 / Order book analysis
       depthAnalysis, // 执行语句
@@ -401,7 +401,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       sizeClass, // 执行语句
 
       // 综合评估 / Comprehensive assessment
-      overallRisk: this._calculateOverallRisk(liquidityAssessment, slippageRisk, impactEstimation), // 设置 overallRisk 字段
+      overallRisk: this._calculateOverallRisk(liquidityAssessment, slippageRisk, impactEstimation), // overall风险
     }; // 结束代码块
   } // 结束代码块
 
@@ -429,18 +429,18 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
 
     // 策略建议 / Strategy recommendation
     recommendations.push({ // 调用 recommendations.push
-      type: 'strategy', // 设置 type 字段
-      strategy: recommendedStrategy, // 设置 strategy 字段
-      reason: this._getStrategyReason(recommendedStrategy, analysis), // 设置 reason 字段
+      type: 'strategy', // 类型
+      strategy: recommendedStrategy, // 策略
+      reason: this._getStrategyReason(recommendedStrategy, analysis), // reason
     }); // 结束代码块
 
     // 时机建议 / Timing recommendation
     if (analysis.slippageRisk?.riskLevel === SLIPPAGE_RISK.HIGH || // 条件判断 analysis.slippageRisk?.riskLevel === SLIPPAGE...
         analysis.slippageRisk?.riskLevel === SLIPPAGE_RISK.VERY_HIGH) { // 执行语句
       recommendations.push({ // 调用 recommendations.push
-        type: 'timing', // 设置 type 字段
-        recommendation: '建议等待更好的执行时机 / Recommend waiting for better timing', // 设置 recommendation 字段
-        optimalTime: analysis.optimalTime?.optimalTime, // 设置 optimalTime 字段
+        type: 'timing', // 类型
+        recommendation: '建议等待更好的执行时机 / Recommend waiting for better timing', // recommendation
+        optimalTime: analysis.optimalTime?.optimalTime, // optimal时间
       }); // 结束代码块
     } // 结束代码块
 
@@ -449,8 +449,8 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
         analysis.impactEstimation?.impactLevel === 'extreme') { // 执行语句
       const suggestedSplits = Math.ceil(orderSize / (analysis.impactEstimation.filledSize / 3)); // 定义常量 suggestedSplits
       recommendations.push({ // 调用 recommendations.push
-        type: 'split', // 设置 type 字段
-        recommendation: `建议拆分为 ${suggestedSplits} 个子订单 / Recommend splitting into ${suggestedSplits} sub-orders`, // 设置 recommendation 字段
+        type: 'split', // 类型
+        recommendation: `建议拆分为 ${suggestedSplits} 个子订单 / Recommend splitting into ${suggestedSplits} sub-orders`, // recommendation
         suggestedSplits, // 执行语句
       }); // 结束代码块
     } // 结束代码块
@@ -463,8 +463,8 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       recommendedStrategy, // 执行语句
       recommendations, // 执行语句
       analysis, // 执行语句
-      expectedImpact: analysis.impactEstimation?.impactBps || 0, // 设置 expectedImpact 字段
-      riskLevel: analysis.overallRisk, // 设置 riskLevel 字段
+      expectedImpact: analysis.impactEstimation?.impactBps || 0, // expectedImpact
+      riskLevel: analysis.overallRisk, // 风险级别
     }; // 结束代码块
   } // 结束代码块
 
@@ -496,9 +496,9 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
         exchangeId, // 执行语句
         symbol, // 执行语句
         side, // 执行语句
-        amount: size, // 设置 amount 字段
-        price: limitPrice || expectedPrice, // 设置 price 字段
-        options: { executionId }, // 设置 options 字段
+        amount: size, // 数量
+        price: limitPrice || expectedPrice, // 价格
+        options: { executionId }, // options
       }); // 结束代码块
 
       // 计算滑点 / Calculate slippage
@@ -510,23 +510,23 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
         : 0; // 执行语句
 
       return { // 返回结果
-        success: true, // 设置 success 字段
-        executedSize: result.orderInfo?.filledAmount || size, // 设置 executedSize 字段
+        success: true, // 成功标记
+        executedSize: result.orderInfo?.filledAmount || size, // executed大小
         avgPrice, // 执行语句
         expectedPrice, // 执行语句
         slippage, // 执行语句
-        orders: [result], // 设置 orders 字段
+        orders: [result], // 订单
       }; // 结束代码块
     } // 结束代码块
 
     // 模拟执行 / Simulated execution
     return { // 返回结果
-      success: true, // 设置 success 字段
-      executedSize: size, // 设置 executedSize 字段
-      avgPrice: expectedPrice, // 设置 avgPrice 字段
+      success: true, // 成功标记
+      executedSize: size, // executed大小
+      avgPrice: expectedPrice, // avg价格
       expectedPrice, // 执行语句
-      slippage: 0, // 设置 slippage 字段
-      simulated: true, // 设置 simulated 字段
+      slippage: 0, // 滑点
+      simulated: true, // simulated
     }; // 结束代码块
   } // 结束代码块
 
@@ -556,17 +556,17 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       exchangeId, // 执行语句
       symbol, // 执行语句
       side, // 执行语句
-      totalSize: size, // 设置 totalSize 字段
+      totalSize: size, // 总大小
       duration, // 执行语句
-      sliceCount: options.sliceCount || this.config.defaultSliceCount, // 设置 sliceCount 字段
-      maxSlippage: params.maxSlippage, // 设置 maxSlippage 字段
-      limitPrice: params.limitPrice, // 设置 limitPrice 字段
+      sliceCount: options.sliceCount || this.config.defaultSliceCount, // slice数量
+      maxSlippage: params.maxSlippage, // 最大滑点
+      limitPrice: params.limitPrice, // 限制价格
     }); // 结束代码块
 
     // 保存到活跃任务 / Save to active tasks
     this.activeTasks.set(executionId, { // 访问 activeTasks
-      type: 'twap', // 设置 type 字段
-      taskId: task.taskId, // 设置 taskId 字段
+      type: 'twap', // 类型
+      taskId: task.taskId, // taskID
       task, // 执行语句
     }); // 结束代码块
 
@@ -582,14 +582,14 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       : 0; // 执行语句
 
     return { // 返回结果
-      success: task.status === 'completed', // 设置 success 字段
-      executedSize: task.executedSize, // 设置 executedSize 字段
-      avgPrice: task.avgExecutionPrice, // 设置 avgPrice 字段
+      success: task.status === 'completed', // 成功标记
+      executedSize: task.executedSize, // executed大小
+      avgPrice: task.avgExecutionPrice, // avg价格
       expectedPrice, // 执行语句
       slippage, // 执行语句
-      taskId: task.taskId, // 设置 taskId 字段
-      completionRate: task.completionRate, // 设置 completionRate 字段
-      sliceCount: task.slices.length, // 设置 sliceCount 字段
+      taskId: task.taskId, // taskID
+      completionRate: task.completionRate, // completion频率
+      sliceCount: task.slices.length, // slice数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -611,18 +611,18 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       exchangeId, // 执行语句
       symbol, // 执行语句
       side, // 执行语句
-      totalSize: size, // 设置 totalSize 字段
-      duration: options.duration || this.config.defaultTWAPDuration, // 设置 duration 字段
-      sliceCount: options.sliceCount || this.config.defaultSliceCount, // 设置 sliceCount 字段
-      volumeCurve: options.volumeCurve || VOLUME_CURVES.crypto, // 设置 volumeCurve 字段
-      maxSlippage: params.maxSlippage, // 设置 maxSlippage 字段
-      limitPrice: params.limitPrice, // 设置 limitPrice 字段
+      totalSize: size, // 总大小
+      duration: options.duration || this.config.defaultTWAPDuration, // duration
+      sliceCount: options.sliceCount || this.config.defaultSliceCount, // slice数量
+      volumeCurve: options.volumeCurve || VOLUME_CURVES.crypto, // 成交量Curve
+      maxSlippage: params.maxSlippage, // 最大滑点
+      limitPrice: params.limitPrice, // 限制价格
     }); // 结束代码块
 
     // 保存到活跃任务 / Save to active tasks
     this.activeTasks.set(executionId, { // 访问 activeTasks
-      type: 'vwap', // 设置 type 字段
-      taskId: task.taskId, // 设置 taskId 字段
+      type: 'vwap', // 类型
+      taskId: task.taskId, // taskID
       task, // 执行语句
     }); // 结束代码块
 
@@ -638,14 +638,14 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       : 0; // 执行语句
 
     return { // 返回结果
-      success: task.status === 'completed', // 设置 success 字段
-      executedSize: task.executedSize, // 设置 executedSize 字段
-      avgPrice: task.avgExecutionPrice, // 设置 avgPrice 字段
+      success: task.status === 'completed', // 成功标记
+      executedSize: task.executedSize, // executed大小
+      avgPrice: task.avgExecutionPrice, // avg价格
       expectedPrice, // 执行语句
       slippage, // 执行语句
-      taskId: task.taskId, // 设置 taskId 字段
-      completionRate: task.completionRate, // 设置 completionRate 字段
-      sliceCount: task.slices.length, // 设置 sliceCount 字段
+      taskId: task.taskId, // taskID
+      completionRate: task.completionRate, // completion频率
+      sliceCount: task.slices.length, // slice数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -675,21 +675,21 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       exchangeId, // 执行语句
       symbol, // 执行语句
       side, // 执行语句
-      totalSize: size, // 设置 totalSize 字段
-      displayMode: DISPLAY_MODE.DYNAMIC, // 设置 displayMode 字段
+      totalSize: size, // 总大小
+      displayMode: DISPLAY_MODE.DYNAMIC, // display模式
       splitStrategy, // 执行语句
-      limitPrice: params.limitPrice, // 设置 limitPrice 字段
-      liquidityInfo: { // 设置 liquidityInfo 字段
-        bidDepth: analysis.depthAnalysis?.bidDepth?.totalVolume || 0, // 设置 bidDepth 字段
-        askDepth: analysis.depthAnalysis?.askDepth?.totalVolume || 0, // 设置 askDepth 字段
-        spread: analysis.depthAnalysis?.spread || 0, // 设置 spread 字段
+      limitPrice: params.limitPrice, // 限制价格
+      liquidityInfo: { // liquidityInfo
+        bidDepth: analysis.depthAnalysis?.bidDepth?.totalVolume || 0, // bidDepth
+        askDepth: analysis.depthAnalysis?.askDepth?.totalVolume || 0, // askDepth
+        spread: analysis.depthAnalysis?.spread || 0, // 价差
       }, // 结束代码块
     }); // 结束代码块
 
     // 保存到活跃任务 / Save to active tasks
     this.activeTasks.set(executionId, { // 访问 activeTasks
-      type: 'iceberg', // 设置 type 字段
-      icebergId: iceberg.icebergId, // 设置 icebergId 字段
+      type: 'iceberg', // 类型
+      icebergId: iceberg.icebergId, // icebergID
       iceberg, // 执行语句
     }); // 结束代码块
 
@@ -705,13 +705,13 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       : 0; // 执行语句
 
     return { // 返回结果
-      success: iceberg.status === 'completed', // 设置 success 字段
-      executedSize: iceberg.executedSize, // 设置 executedSize 字段
-      avgPrice: iceberg.avgExecutionPrice, // 设置 avgPrice 字段
+      success: iceberg.status === 'completed', // 成功标记
+      executedSize: iceberg.executedSize, // executed大小
+      avgPrice: iceberg.avgExecutionPrice, // avg价格
       expectedPrice, // 执行语句
       slippage, // 执行语句
-      icebergId: iceberg.icebergId, // 设置 icebergId 字段
-      subOrdersCount: iceberg.subOrders.length, // 设置 subOrdersCount 字段
+      icebergId: iceberg.icebergId, // icebergID
+      subOrdersCount: iceberg.subOrders.length, // sub订单数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -773,14 +773,14 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       : 0; // 执行语句
 
     return { // 返回结果
-      success: icebergResult.success && (remainingSize === 0 || directResult.success), // 设置 success 字段
-      executedSize: totalExecuted, // 设置 executedSize 字段
+      success: icebergResult.success && (remainingSize === 0 || directResult.success), // 成功标记
+      executedSize: totalExecuted, // executed大小
       avgPrice, // 执行语句
       expectedPrice, // 执行语句
       slippage, // 执行语句
-      components: { // 设置 components 字段
-        iceberg: icebergResult, // 设置 iceberg 字段
-        direct: directResult, // 设置 direct 字段
+      components: { // components
+        iceberg: icebergResult, // iceberg
+        direct: directResult, // direct
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -912,10 +912,10 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
     // 冲击成本风险 / Impact cost risk
     if (impactEstimation) { // 条件判断 impactEstimation
       const impactScore = { // 定义常量 impactScore
-        low: 20, // 设置 low 字段
-        medium: 50, // 设置 medium 字段
-        high: 75, // 设置 high 字段
-        extreme: 95, // 设置 extreme 字段
+        low: 20, // 最低
+        medium: 50, // medium
+        high: 75, // 最高
+        extreme: 95, // 极端
       }[impactEstimation.impactLevel] || 50; // 执行语句
 
       riskScore += impactScore; // 执行语句
@@ -959,7 +959,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       case EXECUTION_STRATEGY.ADAPTIVE: // 分支 EXECUTION_STRATEGY.ADAPTIVE
         return '复杂市场条件，动态调整执行策略 / Complex market conditions, dynamically adjusting execution'; // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return '基于市场分析选择最优策略 / Optimal strategy based on market analysis'; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -1054,7 +1054,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
    */
   getActiveTasks() { // 调用 getActiveTasks
     return Array.from(this.activeTasks.entries()).map(([id, task]) => ({ // 返回结果
-      executionId: id, // 设置 executionId 字段
+      executionId: id, // executionID
       ...task, // 展开对象或数组
     })); // 结束代码块
   } // 结束代码块
@@ -1079,12 +1079,12 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      activeTasks: this.activeTasks.size, // 设置 activeTasks 字段
-      historyCount: this.executionHistory.length, // 设置 historyCount 字段
-      orderBookAnalyzer: this.orderBookAnalyzer.getStats(), // 设置 orderBookAnalyzer 字段
-      twapVwap: this.twapVwapExecutor.getStats(), // 设置 twapVwap 字段
-      iceberg: this.icebergExecutor.getStats(), // 设置 iceberg 字段
-      slippage: this.slippageAnalyzer.getStats(), // 设置 slippage 字段
+      activeTasks: this.activeTasks.size, // 活跃Tasks
+      historyCount: this.executionHistory.length, // 历史数量
+      orderBookAnalyzer: this.orderBookAnalyzer.getStats(), // 订单BookAnalyzer
+      twapVwap: this.twapVwapExecutor.getStats(), // twapVWAP
+      iceberg: this.icebergExecutor.getStats(), // iceberg
+      slippage: this.slippageAnalyzer.getStats(), // 滑点
     }; // 结束代码块
   } // 结束代码块
 
@@ -1121,7 +1121,7 @@ export class ExecutionAlphaEngine extends EventEmitter { // 导出类 ExecutionA
       case 'warn': // 分支 'warn'
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
     } // 结束代码块
   } // 结束代码块

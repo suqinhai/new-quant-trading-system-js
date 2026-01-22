@@ -57,43 +57,43 @@ export const ICEBERG_STATUS = { // 导出常量 ICEBERG_STATUS
  */
 export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   // 默认显示比例 / Default display ratio
-  defaultDisplayRatio: 0.1,  // 10%
+  defaultDisplayRatio: 0.1,  // 默认显示比例
 
   // 最小显示量（相对于最小交易单位）/ Minimum display size
-  minDisplayMultiple: 5, // 设置 minDisplayMultiple 字段
+  minDisplayMultiple: 5, // 最小显示量（相对于最小交易单位）/ Minimum display size
 
   // 最大显示量（相对于总量）/ Maximum display ratio
-  maxDisplayRatio: 0.3,  // 30%
+  maxDisplayRatio: 0.3,  // 最大显示量（相对于总量）/ Maximum display ratio
 
   // 随机化范围 / Randomization range
-  randomRange: 0.2,  // ±20%
+  randomRange: 0.2,  // randomRange
 
   // 子订单间隔（毫秒）/ Sub-order interval (ms)
-  subOrderInterval: 1000, // 设置 subOrderInterval 字段
+  subOrderInterval: 1000, // 子订单间隔（毫秒）/ Sub-order interval (ms)
 
   // 子订单间隔随机范围（毫秒）/ Sub-order interval random range (ms)
-  intervalRandomRange: 500, // 设置 intervalRandomRange 字段
+  intervalRandomRange: 500, // 子订单间隔随机范围（毫秒）/ Sub-order interval random range (ms)
 
   // 最大并发子订单数 / Max concurrent sub-orders
-  maxConcurrentOrders: 3, // 设置 maxConcurrentOrders 字段
+  maxConcurrentOrders: 3, // 最大并发子订单数
 
   // 子订单超时时间（毫秒）/ Sub-order timeout (ms)
-  subOrderTimeout: 30000, // 设置 subOrderTimeout 字段
+  subOrderTimeout: 30000, // 子订单超时时间（毫秒）/ Sub-order timeout (ms)
 
   // 价格追踪间隔（毫秒）/ Price tracking interval (ms)
-  priceTrackInterval: 500, // 设置 priceTrackInterval 字段
+  priceTrackInterval: 500, // 价格追踪间隔（毫秒）/ Price tracking interval (ms)
 
   // 价格滑动容忍度 / Price sliding tolerance
-  priceSlipTolerance: 0.002,  // 0.2%
+  priceSlipTolerance: 0.002,  // 价格SlipTolerance
 
   // 是否启用反检测 / Enable anti-detection
-  enableAntiDetection: true, // 设置 enableAntiDetection 字段
+  enableAntiDetection: true, // 启用AntiDetection
 
   // 反检测：最大连续相同大小订单数 / Anti-detection: max consecutive same-size orders
-  maxConsecutiveSameSize: 2, // 设置 maxConsecutiveSameSize 字段
+  maxConsecutiveSameSize: 2, // 反检测：最大连续相同大小订单数
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 }; // 结束代码块
 
 // ============================================
@@ -265,7 +265,7 @@ class SplitCalculator { // 定义类 SplitCalculator
 
       splits.push({ // 调用 splits.push
         size, // 执行语句
-        type: 'random', // 设置 type 字段
+        type: 'random', // 类型
         randomFactor, // 执行语句
       }); // 结束代码块
 
@@ -275,8 +275,8 @@ class SplitCalculator { // 定义类 SplitCalculator
     // 处理剩余 / Handle remaining
     if (remaining > 0) { // 条件判断 remaining > 0
       splits.push({ // 调用 splits.push
-        size: remaining, // 设置 size 字段
-        type: 'random_remainder', // 设置 type 字段
+        size: remaining, // 大小
+        type: 'random_remainder', // 类型
       }); // 结束代码块
     } // 结束代码块
 
@@ -402,33 +402,33 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
 
       // 数量信息 / Size info
       totalSize, // 执行语句
-      displaySize: calculatedDisplaySize, // 设置 displaySize 字段
+      displaySize: calculatedDisplaySize, // display大小
       displayMode, // 执行语句
-      executedSize: 0, // 设置 executedSize 字段
-      remainingSize: totalSize, // 设置 remainingSize 字段
+      executedSize: 0, // executed大小
+      remainingSize: totalSize, // remaining大小
 
       // 拆单信息 / Split info
       splitStrategy, // 执行语句
       splits, // 执行语句
-      currentSplitIndex: 0, // 设置 currentSplitIndex 字段
+      currentSplitIndex: 0, // currentSplitIndex
 
       // 价格信息 / Price info
       limitPrice, // 执行语句
       priceType, // 执行语句
-      avgExecutionPrice: 0, // 设置 avgExecutionPrice 字段
-      totalCost: 0, // 设置 totalCost 字段
+      avgExecutionPrice: 0, // avgExecution价格
+      totalCost: 0, // 总Cost
 
       // 状态 / Status
-      status: ICEBERG_STATUS.PENDING, // 设置 status 字段
+      status: ICEBERG_STATUS.PENDING, // 状态
 
       // 子订单记录 / Sub-order records
-      subOrders: [], // 设置 subOrders 字段
-      activeSubOrders: new Map(), // 设置 activeSubOrders 字段
+      subOrders: [], // sub订单
+      activeSubOrders: new Map(), // 活跃Sub订单
 
       // 时间信息 / Time info
-      createdAt: Date.now(), // 设置 createdAt 字段
-      startedAt: null, // 设置 startedAt 字段
-      completedAt: null, // 设置 completedAt 字段
+      createdAt: Date.now(), // createdAt
+      startedAt: null, // startedAt
+      completedAt: null, // completedAt
 
       // 选项 / Options
       options, // 执行语句
@@ -640,8 +640,8 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
       if (iceberg.remainingSize > 0) { // 条件判断 iceberg.remainingSize > 0
         // 创建补充子订单 / Create supplementary sub-order
         return { // 返回结果
-          size: iceberg.remainingSize, // 设置 size 字段
-          isSupplementary: true, // 设置 isSupplementary 字段
+          size: iceberg.remainingSize, // 大小
+          isSupplementary: true, // 是否Supplementary
         }; // 结束代码块
       } // 结束代码块
       return null; // 返回结果
@@ -671,8 +671,8 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
 
     return { // 返回结果
       size, // 执行语句
-      splitIndex: iceberg.currentSplitIndex - 1, // 设置 splitIndex 字段
-      originalSplitSize: split.size, // 设置 originalSplitSize 字段
+      splitIndex: iceberg.currentSplitIndex - 1, // splitIndex
+      originalSplitSize: split.size, // originalSplit大小
     }; // 结束代码块
   } // 结束代码块
 
@@ -698,15 +698,15 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
 
     // 创建子订单记录 / Create sub-order record
     const subOrder = { // 定义常量 subOrder
-      subOrderId: `${iceberg.icebergId}_sub_${iceberg.subOrders.length}`, // 设置 subOrderId 字段
+      subOrderId: `${iceberg.icebergId}_sub_${iceberg.subOrders.length}`, // sub订单ID
       size, // 执行语句
       price, // 执行语句
       splitIndex, // 执行语句
-      isSupplementary: !!isSupplementary, // 设置 isSupplementary 字段
-      status: 'pending', // 设置 status 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
-      executedSize: 0, // 设置 executedSize 字段
-      avgPrice: 0, // 设置 avgPrice 字段
+      isSupplementary: !!isSupplementary, // 是否Supplementary
+      status: 'pending', // 状态
+      createdAt: Date.now(), // createdAt
+      executedSize: 0, // executed大小
+      avgPrice: 0, // avg价格
     }; // 结束代码块
 
     // 添加到记录 / Add to records
@@ -720,15 +720,15 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
       // 执行订单 / Execute order
       if (this.orderExecutor) { // 条件判断 this.orderExecutor
         const result = await this.orderExecutor.executeSmartLimitOrder({ // 定义常量 result
-          exchangeId: iceberg.exchangeId, // 设置 exchangeId 字段
-          symbol: iceberg.symbol, // 设置 symbol 字段
-          side: iceberg.side, // 设置 side 字段
-          amount: size, // 设置 amount 字段
-          price: price, // 设置 price 字段
-          postOnly: false, // 设置 postOnly 字段
-          options: { // 设置 options 字段
-            icebergId: iceberg.icebergId, // 设置 icebergId 字段
-            subOrderId: subOrder.subOrderId, // 设置 subOrderId 字段
+          exchangeId: iceberg.exchangeId, // 交易所ID
+          symbol: iceberg.symbol, // 交易对
+          side: iceberg.side, // 方向
+          amount: size, // 数量
+          price: price, // 价格
+          postOnly: false, // 挂单仅
+          options: { // options
+            icebergId: iceberg.icebergId, // icebergID
+            subOrderId: subOrder.subOrderId, // sub订单ID
           }, // 结束代码块
         }); // 结束代码块
 
@@ -759,7 +759,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
       this.emit('subOrderCompleted', { // 调用 emit
         iceberg, // 执行语句
         subOrder, // 执行语句
-        progress: iceberg.executedSize / iceberg.totalSize, // 设置 progress 字段
+        progress: iceberg.executedSize / iceberg.totalSize, // progress
       }); // 结束代码块
 
       // 记录日志 / Log
@@ -851,7 +851,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
         return SplitCalculator.randomSplit(totalSize, 0.1, this.config.randomRange); // 返回结果
 
       case SPLIT_STRATEGY.ADAPTIVE: // 分支 SPLIT_STRATEGY.ADAPTIVE
-      default: // 默认分支
+      default: // 默认
         return SplitCalculator.adaptiveSplit(totalSize, marketCondition); // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -890,7 +890,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
         return size; // 返回结果
 
       case DISPLAY_MODE.FIXED: // 分支 DISPLAY_MODE.FIXED
-      default: // 默认分支
+      default: // 默认
         return Math.min(size, iceberg.displaySize, iceberg.remainingSize); // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -1054,15 +1054,15 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
     } // 结束代码块
 
     return { // 返回结果
-      icebergId: iceberg.icebergId, // 设置 icebergId 字段
-      status: iceberg.status, // 设置 status 字段
-      progress: iceberg.executedSize / iceberg.totalSize, // 设置 progress 字段
-      executedSize: iceberg.executedSize, // 设置 executedSize 字段
-      remainingSize: iceberg.remainingSize, // 设置 remainingSize 字段
-      avgExecutionPrice: iceberg.avgExecutionPrice, // 设置 avgExecutionPrice 字段
-      subOrdersCount: iceberg.subOrders.length, // 设置 subOrdersCount 字段
-      activeSubOrders: iceberg.activeSubOrders.size, // 设置 activeSubOrders 字段
-      elapsedTime: Date.now() - iceberg.startedAt, // 设置 elapsedTime 字段
+      icebergId: iceberg.icebergId, // icebergID
+      status: iceberg.status, // 状态
+      progress: iceberg.executedSize / iceberg.totalSize, // progress
+      executedSize: iceberg.executedSize, // executed大小
+      remainingSize: iceberg.remainingSize, // remaining大小
+      avgExecutionPrice: iceberg.avgExecutionPrice, // avgExecution价格
+      subOrdersCount: iceberg.subOrders.length, // sub订单数量
+      activeSubOrders: iceberg.activeSubOrders.size, // 活跃Sub订单
+      elapsedTime: Date.now() - iceberg.startedAt, // elapsed时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -1087,7 +1087,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      activeIcebergs: this.activeIcebergs.size, // 设置 activeIcebergs 字段
+      activeIcebergs: this.activeIcebergs.size, // 活跃Icebergs
     }; // 结束代码块
   } // 结束代码块
 
@@ -1124,7 +1124,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
       case 'warn': // 分支 'warn'
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
     } // 结束代码块
   } // 结束代码块

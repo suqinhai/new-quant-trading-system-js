@@ -69,7 +69,7 @@ const POSITION_SIDE = { // 定义常量 POSITION_SIDE
  */
 const ARB_STATUS = { // 定义常量 ARB_STATUS
   ACTIVE: 'active',       // 活跃中 / Active
-  CLOSED: 'closed',       // 已关闭 / Closed
+  CLOSED: 'closed',       // CLOSED权限
   PENDING: 'pending',     // 待处理 / Pending
 }; // 结束代码块
 
@@ -83,89 +83,89 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 监控的交易对列表 / Symbols to monitor
-  symbols: ['BTC/USDT', 'ETH/USDT'], // 设置 symbols 字段
+  symbols: ['BTC/USDT', 'ETH/USDT'], // 监控的交易对列表
 
   // ============================================
   // 套利阈值配置 / Arbitrage Threshold Configuration
   // ============================================
 
   // 最小年化利差开仓阈值 (15% = 0.15) / Minimum annualized spread to open position
-  minAnnualizedSpread: 0.15, // 设置 minAnnualizedSpread 字段
+  minAnnualizedSpread: 0.15, // 最小年化利差开仓阈值 (15% = 0.15)
 
   // 平仓年化利差阈值 (5% = 0.05) / Close position spread threshold
-  closeSpreadThreshold: 0.05, // 设置 closeSpreadThreshold 字段
+  closeSpreadThreshold: 0.05, // 平仓年化利差阈值 (5% = 0.05)
 
   // 紧急平仓阈值 (年化利差反向超过此值) / Emergency close threshold
-  emergencyCloseThreshold: -0.10, // 设置 emergencyCloseThreshold 字段
+  emergencyCloseThreshold: -0.10, // 紧急平仓阈值 (年化利差反向超过此值)
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 每个套利机会的最大仓位 (USDT) / Max position per arbitrage opportunity
-  maxPositionSize: 10000, // 设置 maxPositionSize 字段
+  maxPositionSize: 10000, // 每个套利机会的最大仓位 (USDT)
 
   // 最小仓位 (USDT) / Minimum position size
-  minPositionSize: 100, // 设置 minPositionSize 字段
+  minPositionSize: 100, // 最小仓位 (USDT)
 
   // 单次开仓比例 (占最大仓位) / Single position ratio
-  positionRatio: 0.25, // 设置 positionRatio 字段
+  positionRatio: 0.25, // 单次开仓比例 (占最大仓位)
 
   // 总最大持仓 (USDT) / Total max position
-  totalMaxPosition: 50000, // 设置 totalMaxPosition 字段
+  totalMaxPosition: 50000, // 总最大持仓 (USDT)
 
   // ============================================
   // 杠杆配置 / Leverage Configuration
   // ============================================
 
   // 默认杠杆倍数 / Default leverage
-  leverage: 5, // 设置 leverage 字段
+  leverage: 5, // 杠杆
 
   // 最大杠杆倍数 / Maximum leverage
-  maxLeverage: 10, // 设置 maxLeverage 字段
+  maxLeverage: 10, // 最大杠杆
 
   // ============================================
   // 再平衡配置 / Rebalancing Configuration
   // ============================================
 
   // 仓位不平衡阈值 (10% = 0.1) / Position imbalance threshold
-  imbalanceThreshold: 0.10, // 设置 imbalanceThreshold 字段
+  imbalanceThreshold: 0.10, // 仓位不平衡阈值 (10% = 0.1)
 
   // 再平衡检查间隔 (毫秒) / Rebalancing check interval (ms)
-  rebalanceInterval: 60000, // 设置 rebalanceInterval 字段
+  rebalanceInterval: 60000, // 再平衡检查间隔 (毫秒)
 
   // ============================================
   // 监控配置 / Monitoring Configuration
   // ============================================
 
   // 资金费率刷新间隔 (毫秒) / Funding rate refresh interval (ms)
-  fundingRefreshInterval: 30000, // 设置 fundingRefreshInterval 字段
+  fundingRefreshInterval: 30000, // 资金费率刷新间隔 (毫秒)
 
   // 仓位刷新间隔 (毫秒) / Position refresh interval (ms)
-  positionRefreshInterval: 10000, // 设置 positionRefreshInterval 字段
+  positionRefreshInterval: 10000, // 仓位刷新间隔 (毫秒)
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
   // 最大单日亏损 (USDT) / Max daily loss
-  maxDailyLoss: 500, // 设置 maxDailyLoss 字段
+  maxDailyLoss: 500, // 最大单日亏损 (USDT)
 
   // 最大回撤比例 / Max drawdown ratio
-  maxDrawdown: 0.10, // 设置 maxDrawdown 字段
+  maxDrawdown: 0.10, // 最大回撤比例
 
   // 强平缓冲比例 / Liquidation buffer ratio
-  liquidationBuffer: 0.20, // 设置 liquidationBuffer 字段
+  liquidationBuffer: 0.20, // 强平缓冲比例
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[FundingArb]', // 设置 logPrefix 字段
+  logPrefix: '[FundingArb]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -314,22 +314,22 @@ class FundingRateManager extends EventEmitter { // 定义类 FundingRateManager(
     // 保存该交易所的费率数据 / Save rate data for this exchange
     symbolRates.set(exchange, { // 调用 symbolRates.set
       // 当前资金费率 / Current funding rate
-      current: data.fundingRate || 0, // 设置 current 字段
+      current: data.fundingRate || 0, // current
 
       // 预测资金费率 (下一期) / Predicted funding rate (next period)
-      predicted: data.fundingRatePredicted || data.fundingRate || 0, // 设置 predicted 字段
+      predicted: data.fundingRatePredicted || data.fundingRate || 0, // 预测资金费率 (下一期)
 
       // 下次结算时间戳 / Next funding timestamp
-      fundingTimestamp: data.fundingTimestamp || 0, // 设置 fundingTimestamp 字段
+      fundingTimestamp: data.fundingTimestamp || 0, // 资金费率时间戳
 
       // 标记价格 / Mark price
-      markPrice: data.markPrice || 0, // 设置 markPrice 字段
+      markPrice: data.markPrice || 0, // mark价格
 
       // 指数价格 / Index price
-      indexPrice: data.indexPrice || 0, // 设置 indexPrice 字段
+      indexPrice: data.indexPrice || 0, // index价格
 
       // 更新时间 / Update timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -384,8 +384,8 @@ class FundingRateManager extends EventEmitter { // 定义类 FundingRateManager(
     // 如果任一费率不存在，返回空结果 / If any rate missing, return empty result
     if (!longRate || !shortRate) { // 条件判断 !longRate || !shortRate
       return { // 返回结果
-        valid: false, // 设置 valid 字段
-        reason: '缺少资金费率数据 / Missing funding rate data', // 设置 reason 字段
+        valid: false, // 有效
+        reason: '缺少资金费率数据 / Missing funding rate data', // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -410,7 +410,7 @@ class FundingRateManager extends EventEmitter { // 定义类 FundingRateManager(
     // 返回利差信息 / Return spread information
     return { // 返回结果
       // 数据有效 / Data valid
-      valid: true, // 设置 valid 字段
+      valid: true, // 有效
 
       // 交易对 / Symbol
       symbol, // 执行语句
@@ -422,10 +422,10 @@ class FundingRateManager extends EventEmitter { // 定义类 FundingRateManager(
       shortExchange, // 执行语句
 
       // 做多交易所费率 / Long exchange rate
-      longRate: longRate.current, // 设置 longRate 字段
+      longRate: longRate.current, // long频率
 
       // 做空交易所费率 / Short exchange rate
-      shortRate: shortRate.current, // 设置 shortRate 字段
+      shortRate: shortRate.current, // short频率
 
       // 当前单期利差 / Current single period spread
       currentSpread, // 执行语句
@@ -440,10 +440,10 @@ class FundingRateManager extends EventEmitter { // 定义类 FundingRateManager(
       predictedAnnualizedSpread, // 执行语句
 
       // 下次结算时间 (取较近的) / Next funding time (take closer one)
-      nextFundingTime: Math.min(longRate.fundingTimestamp, shortRate.fundingTimestamp), // 设置 nextFundingTime 字段
+      nextFundingTime: Math.min(longRate.fundingTimestamp, shortRate.fundingTimestamp), // 下次结算时间 (取较近的)
 
       // 更新时间 / Update timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -736,10 +736,10 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
     // 结果对象 / Result object
     const result = { // 定义常量 result
       id, // 执行语句
-      success: false, // 设置 success 字段
-      longOrder: null, // 设置 longOrder 字段
-      shortOrder: null, // 设置 shortOrder 字段
-      error: null, // 设置 error 字段
+      success: false, // 成功标记
+      longOrder: null, // long订单
+      shortOrder: null, // short订单
+      error: null, // 错误
     }; // 结束代码块
 
     try { // 尝试执行
@@ -776,55 +776,55 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
         id, // 执行语句
 
         // 交易对 / Symbol
-        symbol: opportunity.symbol, // 设置 symbol 字段
+        symbol: opportunity.symbol, // 交易对
 
         // 做多交易所 / Long exchange
-        longExchange: opportunity.longExchange, // 设置 longExchange 字段
+        longExchange: opportunity.longExchange, // long交易所
 
         // 做空交易所 / Short exchange
-        shortExchange: opportunity.shortExchange, // 设置 shortExchange 字段
+        shortExchange: opportunity.shortExchange, // short交易所
 
         // 多头仓位 (待刷新) / Long position (to be refreshed)
-        longPosition: null, // 设置 longPosition 字段
+        longPosition: null, // 多头仓位 (待刷新)
 
         // 空头仓位 (待刷新) / Short position (to be refreshed)
-        shortPosition: null, // 设置 shortPosition 字段
+        shortPosition: null, // 空头仓位 (待刷新)
 
         // 开仓时的年化利差 / Annualized spread at open
-        openSpread: opportunity.annualizedSpread, // 设置 openSpread 字段
+        openSpread: opportunity.annualizedSpread, // 开仓时的年化利差
 
         // 开仓价格 / Open price
-        openPrice: price, // 设置 openPrice 字段
+        openPrice: price, // 开仓价格
 
         // 开仓数量 / Open amount
-        openAmount: amount, // 设置 openAmount 字段
+        openAmount: amount, // 开仓数量
 
         // 开仓大小 (USDT) / Open size (USDT)
-        openSize: size, // 设置 openSize 字段
+        openSize: size, // 开仓大小 (USDT)
 
         // 多头开仓均价 / Long entry price
-        longEntryPrice: longOrder.average || price, // 设置 longEntryPrice 字段
+        longEntryPrice: longOrder.average || price, // 多头开仓均价
 
         // 空头开仓均价 / Short entry price
-        shortEntryPrice: shortOrder.average || price, // 设置 shortEntryPrice 字段
+        shortEntryPrice: shortOrder.average || price, // 空头开仓均价
 
         // 已实现 PnL / Realized PnL
-        realizedPnl: 0, // 设置 realizedPnl 字段
+        realizedPnl: 0, // 已实现盈亏
 
         // 累计资金费用收入 / Cumulative funding income
-        fundingIncome: 0, // 设置 fundingIncome 字段
+        fundingIncome: 0, // 累计资金费用收入
 
         // 累计交易手续费 / Cumulative trading fees
-        tradingFees: (longOrder.fee?.cost || 0) + (shortOrder.fee?.cost || 0), // 设置 tradingFees 字段
+        tradingFees: (longOrder.fee?.cost || 0) + (shortOrder.fee?.cost || 0), // 交易Fees
 
         // 状态 / Status
-        status: ARB_STATUS.ACTIVE, // 设置 status 字段
+        status: ARB_STATUS.ACTIVE, // 状态
 
         // 开仓时间 / Open time
-        openTime: Date.now(), // 设置 openTime 字段
+        openTime: Date.now(), // 开仓时间
 
         // 最后更新时间 / Last update time
-        lastUpdate: Date.now(), // 设置 lastUpdate 字段
+        lastUpdate: Date.now(), // last更新
       }; // 结束代码块
 
       // 保存到仓位映射 / Save to position map
@@ -871,7 +871,7 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
       try { // 尝试执行
         const exchange = this.exchanges.get(result.longOrder.exchange); // 定义常量 exchange
         await exchange.createOrder(symbol, 'sell', 'market', result.longOrder.filled, undefined, { // 等待异步结果
-          reduceOnly: true, // 设置 reduceOnly 字段
+          reduceOnly: true, // 减仓仅
         }); // 结束代码块
         console.log(`${this.config.logPrefix} 已回滚多头仓位 / Rolled back long position`); // 控制台输出
       } catch (error) { // 执行语句
@@ -884,7 +884,7 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
       try { // 尝试执行
         const exchange = this.exchanges.get(result.shortOrder.exchange); // 定义常量 exchange
         await exchange.createOrder(symbol, 'buy', 'market', result.shortOrder.filled, undefined, { // 等待异步结果
-          reduceOnly: true, // 设置 reduceOnly 字段
+          reduceOnly: true, // 减仓仅
         }); // 结束代码块
         console.log(`${this.config.logPrefix} 已回滚空头仓位 / Rolled back short position`); // 控制台输出
       } catch (error) { // 执行语句
@@ -927,10 +927,10 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
     // 结果对象 / Result object
     const result = { // 定义常量 result
       id, // 执行语句
-      success: false, // 设置 success 字段
-      longOrder: null, // 设置 longOrder 字段
-      shortOrder: null, // 设置 shortOrder 字段
-      error: null, // 设置 error 字段
+      success: false, // 成功标记
+      longOrder: null, // long订单
+      shortOrder: null, // short订单
+      error: null, // 错误
       reason, // 执行语句
     }; // 结束代码块
 
@@ -1098,13 +1098,13 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
     if (imbalance > this.config.imbalanceThreshold) { // 条件判断 imbalance > this.config.imbalanceThreshold
       return { // 返回结果
         id, // 执行语句
-        symbol: arbPosition.symbol, // 设置 symbol 字段
+        symbol: arbPosition.symbol, // 交易对
         longSize, // 执行语句
         shortSize, // 执行语句
         imbalance, // 执行语句
-        needsRebalance: true, // 设置 needsRebalance 字段
-        action: longSize > shortSize ? 'reduce_long' : 'reduce_short', // 设置 action 字段
-        adjustAmount: Math.abs(longSize - shortSize) / 2, // 设置 adjustAmount 字段
+        needsRebalance: true, // needsRebalance
+        action: longSize > shortSize ? 'reduce_long' : 'reduce_short', // action
+        adjustAmount: Math.abs(longSize - shortSize) / 2, // adjust数量
       }; // 结束代码块
     } // 结束代码块
 
@@ -1139,22 +1139,22 @@ class PositionManager extends EventEmitter { // 定义类 PositionManager(继承
     // 统计对象 / Statistics object
     const stats = { // 定义常量 stats
       // 已实现 PnL / Realized PnL
-      realizedPnl: 0, // 设置 realizedPnl 字段
+      realizedPnl: 0, // 已实现盈亏
 
       // 未实现 PnL / Unrealized PnL
-      unrealizedPnl: 0, // 设置 unrealizedPnl 字段
+      unrealizedPnl: 0, // 未实现盈亏
 
       // 资金费收入 / Funding income
-      fundingIncome: 0, // 设置 fundingIncome 字段
+      fundingIncome: 0, // 资金费率Income
 
       // 交易费用 / Trading fees
-      tradingFees: 0, // 设置 tradingFees 字段
+      tradingFees: 0, // 交易Fees
 
       // 活跃仓位数 / Active position count
-      activeCount: 0, // 设置 activeCount 字段
+      activeCount: 0, // 活跃数量
 
       // 已关闭仓位数 / Closed position count
-      closedCount: 0, // 设置 closedCount 字段
+      closedCount: 0, // closed数量
     }; // 结束代码块
 
     // 遍历所有仓位 / Iterate all positions
@@ -1229,19 +1229,19 @@ export class FundingArbStrategy extends BaseStrategy { // 导出类 FundingArbSt
     // PnL 统计 / PnL statistics
     this.pnlStats = { // 设置 pnlStats
       // 每日 PnL / Daily PnL
-      dailyPnl: 0, // 设置 dailyPnl 字段
+      dailyPnl: 0, // 每日盈亏
 
       // 今日开始时间 / Today start time
-      dayStart: this._getDayStart(), // 设置 dayStart 字段
+      dayStart: this._getDayStart(), // 天启动
 
       // 累计 PnL / Cumulative PnL
-      totalPnl: 0, // 设置 totalPnl 字段
+      totalPnl: 0, // 总盈亏
 
       // 最高权益 / Peak equity
-      peakEquity: 0, // 设置 peakEquity 字段
+      peakEquity: 0, // peakEquity
 
       // 当前回撤 / Current drawdown
-      currentDrawdown: 0, // 设置 currentDrawdown 字段
+      currentDrawdown: 0, // current回撤
     }; // 结束代码块
 
     // 再平衡定时器 / Rebalancing timer
@@ -1813,49 +1813,49 @@ export class FundingArbStrategy extends BaseStrategy { // 导出类 FundingArbSt
     // 返回状态 / Return status
     return { // 返回结果
       // 策略名称 / Strategy name
-      name: this.name, // 设置 name 字段
+      name: this.name, // name
 
       // 是否运行中 / Whether running
-      running: this.running, // 设置 running 字段
+      running: this.running, // running
 
       // 监控的交易对 / Monitored symbols
-      symbols: this.config.symbols, // 设置 symbols 字段
+      symbols: this.config.symbols, // 交易对列表
 
       // 交易所 / Exchanges
-      exchanges: Array.from(this.exchanges.keys()), // 设置 exchanges 字段
+      exchanges: Array.from(this.exchanges.keys()), // 交易所
 
       // 活跃仓位数 / Active position count
-      activePositions: posStats.activeCount, // 设置 activePositions 字段
+      activePositions: posStats.activeCount, // 活跃持仓
 
       // 已关闭仓位数 / Closed position count
-      closedPositions: posStats.closedCount, // 设置 closedPositions 字段
+      closedPositions: posStats.closedCount, // closed持仓
 
       // 已实现 PnL / Realized PnL
-      realizedPnl: posStats.realizedPnl, // 设置 realizedPnl 字段
+      realizedPnl: posStats.realizedPnl, // 已实现盈亏
 
       // 未实现 PnL / Unrealized PnL
-      unrealizedPnl: posStats.unrealizedPnl, // 设置 unrealizedPnl 字段
+      unrealizedPnl: posStats.unrealizedPnl, // 未实现盈亏
 
       // 资金费收入 / Funding income
-      fundingIncome: posStats.fundingIncome, // 设置 fundingIncome 字段
+      fundingIncome: posStats.fundingIncome, // 资金费率Income
 
       // 交易费用 / Trading fees
-      tradingFees: posStats.tradingFees, // 设置 tradingFees 字段
+      tradingFees: posStats.tradingFees, // 交易Fees
 
       // 每日 PnL / Daily PnL
-      dailyPnl: this.pnlStats.dailyPnl, // 设置 dailyPnl 字段
+      dailyPnl: this.pnlStats.dailyPnl, // 每日盈亏
 
       // 累计 PnL / Total PnL
-      totalPnl: this.pnlStats.totalPnl, // 设置 totalPnl 字段
+      totalPnl: this.pnlStats.totalPnl, // 总盈亏
 
       // 当前回撤 / Current drawdown
-      currentDrawdown: this.pnlStats.currentDrawdown, // 设置 currentDrawdown 字段
+      currentDrawdown: this.pnlStats.currentDrawdown, // current回撤
 
       // 已用保证金 / Used margin
-      usedMargin: this.positionManager.totalUsedMargin, // 设置 usedMargin 字段
+      usedMargin: this.positionManager.totalUsedMargin, // used保证金
 
       // 更新时间 / Update timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -1942,9 +1942,9 @@ export class FundingArbStrategy extends BaseStrategy { // 导出类 FundingArbSt
         results.push(result); // 调用 results.push
       } catch (error) { // 执行语句
         results.push({ // 调用 results.push
-          id: position.id, // 设置 id 字段
-          success: false, // 设置 success 字段
-          error: error.message, // 设置 error 字段
+          id: position.id, // ID
+          success: false, // 成功标记
+          error: error.message, // 错误
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1977,11 +1977,11 @@ export class FundingArbStrategy extends BaseStrategy { // 导出类 FundingArbSt
     // 保存资金费率数据到管理器 / Save funding rate data to manager
     if (data.symbol && data.exchange && data.fundingRate !== undefined) { // 条件判断 data.symbol && data.exchange && data.fundingR...
       this.fundingManager._saveFundingRate(data.symbol, data.exchange, { // 访问 fundingManager
-        fundingRate: data.fundingRate, // 设置 fundingRate 字段
-        fundingRatePredicted: data.fundingRatePredicted || data.fundingRate, // 设置 fundingRatePredicted 字段
-        fundingTimestamp: data.fundingTimestamp || Date.now(), // 设置 fundingTimestamp 字段
-        markPrice: data.markPrice || 0, // 设置 markPrice 字段
-        indexPrice: data.indexPrice || 0, // 设置 indexPrice 字段
+        fundingRate: data.fundingRate, // 资金费率频率
+        fundingRatePredicted: data.fundingRatePredicted || data.fundingRate, // 资金费率频率Predicted
+        fundingTimestamp: data.fundingTimestamp || Date.now(), // 资金费率时间戳
+        markPrice: data.markPrice || 0, // mark价格
+        indexPrice: data.indexPrice || 0, // index价格
       }); // 结束代码块
     } // 结束代码块
 

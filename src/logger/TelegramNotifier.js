@@ -65,7 +65,7 @@ const ALERT_TYPE = { // 定义常量 ALERT_TYPE
   DRAWDOWN: 'drawdown',           // 回撤警报 / Drawdown alert
   MARGIN_RATE: 'marginRate',      // 保证金率警报 / Margin rate alert
   DISCONNECT: 'disconnect',       // 掉线警报 / Disconnect alert
-  EMERGENCY_CLOSE: 'emergency',   // 紧急平仓 / Emergency close
+  EMERGENCY_CLOSE: 'emergency',   // EMERGENCY平仓权限
   POSITION_LIMIT: 'positionLimit', // 仓位限制 / Position limit
   LIQUIDATION: 'liquidation',     // 强平警告 / Liquidation warning
 }; // 结束代码块
@@ -111,42 +111,42 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // Telegram Bot Token / Telegram Bot Token
-  botToken: process.env.TELEGRAM_BOT_TOKEN || '', // 读取环境变量 TELEGRAM_BOT_TOKEN
+  botToken: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram Bot Token
 
   // 接收消息的 Chat ID / Chat ID to receive messages
-  chatId: process.env.TELEGRAM_CHAT_ID || '', // 读取环境变量 TELEGRAM_CHAT_ID
+  chatId: process.env.TELEGRAM_CHAT_ID || '', // 接收消息的 Chat ID
 
   // 是否启用 / Whether enabled
-  enabled: true, // 设置 enabled 字段
+  enabled: true, // 启用
 
   // ============================================
   // 消息限流配置 / Message Rate Limit Configuration
   // ============================================
 
   // 每秒最大消息数 / Max messages per second
-  maxMessagesPerSecond: 1, // 设置 maxMessagesPerSecond 字段
+  maxMessagesPerSecond: 1, // 每秒最大消息数
 
   // 每分钟最大消息数 / Max messages per minute
-  maxMessagesPerMinute: 20, // 设置 maxMessagesPerMinute 字段
+  maxMessagesPerMinute: 20, // 每分钟最大消息数
 
   // 消息队列最大长度 / Max message queue length
-  maxQueueLength: 100, // 设置 maxQueueLength 字段
+  maxQueueLength: 100, // 消息队列最大长度
 
   // 消息发送间隔 (毫秒) / Message send interval (ms)
-  sendInterval: 1000, // 设置 sendInterval 字段
+  sendInterval: 1000, // 消息发送间隔 (毫秒)
 
   // ============================================
   // 日报配置 / Daily Report Configuration
   // ============================================
 
   // 是否启用日报 / Enable daily report
-  dailyReportEnabled: true, // 设置 dailyReportEnabled 字段
+  dailyReportEnabled: true, // 每日Report启用
 
   // 日报发送时间 (小时) / Daily report send hour (0-23)
-  dailyReportHour: 23, // 设置 dailyReportHour 字段
+  dailyReportHour: 23, // 日报发送时间 (小时)
 
   // 日报发送时间 (分钟) / Daily report send minute (0-59)
-  dailyReportMinute: 59, // 设置 dailyReportMinute 字段
+  dailyReportMinute: 59, // 日报发送时间 (分钟)
 
   // 日报时区偏移 (小时) / Daily report timezone offset (hours)
   timezoneOffset: 8,  // UTC+8 中国时区 / China timezone
@@ -156,7 +156,7 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用警报 / Enable alerts
-  alertEnabled: true, // 设置 alertEnabled 字段
+  alertEnabled: true, // 告警启用
 
   // 相同警报冷却时间 (毫秒) / Same alert cooldown (ms)
   alertCooldown: 300000,  // 5分钟 / 5 minutes
@@ -169,35 +169,35 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用交易通知 / Enable trade notifications
-  tradeNotifyEnabled: true, // 设置 tradeNotifyEnabled 字段
+  tradeNotifyEnabled: true, // 是否启用交易通知
 
   // ============================================
   // 消息格式配置 / Message Format Configuration
   // ============================================
 
   // 是否使用 Markdown / Use Markdown format
-  useMarkdown: true, // 设置 useMarkdown 字段
+  useMarkdown: true, // 是否使用 Markdown
 
   // 是否静默发送 (无通知音) / Silent send (no notification sound)
-  silentMode: false, // 设置 silentMode 字段
+  silentMode: false, // 是否静默发送 (无通知音)
 
   // 消息前缀 / Message prefix
-  messagePrefix: '🤖 量化交易系统', // 设置 messagePrefix 字段
+  messagePrefix: '🤖 量化交易系统', // 消息前缀
 
   // 服务名称 (用于区分不同实例) / Service name (to distinguish different instances)
   // 优先级: SERVICE_NAME > PM2 进程名 > 空
   // Priority: SERVICE_NAME > PM2 process name > empty
-  serviceName: process.env.SERVICE_NAME || (process.env.pm_id !== undefined ? process.env.name : ''), // 读取环境变量 SERVICE_NAME
+  serviceName: process.env.SERVICE_NAME || (process.env.pm_id !== undefined ? process.env.name : ''), // Priority: SERVICE_NAME > PM2 process name > empty
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[Telegram]', // 设置 logPrefix 字段
+  logPrefix: '[Telegram]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -507,7 +507,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
     // 构建消息对象 / Build message object
     const messageObj = { // 定义常量 messageObj
       // 消息内容 / Message content
-      content: message, // 设置 content 字段
+      content: message, // content
 
       // 优先级 / Priority
       priority, // 执行语句
@@ -519,7 +519,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       silent, // 执行语句
 
       // 创建时间 / Creation time
-      createdAt: Date.now(), // 设置 createdAt 字段
+      createdAt: Date.now(), // createdAt
     }; // 结束代码块
 
     // 如果是紧急/严重消息或要求立即发送 / If urgent/critical or immediate required
@@ -567,7 +567,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       // 构建发送选项 / Build send options
       const sendOptions = { // 定义常量 sendOptions
         // 静默模式 / Silent mode
-        disable_notification: messageObj.silent, // 设置 disable_notification 字段
+        disable_notification: messageObj.silent, // 静默模式
       }; // 结束代码块
 
       // 如果使用 Markdown / If using Markdown
@@ -719,9 +719,9 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
 
     // 发送消息 / Send message
     const result = await this.sendMessage(formattedMessage, { // 定义常量 result
-      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      type: MESSAGE_TYPE.ALERT, // 类型
       priority, // 执行语句
-      immediate: priority >= MESSAGE_PRIORITY.URGENT, // 设置 immediate 字段
+      immediate: priority >= MESSAGE_PRIORITY.URGENT, // immediate
     }); // 结束代码块
 
     // 如果发送成功，更新冷却 / If sent, update cooldown
@@ -785,7 +785,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
 
     // 发送警报 / Send alert
     await this.sendAlert(ALERT_TYPE.DISCONNECT, message, { // 等待异步结果
-      exchange: exchangeName, // 设置 exchange 字段
+      exchange: exchangeName, // 交易所
       reason, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -937,8 +937,8 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
 
     // 发送消息 / Send message
     await this.sendMessage(message, { // 等待异步结果
-      type: MESSAGE_TYPE.TRADE, // 设置 type 字段
-      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      type: MESSAGE_TYPE.TRADE, // 类型
+      priority: MESSAGE_PRIORITY.NORMAL, // priority
     }); // 结束代码块
   } // 结束代码块
 
@@ -966,13 +966,13 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
     // 格式化成交时间 / Format execution time
     const execTime = trade.timestamp ? new Date(trade.timestamp) : new Date(); // 定义常量 execTime
     const timeStr = execTime.toLocaleString('zh-CN', { // 定义常量 timeStr
-      year: 'numeric', // 设置 year 字段
-      month: '2-digit', // 设置 month 字段
-      day: '2-digit', // 设置 day 字段
-      hour: '2-digit', // 设置 hour 字段
-      minute: '2-digit', // 设置 minute 字段
-      second: '2-digit', // 设置 second 字段
-      hour12: false, // 设置 hour12 字段
+      year: 'numeric', // 年
+      month: '2-digit', // 月
+      day: '2-digit', // 天
+      hour: '2-digit', // 小时
+      minute: '2-digit', // 分钟
+      second: '2-digit', // 秒
+      hour12: false, // hour12
     }); // 结束代码块
 
     // 构建标题 (带服务名) / Build title (with service name)
@@ -1062,9 +1062,9 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
 
     // 发送报告 / Send report
     await this.sendMessage(message, { // 等待异步结果
-      type: MESSAGE_TYPE.DAILY_REPORT, // 设置 type 字段
-      priority: MESSAGE_PRIORITY.HIGH, // 设置 priority 字段
-      immediate: true, // 设置 immediate 字段
+      type: MESSAGE_TYPE.DAILY_REPORT, // 类型
+      priority: MESSAGE_PRIORITY.HIGH, // priority
+      immediate: true, // immediate
     }); // 结束代码块
 
     // 记录日志 / Log
@@ -1090,10 +1090,10 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
     // 初始化数据对象 / Initialize data object
     const data = { // 定义常量 data
       // 日期 / Date
-      date: new Date().toLocaleDateString('zh-CN'), // 设置 date 字段
+      date: new Date().toLocaleDateString('zh-CN'), // date
 
       // 权益数据 / Equity data
-      equity: { // 设置 equity 字段
+      equity: { // equity
         start: 0,       // 起始权益 / Start equity
         end: 0,         // 结束权益 / End equity
         peak: 0,        // 最高权益 / Peak equity
@@ -1102,14 +1102,14 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       }, // 结束代码块
 
       // PnL 数据 / PnL data
-      pnl: { // 设置 pnl 字段
+      pnl: { // 盈亏
         realized: 0,    // 已实现 / Realized
         unrealized: 0,  // 未实现 / Unrealized
         total: 0,       // 总计 / Total
       }, // 结束代码块
 
       // 交易数据 / Trade data
-      trades: { // 设置 trades 字段
+      trades: { // 成交
         count: 0,       // 交易次数 / Trade count
         wins: 0,        // 盈利次数 / Win count
         losses: 0,      // 亏损次数 / Loss count
@@ -1117,14 +1117,14 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       }, // 结束代码块
 
       // 持仓数据 / Position data
-      positions: { // 设置 positions 字段
+      positions: { // 持仓
         count: 0,       // 持仓数量 / Position count
         long: 0,        // 多头数量 / Long count
         short: 0,       // 空头数量 / Short count
       }, // 结束代码块
 
       // 风控数据 / Risk data
-      risk: { // 设置 risk 字段
+      risk: { // 风险
         maxDrawdown: 0, // 最大回撤 / Max drawdown
         marginRate: 0,  // 保证金率 / Margin rate
         alerts: 0,      // 警报次数 / Alert count
@@ -1267,7 +1267,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
 
     // 发送消息 / Send message
     await this.sendMessage(formattedMessage, { // 等待异步结果
-      type: MESSAGE_TYPE.SYSTEM, // 设置 type 字段
+      type: MESSAGE_TYPE.SYSTEM, // 类型
       priority, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -1288,16 +1288,16 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       ...this.stats, // 展开对象或数组
 
       // 队列长度 / Queue length
-      queueLength: this.messageQueue.length, // 设置 queueLength 字段
+      queueLength: this.messageQueue.length, // 队列Length
 
       // 是否运行中 / Whether running
-      running: this.running, // 设置 running 字段
+      running: this.running, // running
 
       // 是否已初始化 / Whether initialized
-      initialized: this.initialized, // 设置 initialized 字段
+      initialized: this.initialized, // initialized
 
       // 是否启用 / Whether enabled
-      enabled: this.config.enabled, // 设置 enabled 字段
+      enabled: this.config.enabled, // 启用
     }; // 结束代码块
   } // 结束代码块
 
@@ -1321,7 +1321,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         if (this.config.verbose) { // 条件判断 this.config.verbose
           console.log(fullMessage); // 控制台输出
         } // 结束代码块

@@ -141,93 +141,93 @@ export { BaseStrategy as default } from './BaseStrategy.js'; // 导出命名成�
  */
 export const StrategyRegistry = { // 导出常量 StrategyRegistry
   // 策略映射 / Strategy mapping
-  SMA: () => import('./SMAStrategy.js').then(m => m.SMAStrategy), // 设置 SMA 字段
-  RSI: () => import('./RSIStrategy.js').then(m => m.RSIStrategy), // 设置 RSI 字段
-  BollingerBands: () => import('./BollingerBandsStrategy.js').then(m => m.BollingerBandsStrategy), // 设置 BollingerBands 字段
-  MACD: () => import('./MACDStrategy.js').then(m => m.MACDStrategy), // 设置 MACD 字段
-  Grid: () => import('./GridStrategy.js').then(m => m.GridStrategy), // 设置 Grid 字段
-  FundingArb: () => import('./FundingArbStrategy.js').then(m => m.FundingArbStrategy), // 设置 FundingArb 字段
+  SMA: () => import('./SMAStrategy.js').then(m => m.SMAStrategy), // 策略映射
+  RSI: () => import('./RSIStrategy.js').then(m => m.RSIStrategy), // RSI
+  BollingerBands: () => import('./BollingerBandsStrategy.js').then(m => m.BollingerBandsStrategy), // 布林带Bands
+  MACD: () => import('./MACDStrategy.js').then(m => m.MACDStrategy), // MACD
+  Grid: () => import('./GridStrategy.js').then(m => m.GridStrategy), // 网格
+  FundingArb: () => import('./FundingArbStrategy.js').then(m => m.FundingArbStrategy), // 资金费率Arb
 
   // 波动率策略 / Volatility strategies
-  ATRBreakout: () => import('./ATRBreakoutStrategy.js').then(m => m.ATRBreakoutStrategy), // 设置 ATRBreakout 字段
-  BollingerWidth: () => import('./BollingerWidthStrategy.js').then(m => m.BollingerWidthStrategy), // 设置 BollingerWidth 字段
-  VolatilityRegime: () => import('./VolatilityRegimeStrategy.js').then(m => m.VolatilityRegimeStrategy), // 设置 VolatilityRegime 字段
+  ATRBreakout: () => import('./ATRBreakoutStrategy.js').then(m => m.ATRBreakoutStrategy), // ATR突破
+  BollingerWidth: () => import('./BollingerWidthStrategy.js').then(m => m.BollingerWidthStrategy), // 布林带宽度
+  VolatilityRegime: () => import('./VolatilityRegimeStrategy.js').then(m => m.VolatilityRegimeStrategy), // 波动率状态
 
   // Regime 切换策略 / Regime switching strategy
-  RegimeSwitching: () => import('./RegimeSwitchingStrategy.js').then(m => m.RegimeSwitchingStrategy), // 设置 RegimeSwitching 字段
+  RegimeSwitching: () => import('./RegimeSwitchingStrategy.js').then(m => m.RegimeSwitchingStrategy), // Regime 切换策略
 
   // 订单流策略 / Order flow strategy
-  OrderFlow: () => import('./OrderFlowStrategy.js').then(m => m.OrderFlowStrategy), // 设置 OrderFlow 字段
+  OrderFlow: () => import('./OrderFlowStrategy.js').then(m => m.OrderFlowStrategy), // 订单流
 
   // 多周期共振策略 / Multi-timeframe resonance strategy
-  MultiTimeframe: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy), // 设置 MultiTimeframe 字段
-  MTF: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),  // 别名
+  MultiTimeframe: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy), // 多周期共振策略
+  MTF: () => import('./MultiTimeframeStrategy.js').then(m => m.MultiTimeframeStrategy),  // MTF
 
   // 加权组合策略 / Weighted combo strategy
-  WeightedCombo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy), // 设置 WeightedCombo 字段
-  Combo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),  // 别名
+  WeightedCombo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy), // WeightedCombo
+  Combo: () => import('./WeightedComboStrategy.js').then(m => m.WeightedComboStrategy),  // Combo
 
   // ============================================
   // 横截面策略 / Cross-Sectional Strategies
   // ============================================
 
   // 横截面策略基类 / Cross-sectional base
-  CrossSectional: () => import('./CrossSectionalStrategy.js').then(m => m.CrossSectionalStrategy), // 设置 CrossSectional 字段
+  CrossSectional: () => import('./CrossSectionalStrategy.js').then(m => m.CrossSectionalStrategy), // CrossSectional
 
   // 动量排名策略 / Momentum rank strategy
-  MomentumRank: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy), // 设置 MomentumRank 字段
-  Momentum: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy),  // 别名
+  MomentumRank: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy), // 动量Rank
+  Momentum: () => import('./MomentumRankStrategy.js').then(m => m.MomentumRankStrategy),  // 动量
 
   // 强弱轮动策略 / Rotation strategy
-  Rotation: () => import('./RotationStrategy.js').then(m => m.RotationStrategy), // 设置 Rotation 字段
-  TopBottom: () => import('./RotationStrategy.js').then(m => m.RotationStrategy),  // 别名
+  Rotation: () => import('./RotationStrategy.js').then(m => m.RotationStrategy), // Rotation
+  TopBottom: () => import('./RotationStrategy.js').then(m => m.RotationStrategy),  // TopBottom
 
   // 资金费率极值策略 / Funding rate extreme strategy
-  FundingRateExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy), // 设置 FundingRateExtreme 字段
-  FundingExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy),  // 别名
+  FundingRateExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy), // 资金费率极值策略
+  FundingExtreme: () => import('./FundingRateExtremeStrategy.js').then(m => m.FundingRateExtremeStrategy),  // 资金费率极端
 
   // 跨交易所价差策略 / Cross-exchange spread strategy
-  CrossExchangeSpread: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy), // 设置 CrossExchangeSpread 字段
-  CrossExchange: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),  // 别名
+  CrossExchangeSpread: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy), // 跨交易所价差策略
+  CrossExchange: () => import('./CrossExchangeSpreadStrategy.js').then(m => m.CrossExchangeSpreadStrategy),  // Cross交易所
 
   // ============================================
   // 统计套利策略 / Statistical Arbitrage Strategies
   // ============================================
 
   // 统计套利策略 / Statistical arbitrage strategy
-  StatisticalArbitrage: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy), // 设置 StatisticalArbitrage 字段
-  StatArb: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
-  Pairs: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
-  Cointegration: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 别名
+  StatisticalArbitrage: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy), // 统计套利
+  StatArb: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // StatArb
+  Pairs: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // Pairs
+  Cointegration: () => import('./StatisticalArbitrageStrategy.js').then(m => m.StatisticalArbitrageStrategy),  // 协整
 
   // ============================================
   // 自适应参数策略 / Adaptive Strategy
   // ============================================
 
   // 自适应参数策略 / Adaptive strategy
-  Adaptive: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy), // 设置 Adaptive 字段
-  AdaptiveParams: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),  // 别名
+  Adaptive: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy), // Adaptive
+  AdaptiveParams: () => import('./AdaptiveStrategy.js').then(m => m.AdaptiveStrategy),  // AdaptiveParams
 
   // ============================================
   // 风控驱动策略 / Risk-Driven Strategy
   // ============================================
 
   // 风控驱动策略 / Risk-driven strategy
-  RiskDriven: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy), // 设置 RiskDriven 字段
-  RiskBased: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
-  TargetVol: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
-  RiskParity: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
-  DrawdownControl: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 别名
+  RiskDriven: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy), // 风险Driven
+  RiskBased: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 风险Based
+  TargetVol: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // Target波动率
+  RiskParity: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 风险Parity
+  DrawdownControl: () => import('./RiskDrivenStrategy.js').then(m => m.RiskDrivenStrategy),  // 回撤控制
 
   // ============================================
   // 因子投资策略 / Factor Investing Strategy
   // ============================================
 
   // 因子投资策略 / Factor investing strategy
-  FactorInvesting: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy), // 设置 FactorInvesting 字段
-  Factors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
-  MultiFactors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
-  AlphaFactory: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // 别名
+  FactorInvesting: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy), // FactorInvesting
+  Factors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // Factors
+  MultiFactors: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // MultiFactors
+  AlphaFactory: () => import('../factors/FactorInvestingStrategy.js').then(m => m.FactorInvestingStrategy),  // AlphaFactory
 
   /**
    * 获取策略类

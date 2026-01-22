@@ -15,9 +15,9 @@ import { EventEmitter } from 'events'; // 导入模块 events
  * Log level enum
  */
 const LOG_LEVEL = { // 定义常量 LOG_LEVEL
-  INFO: 'info', // 设置 INFO 字段
-  WARNING: 'warning', // 设置 WARNING 字段
-  CRITICAL: 'critical', // 设置 CRITICAL 字段
+  INFO: 'info', // INFO
+  WARNING: 'warning', // 警告
+  CRITICAL: 'critical', // CRITICAL
 }; // 结束代码块
 
 /**
@@ -26,15 +26,15 @@ const LOG_LEVEL = { // 定义常量 LOG_LEVEL
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 批量写入大小 / Batch write size
-  batchSize: 100, // 设置 batchSize 字段
+  batchSize: 100, // 批次大小
   // 刷新间隔 (ms) / Flush interval (ms)
-  flushInterval: 5000, // 设置 flushInterval 字段
+  flushInterval: 5000, // 刷新间隔 (ms)
   // 是否异步写入 / Whether to write asynchronously
-  async: true, // 设置 async 字段
+  async: true, // 异步
   // 最大缓冲区大小 / Max buffer size
-  maxBufferSize: 1000, // 设置 maxBufferSize 字段
+  maxBufferSize: 1000, // 最大Buffer大小
   // 重试次数 / Retry count
-  maxRetries: 3, // 设置 maxRetries 字段
+  maxRetries: 3, // 重试次数
 }; // 结束代码块
 
 /**
@@ -60,10 +60,10 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalWritten: 0, // 设置 totalWritten 字段
-      totalErrors: 0, // 设置 totalErrors 字段
-      lastFlushTime: null, // 设置 lastFlushTime 字段
-      bufferSize: 0, // 设置 bufferSize 字段
+      totalWritten: 0, // 总Written
+      totalErrors: 0, // 总错误列表
+      lastFlushTime: null, // lastFlush时间
+      bufferSize: 0, // buffer大小
     }; // 结束代码块
   } // 结束代码块
 
@@ -211,14 +211,14 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
       : new Date().toISOString().replace('T', ' ').replace('Z', ''); // 执行语句
 
     return { // 返回结果
-      log_id: log.id || log.logId || this._generateLogId(), // 设置 log_id 字段
-      event_type: log.eventType || 'unknown', // 设置 event_type 字段
-      level: log.level || LOG_LEVEL.INFO, // 设置 level 字段
+      log_id: log.id || log.logId || this._generateLogId(), // 日志ID
+      event_type: log.eventType || 'unknown', // 事件类型
+      level: log.level || LOG_LEVEL.INFO, // 级别
       timestamp, // 执行语句
-      data: log.data ? JSON.stringify(log.data) : '', // 设置 data 字段
-      metadata: log.metadata ? JSON.stringify(log.metadata) : '', // 设置 metadata 字段
-      prev_hash: log.prevHash || '', // 设置 prev_hash 字段
-      hash: log.hash || '', // 设置 hash 字段
+      data: log.data ? JSON.stringify(log.data) : '', // 数据
+      metadata: log.metadata ? JSON.stringify(log.metadata) : '', // 元数据
+      prev_hash: log.prevHash || '', // prevhash
+      hash: log.hash || '', // hash
     }; // 结束代码块
   } // 结束代码块
 
@@ -277,10 +277,10 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
   async info(eventType, data = {}, metadata = {}) { // 执行语句
     await this.write({ // 等待异步结果
       eventType, // 执行语句
-      level: LOG_LEVEL.INFO, // 设置 level 字段
+      level: LOG_LEVEL.INFO, // 级别
       data, // 执行语句
       metadata, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -295,10 +295,10 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
   async warning(eventType, data = {}, metadata = {}) { // 执行语句
     await this.write({ // 等待异步结果
       eventType, // 执行语句
-      level: LOG_LEVEL.WARNING, // 设置 level 字段
+      level: LOG_LEVEL.WARNING, // 级别
       data, // 执行语句
       metadata, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -313,10 +313,10 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
   async critical(eventType, data = {}, metadata = {}) { // 执行语句
     await this.write({ // 等待异步结果
       eventType, // 执行语句
-      level: LOG_LEVEL.CRITICAL, // 设置 level 字段
+      level: LOG_LEVEL.CRITICAL, // 级别
       data, // 执行语句
       metadata, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 

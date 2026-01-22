@@ -62,9 +62,9 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
 
       if (!position) { // 条件判断 !position
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Position not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Position not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -86,9 +86,9 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
       // 验证权限
       if (req.user?.role !== 'admin' && req.user?.role !== 'trader') { // 条件判断 req.user?.role !== 'admin' && req.user?.role ...
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Trader or admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Trader or admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -99,9 +99,9 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
 
       if (!position) { // 条件判断 !position
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Position not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Position not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -127,9 +127,9 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
       // 验证权限
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -156,9 +156,9 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
       } // 结束代码块
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        message: `${closedCount} positions closed`, // 设置 message 字段
-        data: { closedCount } // 设置 data 字段
+        success: true, // 成功标记
+        message: `${closedCount} positions closed`, // 消息
+        data: { closedCount } // 数据
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -177,11 +177,11 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
       } // 结束代码块
 
       const summary = { // 定义常量 summary
-        totalPositions: positions.length, // 设置 totalPositions 字段
-        totalValue: 0, // 设置 totalValue 字段
-        totalUnrealizedPnL: 0, // 设置 totalUnrealizedPnL 字段
-        byExchange: {}, // 设置 byExchange 字段
-        bySymbol: {}, // 设置 bySymbol 字段
+        totalPositions: positions.length, // 总持仓
+        totalValue: 0, // 总Value
+        totalUnrealizedPnL: 0, // 总未实现PnL
+        byExchange: {}, // by交易所
+        bySymbol: {}, // by交易对
       }; // 结束代码块
 
       for (const position of positions) { // 循环 const position of positions

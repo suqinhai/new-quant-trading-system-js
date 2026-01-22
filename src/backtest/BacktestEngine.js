@@ -28,71 +28,71 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
     // 回测配置 / Backtest configuration
     this.config = { // 设置 config
       // 初始资金 / Initial capital
-      initialCapital: config.initialCapital || 10000, // 设置 initialCapital 字段
+      initialCapital: config.initialCapital || 10000, // 初始资金
 
       // 手续费率 (0.001 = 0.1%) / Commission rate
-      commissionRate: config.commissionRate || 0.001, // 设置 commissionRate 字段
+      commissionRate: config.commissionRate || 0.001, // 手续费率 (0.001 = 0.1%)
 
       // 滑点 (0.0005 = 0.05%) / Slippage
-      slippage: config.slippage || 0.0005, // 设置 slippage 字段
+      slippage: config.slippage || 0.0005, // 滑点 (0.0005 = 0.05%)
 
       // 是否允许做空 / Whether to allow short selling
-      allowShort: config.allowShort || false, // 设置 allowShort 字段
+      allowShort: config.allowShort || false, // 允许Short
 
       // 杠杆倍数 / Leverage
-      leverage: config.leverage || 1, // 设置 leverage 字段
+      leverage: config.leverage || 1, // 杠杆
 
       // 是否使用百分比仓位 / Whether to use percentage position sizing
-      usePercentPosition: config.usePercentPosition !== false, // 设置 usePercentPosition 字段
+      usePercentPosition: config.usePercentPosition !== false, // 是否使用百分比仓位
     }; // 结束代码块
 
     // 回测状态 / Backtest state
     this.state = { // 设置 state
       // 当前资金 / Current capital
-      capital: this.config.initialCapital, // 设置 capital 字段
+      capital: this.config.initialCapital, // 资金
 
       // 当前持仓 / Current positions
-      positions: new Map(), // 设置 positions 字段
+      positions: new Map(), // 持仓
 
       // 订单历史 / Order history
-      orders: [], // 设置 orders 字段
+      orders: [], // 订单
 
       // 交易历史 / Trade history
-      trades: [], // 设置 trades 字段
+      trades: [], // 成交
 
       // 权益曲线 / Equity curve
-      equityCurve: [], // 设置 equityCurve 字段
+      equityCurve: [], // equityCurve
 
       // 当前 K 线索引 / Current candle index
-      currentIndex: 0, // 设置 currentIndex 字段
+      currentIndex: 0, // 当前 K 线索引
 
       // 当前时间 / Current time
-      currentTime: null, // 设置 currentTime 字段
+      currentTime: null, // current时间
 
       // 是否正在运行 / Whether running
-      running: false, // 设置 running 字段
+      running: false, // running
 
       // ============================================
       // 新增统计跟踪变量 / New statistics tracking variables
       // ============================================
 
       // 总手续费 / Total commission
-      totalCommission: 0, // 设置 totalCommission 字段
+      totalCommission: 0, // 总手续费
 
       // 总交易额 / Total trading volume
-      totalTradingVolume: 0, // 设置 totalTradingVolume 字段
+      totalTradingVolume: 0, // 总交易成交量
 
       // 最大仓位比例 / Maximum position ratio
-      maxPositionRatio: 0, // 设置 maxPositionRatio 字段
+      maxPositionRatio: 0, // 最大仓位比例
 
       // 风控触发次数 / Risk control trigger count
-      riskControlTriggers: 0, // 设置 riskControlTriggers 字段
+      riskControlTriggers: 0, // 风控触发次数
 
       // 日收益率数组 / Daily returns array
-      dailyReturns: [], // 设置 dailyReturns 字段
+      dailyReturns: [], // 日收益率数组
 
       // 基准权益曲线 (买入持有) / Benchmark equity curve (buy and hold)
-      benchmarkEquityCurve: [], // 设置 benchmarkEquityCurve 字段
+      benchmarkEquityCurve: [], // 基准权益曲线 (买入持有)
     }; // 结束代码块
 
     // 历史数据 / Historical data
@@ -218,9 +218,9 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
       // 发出进度事件 / Emit progress event
       if (i % 100 === 0) { // 条件判断 i % 100 === 0
         this.emit('progress', { // 调用 emit
-          current: i, // 设置 current 字段
-          total: this.data.length, // 设置 total 字段
-          percent: ((i / this.data.length) * 100).toFixed(2), // 设置 percent 字段
+          current: i, // current
+          total: this.data.length, // 总
+          percent: ((i / this.data.length) * 100).toFixed(2), // 百分比
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -293,16 +293,16 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
 
     // 创建订单记录 / Create order record
     const orderRecord = { // 定义常量 orderRecord
-      id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 设置 id 字段
+      id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // ID
       symbol, // 执行语句
       side, // 执行语句
       type, // 执行语句
       amount, // 执行语句
-      price: executionPrice, // 设置 price 字段
-      value: orderValue, // 设置 value 字段
+      price: executionPrice, // 价格
+      value: orderValue, // value
       commission, // 执行语句
-      timestamp: this.state.currentTime, // 设置 timestamp 字段
-      status: 'filled', // 设置 status 字段
+      timestamp: this.state.currentTime, // 时间戳
+      status: 'filled', // 状态
     }; // 结束代码块
 
     // 添加到订单历史 / Add to order history
@@ -339,7 +339,7 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
   buy(symbol, amount, options = {}) { // 调用 buy
     return this.order({ // 返回结果
       symbol, // 执行语句
-      side: 'buy', // 设置 side 字段
+      side: 'buy', // 方向
       amount, // 执行语句
       ...options, // 展开对象或数组
     }); // 结束代码块
@@ -356,7 +356,7 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
   sell(symbol, amount, options = {}) { // 调用 sell
     return this.order({ // 返回结果
       symbol, // 执行语句
-      side: 'sell', // 设置 side 字段
+      side: 'sell', // 方向
       amount, // 执行语句
       ...options, // 展开对象或数组
     }); // 结束代码块
@@ -473,21 +473,21 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
    */
   _resetState() { // 调用 _resetState
     this.state = { // 设置 state
-      capital: this.config.initialCapital, // 设置 capital 字段
-      positions: new Map(), // 设置 positions 字段
-      orders: [], // 设置 orders 字段
-      trades: [], // 设置 trades 字段
-      equityCurve: [], // 设置 equityCurve 字段
-      currentIndex: 0, // 设置 currentIndex 字段
-      currentTime: null, // 设置 currentTime 字段
-      running: false, // 设置 running 字段
+      capital: this.config.initialCapital, // 资金
+      positions: new Map(), // 持仓
+      orders: [], // 订单
+      trades: [], // 成交
+      equityCurve: [], // equityCurve
+      currentIndex: 0, // currentIndex
+      currentTime: null, // current时间
+      running: false, // running
       // 新增统计跟踪变量 / New statistics tracking variables
-      totalCommission: 0, // 设置 totalCommission 字段
-      totalTradingVolume: 0, // 设置 totalTradingVolume 字段
-      maxPositionRatio: 0, // 设置 maxPositionRatio 字段
-      riskControlTriggers: 0, // 设置 riskControlTriggers 字段
-      dailyReturns: [], // 设置 dailyReturns 字段
-      benchmarkEquityCurve: [], // 设置 benchmarkEquityCurve 字段
+      totalCommission: 0, // 新增统计跟踪变量
+      totalTradingVolume: 0, // 总交易成交量
+      maxPositionRatio: 0, // 最大持仓比例
+      riskControlTriggers: 0, // 风险控制Triggers
+      dailyReturns: [], // 每日Returns
+      benchmarkEquityCurve: [], // benchmarkEquityCurve
     }; // 结束代码块
   } // 结束代码块
 
@@ -503,11 +503,11 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
     // 如果没有持仓，创建新持仓 / If no position, create new one
     if (!position) { // 条件判断 !position
       position = { // 赋值 position
-        symbol: order.symbol, // 设置 symbol 字段
-        amount: 0, // 设置 amount 字段
-        avgPrice: 0, // 设置 avgPrice 字段
-        unrealizedPnL: 0, // 设置 unrealizedPnL 字段
-        realizedPnL: 0, // 设置 realizedPnL 字段
+        symbol: order.symbol, // 交易对
+        amount: 0, // 数量
+        avgPrice: 0, // avg价格
+        unrealizedPnL: 0, // 未实现PnL
+        realizedPnL: 0, // 已实现PnL
       }; // 结束代码块
       this.state.positions.set(order.symbol, position); // 访问 state
     } // 结束代码块
@@ -529,12 +529,12 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
 
         // 记录交易 / Record trade
         this.state.trades.push({ // 访问 state
-          symbol: order.symbol, // 设置 symbol 字段
-          entryPrice: position.avgPrice, // 设置 entryPrice 字段
-          exitPrice: order.price, // 设置 exitPrice 字段
-          amount: closedAmount, // 设置 amount 字段
+          symbol: order.symbol, // 交易对
+          entryPrice: position.avgPrice, // 入场价格
+          exitPrice: order.price, // 出场价格
+          amount: closedAmount, // 数量
           pnl, // 执行语句
-          timestamp: this.state.currentTime, // 设置 timestamp 字段
+          timestamp: this.state.currentTime, // 时间戳
         }); // 结束代码块
       } // 结束代码块
       position.amount -= order.amount; // 执行语句
@@ -563,9 +563,9 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
   _recordEquity(candle) { // 调用 _recordEquity
     const equity = this.getEquity(); // 定义常量 equity
     this.state.equityCurve.push({ // 访问 state
-      timestamp: candle.timestamp, // 设置 timestamp 字段
+      timestamp: candle.timestamp, // 时间戳
       equity, // 执行语句
-      capital: this.state.capital, // 设置 capital 字段
+      capital: this.state.capital, // 资金
     }); // 结束代码块
 
     // 记录基准权益 (买入持有策略) / Record benchmark equity (buy and hold)
@@ -575,8 +575,8 @@ export class BacktestEngine extends EventEmitter { // 导出类 BacktestEngine
     } // 结束代码块
     const benchmarkEquity = this.config.initialCapital * (candle.close / this._benchmarkInitialPrice); // 定义常量 benchmarkEquity
     this.state.benchmarkEquityCurve.push({ // 访问 state
-      timestamp: candle.timestamp, // 设置 timestamp 字段
-      equity: benchmarkEquity, // 设置 equity 字段
+      timestamp: candle.timestamp, // 时间戳
+      equity: benchmarkEquity, // equity
     }); // 结束代码块
 
     // 计算并记录当前仓位比例 / Calculate and record current position ratio

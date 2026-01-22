@@ -23,17 +23,17 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
   router.get('/summary', async (req, res) => { // 调用 router.get
     try { // 尝试执行
       let summary = { // 定义变量 summary
-        totalAssets: 0, // 设置 totalAssets 字段
-        availableBalance: 0, // 设置 availableBalance 字段
-        positionValue: 0, // 设置 positionValue 字段
-        todayPnL: 0, // 设置 todayPnL 字段
-        todayPnLPercent: 0, // 设置 todayPnLPercent 字段
-        totalPnL: 0, // 设置 totalPnL 字段
-        totalPnLPercent: 0, // 设置 totalPnLPercent 字段
-        runningStrategies: 0, // 设置 runningStrategies 字段
-        totalStrategies: 0, // 设置 totalStrategies 字段
-        openPositions: 0, // 设置 openPositions 字段
-        todayTrades: 0, // 设置 todayTrades 字段
+        totalAssets: 0, // 总Assets
+        availableBalance: 0, // available余额
+        positionValue: 0, // 持仓Value
+        todayPnL: 0, // todayPnL
+        todayPnLPercent: 0, // todayPnL百分比
+        totalPnL: 0, // 总PnL
+        totalPnLPercent: 0, // 总PnL百分比
+        runningStrategies: 0, // running策略
+        totalStrategies: 0, // 总策略
+        openPositions: 0, // 开盘持仓
+        todayTrades: 0, // today成交
       }; // 结束代码块
 
       if (dashboardService?.getSummary) { // 条件判断 dashboardService?.getSummary
@@ -55,9 +55,9 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
       const { period = '7d' } = req.query; // 解构赋值
 
       let pnlData = { // 定义变量 pnlData
-        dates: [], // 设置 dates 字段
-        values: [], // 设置 values 字段
-        cumulative: [], // 设置 cumulative 字段
+        dates: [], // dates
+        values: [], // values
+        cumulative: [], // cumulative
       }; // 结束代码块
 
       if (dashboardService?.getPnLHistory) { // 条件判断 dashboardService?.getPnLHistory
@@ -93,9 +93,9 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
 
       if (tradeRepository) { // 条件判断 tradeRepository
         const result = await tradeRepository.getTradeHistory({ // 定义常量 result
-          limit: parseInt(limit), // 设置 limit 字段
-          sortBy: 'timestamp', // 设置 sortBy 字段
-          sortOrder: 'desc', // 设置 sortOrder 字段
+          limit: parseInt(limit), // 限制
+          sortBy: 'timestamp', // sortBy
+          sortOrder: 'desc', // sort订单
         }); // 结束代码块
         trades = result.trades || []; // 赋值 trades
       } // 结束代码块
@@ -141,10 +141,10 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
 
       // 计算持仓摘要
       const summary = { // 定义常量 summary
-        total: positions.length, // 设置 total 字段
-        totalValue: positions.reduce((sum, p) => sum + (p.currentValue || 0), 0), // 设置 totalValue 字段
-        totalPnL: positions.reduce((sum, p) => sum + (p.unrealizedPnL || 0), 0), // 设置 totalPnL 字段
-        positions: positions.slice(0, 10), // 只返回前10个
+        total: positions.length, // 总
+        totalValue: positions.reduce((sum, p) => sum + (p.currentValue || 0), 0), // 总Value
+        totalPnL: positions.reduce((sum, p) => sum + (p.unrealizedPnL || 0), 0), // 总PnL
+        positions: positions.slice(0, 10), // 持仓
       }; // 结束代码块
 
       res.json({ success: true, data: summary }); // 调用 res.json
@@ -161,17 +161,17 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
     try { // 尝试执行
       const memory = process.memoryUsage(); // 定义常量 memory
       const metrics = { // 定义常量 metrics
-        cpu: { // 设置 cpu 字段
-          usage: Math.random() * 30 + 10, // 模拟 CPU 使用率
+        cpu: { // CPU
+          usage: Math.random() * 30 + 10, // 使用
         }, // 结束代码块
-        memory: { // 设置 memory 字段
-          used: memory.heapUsed, // 设置 used 字段
-          total: memory.heapTotal, // 设置 total 字段
-          percent: (memory.heapUsed / memory.heapTotal) * 100, // 设置 percent 字段
+        memory: { // 内存
+          used: memory.heapUsed, // used
+          total: memory.heapTotal, // 总
+          percent: (memory.heapUsed / memory.heapTotal) * 100, // 百分比
         }, // 结束代码块
-        uptime: process.uptime(), // 设置 uptime 字段
-        latency: Math.random() * 50 + 10, // 模拟延迟
-        timestamp: Date.now(), // 设置 timestamp 字段
+        uptime: process.uptime(), // uptime
+        latency: Math.random() * 50 + 10, // latency
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
 
       res.json({ success: true, data: metrics }); // 调用 res.json

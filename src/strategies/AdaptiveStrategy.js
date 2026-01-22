@@ -27,11 +27,11 @@ import { toNumber } from '../utils/helpers.js'; // 导入模块 ../utils/helpers
  * 自适应模式枚举
  */
 export const AdaptiveMode = { // 导出常量 AdaptiveMode
-  FULL: 'full',           // 完全自适应（SMA + RSI + BB 全部自适应）
-  SMA_ONLY: 'sma_only',   // 仅 SMA 周期自适应
-  RSI_ONLY: 'rsi_only',   // 仅 RSI 阈值自适应
-  BB_ONLY: 'bb_only',     // 仅布林带自适应
-  CUSTOM: 'custom',       // 自定义组合
+  FULL: 'full',           // FULL
+  SMA_ONLY: 'sma_only',   // SMA仅
+  RSI_ONLY: 'rsi_only',   // RSI仅
+  BB_ONLY: 'bb_only',     // 布林带仅
+  CUSTOM: 'custom',       // 自定义
 }; // 结束代码块
 
 /**
@@ -122,13 +122,13 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
     // 市场状态检测器 / Market Regime Detector
     // ============================================
     this.regimeDetector = new MarketRegimeDetector({ // 设置 regimeDetector
-      adxPeriod: params.adxPeriod || 14, // 设置 adxPeriod 字段
-      adxTrendThreshold: params.adxTrendThreshold || 25, // 设置 adxTrendThreshold 字段
-      bbPeriod: this.bbPeriod, // 设置 bbPeriod 字段
-      atrPeriod: this.atrPeriod, // 设置 atrPeriod 字段
-      lowVolPercentile: this.smaVolLowThreshold, // 设置 lowVolPercentile 字段
-      highVolPercentile: this.smaVolHighThreshold, // 设置 highVolPercentile 字段
-      extremeVolPercentile: params.extremeVolPercentile || 95, // 设置 extremeVolPercentile 字段
+      adxPeriod: params.adxPeriod || 14, // ADX周期
+      adxTrendThreshold: params.adxTrendThreshold || 25, // ADXTrend阈值
+      bbPeriod: this.bbPeriod, // 布林带周期
+      atrPeriod: this.atrPeriod, // ATR周期
+      lowVolPercentile: this.smaVolLowThreshold, // 最低波动率Percentile
+      highVolPercentile: this.smaVolHighThreshold, // 最高波动率Percentile
+      extremeVolPercentile: params.extremeVolPercentile || 95, // 极端波动率Percentile
     }); // 结束代码块
 
     // ============================================
@@ -136,11 +136,11 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
     // ============================================
     this._atrHistory = []; // 设置 _atrHistory
     this._adaptiveParams = { // 设置 _adaptiveParams
-      smaFastPeriod: this.smaBaseFast, // 设置 smaFastPeriod 字段
-      smaSlowPeriod: this.smaBaseSlow, // 设置 smaSlowPeriod 字段
-      rsiOversold: this.rsiBaseOversold, // 设置 rsiOversold 字段
-      rsiOverbought: this.rsiBaseOverbought, // 设置 rsiOverbought 字段
-      bbStdDev: this.bbBaseStdDev, // 设置 bbStdDev 字段
+      smaFastPeriod: this.smaBaseFast, // SMAFast周期
+      smaSlowPeriod: this.smaBaseSlow, // SMASlow周期
+      rsiOversold: this.rsiBaseOversold, // RSIOversold
+      rsiOverbought: this.rsiBaseOverbought, // RSIOverbought
+      bbStdDev: this.bbBaseStdDev, // 布林带标准差
     }; // 结束代码块
     this._signalHistory = []; // 设置 _signalHistory
     this._lastSignalTime = 0; // 设置 _lastSignalTime
@@ -318,10 +318,10 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
     const currentPrice = toNumber(candle.close); // 定义常量 currentPrice
 
     const signals = { // 定义常量 signals
-      sma: { signal: 0, strength: 0, reason: '' }, // 设置 sma 字段
-      rsi: { signal: 0, strength: 0, reason: '' }, // 设置 rsi 字段
-      bb: { signal: 0, strength: 0, reason: '' }, // 设置 bb 字段
-      trend: { direction: 'neutral', strength: 0 }, // 设置 trend 字段
+      sma: { signal: 0, strength: 0, reason: '' }, // SMA
+      rsi: { signal: 0, strength: 0, reason: '' }, // RSI
+      bb: { signal: 0, strength: 0, reason: '' }, // 布林带
+      trend: { direction: 'neutral', strength: 0 }, // trend
     }; // 结束代码块
 
     // ============================================
@@ -339,18 +339,18 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
       if (crossover.bullish) { // 条件判断 crossover.bullish
         const strength = Math.min(1, Math.abs(fastCurrent - slowCurrent) / slowCurrent * 100); // 定义常量 strength
         signals.sma = { // 赋值 signals.sma
-          signal: 1, // 设置 signal 字段
+          signal: 1, // 信号
           strength, // 执行语句
-          reason: `SMA 金叉 | 快线(${this._adaptiveParams.smaFastPeriod}): ${fastCurrent.toFixed(2)} > 慢线(${this._adaptiveParams.smaSlowPeriod}): ${slowCurrent.toFixed(2)}`, // 设置 reason 字段
+          reason: `SMA 金叉 | 快线(${this._adaptiveParams.smaFastPeriod}): ${fastCurrent.toFixed(2)} > 慢线(${this._adaptiveParams.smaSlowPeriod}): ${slowCurrent.toFixed(2)}`, // reason
         }; // 结束代码块
       } // 结束代码块
       // 死叉卖出
       else if (crossover.bearish) { // 否则如果 crossover.bearish
         const strength = Math.min(1, Math.abs(fastCurrent - slowCurrent) / slowCurrent * 100); // 定义常量 strength
         signals.sma = { // 赋值 signals.sma
-          signal: -1, // 设置 signal 字段
+          signal: -1, // 信号
           strength, // 执行语句
-          reason: `SMA 死叉 | 快线(${this._adaptiveParams.smaFastPeriod}): ${fastCurrent.toFixed(2)} < 慢线(${this._adaptiveParams.smaSlowPeriod}): ${slowCurrent.toFixed(2)}`, // 设置 reason 字段
+          reason: `SMA 死叉 | 快线(${this._adaptiveParams.smaFastPeriod}): ${fastCurrent.toFixed(2)} < 慢线(${this._adaptiveParams.smaSlowPeriod}): ${slowCurrent.toFixed(2)}`, // reason
         }; // 结束代码块
       } // 结束代码块
 
@@ -371,34 +371,34 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
       if (currentRSI <= this._adaptiveParams.rsiOversold) { // 条件判断 currentRSI <= this._adaptiveParams.rsiOversold
         const strength = (this._adaptiveParams.rsiOversold - currentRSI) / this._adaptiveParams.rsiOversold; // 定义常量 strength
         signals.rsi = { // 赋值 signals.rsi
-          signal: 1, // 设置 signal 字段
-          strength: Math.min(1, strength), // 设置 strength 字段
-          reason: `RSI 超卖 | RSI: ${currentRSI.toFixed(1)} <= 阈值: ${this._adaptiveParams.rsiOversold}`, // 设置 reason 字段
+          signal: 1, // 信号
+          strength: Math.min(1, strength), // strength
+          reason: `RSI 超卖 | RSI: ${currentRSI.toFixed(1)} <= 阈值: ${this._adaptiveParams.rsiOversold}`, // reason
         }; // 结束代码块
       } // 结束代码块
       // 超买回落
       else if (currentRSI >= this._adaptiveParams.rsiOverbought) { // 否则如果 currentRSI >= this._adaptiveParams.rsiOverbought
         const strength = (currentRSI - this._adaptiveParams.rsiOverbought) / (100 - this._adaptiveParams.rsiOverbought); // 定义常量 strength
         signals.rsi = { // 赋值 signals.rsi
-          signal: -1, // 设置 signal 字段
-          strength: Math.min(1, strength), // 设置 strength 字段
-          reason: `RSI 超买 | RSI: ${currentRSI.toFixed(1)} >= 阈值: ${this._adaptiveParams.rsiOverbought}`, // 设置 reason 字段
+          signal: -1, // 信号
+          strength: Math.min(1, strength), // strength
+          reason: `RSI 超买 | RSI: ${currentRSI.toFixed(1)} >= 阈值: ${this._adaptiveParams.rsiOverbought}`, // reason
         }; // 结束代码块
       } // 结束代码块
       // RSI 从超卖区域回升
       else if (prevRSI <= this._adaptiveParams.rsiOversold && currentRSI > this._adaptiveParams.rsiOversold) { // 否则如果 prevRSI <= this._adaptiveParams.rsiOversold &...
         signals.rsi = { // 赋值 signals.rsi
-          signal: 0.5,  // 弱买入信号
-          strength: 0.5, // 设置 strength 字段
-          reason: `RSI 离开超卖区 | RSI: ${prevRSI.toFixed(1)} → ${currentRSI.toFixed(1)}`, // 设置 reason 字段
+          signal: 0.5,  // 信号
+          strength: 0.5, // strength
+          reason: `RSI 离开超卖区 | RSI: ${prevRSI.toFixed(1)} → ${currentRSI.toFixed(1)}`, // reason
         }; // 结束代码块
       } // 结束代码块
       // RSI 从超买区域回落
       else if (prevRSI >= this._adaptiveParams.rsiOverbought && currentRSI < this._adaptiveParams.rsiOverbought) { // 否则如果 prevRSI >= this._adaptiveParams.rsiOverbought...
         signals.rsi = { // 赋值 signals.rsi
-          signal: -0.5,  // 弱卖出信号
-          strength: 0.5, // 设置 strength 字段
-          reason: `RSI 离开超买区 | RSI: ${prevRSI.toFixed(1)} → ${currentRSI.toFixed(1)}`, // 设置 reason 字段
+          signal: -0.5,  // 信号
+          strength: 0.5, // strength
+          reason: `RSI 离开超买区 | RSI: ${prevRSI.toFixed(1)} → ${currentRSI.toFixed(1)}`, // reason
         }; // 结束代码块
       } // 结束代码块
 
@@ -423,34 +423,34 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
       if (currentPrice <= currentBB.lower) { // 条件判断 currentPrice <= currentBB.lower
         const strength = Math.min(1, (currentBB.lower - currentPrice) / currentBB.lower * 100); // 定义常量 strength
         signals.bb = { // 赋值 signals.bb
-          signal: 1, // 设置 signal 字段
+          signal: 1, // 信号
           strength, // 执行语句
-          reason: `触及布林带下轨 | 价格: ${currentPrice.toFixed(2)} <= 下轨: ${currentBB.lower.toFixed(2)} (σ=${this._adaptiveParams.bbStdDev.toFixed(2)})`, // 设置 reason 字段
+          reason: `触及布林带下轨 | 价格: ${currentPrice.toFixed(2)} <= 下轨: ${currentBB.lower.toFixed(2)} (σ=${this._adaptiveParams.bbStdDev.toFixed(2)})`, // reason
         }; // 结束代码块
       } // 结束代码块
       // 触及上轨卖出
       else if (currentPrice >= currentBB.upper) { // 否则如果 currentPrice >= currentBB.upper
         const strength = Math.min(1, (currentPrice - currentBB.upper) / currentBB.upper * 100); // 定义常量 strength
         signals.bb = { // 赋值 signals.bb
-          signal: -1, // 设置 signal 字段
+          signal: -1, // 信号
           strength, // 执行语句
-          reason: `触及布林带上轨 | 价格: ${currentPrice.toFixed(2)} >= 上轨: ${currentBB.upper.toFixed(2)} (σ=${this._adaptiveParams.bbStdDev.toFixed(2)})`, // 设置 reason 字段
+          reason: `触及布林带上轨 | 价格: ${currentPrice.toFixed(2)} >= 上轨: ${currentBB.upper.toFixed(2)} (σ=${this._adaptiveParams.bbStdDev.toFixed(2)})`, // reason
         }; // 结束代码块
       } // 结束代码块
       // 从下轨反弹
       else if (prevPrice <= prevBB.lower && currentPrice > currentBB.lower) { // 否则如果 prevPrice <= prevBB.lower && currentPrice > c...
         signals.bb = { // 赋值 signals.bb
-          signal: 0.7, // 设置 signal 字段
-          strength: 0.7, // 设置 strength 字段
-          reason: `布林带下轨反弹 | %B: ${(percentB * 100).toFixed(1)}%`, // 设置 reason 字段
+          signal: 0.7, // 信号
+          strength: 0.7, // strength
+          reason: `布林带下轨反弹 | %B: ${(percentB * 100).toFixed(1)}%`, // reason
         }; // 结束代码块
       } // 结束代码块
       // 从上轨回落
       else if (prevPrice >= prevBB.upper && currentPrice < currentBB.upper) { // 否则如果 prevPrice >= prevBB.upper && currentPrice < c...
         signals.bb = { // 赋值 signals.bb
-          signal: -0.7, // 设置 signal 字段
-          strength: 0.7, // 设置 strength 字段
-          reason: `布林带上轨回落 | %B: ${(percentB * 100).toFixed(1)}%`, // 设置 reason 字段
+          signal: -0.7, // 信号
+          strength: 0.7, // strength
+          reason: `布林带上轨回落 | %B: ${(percentB * 100).toFixed(1)}%`, // reason
         }; // 结束代码块
       } // 结束代码块
 
@@ -471,9 +471,9 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
         const trendStrength = Math.abs(currentPrice - trendMAValue) / trendMAValue; // 定义常量 trendStrength
 
         signals.trend = { // 赋值 signals.trend
-          direction: currentPrice > trendMAValue ? 'up' : 'down', // 设置 direction 字段
-          strength: Math.min(1, trendStrength * 100), // 设置 strength 字段
-          maValue: trendMAValue, // 设置 maValue 字段
+          direction: currentPrice > trendMAValue ? 'up' : 'down', // direction
+          strength: Math.min(1, trendStrength * 100), // strength
+          maValue: trendMAValue, // 均线Value
         }; // 结束代码块
 
         this.setIndicator('trendMA', trendMAValue); // 调用 setIndicator
@@ -497,9 +497,9 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
 
     // 根据市场状态调整权重
     let adjustedWeights = { // 定义变量 adjustedWeights
-      sma: this.smaWeight, // 设置 sma 字段
-      rsi: this.rsiWeight, // 设置 rsi 字段
-      bb: this.bbWeight, // 设置 bb 字段
+      sma: this.smaWeight, // SMA
+      rsi: this.rsiWeight, // RSI
+      bb: this.bbWeight, // 布林带
     }; // 结束代码块
 
     // 趋势市：增加 SMA 权重
@@ -579,12 +579,12 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
     if (Math.abs(bb.signal) > 0) reasons.push(bb.reason); // 条件判断 Math.abs(bb.signal) > 0
 
     return { // 返回结果
-      signal: finalSignal, // 设置 signal 字段
-      rawSignal: trendAdjusted, // 设置 rawSignal 字段
-      confidence: Math.min(1, confidence), // 设置 confidence 字段
+      signal: finalSignal, // 信号
+      rawSignal: trendAdjusted, // raw信号
+      confidence: Math.min(1, confidence), // confidence
       reasons, // 执行语句
-      weights: adjustedWeights, // 设置 weights 字段
-      components: { sma, rsi, bb }, // 设置 components 字段
+      weights: adjustedWeights, // weights
+      components: { sma, rsi, bb }, // components
     }; // 结束代码块
   } // 结束代码块
 
@@ -641,11 +641,11 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
 
     // 记录信号历史
     this._signalHistory.push({ // 访问 _signalHistory
-      timestamp: candle.timestamp || Date.now(), // 设置 timestamp 字段
-      signal: fusedSignal.signal, // 设置 signal 字段
-      confidence: fusedSignal.confidence, // 设置 confidence 字段
-      adaptiveParams: { ...this._adaptiveParams }, // 设置 adaptiveParams 字段
-      regime: regimeInfo.regime, // 设置 regime 字段
+      timestamp: candle.timestamp || Date.now(), // 时间戳
+      signal: fusedSignal.signal, // 信号
+      confidence: fusedSignal.confidence, // confidence
+      adaptiveParams: { ...this._adaptiveParams }, // adaptiveParams
+      regime: regimeInfo.regime, // 状态
     }); // 结束代码块
 
     // 保留最近 200 条
@@ -681,13 +681,13 @@ export class AdaptiveStrategy extends BaseStrategy { // 导出类 AdaptiveStrate
     const sellSignals = this._signalHistory.filter(s => s.signal === 'sell').length; // 定义函数 sellSignals
 
     return { // 返回结果
-      currentRegime: regimeStats.currentRegime, // 设置 currentRegime 字段
-      regimeChanges: regimeStats.regimeChanges, // 设置 regimeChanges 字段
-      adaptiveParams: { ...this._adaptiveParams }, // 设置 adaptiveParams 字段
-      signals: { // 设置 signals 字段
-        buy: buySignals, // 设置 buy 字段
-        sell: sellSignals, // 设置 sell 字段
-        total: this._signalHistory.length, // 设置 total 字段
+      currentRegime: regimeStats.currentRegime, // current状态
+      regimeChanges: regimeStats.regimeChanges, // 状态变更
+      adaptiveParams: { ...this._adaptiveParams }, // adaptiveParams
+      signals: { // 信号
+        buy: buySignals, // buy
+        sell: sellSignals, // sell
+        total: this._signalHistory.length, // 总
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块

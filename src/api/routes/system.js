@@ -23,20 +23,20 @@ export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRout
   router.get('/status', async (req, res) => { // 调用 router.get
     try { // 尝试执行
       const status = { // 定义常量 status
-        version: process.env.npm_package_version || '1.0.0', // 读取环境变量
-        nodeVersion: process.version, // 设置 nodeVersion 字段
-        uptime: process.uptime(), // 设置 uptime 字段
-        memoryUsage: process.memoryUsage(), // 设置 memoryUsage 字段
-        cpuUsage: process.cpuUsage(), // 设置 cpuUsage 字段
-        timestamp: new Date().toISOString(), // 设置 timestamp 字段
-        mode: process.env.RUN_MODE || 'shadow', // 读取环境变量 RUN_MODE
-        pid: process.pid, // 设置 pid 字段
+        version: process.env.npm_package_version || '1.0.0', // version
+        nodeVersion: process.version, // nodeVersion
+        uptime: process.uptime(), // uptime
+        memoryUsage: process.memoryUsage(), // 内存使用
+        cpuUsage: process.cpuUsage(), // CPU使用
+        timestamp: new Date().toISOString(), // 时间戳
+        mode: process.env.RUN_MODE || 'shadow', // 模式
+        pid: process.pid, // pid
       }; // 结束代码块
 
       if (tradingEngine) { // 条件判断 tradingEngine
         status.engine = { // 赋值 status.engine
-          running: tradingEngine.isRunning?.() || false, // 设置 running 字段
-          strategies: tradingEngine.getActiveStrategies?.()?.length || 0, // 设置 strategies 字段
+          running: tradingEngine.isRunning?.() || false, // running
+          strategies: tradingEngine.getActiveStrategies?.()?.length || 0, // 策略
         }; // 结束代码块
       } // 结束代码块
 
@@ -58,11 +58,11 @@ export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRout
         config = configManager.getAll?.() || {}; // 赋值 config
       } else { // 执行语句
         config = { // 赋值 config
-          runMode: process.env.RUN_MODE || 'shadow', // 读取环境变量 RUN_MODE
-          logging: { level: process.env.LOG_LEVEL || 'info' }, // 读取环境变量 LOG_LEVEL
-          server: { // 设置 server 字段
-            httpPort: parseInt(process.env.HTTP_PORT) || 3000, // 读取环境变量 HTTP_PORT
-            wsPort: parseInt(process.env.WS_PORT) || 3001, // 读取环境变量 WS_PORT
+          runMode: process.env.RUN_MODE || 'shadow', // run模式
+          logging: { level: process.env.LOG_LEVEL || 'info' }, // logging
+          server: { // server
+            httpPort: parseInt(process.env.HTTP_PORT) || 3000, // http端口
+            wsPort: parseInt(process.env.WS_PORT) || 3001, // ws端口
           }, // 结束代码块
         }; // 结束代码块
       } // 结束代码块
@@ -97,9 +97,9 @@ export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRout
       // 验证权限 - 只有管理员可以修改配置
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -120,10 +120,10 @@ export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRout
   router.get('/metrics', async (req, res) => { // 调用 router.get
     try { // 尝试执行
       const metrics = { // 定义常量 metrics
-        memory: process.memoryUsage(), // 设置 memory 字段
-        cpu: process.cpuUsage(), // 设置 cpu 字段
-        uptime: process.uptime(), // 设置 uptime 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        memory: process.memoryUsage(), // 内存
+        cpu: process.cpuUsage(), // CPU
+        uptime: process.uptime(), // uptime
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
 
       // 添加交易引擎指标
@@ -150,9 +150,9 @@ export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRout
       } // 结束代码块
 
       res.json({ // 调用 res.json
-        status: 'healthy', // 设置 status 字段
-        timestamp: new Date().toISOString(), // 设置 timestamp 字段
-        uptime: process.uptime(), // 设置 uptime 字段
+        status: 'healthy', // 状态
+        timestamp: new Date().toISOString(), // 时间戳
+        uptime: process.uptime(), // uptime
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(503).json({ status: 'unhealthy', error: error.message }); // 调用 res.status

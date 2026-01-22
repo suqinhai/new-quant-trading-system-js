@@ -52,21 +52,21 @@ export class BinanceExchange extends BaseExchange { // 导出类 BinanceExchange
     // 构建配置对象 / Build configuration object
     const exchangeConfig = { // 定义常量 exchangeConfig
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout, // 设置 timeout 字段
+      timeout: this.config.timeout, // 超时设置 (毫秒)
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
-        defaultType: this.config.defaultType, // 设置 defaultType 字段
+        defaultType: this.config.defaultType, // 默认类型默认交易类型
 
         // 调整时间戳 (解决服务器时间差问题) / Adjust timestamp (solve server time difference)
-        adjustForTimeDifference: true, // 设置 adjustForTimeDifference 字段
+        adjustForTimeDifference: true, // 调整时间戳 (解决服务器时间差问题)
 
         // 接收窗口 (毫秒)，防止时间戳过期 / Receive window (ms), prevent timestamp expiry
-        recvWindow: 10000, // 设置 recvWindow 字段
+        recvWindow: 10000, // 接收窗口 (毫秒)，防止时间戳过期
 
         // 合并额外选项 / Merge additional options
         ...this.config.options, // 展开对象或数组
@@ -216,7 +216,7 @@ export class BinanceExchange extends BaseExchange { // 导出类 BinanceExchange
         // hedgeMode: true = 双向持仓 (long_short_mode), false = 单向持仓 (net_mode)
         // hedgeMode: true = hedge mode, false = one-way mode
         const result = await this.exchange.fapiPrivatePostPositionSideDual({ // 定义常量 result
-          dualSidePosition: hedgeMode.toString(), // 设置 dualSidePosition 字段
+          dualSidePosition: hedgeMode.toString(), // dual方向持仓
         }); // 结束代码块
 
         // 发出持仓模式设置事件 / Emit position mode set event
@@ -323,8 +323,8 @@ export class BinanceExchange extends BaseExchange { // 导出类 BinanceExchange
       symbol, // 执行语句
       side, // 执行语句
       amount, // 执行语句
-      stopPrice: options.stopPrice, // 设置 stopPrice 字段
-      stopType: options.stopType || 'STOP_MARKET', // 设置 stopType 字段
+      stopPrice: options.stopPrice, // 停止价格
+      stopType: options.stopType || 'STOP_MARKET', // 停止类型
     }); // 结束代码块
 
     // 执行带重试的请求 / Execute request with retry

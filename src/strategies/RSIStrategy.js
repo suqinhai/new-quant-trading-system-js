@@ -21,7 +21,7 @@ export class RSIStrategy extends BaseStrategy { // 导出类 RSIStrategy
   constructor(params = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super({ // 调用父类
-      name: 'RSIStrategy', // 设置 name 字段
+      name: 'RSIStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 

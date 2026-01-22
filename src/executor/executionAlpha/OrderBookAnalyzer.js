@@ -44,17 +44,17 @@ export const PRESSURE_DIRECTION = { // 导出常量 PRESSURE_DIRECTION
  */
 export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   // 分析深度（档位数）/ Analysis depth (levels)
-  depthLevels: 20, // 设置 depthLevels 字段
+  depthLevels: 20, // 分析深度（档位数）/ Analysis depth (levels)
 
   // 冲击成本阈值 / Impact cost thresholds
-  impactCostThresholds: { // 设置 impactCostThresholds 字段
+  impactCostThresholds: { // 冲击成本阈值
     low: 0.001,      // 0.1% 低冲击 / Low impact
     medium: 0.003,   // 0.3% 中等冲击 / Medium impact
     high: 0.01,      // 1% 高冲击 / High impact
   }, // 结束代码块
 
   // 流动性评估阈值（相对于日均成交量）/ Liquidity thresholds (relative to daily volume)
-  liquidityThresholds: { // 设置 liquidityThresholds 字段
+  liquidityThresholds: { // 流动性评估阈值（相对于日均成交量）/ Liquidity thresholds (relative to daily volume)
     veryHigh: 0.1,   // 10% 日均量 / 10% of daily volume
     high: 0.05,      // 5% 日均量 / 5% of daily volume
     medium: 0.02,    // 2% 日均量 / 2% of daily volume
@@ -65,10 +65,10 @@ export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   imbalanceThreshold: 0.3, // 30% 差异视为不平衡 / 30% difference considered imbalanced
 
   // 盘口数据缓存时间（毫秒）/ Order book cache time (ms)
-  cacheTime: 100, // 设置 cacheTime 字段
+  cacheTime: 100, // 盘口数据缓存时间（毫秒）/ Order book cache time (ms)
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 }; // 结束代码块
 
 // ============================================
@@ -152,7 +152,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     this.orderBookCache.set(symbol, { // 访问 orderBookCache
       bids, // 执行语句
       asks, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       bestBid, // 执行语句
       bestAsk, // 执行语句
       midPrice, // 执行语句
@@ -160,7 +160,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
 
     // 保存历史快照 / Save historical snapshot
     this._saveHistoricalSnapshot(symbol, { // 调用 _saveHistoricalSnapshot
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       bidDepth, // 执行语句
       askDepth, // 执行语句
       spread, // 执行语句
@@ -182,22 +182,22 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       spread, // 执行语句
 
       // 买卖价差（基点）/ Spread in basis points
-      spreadBps: spread * 10000, // 设置 spreadBps 字段
+      spreadBps: spread * 10000, // 买卖价差（基点）/ Spread in basis points
 
       // 买盘深度 / Bid depth
-      bidDepth: { // 设置 bidDepth 字段
-        totalVolume: bidDepth.totalVolume, // 设置 totalVolume 字段
-        totalValue: bidDepth.totalValue, // 设置 totalValue 字段
-        levels: bidDepth.levels, // 设置 levels 字段
-        weightedAvgPrice: bidDepth.weightedAvgPrice, // 设置 weightedAvgPrice 字段
+      bidDepth: { // bidDepth
+        totalVolume: bidDepth.totalVolume, // 总成交量
+        totalValue: bidDepth.totalValue, // 总Value
+        levels: bidDepth.levels, // levels
+        weightedAvgPrice: bidDepth.weightedAvgPrice, // weightedAvg价格
       }, // 结束代码块
 
       // 卖盘深度 / Ask depth
-      askDepth: { // 设置 askDepth 字段
-        totalVolume: askDepth.totalVolume, // 设置 totalVolume 字段
-        totalValue: askDepth.totalValue, // 设置 totalValue 字段
-        levels: askDepth.levels, // 设置 levels 字段
-        weightedAvgPrice: askDepth.weightedAvgPrice, // 设置 weightedAvgPrice 字段
+      askDepth: { // askDepth
+        totalVolume: askDepth.totalVolume, // 总成交量
+        totalValue: askDepth.totalValue, // 总Value
+        levels: askDepth.levels, // levels
+        weightedAvgPrice: askDepth.weightedAvgPrice, // weightedAvg价格
       }, // 结束代码块
 
       // 买卖压力 / Buy/sell pressure
@@ -207,7 +207,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       liquidityDistribution, // 执行语句
 
       // 分析时间 / Analysis timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -269,10 +269,10 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       askAbsorbRatio, // 执行语句
 
       // 建议 / Recommendations
-      recommendations: this._generateLiquidityRecommendations(level, orderRatio, depthAnalysis), // 设置 recommendations 字段
+      recommendations: this._generateLiquidityRecommendations(level, orderRatio, depthAnalysis), // recommendations
 
       // 风险等级 (1-5) / Risk level (1-5)
-      riskLevel: this._calculateRiskLevel(level, orderRatio), // 设置 riskLevel 字段
+      riskLevel: this._calculateRiskLevel(level, orderRatio), // 风险等级 (1-5)
     }; // 结束代码块
   } // 结束代码块
 
@@ -296,12 +296,12 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 如果没有盘口数据 / If no order book data
     if (!orders || orders.length === 0) { // 条件判断 !orders || orders.length === 0
       return { // 返回结果
-        estimatedPrice: 0, // 设置 estimatedPrice 字段
+        estimatedPrice: 0, // estimated价格
         impactCost: 1,  // 100% 冲击（无法执行）/ 100% impact (cannot execute)
-        impactBps: 10000, // 设置 impactBps 字段
-        filledLevels: 0, // 设置 filledLevels 字段
-        remainingSize: orderSize, // 设置 remainingSize 字段
-        canExecute: false, // 设置 canExecute 字段
+        impactBps: 10000, // impactBps
+        filledLevels: 0, // filledLevels
+        remainingSize: orderSize, // remaining大小
+        canExecute: false, // 是否可Execute
       }; // 结束代码块
     } // 结束代码块
 
@@ -351,7 +351,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 返回预估结果 / Return estimation result
     return { // 返回结果
       // 预估成交均价 / Estimated average price
-      estimatedPrice: avgFillPrice, // 设置 estimatedPrice 字段
+      estimatedPrice: avgFillPrice, // estimated价格
 
       // 最优价格 / Best price
       bestPrice, // 执行语句
@@ -360,7 +360,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       impactCost, // 执行语句
 
       // 冲击成本（基点）/ Impact cost (bps)
-      impactBps: impactCost * 10000, // 设置 impactBps 字段
+      impactBps: impactCost * 10000, // 冲击成本（基点）/ Impact cost (bps)
 
       // 冲击等级 / Impact level
       impactLevel, // 执行语句
@@ -375,13 +375,13 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       remainingSize, // 执行语句
 
       // 是否可完全成交 / Can fully execute
-      canExecute: remainingSize === 0, // 设置 canExecute 字段
+      canExecute: remainingSize === 0, // 是否可Execute
 
       // 完全成交比例 / Fill ratio
-      fillRatio: filledSize / orderSize, // 设置 fillRatio 字段
+      fillRatio: filledSize / orderSize, // 完全成交比例
 
       // 建议 / Suggestions
-      suggestions: this._generateImpactSuggestions(impactLevel, filledLevels, orderSize, filledSize), // 设置 suggestions 字段
+      suggestions: this._generateImpactSuggestions(impactLevel, filledLevels, orderSize, filledSize), // suggestions
     }; // 结束代码块
   } // 结束代码块
 
@@ -415,9 +415,9 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 如果无盘口数据 / If no order book data
     if (!orders || orders.length === 0 || bestPrice === 0) { // 条件判断 !orders || orders.length === 0 || bestPrice =...
       return { // 返回结果
-        optimalPrice: 0, // 设置 optimalPrice 字段
-        canExecute: false, // 设置 canExecute 字段
-        reason: '无盘口数据 / No order book data', // 设置 reason 字段
+        optimalPrice: 0, // optimal价格
+        canExecute: false, // 是否可Execute
+        reason: '无盘口数据 / No order book data', // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -432,7 +432,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
         // 不紧急：耐心挂单 / Not urgent: patient limit order
         priceStrategy = 'passive'; // 赋值 priceStrategy
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         // 正常：平衡策略 / Normal: balanced strategy
         priceStrategy = 'balanced'; // 赋值 priceStrategy
     } // 结束代码块
@@ -461,7 +461,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
         expectedImpact = 0; // 赋值 expectedImpact
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         // 平衡：在最优价附近，控制冲击 / Balanced: near best price, control impact
         optimalPrice = isBuy // 赋值 optimalPrice
           ? bestPrice * (1 + maxImpactBps / 20000)  // 允许一半的冲击 / Allow half the impact
@@ -479,7 +479,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       bestPrice, // 执行语句
 
       // 盘口中间价 / Mid price
-      midPrice: depthAnalysis.midPrice, // 设置 midPrice 字段
+      midPrice: depthAnalysis.midPrice, // mid价格
 
       // 价格策略 / Price strategy
       priceStrategy, // 执行语句
@@ -491,13 +491,13 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       expectedImpact, // 执行语句
 
       // 是否可执行 / Can execute
-      canExecute: true, // 设置 canExecute 字段
+      canExecute: true, // 是否可Execute
 
       // 买卖价差 / Spread
-      spread: depthAnalysis.spread, // 设置 spread 字段
+      spread: depthAnalysis.spread, // 价差
 
       // 买卖压力 / Pressure
-      pressure: depthAnalysis.pressure, // 设置 pressure 字段
+      pressure: depthAnalysis.pressure, // pressure
     }; // 结束代码块
   } // 结束代码块
 
@@ -520,8 +520,8 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 如果数据不足 / If insufficient data
     if (recentSnapshots.length < 2) { // 条件判断 recentSnapshots.length < 2
       return { // 返回结果
-        hasTrend: false, // 设置 hasTrend 字段
-        reason: '历史数据不足 / Insufficient historical data', // 设置 reason 字段
+        hasTrend: false, // 是否有Trend
+        reason: '历史数据不足 / Insufficient historical data', // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -547,7 +547,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 返回趋势分析 / Return trend analysis
     return { // 返回结果
       // 是否有明显趋势 / Has clear trend
-      hasTrend: trendDirection !== 'neutral', // 设置 hasTrend 字段
+      hasTrend: trendDirection !== 'neutral', // 是否有Trend
 
       // 趋势方向 / Trend direction
       trendDirection, // 执行语句
@@ -565,13 +565,13 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
       priceChange, // 执行语句
 
       // 分析时段 / Analysis period
-      periodMs: lookbackPeriod, // 设置 periodMs 字段
+      periodMs: lookbackPeriod, // 周期毫秒
 
       // 样本数 / Sample count
-      sampleCount: recentSnapshots.length, // 设置 sampleCount 字段
+      sampleCount: recentSnapshots.length, // 采样数量
 
       // 建议 / Suggestions
-      suggestions: this._generateTrendSuggestions(trendDirection, bidDepthChange, askDepthChange), // 设置 suggestions 字段
+      suggestions: this._generateTrendSuggestions(trendDirection, bidDepthChange, askDepthChange), // suggestions
     }; // 结束代码块
   } // 结束代码块
 
@@ -590,7 +590,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 缓存新数据 / Cache new data
     this.orderBookCache.set(symbol, { // 访问 orderBookCache
       ...orderBook, // 展开对象或数组
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 自动分析深度 / Auto analyze depth
@@ -673,10 +673,10 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 如果没有订单 / If no orders
     if (!orders || orders.length === 0) { // 条件判断 !orders || orders.length === 0
       return { // 返回结果
-        totalVolume: 0, // 设置 totalVolume 字段
-        totalValue: 0, // 设置 totalValue 字段
-        levels: 0, // 设置 levels 字段
-        weightedAvgPrice: 0, // 设置 weightedAvgPrice 字段
+        totalVolume: 0, // 总成交量
+        totalValue: 0, // 总Value
+        levels: 0, // levels
+        weightedAvgPrice: 0, // weightedAvg价格
       }; // 结束代码块
     } // 结束代码块
 
@@ -699,7 +699,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     return { // 返回结果
       totalVolume, // 执行语句
       totalValue, // 执行语句
-      levels: limitedOrders.length, // 设置 levels 字段
+      levels: limitedOrders.length, // levels
       weightedAvgPrice, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -719,9 +719,9 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 如果无深度数据 / If no depth data
     if (totalDepth === 0) { // 条件判断 totalDepth === 0
       return { // 返回结果
-        direction: PRESSURE_DIRECTION.NEUTRAL, // 设置 direction 字段
-        ratio: 0.5, // 设置 ratio 字段
-        imbalance: 0, // 设置 imbalance 字段
+        direction: PRESSURE_DIRECTION.NEUTRAL, // direction
+        ratio: 0.5, // 比例
+        imbalance: 0, // imbalance
       }; // 结束代码块
     } // 结束代码块
 
@@ -745,10 +745,10 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     // 返回结果 / Return result
     return { // 返回结果
       direction, // 执行语句
-      ratio: bidRatio, // 设置 ratio 字段
+      ratio: bidRatio, // 比例
       imbalance, // 执行语句
-      bidVolume: bidDepth.totalVolume, // 设置 bidVolume 字段
-      askVolume: askDepth.totalVolume, // 设置 askVolume 字段
+      bidVolume: bidDepth.totalVolume, // bid成交量
+      askVolume: askDepth.totalVolume, // ask成交量
     }; // 结束代码块
   } // 结束代码块
 
@@ -767,8 +767,8 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     const ranges = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05]; // 0.1%, 0.2%, 0.5%, 1%, 2%, 5%
 
     const distribution = { // 定义常量 distribution
-      bids: {}, // 设置 bids 字段
-      asks: {}, // 设置 asks 字段
+      bids: {}, // bids
+      asks: {}, // asks
     }; // 结束代码块
 
     // 计算各区间的流动性 / Calculate liquidity in each range
@@ -955,8 +955,8 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     return { // 返回结果
       ...this.stats, // 展开对象或数组
       estimationAccuracy, // 执行语句
-      cachedSymbols: this.orderBookCache.size, // 设置 cachedSymbols 字段
-      historySymbols: this.historicalSnapshots.size, // 设置 historySymbols 字段
+      cachedSymbols: this.orderBookCache.size, // cached交易对列表
+      historySymbols: this.historicalSnapshots.size, // 历史交易对列表
     }; // 结束代码块
   } // 结束代码块
 
@@ -966,11 +966,11 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
    */
   resetStats() { // 调用 resetStats
     this.stats = { // 设置 stats
-      analyzedOrders: 0, // 设置 analyzedOrders 字段
-      impactEstimations: 0, // 设置 impactEstimations 字段
-      accurateEstimations: 0, // 设置 accurateEstimations 字段
-      totalSlippageEstimated: 0, // 设置 totalSlippageEstimated 字段
-      totalSlippageActual: 0, // 设置 totalSlippageActual 字段
+      analyzedOrders: 0, // analyzed订单
+      impactEstimations: 0, // impactEstimations
+      accurateEstimations: 0, // accurateEstimations
+      totalSlippageEstimated: 0, // 总滑点Estimated
+      totalSlippageActual: 0, // 总滑点Actual
     }; // 结束代码块
   } // 结束代码块
 
