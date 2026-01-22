@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 日志工具
  * Logger Utility
  *
@@ -10,162 +10,162 @@
  */
 
 // 导入 Winston 日志库 / Import Winston logging library
-import winston from 'winston';
+import winston from 'winston'; // 导入模块 winston
 
 // 导入路径模块 / Import path module
-import path from 'path';
+import path from 'path'; // 导入模块 path
 
 // 导入文件系统模块 / Import file system module
-import fs from 'fs';
+import fs from 'fs'; // 导入模块 fs
 
 // 导入异步本地存储 / Import async local storage
-import { AsyncLocalStorage } from 'async_hooks';
+import { AsyncLocalStorage } from 'async_hooks'; // 导入模块 async_hooks
 
 // 请求上下文存储（延迟初始化，避免循环依赖）
 // Request context storage (lazy init to avoid circular deps)
-let getContextFn = null;
+let getContextFn = null; // 定义变量 getContextFn
 
 /**
  * 设置上下文获取函数（由 requestTracing 模块调用）
  * Set context getter function (called by requestTracing module)
  */
-export function setContextGetter(fn) {
-  getContextFn = fn;
-}
+export function setContextGetter(fn) { // 导出函数 setContextGetter
+  getContextFn = fn; // 赋值 getContextFn
+} // 结束代码块
 
 /**
  * 获取当前请求上下文
  * Get current request context
  */
-function getCurrentContext() {
-  if (getContextFn) {
-    return getContextFn();
-  }
-  return null;
-}
+function getCurrentContext() { // 定义函数 getCurrentContext
+  if (getContextFn) { // 条件判断 getContextFn
+    return getContextFn(); // 返回结果
+  } // 结束代码块
+  return null; // 返回结果
+} // 结束代码块
 
 // 日志目录 / Log directory
-const LOG_DIR = process.env.LOG_DIR || 'logs';
+const LOG_DIR = process.env.LOG_DIR || 'logs'; // 定义常量 LOG_DIR
 
 // 确保日志目录存在 / Ensure log directory exists
-if (!fs.existsSync(LOG_DIR)) {
-  fs.mkdirSync(LOG_DIR, { recursive: true });
-}
+if (!fs.existsSync(LOG_DIR)) { // 条件判断 !fs.existsSync(LOG_DIR)
+  fs.mkdirSync(LOG_DIR, { recursive: true }); // 调用 fs.mkdirSync
+} // 结束代码块
 
 /**
  * 上下文注入格式
  * Context injection format
  */
-const contextFormat = winston.format((info) => {
-  const context = getCurrentContext();
-  if (context) {
-    info.requestId = context.requestId;
-    info.traceId = context.traceId;
-    if (context.userId) {
-      info.userId = context.userId;
-    }
-  }
-  return info;
-});
+const contextFormat = winston.format((info) => { // 定义函数 contextFormat
+  const context = getCurrentContext(); // 定义常量 context
+  if (context) { // 条件判断 context
+    info.requestId = context.requestId; // 赋值 info.requestId
+    info.traceId = context.traceId; // 赋值 info.traceId
+    if (context.userId) { // 条件判断 context.userId
+      info.userId = context.userId; // 赋值 info.userId
+    } // 结束代码块
+  } // 结束代码块
+  return info; // 返回结果
+}); // 结束代码块
 
 /**
  * 自定义日志格式
  * Custom log format
  */
-const customFormat = winston.format.combine(
+const customFormat = winston.format.combine( // 定义常量 customFormat
   // 添加时间戳 / Add timestamp
-  winston.format.timestamp({
-    format: 'YYYY-MM-DD HH:mm:ss.SSS',
-  }),
+  winston.format.timestamp({ // 调用 winston.format.timestamp
+    format: 'YYYY-MM-DD HH:mm:ss.SSS', // 设置 format 字段
+  }), // 结束代码块
 
   // 添加错误堆栈 / Add error stack
-  winston.format.errors({ stack: true }),
+  winston.format.errors({ stack: true }), // 调用 winston.format.errors
 
   // 注入请求上下文 / Inject request context
-  contextFormat(),
+  contextFormat(), // 调用 contextFormat
 
   // 自定义输出格式 / Custom output format
-  winston.format.printf(({ level, message, timestamp, stack, requestId, traceId, userId, ...metadata }) => {
+  winston.format.printf(({ level, message, timestamp, stack, requestId, traceId, userId, ...metadata }) => { // 调用 winston.format.printf
     // 构建基础日志信息 / Build base log info
-    let log = `[${timestamp}] [${level.toUpperCase()}]`;
+    let log = `[${timestamp}] [${level.toUpperCase()}]`; // 定义变量 log
 
     // 添加请求 ID / Add request ID
-    if (requestId) {
-      log += ` [${requestId}]`;
-    }
+    if (requestId) { // 条件判断 requestId
+      log += ` [${requestId}]`; // 执行语句
+    } // 结束代码块
 
-    log += ` ${message}`;
+    log += ` ${message}`; // 执行语句
 
     // 构建元数据对象 / Build metadata object
-    const metaObj = { ...metadata };
-    if (traceId && traceId !== requestId) {
-      metaObj.traceId = traceId;
-    }
-    if (userId) {
-      metaObj.userId = userId;
-    }
+    const metaObj = { ...metadata }; // 定义常量 metaObj
+    if (traceId && traceId !== requestId) { // 条件判断 traceId && traceId !== requestId
+      metaObj.traceId = traceId; // 赋值 metaObj.traceId
+    } // 结束代码块
+    if (userId) { // 条件判断 userId
+      metaObj.userId = userId; // 赋值 metaObj.userId
+    } // 结束代码块
 
     // 如果有元数据，添加到日志 / If metadata exists, add to log
-    if (Object.keys(metaObj).length > 0) {
-      log += ` ${JSON.stringify(metaObj)}`;
-    }
+    if (Object.keys(metaObj).length > 0) { // 条件判断 Object.keys(metaObj).length > 0
+      log += ` ${JSON.stringify(metaObj)}`; // 执行语句
+    } // 结束代码块
 
     // 如果有错误堆栈，添加到日志 / If error stack exists, add to log
-    if (stack) {
-      log += `\n${stack}`;
-    }
+    if (stack) { // 条件判断 stack
+      log += `\n${stack}`; // 执行语句
+    } // 结束代码块
 
-    return log;
-  })
-);
+    return log; // 返回结果
+  }) // 结束代码块
+); // 结束调用或参数
 
 /**
  * 控制台格式 (带颜色)
  * Console format (with colors)
  */
-const consoleFormat = winston.format.combine(
+const consoleFormat = winston.format.combine( // 定义常量 consoleFormat
   // 添加颜色 / Add colors
-  winston.format.colorize({ all: true }),
+  winston.format.colorize({ all: true }), // 调用 winston.format.colorize
 
   // 添加时间戳 / Add timestamp
-  winston.format.timestamp({
-    format: 'HH:mm:ss.SSS',
-  }),
+  winston.format.timestamp({ // 调用 winston.format.timestamp
+    format: 'HH:mm:ss.SSS', // 设置 format 字段
+  }), // 结束代码块
 
   // 注入请求上下文 / Inject request context
-  contextFormat(),
+  contextFormat(), // 调用 contextFormat
 
   // 自定义输出格式 / Custom output format
-  winston.format.printf(({ level, message, timestamp, requestId, ...metadata }) => {
+  winston.format.printf(({ level, message, timestamp, requestId, ...metadata }) => { // 调用 winston.format.printf
     // 构建日志信息 / Build log info
-    let log = `[${timestamp}]`;
+    let log = `[${timestamp}]`; // 定义变量 log
 
     // 添加请求 ID (简短版本) / Add request ID (short version)
-    if (requestId) {
+    if (requestId) { // 条件判断 requestId
       // 只显示请求 ID 的后 8 位
-      const shortId = requestId.length > 12 ? requestId.slice(-8) : requestId;
-      log += ` [${shortId}]`;
-    }
+      const shortId = requestId.length > 12 ? requestId.slice(-8) : requestId; // 定义常量 shortId
+      log += ` [${shortId}]`; // 执行语句
+    } // 结束代码块
 
-    log += ` ${level}: ${message}`;
+    log += ` ${level}: ${message}`; // 执行语句
 
     // 如果有重要元数据，添加到日志 / If important metadata exists, add to log
-    const metaKeys = Object.keys(metadata);
-    if (metaKeys.length > 0 && metaKeys.some(k => !['stack', 'traceId', 'userId', 'service'].includes(k))) {
-      const filteredMeta = {};
-      for (const key of metaKeys) {
-        if (!['stack', 'traceId', 'userId', 'service'].includes(key)) {
-          filteredMeta[key] = metadata[key];
-        }
-      }
-      if (Object.keys(filteredMeta).length > 0) {
-        log += ` ${JSON.stringify(filteredMeta)}`;
-      }
-    }
+    const metaKeys = Object.keys(metadata); // 定义常量 metaKeys
+    if (metaKeys.length > 0 && metaKeys.some(k => !['stack', 'traceId', 'userId', 'service'].includes(k))) { // 条件判断 metaKeys.length > 0 && metaKeys.some(k => !['...
+      const filteredMeta = {}; // 定义常量 filteredMeta
+      for (const key of metaKeys) { // 循环 const key of metaKeys
+        if (!['stack', 'traceId', 'userId', 'service'].includes(key)) { // 条件判断 !['stack', 'traceId', 'userId', 'service'].in...
+          filteredMeta[key] = metadata[key]; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
+      if (Object.keys(filteredMeta).length > 0) { // 条件判断 Object.keys(filteredMeta).length > 0
+        log += ` ${JSON.stringify(filteredMeta)}`; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    return log;
-  })
-);
+    return log; // 返回结果
+  }) // 结束代码块
+); // 结束调用或参数
 
 /**
  * 创建日志记录器
@@ -174,108 +174,108 @@ const consoleFormat = winston.format.combine(
  * @param {Object} options - 配置选项 / Configuration options
  * @returns {winston.Logger} 日志记录器 / Logger instance
  */
-export function createLogger(name, options = {}) {
+export function createLogger(name, options = {}) { // 导出函数 createLogger
   // 默认配置 / Default configuration
-  const config = {
+  const config = { // 定义常量 config
     // 日志级别 / Log level
-    level: options.level || process.env.LOG_LEVEL || 'info',
+    level: options.level || process.env.LOG_LEVEL || 'info', // 读取环境变量 LOG_LEVEL
 
     // 是否输出到控制台 / Whether to output to console
-    console: options.console !== false,
+    console: options.console !== false, // 设置 console 字段
 
     // 是否输出到文件 / Whether to output to file
-    file: options.file !== false,
+    file: options.file !== false, // 设置 file 字段
 
     // 日志文件前缀 / Log file prefix
-    filePrefix: options.filePrefix || name || 'app',
-  };
+    filePrefix: options.filePrefix || name || 'app', // 设置 filePrefix 字段
+  }; // 结束代码块
 
   // 传输器列表 / Transports list
-  const transports = [];
+  const transports = []; // 定义常量 transports
 
   // 添加控制台传输器 / Add console transport
-  if (config.console) {
-    transports.push(
-      new winston.transports.Console({
-        format: consoleFormat,
-      })
-    );
-  }
+  if (config.console) { // 条件判断 config.console
+    transports.push( // 调用 transports.push
+      new winston.transports.Console({ // 创建 winston 实例
+        format: consoleFormat, // 设置 format 字段
+      }) // 结束代码块
+    ); // 结束调用或参数
+  } // 结束代码块
 
   // 添加文件传输器 / Add file transports
-  if (config.file) {
+  if (config.file) { // 条件判断 config.file
     // 普通日志文件 / Normal log file
-    transports.push(
-      new winston.transports.File({
-        filename: path.join(LOG_DIR, `${config.filePrefix}.log`),
-        format: customFormat,
+    transports.push( // 调用 transports.push
+      new winston.transports.File({ // 创建 winston 实例
+        filename: path.join(LOG_DIR, `${config.filePrefix}.log`), // 设置 filename 字段
+        format: customFormat, // 设置 format 字段
         maxsize: 10 * 1024 * 1024,  // 10MB
-        maxFiles: 5,
-        tailable: true,
-      })
-    );
+        maxFiles: 5, // 设置 maxFiles 字段
+        tailable: true, // 设置 tailable 字段
+      }) // 结束代码块
+    ); // 结束调用或参数
 
     // 错误日志文件 / Error log file
-    transports.push(
-      new winston.transports.File({
-        filename: path.join(LOG_DIR, `${config.filePrefix}-error.log`),
-        format: customFormat,
-        level: 'error',
+    transports.push( // 调用 transports.push
+      new winston.transports.File({ // 创建 winston 实例
+        filename: path.join(LOG_DIR, `${config.filePrefix}-error.log`), // 设置 filename 字段
+        format: customFormat, // 设置 format 字段
+        level: 'error', // 设置 level 字段
         maxsize: 10 * 1024 * 1024,  // 10MB
-        maxFiles: 5,
-        tailable: true,
-      })
-    );
-  }
+        maxFiles: 5, // 设置 maxFiles 字段
+        tailable: true, // 设置 tailable 字段
+      }) // 结束代码块
+    ); // 结束调用或参数
+  } // 结束代码块
 
   // 创建日志记录器 / Create logger
-  const logger = winston.createLogger({
-    level: config.level,
-    defaultMeta: { service: name },
-    transports,
-  });
+  const logger = winston.createLogger({ // 定义常量 logger
+    level: config.level, // 设置 level 字段
+    defaultMeta: { service: name }, // 设置 defaultMeta 字段
+    transports, // 执行语句
+  }); // 结束代码块
 
-  return logger;
-}
+  return logger; // 返回结果
+} // 结束代码块
 
 /**
  * 默认日志记录器
  * Default logger instance
  */
-export const logger = createLogger('quant-trading');
+export const logger = createLogger('quant-trading'); // 导出常量 logger
 
 /**
  * 交易日志记录器
  * Trading logger instance
  */
-export const tradingLogger = createLogger('trading', {
-  filePrefix: 'trading',
-});
+export const tradingLogger = createLogger('trading', { // 导出常量 tradingLogger
+  filePrefix: 'trading', // 设置 filePrefix 字段
+}); // 结束代码块
 
 /**
  * 策略日志记录器
  * Strategy logger instance
  */
-export const strategyLogger = createLogger('strategy', {
-  filePrefix: 'strategy',
-});
+export const strategyLogger = createLogger('strategy', { // 导出常量 strategyLogger
+  filePrefix: 'strategy', // 设置 filePrefix 字段
+}); // 结束代码块
 
 /**
  * 风控日志记录器
  * Risk logger instance
  */
-export const riskLogger = createLogger('risk', {
-  filePrefix: 'risk',
-});
+export const riskLogger = createLogger('risk', { // 导出常量 riskLogger
+  filePrefix: 'risk', // 设置 filePrefix 字段
+}); // 结束代码块
 
 /**
  * 性能日志记录器
  * Performance logger instance
  */
-export const perfLogger = createLogger('performance', {
-  filePrefix: 'performance',
-  level: 'debug',
-});
+export const perfLogger = createLogger('performance', { // 导出常量 perfLogger
+  filePrefix: 'performance', // 设置 filePrefix 字段
+  level: 'debug', // 设置 level 字段
+}); // 结束代码块
 
 // 默认导出 / Default export
-export default logger;
+export default logger; // 默认导出

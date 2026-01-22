@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 优化模块导出文件
  * Optimization Module Export File
  *
@@ -9,25 +9,25 @@
  */
 
 // 参数网格搜索 / Parameter Grid Search
-export {
-  GridSearch,
-  OptimizationTarget,
-  DEFAULT_GRID_SEARCH_CONFIG,
-} from './GridSearch.js';
+export { // 导出命名成员
+  GridSearch, // 执行语句
+  OptimizationTarget, // 执行语句
+  DEFAULT_GRID_SEARCH_CONFIG, // 执行语句
+} from './GridSearch.js'; // 执行语句
 
 // Walk-Forward 分析 / Walk-Forward Analysis
-export {
-  WalkForwardAnalysis,
-  WalkForwardType,
-  DEFAULT_WF_CONFIG,
-} from './WalkForwardAnalysis.js';
+export { // 导出命名成员
+  WalkForwardAnalysis, // 执行语句
+  WalkForwardType, // 执行语句
+  DEFAULT_WF_CONFIG, // 执行语句
+} from './WalkForwardAnalysis.js'; // 执行语句
 
 // 蒙特卡洛模拟 / Monte Carlo Simulation
-export {
-  MonteCarloSimulation,
-  SimulationType,
-  DEFAULT_MC_CONFIG,
-} from './MonteCarloSimulation.js';
+export { // 导出命名成员
+  MonteCarloSimulation, // 执行语句
+  SimulationType, // 执行语句
+  DEFAULT_MC_CONFIG, // 执行语句
+} from './MonteCarloSimulation.js'; // 执行语句
 
 // 默认导出 / Default export
-export { GridSearch as default } from './GridSearch.js';
+export { GridSearch as default } from './GridSearch.js'; // 导出命名成员

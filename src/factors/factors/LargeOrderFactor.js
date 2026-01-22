@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 大单成交占比因子
  * Large Order Factor
  *
@@ -9,26 +9,26 @@
  * Large order dominance often reflects institutional or whale activity
  */
 
-import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from '../BaseFactor.js';
+import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from '../BaseFactor.js'; // 导入模块 ../BaseFactor.js
 
 /**
  * 大单计算方法
  * Large Order Calculation Methods
  */
-export const LARGE_ORDER_METHOD = {
+export const LARGE_ORDER_METHOD = { // 导出常量 LARGE_ORDER_METHOD
   VOLUME_RATIO: 'vol_ratio',            // 大单成交量占比
   COUNT_RATIO: 'count_ratio',           // 大单数量占比
   NET_LARGE_FLOW: 'net_flow',           // 大单净流入
   BUY_SELL_RATIO: 'buy_sell',           // 大单买卖比
   WHALE_ACTIVITY: 'whale',              // 鲸鱼活动指数
   IMBALANCE: 'imbalance',               // 大单买卖不平衡度
-};
+}; // 结束代码块
 
 /**
  * 大单成交占比因子类
  * Large Order Factor Class
  */
-export class LargeOrderFactor extends BaseFactor {
+export class LargeOrderFactor extends BaseFactor { // 导出类 LargeOrderFactor
   /**
    * @param {Object} config - 配置
    * @param {number} config.period - 统计周期
@@ -36,25 +36,25 @@ export class LargeOrderFactor extends BaseFactor {
    * @param {number} config.largeOrderThreshold - 大单阈值 (相对于平均成交额的倍数)
    * @param {number} config.whaleThreshold - 鲸鱼单阈值 (更大的单子)
    */
-  constructor(config = {}) {
-    const method = config.method || LARGE_ORDER_METHOD.VOLUME_RATIO;
+  constructor(config = {}) { // 构造函数
+    const method = config.method || LARGE_ORDER_METHOD.VOLUME_RATIO; // 定义常量 method
 
-    super({
-      name: config.name || `LargeOrder_${method}`,
-      category: FACTOR_CATEGORY.VOLUME,
+    super({ // 调用父类
+      name: config.name || `LargeOrder_${method}`, // 设置 name 字段
+      category: FACTOR_CATEGORY.VOLUME, // 设置 category 字段
       direction: FACTOR_DIRECTION.POSITIVE, // 大单净买入 → 看涨
-      frequency: FACTOR_FREQUENCY.HOURLY,
-      description: `大单成交占比因子 (${method})`,
-      params: {
-        method,
+      frequency: FACTOR_FREQUENCY.HOURLY, // 设置 frequency 字段
+      description: `大单成交占比因子 (${method})`, // 设置 description 字段
+      params: { // 设置 params 字段
+        method, // 执行语句
         period: config.period || 24,         // 24小时
         largeOrderThreshold: config.largeOrderThreshold || 5.0,  // 5倍平均为大单
         whaleThreshold: config.whaleThreshold || 20.0,          // 20倍平均为鲸鱼单
-        minDataPoints: config.minDataPoints || 50,
-      },
-      ...config,
-    });
-  }
+        minDataPoints: config.minDataPoints || 50, // 设置 minDataPoints 字段
+      }, // 结束代码块
+      ...config, // 展开对象或数组
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 计算因子值
@@ -64,225 +64,225 @@ export class LargeOrderFactor extends BaseFactor {
    * @param {Array} data.candles - K线数据 (可选，用于计算阈值)
    * @returns {Promise<number|null>} 大单因子值
    */
-  async calculate(symbol, data, context = {}) {
-    const { trades, candles } = data;
-    const { method, minDataPoints } = this.params;
+  async calculate(symbol, data, context = {}) { // 执行语句
+    const { trades, candles } = data; // 解构赋值
+    const { method, minDataPoints } = this.params; // 解构赋值
 
-    if (!trades || trades.length < minDataPoints) {
-      return null;
-    }
+    if (!trades || trades.length < minDataPoints) { // 条件判断 !trades || trades.length < minDataPoints
+      return null; // 返回结果
+    } // 结束代码块
 
     // 计算动态阈值 / Calculate dynamic threshold
-    const avgTradeValue = this._calculateAverageTradeValue(trades);
+    const avgTradeValue = this._calculateAverageTradeValue(trades); // 定义常量 avgTradeValue
 
-    let value;
+    let value; // 定义变量 value
 
-    switch (method) {
-      case LARGE_ORDER_METHOD.VOLUME_RATIO:
-        value = this._calculateVolumeRatio(trades, avgTradeValue);
-        break;
+    switch (method) { // 分支选择 method
+      case LARGE_ORDER_METHOD.VOLUME_RATIO: // 分支 LARGE_ORDER_METHOD.VOLUME_RATIO
+        value = this._calculateVolumeRatio(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      case LARGE_ORDER_METHOD.COUNT_RATIO:
-        value = this._calculateCountRatio(trades, avgTradeValue);
-        break;
+      case LARGE_ORDER_METHOD.COUNT_RATIO: // 分支 LARGE_ORDER_METHOD.COUNT_RATIO
+        value = this._calculateCountRatio(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      case LARGE_ORDER_METHOD.NET_LARGE_FLOW:
-        value = this._calculateNetLargeFlow(trades, avgTradeValue);
-        break;
+      case LARGE_ORDER_METHOD.NET_LARGE_FLOW: // 分支 LARGE_ORDER_METHOD.NET_LARGE_FLOW
+        value = this._calculateNetLargeFlow(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      case LARGE_ORDER_METHOD.BUY_SELL_RATIO:
-        value = this._calculateBuySellRatio(trades, avgTradeValue);
-        break;
+      case LARGE_ORDER_METHOD.BUY_SELL_RATIO: // 分支 LARGE_ORDER_METHOD.BUY_SELL_RATIO
+        value = this._calculateBuySellRatio(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      case LARGE_ORDER_METHOD.WHALE_ACTIVITY:
-        value = this._calculateWhaleActivity(trades, avgTradeValue);
-        break;
+      case LARGE_ORDER_METHOD.WHALE_ACTIVITY: // 分支 LARGE_ORDER_METHOD.WHALE_ACTIVITY
+        value = this._calculateWhaleActivity(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      case LARGE_ORDER_METHOD.IMBALANCE:
-        value = this._calculateImbalance(trades, avgTradeValue);
-        break;
+      case LARGE_ORDER_METHOD.IMBALANCE: // 分支 LARGE_ORDER_METHOD.IMBALANCE
+        value = this._calculateImbalance(trades, avgTradeValue); // 赋值 value
+        break; // 跳出循环或分支
 
-      default:
-        value = this._calculateVolumeRatio(trades, avgTradeValue);
-    }
+      default: // 默认分支
+        value = this._calculateVolumeRatio(trades, avgTradeValue); // 赋值 value
+    } // 结束代码块
 
-    return value;
-  }
+    return value; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算平均成交额
    * @private
    */
-  _calculateAverageTradeValue(trades) {
-    const values = trades.map(t => parseFloat(t.price) * parseFloat(t.amount));
-    return values.reduce((a, b) => a + b, 0) / values.length;
-  }
+  _calculateAverageTradeValue(trades) { // 调用 _calculateAverageTradeValue
+    const values = trades.map(t => parseFloat(t.price) * parseFloat(t.amount)); // 定义函数 values
+    return values.reduce((a, b) => a + b, 0) / values.length; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算大单成交量占比
    * @private
    */
-  _calculateVolumeRatio(trades, avgTradeValue) {
-    const { largeOrderThreshold } = this.params;
-    const threshold = avgTradeValue * largeOrderThreshold;
+  _calculateVolumeRatio(trades, avgTradeValue) { // 调用 _calculateVolumeRatio
+    const { largeOrderThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * largeOrderThreshold; // 定义常量 threshold
 
-    let largeVolume = 0;
-    let totalVolume = 0;
+    let largeVolume = 0; // 定义变量 largeVolume
+    let totalVolume = 0; // 定义变量 totalVolume
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
-      totalVolume += value;
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
+      totalVolume += value; // 执行语句
 
-      if (value >= threshold) {
-        largeVolume += value;
-      }
-    }
+      if (value >= threshold) { // 条件判断 value >= threshold
+        largeVolume += value; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    if (totalVolume === 0) return 0;
+    if (totalVolume === 0) return 0; // 条件判断 totalVolume === 0
 
-    return (largeVolume / totalVolume) * 100;
-  }
+    return (largeVolume / totalVolume) * 100; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算大单数量占比
    * @private
    */
-  _calculateCountRatio(trades, avgTradeValue) {
-    const { largeOrderThreshold } = this.params;
-    const threshold = avgTradeValue * largeOrderThreshold;
+  _calculateCountRatio(trades, avgTradeValue) { // 调用 _calculateCountRatio
+    const { largeOrderThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * largeOrderThreshold; // 定义常量 threshold
 
-    let largeCount = 0;
+    let largeCount = 0; // 定义变量 largeCount
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
-      if (value >= threshold) {
-        largeCount++;
-      }
-    }
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
+      if (value >= threshold) { // 条件判断 value >= threshold
+        largeCount++; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    return (largeCount / trades.length) * 100;
-  }
+    return (largeCount / trades.length) * 100; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算大单净流入
    * 正值表示大单净买入，负值表示大单净卖出
    * @private
    */
-  _calculateNetLargeFlow(trades, avgTradeValue) {
-    const { largeOrderThreshold } = this.params;
-    const threshold = avgTradeValue * largeOrderThreshold;
+  _calculateNetLargeFlow(trades, avgTradeValue) { // 调用 _calculateNetLargeFlow
+    const { largeOrderThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * largeOrderThreshold; // 定义常量 threshold
 
-    let netFlow = 0;
+    let netFlow = 0; // 定义变量 netFlow
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
 
-      if (value >= threshold) {
+      if (value >= threshold) { // 条件判断 value >= threshold
         // side: 'buy' or 'sell', 也可能是 'bid' or 'ask'
-        const side = (trade.side || '').toLowerCase();
-        if (side === 'buy' || side === 'bid') {
-          netFlow += value;
-        } else if (side === 'sell' || side === 'ask') {
-          netFlow -= value;
-        }
-      }
-    }
+        const side = (trade.side || '').toLowerCase(); // 定义常量 side
+        if (side === 'buy' || side === 'bid') { // 条件判断 side === 'buy' || side === 'bid'
+          netFlow += value; // 执行语句
+        } else if (side === 'sell' || side === 'ask') { // 执行语句
+          netFlow -= value; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    return netFlow;
-  }
+    return netFlow; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算大单买卖比
    * @private
    */
-  _calculateBuySellRatio(trades, avgTradeValue) {
-    const { largeOrderThreshold } = this.params;
-    const threshold = avgTradeValue * largeOrderThreshold;
+  _calculateBuySellRatio(trades, avgTradeValue) { // 调用 _calculateBuySellRatio
+    const { largeOrderThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * largeOrderThreshold; // 定义常量 threshold
 
-    let buyVolume = 0;
-    let sellVolume = 0;
+    let buyVolume = 0; // 定义变量 buyVolume
+    let sellVolume = 0; // 定义变量 sellVolume
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
 
-      if (value >= threshold) {
-        const side = (trade.side || '').toLowerCase();
-        if (side === 'buy' || side === 'bid') {
-          buyVolume += value;
-        } else if (side === 'sell' || side === 'ask') {
-          sellVolume += value;
-        }
-      }
-    }
+      if (value >= threshold) { // 条件判断 value >= threshold
+        const side = (trade.side || '').toLowerCase(); // 定义常量 side
+        if (side === 'buy' || side === 'bid') { // 条件判断 side === 'buy' || side === 'bid'
+          buyVolume += value; // 执行语句
+        } else if (side === 'sell' || side === 'ask') { // 执行语句
+          sellVolume += value; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    if (sellVolume === 0) return buyVolume > 0 ? Infinity : 1;
+    if (sellVolume === 0) return buyVolume > 0 ? Infinity : 1; // 条件判断 sellVolume === 0
 
-    return buyVolume / sellVolume;
-  }
+    return buyVolume / sellVolume; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算鲸鱼活动指数
    * 超大单 (鲸鱼单) 的活跃程度
    * @private
    */
-  _calculateWhaleActivity(trades, avgTradeValue) {
-    const { whaleThreshold } = this.params;
-    const threshold = avgTradeValue * whaleThreshold;
+  _calculateWhaleActivity(trades, avgTradeValue) { // 调用 _calculateWhaleActivity
+    const { whaleThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * whaleThreshold; // 定义常量 threshold
 
-    let whaleCount = 0;
-    let whaleVolume = 0;
-    let totalVolume = 0;
+    let whaleCount = 0; // 定义变量 whaleCount
+    let whaleVolume = 0; // 定义变量 whaleVolume
+    let totalVolume = 0; // 定义变量 totalVolume
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
-      totalVolume += value;
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
+      totalVolume += value; // 执行语句
 
-      if (value >= threshold) {
-        whaleCount++;
-        whaleVolume += value;
-      }
-    }
+      if (value >= threshold) { // 条件判断 value >= threshold
+        whaleCount++; // 执行语句
+        whaleVolume += value; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
-    if (totalVolume === 0) return 0;
+    if (totalVolume === 0) return 0; // 条件判断 totalVolume === 0
 
     // 鲸鱼活动指数 = 鲸鱼单数量 * 鲸鱼单成交量占比
-    const volumeRatio = whaleVolume / totalVolume;
+    const volumeRatio = whaleVolume / totalVolume; // 定义常量 volumeRatio
     const countScore = Math.log(whaleCount + 1); // 对数平滑
 
-    return countScore * volumeRatio * 100;
-  }
+    return countScore * volumeRatio * 100; // 返回结果
+  } // 结束代码块
 
   /**
    * 计算大单买卖不平衡度
    * 范围: -1 到 1 (-1 全卖, 0 平衡, 1 全买)
    * @private
    */
-  _calculateImbalance(trades, avgTradeValue) {
-    const { largeOrderThreshold } = this.params;
-    const threshold = avgTradeValue * largeOrderThreshold;
+  _calculateImbalance(trades, avgTradeValue) { // 调用 _calculateImbalance
+    const { largeOrderThreshold } = this.params; // 解构赋值
+    const threshold = avgTradeValue * largeOrderThreshold; // 定义常量 threshold
 
-    let buyVolume = 0;
-    let sellVolume = 0;
+    let buyVolume = 0; // 定义变量 buyVolume
+    let sellVolume = 0; // 定义变量 sellVolume
 
-    for (const trade of trades) {
-      const value = parseFloat(trade.price) * parseFloat(trade.amount);
+    for (const trade of trades) { // 循环 const trade of trades
+      const value = parseFloat(trade.price) * parseFloat(trade.amount); // 定义常量 value
 
-      if (value >= threshold) {
-        const side = (trade.side || '').toLowerCase();
-        if (side === 'buy' || side === 'bid') {
-          buyVolume += value;
-        } else if (side === 'sell' || side === 'ask') {
-          sellVolume += value;
-        }
-      }
-    }
+      if (value >= threshold) { // 条件判断 value >= threshold
+        const side = (trade.side || '').toLowerCase(); // 定义常量 side
+        if (side === 'buy' || side === 'bid') { // 条件判断 side === 'buy' || side === 'bid'
+          buyVolume += value; // 执行语句
+        } else if (side === 'sell' || side === 'ask') { // 执行语句
+          sellVolume += value; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    const total = buyVolume + sellVolume;
-    if (total === 0) return 0;
+    const total = buyVolume + sellVolume; // 定义常量 total
+    if (total === 0) return 0; // 条件判断 total === 0
 
-    return (buyVolume - sellVolume) / total;
-  }
-}
+    return (buyVolume - sellVolume) / total; // 返回结果
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * 预定义因子实例
@@ -290,49 +290,49 @@ export class LargeOrderFactor extends BaseFactor {
  */
 
 // 大单成交量占比
-export const LargeOrderVolumeRatio = new LargeOrderFactor({
-  name: 'LargeOrder_Vol_Ratio',
-  method: LARGE_ORDER_METHOD.VOLUME_RATIO,
-  largeOrderThreshold: 5.0,
-});
+export const LargeOrderVolumeRatio = new LargeOrderFactor({ // 导出常量 LargeOrderVolumeRatio
+  name: 'LargeOrder_Vol_Ratio', // 设置 name 字段
+  method: LARGE_ORDER_METHOD.VOLUME_RATIO, // 设置 method 字段
+  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+}); // 结束代码块
 
 // 大单净流入
-export const LargeOrderNetFlow = new LargeOrderFactor({
-  name: 'LargeOrder_Net_Flow',
-  method: LARGE_ORDER_METHOD.NET_LARGE_FLOW,
-  largeOrderThreshold: 5.0,
-});
+export const LargeOrderNetFlow = new LargeOrderFactor({ // 导出常量 LargeOrderNetFlow
+  name: 'LargeOrder_Net_Flow', // 设置 name 字段
+  method: LARGE_ORDER_METHOD.NET_LARGE_FLOW, // 设置 method 字段
+  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+}); // 结束代码块
 
 // 大单买卖比
-export const LargeOrderBuySell = new LargeOrderFactor({
-  name: 'LargeOrder_Buy_Sell',
-  method: LARGE_ORDER_METHOD.BUY_SELL_RATIO,
-  largeOrderThreshold: 5.0,
-});
+export const LargeOrderBuySell = new LargeOrderFactor({ // 导出常量 LargeOrderBuySell
+  name: 'LargeOrder_Buy_Sell', // 设置 name 字段
+  method: LARGE_ORDER_METHOD.BUY_SELL_RATIO, // 设置 method 字段
+  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+}); // 结束代码块
 
 // 鲸鱼活动指数
-export const WhaleActivity = new LargeOrderFactor({
-  name: 'Whale_Activity',
-  method: LARGE_ORDER_METHOD.WHALE_ACTIVITY,
-  largeOrderThreshold: 10.0,
-  whaleThreshold: 50.0,
-});
+export const WhaleActivity = new LargeOrderFactor({ // 导出常量 WhaleActivity
+  name: 'Whale_Activity', // 设置 name 字段
+  method: LARGE_ORDER_METHOD.WHALE_ACTIVITY, // 设置 method 字段
+  largeOrderThreshold: 10.0, // 设置 largeOrderThreshold 字段
+  whaleThreshold: 50.0, // 设置 whaleThreshold 字段
+}); // 结束代码块
 
 // 大单不平衡度
-export const LargeOrderImbalance = new LargeOrderFactor({
-  name: 'LargeOrder_Imbalance',
-  method: LARGE_ORDER_METHOD.IMBALANCE,
-  largeOrderThreshold: 5.0,
-});
+export const LargeOrderImbalance = new LargeOrderFactor({ // 导出常量 LargeOrderImbalance
+  name: 'LargeOrder_Imbalance', // 设置 name 字段
+  method: LARGE_ORDER_METHOD.IMBALANCE, // 设置 method 字段
+  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+}); // 结束代码块
 
 /**
  * 工厂函数
  */
-export function createLargeOrderFactor(method = LARGE_ORDER_METHOD.VOLUME_RATIO, options = {}) {
-  return new LargeOrderFactor({
-    method,
-    ...options,
-  });
-}
+export function createLargeOrderFactor(method = LARGE_ORDER_METHOD.VOLUME_RATIO, options = {}) { // 导出函数 createLargeOrderFactor
+  return new LargeOrderFactor({ // 返回结果
+    method, // 执行语句
+    ...options, // 展开对象或数组
+  }); // 结束代码块
+} // 结束代码块
 
-export default LargeOrderFactor;
+export default LargeOrderFactor; // 默认导出

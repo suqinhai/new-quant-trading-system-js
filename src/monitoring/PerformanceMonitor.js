@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 性能监控器
  * Performance Monitor
  *
@@ -8,311 +8,311 @@
  * @module src/monitoring/PerformanceMonitor
  */
 
-import { EventEmitter } from 'events';
-import os from 'os';
-import v8 from 'v8';
+import { EventEmitter } from 'events'; // 导入模块 events
+import os from 'os'; // 导入模块 os
+import v8 from 'v8'; // 导入模块 v8
 
 /**
  * 性能监控器类
  * Performance Monitor Class
  */
-class PerformanceMonitor extends EventEmitter {
-  constructor(config = {}) {
-    super();
+class PerformanceMonitor extends EventEmitter { // 定义类 PerformanceMonitor(继承EventEmitter)
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
-    this.config = {
+    this.config = { // 设置 config
       // 采样间隔 (ms)
-      sampleInterval: config.sampleInterval || 5000,
+      sampleInterval: config.sampleInterval || 5000, // 设置 sampleInterval 字段
       // 保留的历史数据点数
-      historySize: config.historySize || 1000,
+      historySize: config.historySize || 1000, // 设置 historySize 字段
       // 是否启用详细内存分析
-      detailedMemory: config.detailedMemory ?? false,
+      detailedMemory: config.detailedMemory ?? false, // 设置 detailedMemory 字段
       // 告警阈值
-      thresholds: {
-        memoryUsagePercent: config.thresholds?.memoryUsagePercent || 85,
-        cpuUsagePercent: config.thresholds?.cpuUsagePercent || 80,
-        eventLoopLagMs: config.thresholds?.eventLoopLagMs || 100,
-        gcPauseMs: config.thresholds?.gcPauseMs || 100,
-        ...config.thresholds,
-      },
-    };
+      thresholds: { // 设置 thresholds 字段
+        memoryUsagePercent: config.thresholds?.memoryUsagePercent || 85, // 设置 memoryUsagePercent 字段
+        cpuUsagePercent: config.thresholds?.cpuUsagePercent || 80, // 设置 cpuUsagePercent 字段
+        eventLoopLagMs: config.thresholds?.eventLoopLagMs || 100, // 设置 eventLoopLagMs 字段
+        gcPauseMs: config.thresholds?.gcPauseMs || 100, // 设置 gcPauseMs 字段
+        ...config.thresholds, // 展开对象或数组
+      }, // 结束代码块
+    }; // 结束代码块
 
     // 指标存储
-    this.metrics = {
+    this.metrics = { // 设置 metrics
       // 操作计时器
-      timers: new Map(),
+      timers: new Map(), // 设置 timers 字段
       // 计数器
-      counters: new Map(),
+      counters: new Map(), // 设置 counters 字段
       // 直方图 (用于延迟分布)
-      histograms: new Map(),
+      histograms: new Map(), // 设置 histograms 字段
       // 仪表 (当前值)
-      gauges: new Map(),
-    };
+      gauges: new Map(), // 设置 gauges 字段
+    }; // 结束代码块
 
     // 历史数据
-    this.history = {
-      memory: [],
-      cpu: [],
-      eventLoop: [],
-      custom: new Map(),
-    };
+    this.history = { // 设置 history
+      memory: [], // 设置 memory 字段
+      cpu: [], // 设置 cpu 字段
+      eventLoop: [], // 设置 eventLoop 字段
+      custom: new Map(), // 设置 custom 字段
+    }; // 结束代码块
 
     // 系统信息
-    this.systemInfo = this._getSystemInfo();
+    this.systemInfo = this._getSystemInfo(); // 设置 systemInfo
 
     // 采样定时器
-    this.sampleTimer = null;
+    this.sampleTimer = null; // 设置 sampleTimer
 
     // 事件循环监控
-    this.eventLoopMonitor = null;
-    this.lastEventLoopCheck = process.hrtime.bigint();
+    this.eventLoopMonitor = null; // 设置 eventLoopMonitor
+    this.lastEventLoopCheck = process.hrtime.bigint(); // 设置 lastEventLoopCheck
 
     // CPU 使用率跟踪
-    this.lastCpuUsage = process.cpuUsage();
-    this.lastCpuTime = Date.now();
+    this.lastCpuUsage = process.cpuUsage(); // 设置 lastCpuUsage
+    this.lastCpuTime = Date.now(); // 设置 lastCpuTime
 
     // GC 监控 (如果可用)
-    this.gcStats = {
-      collections: 0,
-      totalPauseMs: 0,
-      lastPauseMs: 0,
-    };
+    this.gcStats = { // 设置 gcStats
+      collections: 0, // 设置 collections 字段
+      totalPauseMs: 0, // 设置 totalPauseMs 字段
+      lastPauseMs: 0, // 设置 lastPauseMs 字段
+    }; // 结束代码块
 
     // 启动时间
-    this.startTime = Date.now();
-  }
+    this.startTime = Date.now(); // 设置 startTime
+  } // 结束代码块
 
   /**
    * 获取系统信息
    * @private
    */
-  _getSystemInfo() {
-    return {
-      platform: os.platform(),
-      arch: os.arch(),
-      nodeVersion: process.version,
-      cpus: os.cpus().length,
-      totalMemory: os.totalmem(),
-      hostname: os.hostname(),
-    };
-  }
+  _getSystemInfo() { // 调用 _getSystemInfo
+    return { // 返回结果
+      platform: os.platform(), // 设置 platform 字段
+      arch: os.arch(), // 设置 arch 字段
+      nodeVersion: process.version, // 设置 nodeVersion 字段
+      cpus: os.cpus().length, // 设置 cpus 字段
+      totalMemory: os.totalmem(), // 设置 totalMemory 字段
+      hostname: os.hostname(), // 设置 hostname 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 启动性能监控
    */
-  start() {
-    if (this.sampleTimer) {
-      return;
-    }
+  start() { // 调用 start
+    if (this.sampleTimer) { // 条件判断 this.sampleTimer
+      return; // 返回结果
+    } // 结束代码块
 
     // 初始采样
-    this._collectSample();
+    this._collectSample(); // 调用 _collectSample
 
     // 定时采样
-    this.sampleTimer = setInterval(() => {
-      this._collectSample();
-    }, this.config.sampleInterval);
+    this.sampleTimer = setInterval(() => { // 设置 sampleTimer
+      this._collectSample(); // 调用 _collectSample
+    }, this.config.sampleInterval); // 执行语句
 
     // 事件循环延迟监控
-    this._startEventLoopMonitor();
+    this._startEventLoopMonitor(); // 调用 _startEventLoopMonitor
 
-    this.emit('started');
-  }
+    this.emit('started'); // 调用 emit
+  } // 结束代码块
 
   /**
    * 停止性能监控
    */
-  stop() {
-    if (this.sampleTimer) {
-      clearInterval(this.sampleTimer);
-      this.sampleTimer = null;
-    }
+  stop() { // 调用 stop
+    if (this.sampleTimer) { // 条件判断 this.sampleTimer
+      clearInterval(this.sampleTimer); // 调用 clearInterval
+      this.sampleTimer = null; // 设置 sampleTimer
+    } // 结束代码块
 
-    if (this.eventLoopMonitor) {
-      clearImmediate(this.eventLoopMonitor);
-      this.eventLoopMonitor = null;
-    }
+    if (this.eventLoopMonitor) { // 条件判断 this.eventLoopMonitor
+      clearImmediate(this.eventLoopMonitor); // 调用 clearImmediate
+      this.eventLoopMonitor = null; // 设置 eventLoopMonitor
+    } // 结束代码块
 
-    this.emit('stopped');
-  }
+    this.emit('stopped'); // 调用 emit
+  } // 结束代码块
 
   /**
    * 启动事件循环监控
    * @private
    */
-  _startEventLoopMonitor() {
-    const check = () => {
-      const now = process.hrtime.bigint();
-      const lag = Number(now - this.lastEventLoopCheck) / 1e6 - this.config.sampleInterval;
+  _startEventLoopMonitor() { // 调用 _startEventLoopMonitor
+    const check = () => { // 定义函数 check
+      const now = process.hrtime.bigint(); // 定义常量 now
+      const lag = Number(now - this.lastEventLoopCheck) / 1e6 - this.config.sampleInterval; // 定义常量 lag
 
-      if (lag > 0) {
-        this._addToHistory('eventLoop', {
-          timestamp: Date.now(),
-          lagMs: Math.max(0, lag),
-        });
+      if (lag > 0) { // 条件判断 lag > 0
+        this._addToHistory('eventLoop', { // 调用 _addToHistory
+          timestamp: Date.now(), // 设置 timestamp 字段
+          lagMs: Math.max(0, lag), // 设置 lagMs 字段
+        }); // 结束代码块
 
         // 检查阈值
-        if (lag > this.config.thresholds.eventLoopLagMs) {
-          this.emit('alert', {
-            type: 'eventLoopLag',
-            value: lag,
-            threshold: this.config.thresholds.eventLoopLagMs,
-            message: `Event loop lag ${lag.toFixed(2)}ms exceeds threshold`,
-          });
-        }
-      }
+        if (lag > this.config.thresholds.eventLoopLagMs) { // 条件判断 lag > this.config.thresholds.eventLoopLagMs
+          this.emit('alert', { // 调用 emit
+            type: 'eventLoopLag', // 设置 type 字段
+            value: lag, // 设置 value 字段
+            threshold: this.config.thresholds.eventLoopLagMs, // 设置 threshold 字段
+            message: `Event loop lag ${lag.toFixed(2)}ms exceeds threshold`, // 设置 message 字段
+          }); // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
 
-      this.lastEventLoopCheck = now;
-      this.eventLoopMonitor = setTimeout(check, this.config.sampleInterval);
-    };
+      this.lastEventLoopCheck = now; // 设置 lastEventLoopCheck
+      this.eventLoopMonitor = setTimeout(check, this.config.sampleInterval); // 设置 eventLoopMonitor
+    }; // 结束代码块
 
-    this.lastEventLoopCheck = process.hrtime.bigint();
-    this.eventLoopMonitor = setTimeout(check, this.config.sampleInterval);
-  }
+    this.lastEventLoopCheck = process.hrtime.bigint(); // 设置 lastEventLoopCheck
+    this.eventLoopMonitor = setTimeout(check, this.config.sampleInterval); // 设置 eventLoopMonitor
+  } // 结束代码块
 
   /**
    * 收集样本
    * @private
    */
-  _collectSample() {
-    const timestamp = Date.now();
+  _collectSample() { // 调用 _collectSample
+    const timestamp = Date.now(); // 定义常量 timestamp
 
     // 内存指标
-    const memoryMetrics = this._collectMemoryMetrics();
-    this._addToHistory('memory', { timestamp, ...memoryMetrics });
+    const memoryMetrics = this._collectMemoryMetrics(); // 定义常量 memoryMetrics
+    this._addToHistory('memory', { timestamp, ...memoryMetrics }); // 调用 _addToHistory
 
     // CPU 指标
-    const cpuMetrics = this._collectCpuMetrics();
-    this._addToHistory('cpu', { timestamp, ...cpuMetrics });
+    const cpuMetrics = this._collectCpuMetrics(); // 定义常量 cpuMetrics
+    this._addToHistory('cpu', { timestamp, ...cpuMetrics }); // 调用 _addToHistory
 
     // 检查告警阈值
-    this._checkThresholds(memoryMetrics, cpuMetrics);
+    this._checkThresholds(memoryMetrics, cpuMetrics); // 调用 _checkThresholds
 
-    this.emit('sample', {
-      timestamp,
-      memory: memoryMetrics,
-      cpu: cpuMetrics,
-    });
-  }
+    this.emit('sample', { // 调用 emit
+      timestamp, // 执行语句
+      memory: memoryMetrics, // 设置 memory 字段
+      cpu: cpuMetrics, // 设置 cpu 字段
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 收集内存指标
    * @private
    */
-  _collectMemoryMetrics() {
-    const memUsage = process.memoryUsage();
-    const totalMemory = os.totalmem();
-    const freeMemory = os.freemem();
+  _collectMemoryMetrics() { // 调用 _collectMemoryMetrics
+    const memUsage = process.memoryUsage(); // 定义常量 memUsage
+    const totalMemory = os.totalmem(); // 定义常量 totalMemory
+    const freeMemory = os.freemem(); // 定义常量 freeMemory
 
-    const metrics = {
-      heapUsed: memUsage.heapUsed,
-      heapTotal: memUsage.heapTotal,
-      external: memUsage.external,
-      rss: memUsage.rss,
-      arrayBuffers: memUsage.arrayBuffers || 0,
-      systemTotal: totalMemory,
-      systemFree: freeMemory,
-      systemUsed: totalMemory - freeMemory,
-      heapUsedPercent: (memUsage.heapUsed / memUsage.heapTotal) * 100,
-      systemUsedPercent: ((totalMemory - freeMemory) / totalMemory) * 100,
-    };
+    const metrics = { // 定义常量 metrics
+      heapUsed: memUsage.heapUsed, // 设置 heapUsed 字段
+      heapTotal: memUsage.heapTotal, // 设置 heapTotal 字段
+      external: memUsage.external, // 设置 external 字段
+      rss: memUsage.rss, // 设置 rss 字段
+      arrayBuffers: memUsage.arrayBuffers || 0, // 设置 arrayBuffers 字段
+      systemTotal: totalMemory, // 设置 systemTotal 字段
+      systemFree: freeMemory, // 设置 systemFree 字段
+      systemUsed: totalMemory - freeMemory, // 设置 systemUsed 字段
+      heapUsedPercent: (memUsage.heapUsed / memUsage.heapTotal) * 100, // 设置 heapUsedPercent 字段
+      systemUsedPercent: ((totalMemory - freeMemory) / totalMemory) * 100, // 设置 systemUsedPercent 字段
+    }; // 结束代码块
 
     // 详细 V8 堆统计
-    if (this.config.detailedMemory) {
-      const heapStats = v8.getHeapStatistics();
-      metrics.v8 = {
-        totalHeapSize: heapStats.total_heap_size,
-        totalHeapSizeExecutable: heapStats.total_heap_size_executable,
-        totalPhysicalSize: heapStats.total_physical_size,
-        usedHeapSize: heapStats.used_heap_size,
-        heapSizeLimit: heapStats.heap_size_limit,
-        mallocedMemory: heapStats.malloced_memory,
-        peakMallocedMemory: heapStats.peak_malloced_memory,
-        numberOfNativeContexts: heapStats.number_of_native_contexts,
-        numberOfDetachedContexts: heapStats.number_of_detached_contexts,
-      };
-    }
+    if (this.config.detailedMemory) { // 条件判断 this.config.detailedMemory
+      const heapStats = v8.getHeapStatistics(); // 定义常量 heapStats
+      metrics.v8 = { // 赋值 metrics.v8
+        totalHeapSize: heapStats.total_heap_size, // 设置 totalHeapSize 字段
+        totalHeapSizeExecutable: heapStats.total_heap_size_executable, // 设置 totalHeapSizeExecutable 字段
+        totalPhysicalSize: heapStats.total_physical_size, // 设置 totalPhysicalSize 字段
+        usedHeapSize: heapStats.used_heap_size, // 设置 usedHeapSize 字段
+        heapSizeLimit: heapStats.heap_size_limit, // 设置 heapSizeLimit 字段
+        mallocedMemory: heapStats.malloced_memory, // 设置 mallocedMemory 字段
+        peakMallocedMemory: heapStats.peak_malloced_memory, // 设置 peakMallocedMemory 字段
+        numberOfNativeContexts: heapStats.number_of_native_contexts, // 设置 numberOfNativeContexts 字段
+        numberOfDetachedContexts: heapStats.number_of_detached_contexts, // 设置 numberOfDetachedContexts 字段
+      }; // 结束代码块
+    } // 结束代码块
 
-    return metrics;
-  }
+    return metrics; // 返回结果
+  } // 结束代码块
 
   /**
    * 收集 CPU 指标
    * @private
    */
-  _collectCpuMetrics() {
-    const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
-    const currentTime = Date.now();
-    const elapsedMs = currentTime - this.lastCpuTime;
+  _collectCpuMetrics() { // 调用 _collectCpuMetrics
+    const currentCpuUsage = process.cpuUsage(this.lastCpuUsage); // 定义常量 currentCpuUsage
+    const currentTime = Date.now(); // 定义常量 currentTime
+    const elapsedMs = currentTime - this.lastCpuTime; // 定义常量 elapsedMs
 
     // 计算 CPU 使用百分比
-    const userPercent = (currentCpuUsage.user / 1000 / elapsedMs) * 100;
-    const systemPercent = (currentCpuUsage.system / 1000 / elapsedMs) * 100;
-    const totalPercent = userPercent + systemPercent;
+    const userPercent = (currentCpuUsage.user / 1000 / elapsedMs) * 100; // 定义常量 userPercent
+    const systemPercent = (currentCpuUsage.system / 1000 / elapsedMs) * 100; // 定义常量 systemPercent
+    const totalPercent = userPercent + systemPercent; // 定义常量 totalPercent
 
     // 系统负载 (仅 Unix)
-    let loadAverage = [0, 0, 0];
-    try {
-      loadAverage = os.loadavg();
-    } catch {
+    let loadAverage = [0, 0, 0]; // 定义变量 loadAverage
+    try { // 尝试执行
+      loadAverage = os.loadavg(); // 赋值 loadAverage
+    } catch { // 执行语句
       // Windows 不支持 loadavg
-    }
+    } // 结束代码块
 
-    this.lastCpuUsage = process.cpuUsage();
-    this.lastCpuTime = currentTime;
+    this.lastCpuUsage = process.cpuUsage(); // 设置 lastCpuUsage
+    this.lastCpuTime = currentTime; // 设置 lastCpuTime
 
-    return {
-      user: currentCpuUsage.user,
-      system: currentCpuUsage.system,
-      userPercent,
-      systemPercent,
-      totalPercent,
-      loadAverage,
-      cpuCount: os.cpus().length,
-    };
-  }
+    return { // 返回结果
+      user: currentCpuUsage.user, // 设置 user 字段
+      system: currentCpuUsage.system, // 设置 system 字段
+      userPercent, // 执行语句
+      systemPercent, // 执行语句
+      totalPercent, // 执行语句
+      loadAverage, // 执行语句
+      cpuCount: os.cpus().length, // 设置 cpuCount 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 检查告警阈值
    * @private
    */
-  _checkThresholds(memoryMetrics, cpuMetrics) {
+  _checkThresholds(memoryMetrics, cpuMetrics) { // 调用 _checkThresholds
     // 内存使用率告警
-    if (memoryMetrics.systemUsedPercent > this.config.thresholds.memoryUsagePercent) {
-      this.emit('alert', {
-        type: 'memoryUsage',
-        value: memoryMetrics.systemUsedPercent,
-        threshold: this.config.thresholds.memoryUsagePercent,
-        message: `Memory usage ${memoryMetrics.systemUsedPercent.toFixed(1)}% exceeds threshold`,
-      });
-    }
+    if (memoryMetrics.systemUsedPercent > this.config.thresholds.memoryUsagePercent) { // 条件判断 memoryMetrics.systemUsedPercent > this.config...
+      this.emit('alert', { // 调用 emit
+        type: 'memoryUsage', // 设置 type 字段
+        value: memoryMetrics.systemUsedPercent, // 设置 value 字段
+        threshold: this.config.thresholds.memoryUsagePercent, // 设置 threshold 字段
+        message: `Memory usage ${memoryMetrics.systemUsedPercent.toFixed(1)}% exceeds threshold`, // 设置 message 字段
+      }); // 结束代码块
+    } // 结束代码块
 
     // CPU 使用率告警
-    if (cpuMetrics.totalPercent > this.config.thresholds.cpuUsagePercent) {
-      this.emit('alert', {
-        type: 'cpuUsage',
-        value: cpuMetrics.totalPercent,
-        threshold: this.config.thresholds.cpuUsagePercent,
-        message: `CPU usage ${cpuMetrics.totalPercent.toFixed(1)}% exceeds threshold`,
-      });
-    }
-  }
+    if (cpuMetrics.totalPercent > this.config.thresholds.cpuUsagePercent) { // 条件判断 cpuMetrics.totalPercent > this.config.thresho...
+      this.emit('alert', { // 调用 emit
+        type: 'cpuUsage', // 设置 type 字段
+        value: cpuMetrics.totalPercent, // 设置 value 字段
+        threshold: this.config.thresholds.cpuUsagePercent, // 设置 threshold 字段
+        message: `CPU usage ${cpuMetrics.totalPercent.toFixed(1)}% exceeds threshold`, // 设置 message 字段
+      }); // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 添加到历史记录
    * @private
    */
-  _addToHistory(type, data) {
-    const history = this.history[type];
-    if (!history) return;
+  _addToHistory(type, data) { // 调用 _addToHistory
+    const history = this.history[type]; // 定义常量 history
+    if (!history) return; // 条件判断 !history
 
-    history.push(data);
+    history.push(data); // 调用 history.push
 
     // 限制历史大小
-    while (history.length > this.config.historySize) {
-      history.shift();
-    }
-  }
+    while (history.length > this.config.historySize) { // 循环条件 history.length > this.config.historySize
+      history.shift(); // 调用 history.shift
+    } // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 计时器 API Timers API
@@ -323,73 +323,73 @@ class PerformanceMonitor extends EventEmitter {
    * @param {string} name - 计时器名称
    * @returns {Function} 停止计时的函数
    */
-  startTimer(name) {
-    const start = process.hrtime.bigint();
+  startTimer(name) { // 调用 startTimer
+    const start = process.hrtime.bigint(); // 定义常量 start
 
-    return () => {
-      const end = process.hrtime.bigint();
-      const durationMs = Number(end - start) / 1e6;
-      this.recordTiming(name, durationMs);
-      return durationMs;
-    };
-  }
+    return () => { // 返回结果
+      const end = process.hrtime.bigint(); // 定义常量 end
+      const durationMs = Number(end - start) / 1e6; // 定义常量 durationMs
+      this.recordTiming(name, durationMs); // 调用 recordTiming
+      return durationMs; // 返回结果
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 记录计时
    * @param {string} name - 名称
    * @param {number} durationMs - 持续时间 (ms)
    */
-  recordTiming(name, durationMs) {
-    if (!this.metrics.histograms.has(name)) {
-      this.metrics.histograms.set(name, {
-        count: 0,
-        sum: 0,
-        min: Infinity,
-        max: -Infinity,
-        values: [],
-      });
-    }
+  recordTiming(name, durationMs) { // 调用 recordTiming
+    if (!this.metrics.histograms.has(name)) { // 条件判断 !this.metrics.histograms.has(name)
+      this.metrics.histograms.set(name, { // 访问 metrics
+        count: 0, // 设置 count 字段
+        sum: 0, // 设置 sum 字段
+        min: Infinity, // 设置 min 字段
+        max: -Infinity, // 设置 max 字段
+        values: [], // 设置 values 字段
+      }); // 结束代码块
+    } // 结束代码块
 
-    const histogram = this.metrics.histograms.get(name);
-    histogram.count++;
-    histogram.sum += durationMs;
-    histogram.min = Math.min(histogram.min, durationMs);
-    histogram.max = Math.max(histogram.max, durationMs);
-    histogram.values.push(durationMs);
+    const histogram = this.metrics.histograms.get(name); // 定义常量 histogram
+    histogram.count++; // 执行语句
+    histogram.sum += durationMs; // 执行语句
+    histogram.min = Math.min(histogram.min, durationMs); // 赋值 histogram.min
+    histogram.max = Math.max(histogram.max, durationMs); // 赋值 histogram.max
+    histogram.values.push(durationMs); // 调用 histogram.values.push
 
     // 限制存储的值数量
-    if (histogram.values.length > 10000) {
-      histogram.values = histogram.values.slice(-5000);
-    }
-  }
+    if (histogram.values.length > 10000) { // 条件判断 histogram.values.length > 10000
+      histogram.values = histogram.values.slice(-5000); // 赋值 histogram.values
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 异步操作计时装饰器
    * @param {string} name - 名称
    * @param {Function} fn - 异步函数
    */
-  async timeAsync(name, fn) {
-    const stop = this.startTimer(name);
-    try {
-      return await fn();
-    } finally {
-      stop();
-    }
-  }
+  async timeAsync(name, fn) { // 执行语句
+    const stop = this.startTimer(name); // 定义常量 stop
+    try { // 尝试执行
+      return await fn(); // 返回结果
+    } finally { // 执行语句
+      stop(); // 调用 stop
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 同步操作计时装饰器
    * @param {string} name - 名称
    * @param {Function} fn - 同步函数
    */
-  timeSync(name, fn) {
-    const stop = this.startTimer(name);
-    try {
-      return fn();
-    } finally {
-      stop();
-    }
-  }
+  timeSync(name, fn) { // 调用 timeSync
+    const stop = this.startTimer(name); // 定义常量 stop
+    try { // 尝试执行
+      return fn(); // 返回结果
+    } finally { // 执行语句
+      stop(); // 调用 stop
+    } // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 计数器 API Counters API
@@ -400,27 +400,27 @@ class PerformanceMonitor extends EventEmitter {
    * @param {string} name - 计数器名称
    * @param {number} value - 增加值
    */
-  increment(name, value = 1) {
-    const current = this.metrics.counters.get(name) || 0;
-    this.metrics.counters.set(name, current + value);
-  }
+  increment(name, value = 1) { // 调用 increment
+    const current = this.metrics.counters.get(name) || 0; // 定义常量 current
+    this.metrics.counters.set(name, current + value); // 访问 metrics
+  } // 结束代码块
 
   /**
    * 减少计数器
    * @param {string} name - 计数器名称
    * @param {number} value - 减少值
    */
-  decrement(name, value = 1) {
-    this.increment(name, -value);
-  }
+  decrement(name, value = 1) { // 调用 decrement
+    this.increment(name, -value); // 调用 increment
+  } // 结束代码块
 
   /**
    * 获取计数器值
    * @param {string} name - 计数器名称
    */
-  getCounter(name) {
-    return this.metrics.counters.get(name) || 0;
-  }
+  getCounter(name) { // 调用 getCounter
+    return this.metrics.counters.get(name) || 0; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 仪表 API Gauges API
@@ -431,21 +431,21 @@ class PerformanceMonitor extends EventEmitter {
    * @param {string} name - 仪表名称
    * @param {number} value - 值
    */
-  setGauge(name, value) {
-    this.metrics.gauges.set(name, {
-      value,
-      timestamp: Date.now(),
-    });
-  }
+  setGauge(name, value) { // 调用 setGauge
+    this.metrics.gauges.set(name, { // 访问 metrics
+      value, // 执行语句
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取仪表值
    * @param {string} name - 仪表名称
    */
-  getGauge(name) {
-    const gauge = this.metrics.gauges.get(name);
-    return gauge ? gauge.value : null;
-  }
+  getGauge(name) { // 调用 getGauge
+    const gauge = this.metrics.gauges.get(name); // 定义常量 gauge
+    return gauge ? gauge.value : null; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 统计 API Statistics API
@@ -455,61 +455,61 @@ class PerformanceMonitor extends EventEmitter {
    * 获取计时统计
    * @param {string} name - 名称
    */
-  getTimingStats(name) {
-    const histogram = this.metrics.histograms.get(name);
-    if (!histogram || histogram.count === 0) {
-      return null;
-    }
+  getTimingStats(name) { // 调用 getTimingStats
+    const histogram = this.metrics.histograms.get(name); // 定义常量 histogram
+    if (!histogram || histogram.count === 0) { // 条件判断 !histogram || histogram.count === 0
+      return null; // 返回结果
+    } // 结束代码块
 
-    const values = [...histogram.values].sort((a, b) => a - b);
-    const count = values.length;
+    const values = [...histogram.values].sort((a, b) => a - b); // 定义函数 values
+    const count = values.length; // 定义常量 count
 
-    return {
-      name,
-      count: histogram.count,
-      min: histogram.min,
-      max: histogram.max,
-      mean: histogram.sum / histogram.count,
-      sum: histogram.sum,
-      p50: values[Math.floor(count * 0.5)] || 0,
-      p90: values[Math.floor(count * 0.9)] || 0,
-      p95: values[Math.floor(count * 0.95)] || 0,
-      p99: values[Math.floor(count * 0.99)] || 0,
-    };
-  }
+    return { // 返回结果
+      name, // 执行语句
+      count: histogram.count, // 设置 count 字段
+      min: histogram.min, // 设置 min 字段
+      max: histogram.max, // 设置 max 字段
+      mean: histogram.sum / histogram.count, // 设置 mean 字段
+      sum: histogram.sum, // 设置 sum 字段
+      p50: values[Math.floor(count * 0.5)] || 0, // 设置 p50 字段
+      p90: values[Math.floor(count * 0.9)] || 0, // 设置 p90 字段
+      p95: values[Math.floor(count * 0.95)] || 0, // 设置 p95 字段
+      p99: values[Math.floor(count * 0.99)] || 0, // 设置 p99 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取所有计时统计
    */
-  getAllTimingStats() {
-    const stats = {};
-    for (const name of this.metrics.histograms.keys()) {
-      stats[name] = this.getTimingStats(name);
-    }
-    return stats;
-  }
+  getAllTimingStats() { // 调用 getAllTimingStats
+    const stats = {}; // 定义常量 stats
+    for (const name of this.metrics.histograms.keys()) { // 循环 const name of this.metrics.histograms.keys()
+      stats[name] = this.getTimingStats(name); // 执行语句
+    } // 结束代码块
+    return stats; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取所有计数器
    */
-  getAllCounters() {
-    const counters = {};
-    for (const [name, value] of this.metrics.counters) {
-      counters[name] = value;
-    }
-    return counters;
-  }
+  getAllCounters() { // 调用 getAllCounters
+    const counters = {}; // 定义常量 counters
+    for (const [name, value] of this.metrics.counters) { // 循环 const [name, value] of this.metrics.counters
+      counters[name] = value; // 执行语句
+    } // 结束代码块
+    return counters; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取所有仪表
    */
-  getAllGauges() {
-    const gauges = {};
-    for (const [name, data] of this.metrics.gauges) {
-      gauges[name] = data;
-    }
-    return gauges;
-  }
+  getAllGauges() { // 调用 getAllGauges
+    const gauges = {}; // 定义常量 gauges
+    for (const [name, data] of this.metrics.gauges) { // 循环 const [name, data] of this.metrics.gauges
+      gauges[name] = data; // 执行语句
+    } // 结束代码块
+    return gauges; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 历史数据 API History API
@@ -519,25 +519,25 @@ class PerformanceMonitor extends EventEmitter {
    * 获取内存历史
    * @param {number} limit - 限制数量
    */
-  getMemoryHistory(limit = 100) {
-    return this.history.memory.slice(-limit);
-  }
+  getMemoryHistory(limit = 100) { // 调用 getMemoryHistory
+    return this.history.memory.slice(-limit); // 返回结果
+  } // 结束代码块
 
   /**
    * 获取 CPU 历史
    * @param {number} limit - 限制数量
    */
-  getCpuHistory(limit = 100) {
-    return this.history.cpu.slice(-limit);
-  }
+  getCpuHistory(limit = 100) { // 调用 getCpuHistory
+    return this.history.cpu.slice(-limit); // 返回结果
+  } // 结束代码块
 
   /**
    * 获取事件循环历史
    * @param {number} limit - 限制数量
    */
-  getEventLoopHistory(limit = 100) {
-    return this.history.eventLoop.slice(-limit);
-  }
+  getEventLoopHistory(limit = 100) { // 调用 getEventLoopHistory
+    return this.history.eventLoop.slice(-limit); // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 快照 API Snapshot API
@@ -546,86 +546,86 @@ class PerformanceMonitor extends EventEmitter {
   /**
    * 获取当前性能快照
    */
-  getSnapshot() {
-    const memoryMetrics = this._collectMemoryMetrics();
-    const cpuMetrics = this._collectCpuMetrics();
+  getSnapshot() { // 调用 getSnapshot
+    const memoryMetrics = this._collectMemoryMetrics(); // 定义常量 memoryMetrics
+    const cpuMetrics = this._collectCpuMetrics(); // 定义常量 cpuMetrics
 
-    return {
-      timestamp: Date.now(),
-      uptime: Date.now() - this.startTime,
-      system: this.systemInfo,
-      memory: memoryMetrics,
-      cpu: cpuMetrics,
-      counters: this.getAllCounters(),
-      gauges: this.getAllGauges(),
-      timings: this.getAllTimingStats(),
-      gc: { ...this.gcStats },
-    };
-  }
+    return { // 返回结果
+      timestamp: Date.now(), // 设置 timestamp 字段
+      uptime: Date.now() - this.startTime, // 设置 uptime 字段
+      system: this.systemInfo, // 设置 system 字段
+      memory: memoryMetrics, // 设置 memory 字段
+      cpu: cpuMetrics, // 设置 cpu 字段
+      counters: this.getAllCounters(), // 设置 counters 字段
+      gauges: this.getAllGauges(), // 设置 gauges 字段
+      timings: this.getAllTimingStats(), // 设置 timings 字段
+      gc: { ...this.gcStats }, // 设置 gc 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取摘要
    */
-  getSummary() {
-    const snapshot = this.getSnapshot();
+  getSummary() { // 调用 getSummary
+    const snapshot = this.getSnapshot(); // 定义常量 snapshot
 
-    return {
-      uptime: snapshot.uptime,
-      uptimeFormatted: this._formatUptime(snapshot.uptime),
-      memoryUsedMB: Math.round(snapshot.memory.heapUsed / 1024 / 1024 * 100) / 100,
-      memoryTotalMB: Math.round(snapshot.memory.heapTotal / 1024 / 1024 * 100) / 100,
-      memoryPercent: Math.round(snapshot.memory.heapUsedPercent * 10) / 10,
-      cpuPercent: Math.round(snapshot.cpu.totalPercent * 10) / 10,
-      counters: Object.keys(snapshot.counters).length,
-      timings: Object.keys(snapshot.timings).length,
-    };
-  }
+    return { // 返回结果
+      uptime: snapshot.uptime, // 设置 uptime 字段
+      uptimeFormatted: this._formatUptime(snapshot.uptime), // 设置 uptimeFormatted 字段
+      memoryUsedMB: Math.round(snapshot.memory.heapUsed / 1024 / 1024 * 100) / 100, // 设置 memoryUsedMB 字段
+      memoryTotalMB: Math.round(snapshot.memory.heapTotal / 1024 / 1024 * 100) / 100, // 设置 memoryTotalMB 字段
+      memoryPercent: Math.round(snapshot.memory.heapUsedPercent * 10) / 10, // 设置 memoryPercent 字段
+      cpuPercent: Math.round(snapshot.cpu.totalPercent * 10) / 10, // 设置 cpuPercent 字段
+      counters: Object.keys(snapshot.counters).length, // 设置 counters 字段
+      timings: Object.keys(snapshot.timings).length, // 设置 timings 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 格式化运行时间
    * @private
    */
-  _formatUptime(ms) {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+  _formatUptime(ms) { // 调用 _formatUptime
+    const seconds = Math.floor(ms / 1000); // 定义常量 seconds
+    const minutes = Math.floor(seconds / 60); // 定义常量 minutes
+    const hours = Math.floor(minutes / 60); // 定义常量 hours
+    const days = Math.floor(hours / 24); // 定义常量 days
 
-    if (days > 0) {
-      return `${days}d ${hours % 24}h ${minutes % 60}m`;
-    }
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-    }
-    if (minutes > 0) {
-      return `${minutes}m ${seconds % 60}s`;
-    }
-    return `${seconds}s`;
-  }
+    if (days > 0) { // 条件判断 days > 0
+      return `${days}d ${hours % 24}h ${minutes % 60}m`; // 返回结果
+    } // 结束代码块
+    if (hours > 0) { // 条件判断 hours > 0
+      return `${hours}h ${minutes % 60}m ${seconds % 60}s`; // 返回结果
+    } // 结束代码块
+    if (minutes > 0) { // 条件判断 minutes > 0
+      return `${minutes}m ${seconds % 60}s`; // 返回结果
+    } // 结束代码块
+    return `${seconds}s`; // 返回结果
+  } // 结束代码块
 
   /**
    * 重置所有指标
    */
-  reset() {
-    this.metrics.timers.clear();
-    this.metrics.counters.clear();
-    this.metrics.histograms.clear();
-    this.metrics.gauges.clear();
+  reset() { // 调用 reset
+    this.metrics.timers.clear(); // 访问 metrics
+    this.metrics.counters.clear(); // 访问 metrics
+    this.metrics.histograms.clear(); // 访问 metrics
+    this.metrics.gauges.clear(); // 访问 metrics
 
-    this.history.memory = [];
-    this.history.cpu = [];
-    this.history.eventLoop = [];
-    this.history.custom.clear();
+    this.history.memory = []; // 访问 history
+    this.history.cpu = []; // 访问 history
+    this.history.eventLoop = []; // 访问 history
+    this.history.custom.clear(); // 访问 history
 
-    this.gcStats = {
-      collections: 0,
-      totalPauseMs: 0,
-      lastPauseMs: 0,
-    };
+    this.gcStats = { // 设置 gcStats
+      collections: 0, // 设置 collections 字段
+      totalPauseMs: 0, // 设置 totalPauseMs 字段
+      lastPauseMs: 0, // 设置 lastPauseMs 字段
+    }; // 结束代码块
 
-    this.emit('reset');
-  }
-}
+    this.emit('reset'); // 调用 emit
+  } // 结束代码块
+} // 结束代码块
 
-export { PerformanceMonitor };
-export default PerformanceMonitor;
+export { PerformanceMonitor }; // 导出命名成员
+export default PerformanceMonitor; // 默认导出

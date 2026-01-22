@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 订单归档服务
  * Order Archiver Service
  *
@@ -8,56 +8,56 @@
  * @module src/database/clickhouse/OrderArchiver
  */
 
-import { EventEmitter } from 'events';
-import { ORDER_STATUS } from '../redis/OrderStore.js';
+import { EventEmitter } from 'events'; // 导入模块 events
+import { ORDER_STATUS } from '../redis/OrderStore.js'; // 导入模块 ../redis/OrderStore.js
 
 /**
  * 需要归档的订单状态列表
  * Order statuses that should be archived
  */
-const ARCHIVABLE_STATUSES = [
-  ORDER_STATUS.FILLED,
-  ORDER_STATUS.CANCELED,
-  ORDER_STATUS.REJECTED,
-  ORDER_STATUS.EXPIRED,
-  ORDER_STATUS.FAILED,
-];
+const ARCHIVABLE_STATUSES = [ // 定义常量 ARCHIVABLE_STATUSES
+  ORDER_STATUS.FILLED, // 执行语句
+  ORDER_STATUS.CANCELED, // 执行语句
+  ORDER_STATUS.REJECTED, // 执行语句
+  ORDER_STATUS.EXPIRED, // 执行语句
+  ORDER_STATUS.FAILED, // 执行语句
+]; // 结束数组或索引
 
 /**
  * 默认配置
  * Default configuration
  */
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 批量大小 / Batch size
-  batchSize: 100,
+  batchSize: 100, // 设置 batchSize 字段
   // 归档阈值 (秒) - 订单完成后多久可以归档 / Archive threshold (seconds)
   archiveAfterSeconds: 3600, // 1 hour
   // 是否在归档后删除 Redis 中的数据 / Whether to delete from Redis after archiving
-  deleteAfterArchive: true,
+  deleteAfterArchive: true, // 设置 deleteAfterArchive 字段
   // 保留天数 (在删除前保留多少天) / Days to keep before deletion
-  retentionDays: 7,
-};
+  retentionDays: 7, // 设置 retentionDays 字段
+}; // 结束代码块
 
 /**
  * 订单归档器类
  * Order Archiver Class
  */
-class OrderArchiver extends EventEmitter {
-  constructor(redisOrderStore, clickHouseClient, config = {}) {
-    super();
+class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承EventEmitter)
+  constructor(redisOrderStore, clickHouseClient, config = {}) { // 构造函数
+    super(); // 调用父类
 
-    this.orderStore = redisOrderStore;
-    this.clickhouse = clickHouseClient;
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.orderStore = redisOrderStore; // 设置 orderStore
+    this.clickhouse = clickHouseClient; // 设置 clickhouse
+    this.config = { ...DEFAULT_CONFIG, ...config }; // 设置 config
 
     // 统计信息 / Statistics
-    this.stats = {
-      totalArchived: 0,
-      totalDeleted: 0,
-      lastArchiveTime: null,
-      errors: 0,
-    };
-  }
+    this.stats = { // 设置 stats
+      totalArchived: 0, // 设置 totalArchived 字段
+      totalDeleted: 0, // 设置 totalDeleted 字段
+      lastArchiveTime: null, // 设置 lastArchiveTime 字段
+      errors: 0, // 设置 errors 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 执行归档任务
@@ -65,64 +65,64 @@ class OrderArchiver extends EventEmitter {
    *
    * @returns {Object} 归档结果 / Archive result
    */
-  async archive() {
-    const startTime = Date.now();
-    const result = {
-      archived: 0,
-      deleted: 0,
-      errors: [],
-    };
+  async archive() { // 执行语句
+    const startTime = Date.now(); // 定义常量 startTime
+    const result = { // 定义常量 result
+      archived: 0, // 设置 archived 字段
+      deleted: 0, // 设置 deleted 字段
+      errors: [], // 设置 errors 字段
+    }; // 结束代码块
 
-    try {
+    try { // 尝试执行
       // 获取可归档的订单 / Get archivable orders
-      const orders = await this._getArchivableOrders();
+      const orders = await this._getArchivableOrders(); // 定义常量 orders
 
-      if (orders.length === 0) {
-        this.emit('archive:complete', { ...result, duration: Date.now() - startTime });
-        return result;
-      }
+      if (orders.length === 0) { // 条件判断 orders.length === 0
+        this.emit('archive:complete', { ...result, duration: Date.now() - startTime }); // 调用 emit
+        return result; // 返回结果
+      } // 结束代码块
 
       // 分批处理 / Process in batches
-      for (let i = 0; i < orders.length; i += this.config.batchSize) {
-        const batch = orders.slice(i, i + this.config.batchSize);
+      for (let i = 0; i < orders.length; i += this.config.batchSize) { // 循环 let i = 0; i < orders.length; i += this.confi...
+        const batch = orders.slice(i, i + this.config.batchSize); // 定义常量 batch
 
-        try {
+        try { // 尝试执行
           // 写入 ClickHouse / Write to ClickHouse
-          await this._archiveBatch(batch);
-          result.archived += batch.length;
+          await this._archiveBatch(batch); // 等待异步结果
+          result.archived += batch.length; // 执行语句
 
           // 删除 Redis 中的数据 / Delete from Redis
-          if (this.config.deleteAfterArchive) {
-            await this._deleteBatch(batch);
-            result.deleted += batch.length;
-          }
+          if (this.config.deleteAfterArchive) { // 条件判断 this.config.deleteAfterArchive
+            await this._deleteBatch(batch); // 等待异步结果
+            result.deleted += batch.length; // 执行语句
+          } // 结束代码块
 
-          this.emit('archive:batch', { count: batch.length, total: result.archived });
+          this.emit('archive:batch', { count: batch.length, total: result.archived }); // 调用 emit
 
-        } catch (error) {
-          result.errors.push({
-            batch: i / this.config.batchSize,
-            error: error.message,
-            orderIds: batch.map(o => o.orderId),
-          });
-          this.stats.errors++;
-        }
-      }
+        } catch (error) { // 执行语句
+          result.errors.push({ // 调用 result.errors.push
+            batch: i / this.config.batchSize, // 设置 batch 字段
+            error: error.message, // 设置 error 字段
+            orderIds: batch.map(o => o.orderId), // 设置 orderIds 字段
+          }); // 结束代码块
+          this.stats.errors++; // 访问 stats
+        } // 结束代码块
+      } // 结束代码块
 
       // 更新统计 / Update statistics
-      this.stats.totalArchived += result.archived;
-      this.stats.totalDeleted += result.deleted;
-      this.stats.lastArchiveTime = new Date().toISOString();
+      this.stats.totalArchived += result.archived; // 访问 stats
+      this.stats.totalDeleted += result.deleted; // 访问 stats
+      this.stats.lastArchiveTime = new Date().toISOString(); // 访问 stats
 
-      this.emit('archive:complete', { ...result, duration: Date.now() - startTime });
+      this.emit('archive:complete', { ...result, duration: Date.now() - startTime }); // 调用 emit
 
-    } catch (error) {
-      result.errors.push({ error: error.message });
-      this.emit('archive:error', error);
-    }
+    } catch (error) { // 执行语句
+      result.errors.push({ error: error.message }); // 调用 result.errors.push
+      this.emit('archive:error', error); // 调用 emit
+    } // 结束代码块
 
-    return result;
-  }
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取可归档的订单
@@ -131,26 +131,26 @@ class OrderArchiver extends EventEmitter {
    * @returns {Array} 可归档的订单列表 / List of archivable orders
    * @private
    */
-  async _getArchivableOrders() {
-    const archivableOrders = [];
-    const cutoffTime = Date.now() - this.config.archiveAfterSeconds * 1000;
+  async _getArchivableOrders() { // 执行语句
+    const archivableOrders = []; // 定义常量 archivableOrders
+    const cutoffTime = Date.now() - this.config.archiveAfterSeconds * 1000; // 定义常量 cutoffTime
 
     // 遍历所有可归档状态 / Iterate through all archivable statuses
-    for (const status of ARCHIVABLE_STATUSES) {
-      const orders = await this.orderStore.getByStatus(status);
+    for (const status of ARCHIVABLE_STATUSES) { // 循环 const status of ARCHIVABLE_STATUSES
+      const orders = await this.orderStore.getByStatus(status); // 定义常量 orders
 
-      for (const order of orders) {
+      for (const order of orders) { // 循环 const order of orders
         // 检查订单是否满足归档条件 / Check if order meets archive criteria
-        const orderTime = order.closedAt || order.updatedAt || order.createdAt;
+        const orderTime = order.closedAt || order.updatedAt || order.createdAt; // 定义常量 orderTime
 
-        if (orderTime && orderTime < cutoffTime) {
-          archivableOrders.push(order);
-        }
-      }
-    }
+        if (orderTime && orderTime < cutoffTime) { // 条件判断 orderTime && orderTime < cutoffTime
+          archivableOrders.push(order); // 调用 archivableOrders.push
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
-    return archivableOrders;
-  }
+    return archivableOrders; // 返回结果
+  } // 结束代码块
 
   /**
    * 批量归档订单到 ClickHouse
@@ -159,10 +159,10 @@ class OrderArchiver extends EventEmitter {
    * @param {Array} orders - 订单数组 / Order array
    * @private
    */
-  async _archiveBatch(orders) {
-    const rows = orders.map(order => this._transformOrder(order));
-    await this.clickhouse.insert('orders_archive', rows);
-  }
+  async _archiveBatch(orders) { // 执行语句
+    const rows = orders.map(order => this._transformOrder(order)); // 定义函数 rows
+    await this.clickhouse.insert('orders_archive', rows); // 等待异步结果
+  } // 结束代码块
 
   /**
    * 转换订单格式为 ClickHouse 格式
@@ -172,31 +172,31 @@ class OrderArchiver extends EventEmitter {
    * @returns {Object} ClickHouse 格式数据 / ClickHouse format data
    * @private
    */
-  _transformOrder(order) {
-    return {
-      order_id: order.orderId || '',
-      client_order_id: order.clientOrderId || '',
-      symbol: order.symbol || '',
-      side: order.side || 'buy',
-      type: order.type || 'market',
-      status: order.status || 'filled',
-      amount: order.amount || 0,
-      filled: order.filled || 0,
-      remaining: order.remaining || 0,
-      price: order.price || 0,
-      average_price: order.averagePrice || 0,
-      stop_price: order.stopPrice || 0,
-      cost: order.cost || 0,
-      fee: order.fee || 0,
-      exchange: order.exchange || '',
-      strategy: order.strategy || '',
-      created_at: this._toDateTime(order.createdAt),
-      updated_at: this._toDateTime(order.updatedAt),
-      closed_at: this._toDateTime(order.closedAt),
-      error_message: order.errorMessage || '',
-      metadata: order.metadata ? JSON.stringify(order.metadata) : '',
-    };
-  }
+  _transformOrder(order) { // 调用 _transformOrder
+    return { // 返回结果
+      order_id: order.orderId || '', // 设置 order_id 字段
+      client_order_id: order.clientOrderId || '', // 设置 client_order_id 字段
+      symbol: order.symbol || '', // 设置 symbol 字段
+      side: order.side || 'buy', // 设置 side 字段
+      type: order.type || 'market', // 设置 type 字段
+      status: order.status || 'filled', // 设置 status 字段
+      amount: order.amount || 0, // 设置 amount 字段
+      filled: order.filled || 0, // 设置 filled 字段
+      remaining: order.remaining || 0, // 设置 remaining 字段
+      price: order.price || 0, // 设置 price 字段
+      average_price: order.averagePrice || 0, // 设置 average_price 字段
+      stop_price: order.stopPrice || 0, // 设置 stop_price 字段
+      cost: order.cost || 0, // 设置 cost 字段
+      fee: order.fee || 0, // 设置 fee 字段
+      exchange: order.exchange || '', // 设置 exchange 字段
+      strategy: order.strategy || '', // 设置 strategy 字段
+      created_at: this._toDateTime(order.createdAt), // 设置 created_at 字段
+      updated_at: this._toDateTime(order.updatedAt), // 设置 updated_at 字段
+      closed_at: this._toDateTime(order.closedAt), // 设置 closed_at 字段
+      error_message: order.errorMessage || '', // 设置 error_message 字段
+      metadata: order.metadata ? JSON.stringify(order.metadata) : '', // 设置 metadata 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 批量删除 Redis 中的订单
@@ -205,11 +205,11 @@ class OrderArchiver extends EventEmitter {
    * @param {Array} orders - 订单数组 / Order array
    * @private
    */
-  async _deleteBatch(orders) {
-    for (const order of orders) {
-      await this.orderStore.delete(order.orderId);
-    }
-  }
+  async _deleteBatch(orders) { // 执行语句
+    for (const order of orders) { // 循环 const order of orders
+      await this.orderStore.delete(order.orderId); // 等待异步结果
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 转换时间戳为 DateTime 字符串
@@ -219,12 +219,12 @@ class OrderArchiver extends EventEmitter {
    * @returns {string} DateTime 字符串 / DateTime string
    * @private
    */
-  _toDateTime(timestamp) {
-    if (!timestamp) {
-      return '1970-01-01 00:00:00.000';
-    }
-    return new Date(timestamp).toISOString().replace('T', ' ').replace('Z', '');
-  }
+  _toDateTime(timestamp) { // 调用 _toDateTime
+    if (!timestamp) { // 条件判断 !timestamp
+      return '1970-01-01 00:00:00.000'; // 返回结果
+    } // 结束代码块
+    return new Date(timestamp).toISOString().replace('T', ' ').replace('Z', ''); // 返回结果
+  } // 结束代码块
 
   /**
    * 获取归档统计
@@ -232,23 +232,23 @@ class OrderArchiver extends EventEmitter {
    *
    * @returns {Object} 统计数据 / Statistics
    */
-  getStats() {
-    return { ...this.stats };
-  }
+  getStats() { // 调用 getStats
+    return { ...this.stats }; // 返回结果
+  } // 结束代码块
 
   /**
    * 重置统计
    * Reset statistics
    */
-  resetStats() {
-    this.stats = {
-      totalArchived: 0,
-      totalDeleted: 0,
-      lastArchiveTime: null,
-      errors: 0,
-    };
-  }
-}
+  resetStats() { // 调用 resetStats
+    this.stats = { // 设置 stats
+      totalArchived: 0, // 设置 totalArchived 字段
+      totalDeleted: 0, // 设置 totalDeleted 字段
+      lastArchiveTime: null, // 设置 lastArchiveTime 字段
+      errors: 0, // 设置 errors 字段
+    }; // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
-export { OrderArchiver, ARCHIVABLE_STATUSES };
-export default OrderArchiver;
+export { OrderArchiver, ARCHIVABLE_STATUSES }; // 导出命名成员
+export default OrderArchiver; // 默认导出

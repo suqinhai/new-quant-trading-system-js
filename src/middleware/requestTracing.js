@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 请求追踪中间件
  * Request Tracing Middleware
  *
@@ -8,9 +8,9 @@
  * @module src/middleware/requestTracing
  */
 
-import { AsyncLocalStorage } from 'async_hooks';
-import { randomUUID } from 'crypto';
-import { EventEmitter } from 'events';
+import { AsyncLocalStorage } from 'async_hooks'; // 导入模块 async_hooks
+import { randomUUID } from 'crypto'; // 导入模块 crypto
+import { EventEmitter } from 'events'; // 导入模块 events
 
 // ============================================
 // 请求上下文存储
@@ -20,223 +20,223 @@ import { EventEmitter } from 'events';
  * 异步本地存储，用于在整个请求生命周期中传递上下文
  * AsyncLocalStorage for propagating context throughout request lifecycle
  */
-const asyncLocalStorage = new AsyncLocalStorage();
+const asyncLocalStorage = new AsyncLocalStorage(); // 定义常量 asyncLocalStorage
 
 /**
  * 请求上下文类
  * Request Context Class
  */
-export class RequestContext {
-  constructor(options = {}) {
+export class RequestContext { // 导出类 RequestContext
+  constructor(options = {}) { // 构造函数
     // 请求 ID / Request ID
-    this.requestId = options.requestId || RequestContext.generateId();
+    this.requestId = options.requestId || RequestContext.generateId(); // 设置 requestId
 
     // 追踪 ID (用于跨服务追踪，预留) / Trace ID (for cross-service tracing, reserved)
-    this.traceId = options.traceId || this.requestId;
+    this.traceId = options.traceId || this.requestId; // 设置 traceId
 
     // Span ID (当前操作标识) / Span ID (current operation identifier)
-    this.spanId = options.spanId || RequestContext.generateSpanId();
+    this.spanId = options.spanId || RequestContext.generateSpanId(); // 设置 spanId
 
     // 父 Span ID / Parent Span ID
-    this.parentSpanId = options.parentSpanId || null;
+    this.parentSpanId = options.parentSpanId || null; // 设置 parentSpanId
 
     // 请求开始时间 / Request start time
-    this.startTime = options.startTime || Date.now();
-    this.startHrTime = options.startHrTime || process.hrtime.bigint();
+    this.startTime = options.startTime || Date.now(); // 设置 startTime
+    this.startHrTime = options.startHrTime || process.hrtime.bigint(); // 设置 startHrTime
 
     // 请求元数据 / Request metadata
-    this.method = options.method || '';
-    this.path = options.path || '';
-    this.userAgent = options.userAgent || '';
-    this.ip = options.ip || '';
-    this.userId = options.userId || null;
+    this.method = options.method || ''; // 设置 method
+    this.path = options.path || ''; // 设置 path
+    this.userAgent = options.userAgent || ''; // 设置 userAgent
+    this.ip = options.ip || ''; // 设置 ip
+    this.userId = options.userId || null; // 设置 userId
 
     // 自定义属性 / Custom attributes
-    this.attributes = new Map();
+    this.attributes = new Map(); // 设置 attributes
 
     // 事件/日志记录 / Events/logs
-    this.events = [];
+    this.events = []; // 设置 events
 
     // 子 Span 列表 / Child spans
-    this.spans = [];
-  }
+    this.spans = []; // 设置 spans
+  } // 结束代码块
 
   /**
    * 生成请求 ID
    */
-  static generateId() {
-    const timestamp = Date.now().toString(36);
-    const random = randomUUID().split('-')[0];
-    return `req_${timestamp}_${random}`;
-  }
+  static generateId() { // 执行语句
+    const timestamp = Date.now().toString(36); // 定义常量 timestamp
+    const random = randomUUID().split('-')[0]; // 定义常量 random
+    return `req_${timestamp}_${random}`; // 返回结果
+  } // 结束代码块
 
   /**
    * 生成 Span ID
    */
-  static generateSpanId() {
-    return randomUUID().split('-').slice(0, 2).join('');
-  }
+  static generateSpanId() { // 执行语句
+    return randomUUID().split('-').slice(0, 2).join(''); // 返回结果
+  } // 结束代码块
 
   /**
    * 设置属性
    */
-  setAttribute(key, value) {
-    this.attributes.set(key, value);
-    return this;
-  }
+  setAttribute(key, value) { // 调用 setAttribute
+    this.attributes.set(key, value); // 访问 attributes
+    return this; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取属性
    */
-  getAttribute(key) {
-    return this.attributes.get(key);
-  }
+  getAttribute(key) { // 调用 getAttribute
+    return this.attributes.get(key); // 返回结果
+  } // 结束代码块
 
   /**
    * 添加事件
    */
-  addEvent(name, attributes = {}) {
-    this.events.push({
-      name,
-      timestamp: Date.now(),
-      attributes,
-    });
-    return this;
-  }
+  addEvent(name, attributes = {}) { // 调用 addEvent
+    this.events.push({ // 访问 events
+      name, // 执行语句
+      timestamp: Date.now(), // 设置 timestamp 字段
+      attributes, // 执行语句
+    }); // 结束代码块
+    return this; // 返回结果
+  } // 结束代码块
 
   /**
    * 创建子 Span
    */
-  createSpan(name) {
-    const span = new Span({
-      name,
-      traceId: this.traceId,
-      parentSpanId: this.spanId,
-      requestId: this.requestId,
-    });
-    this.spans.push(span);
-    return span;
-  }
+  createSpan(name) { // 调用 createSpan
+    const span = new Span({ // 定义常量 span
+      name, // 执行语句
+      traceId: this.traceId, // 设置 traceId 字段
+      parentSpanId: this.spanId, // 设置 parentSpanId 字段
+      requestId: this.requestId, // 设置 requestId 字段
+    }); // 结束代码块
+    this.spans.push(span); // 访问 spans
+    return span; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取请求耗时 (毫秒)
    */
-  getDuration() {
-    return Date.now() - this.startTime;
-  }
+  getDuration() { // 调用 getDuration
+    return Date.now() - this.startTime; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取高精度耗时 (纳秒)
    */
-  getDurationNanos() {
-    return Number(process.hrtime.bigint() - this.startHrTime);
-  }
+  getDurationNanos() { // 调用 getDurationNanos
+    return Number(process.hrtime.bigint() - this.startHrTime); // 返回结果
+  } // 结束代码块
 
   /**
    * 转换为日志友好格式
    */
-  toLogContext() {
-    return {
-      requestId: this.requestId,
-      traceId: this.traceId,
-      spanId: this.spanId,
-      method: this.method,
-      path: this.path,
-      userId: this.userId,
-      duration: this.getDuration(),
-    };
-  }
+  toLogContext() { // 调用 toLogContext
+    return { // 返回结果
+      requestId: this.requestId, // 设置 requestId 字段
+      traceId: this.traceId, // 设置 traceId 字段
+      spanId: this.spanId, // 设置 spanId 字段
+      method: this.method, // 设置 method 字段
+      path: this.path, // 设置 path 字段
+      userId: this.userId, // 设置 userId 字段
+      duration: this.getDuration(), // 设置 duration 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 转换为 JSON
    */
-  toJSON() {
-    return {
-      requestId: this.requestId,
-      traceId: this.traceId,
-      spanId: this.spanId,
-      parentSpanId: this.parentSpanId,
-      method: this.method,
-      path: this.path,
-      ip: this.ip,
-      userId: this.userId,
-      startTime: this.startTime,
-      duration: this.getDuration(),
-      attributes: Object.fromEntries(this.attributes),
-      events: this.events,
-      spans: this.spans.map(s => s.toJSON()),
-    };
-  }
-}
+  toJSON() { // 调用 toJSON
+    return { // 返回结果
+      requestId: this.requestId, // 设置 requestId 字段
+      traceId: this.traceId, // 设置 traceId 字段
+      spanId: this.spanId, // 设置 spanId 字段
+      parentSpanId: this.parentSpanId, // 设置 parentSpanId 字段
+      method: this.method, // 设置 method 字段
+      path: this.path, // 设置 path 字段
+      ip: this.ip, // 设置 ip 字段
+      userId: this.userId, // 设置 userId 字段
+      startTime: this.startTime, // 设置 startTime 字段
+      duration: this.getDuration(), // 设置 duration 字段
+      attributes: Object.fromEntries(this.attributes), // 设置 attributes 字段
+      events: this.events, // 设置 events 字段
+      spans: this.spans.map(s => s.toJSON()), // 设置 spans 字段
+    }; // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * Span 类 - 表示一个操作单元
  * Span Class - Represents an operation unit
  */
-export class Span {
-  constructor(options = {}) {
-    this.name = options.name || 'unknown';
-    this.traceId = options.traceId;
-    this.spanId = RequestContext.generateSpanId();
-    this.parentSpanId = options.parentSpanId;
-    this.requestId = options.requestId;
-    this.startTime = Date.now();
-    this.startHrTime = process.hrtime.bigint();
-    this.endTime = null;
+export class Span { // 导出类 Span
+  constructor(options = {}) { // 构造函数
+    this.name = options.name || 'unknown'; // 设置 name
+    this.traceId = options.traceId; // 设置 traceId
+    this.spanId = RequestContext.generateSpanId(); // 设置 spanId
+    this.parentSpanId = options.parentSpanId; // 设置 parentSpanId
+    this.requestId = options.requestId; // 设置 requestId
+    this.startTime = Date.now(); // 设置 startTime
+    this.startHrTime = process.hrtime.bigint(); // 设置 startHrTime
+    this.endTime = null; // 设置 endTime
     this.status = 'ok'; // ok, error
-    this.attributes = new Map();
-    this.events = [];
-  }
+    this.attributes = new Map(); // 设置 attributes
+    this.events = []; // 设置 events
+  } // 结束代码块
 
-  setAttribute(key, value) {
-    this.attributes.set(key, value);
-    return this;
-  }
+  setAttribute(key, value) { // 调用 setAttribute
+    this.attributes.set(key, value); // 访问 attributes
+    return this; // 返回结果
+  } // 结束代码块
 
-  addEvent(name, attributes = {}) {
-    this.events.push({
-      name,
-      timestamp: Date.now(),
-      attributes,
-    });
-    return this;
-  }
+  addEvent(name, attributes = {}) { // 调用 addEvent
+    this.events.push({ // 访问 events
+      name, // 执行语句
+      timestamp: Date.now(), // 设置 timestamp 字段
+      attributes, // 执行语句
+    }); // 结束代码块
+    return this; // 返回结果
+  } // 结束代码块
 
-  setError(error) {
-    this.status = 'error';
-    this.setAttribute('error.type', error.name || 'Error');
-    this.setAttribute('error.message', error.message);
-    if (error.stack) {
-      this.setAttribute('error.stack', error.stack);
-    }
-    return this;
-  }
+  setError(error) { // 调用 setError
+    this.status = 'error'; // 设置 status
+    this.setAttribute('error.type', error.name || 'Error'); // 调用 setAttribute
+    this.setAttribute('error.message', error.message); // 调用 setAttribute
+    if (error.stack) { // 条件判断 error.stack
+      this.setAttribute('error.stack', error.stack); // 调用 setAttribute
+    } // 结束代码块
+    return this; // 返回结果
+  } // 结束代码块
 
-  end() {
-    this.endTime = Date.now();
-    return this;
-  }
+  end() { // 调用 end
+    this.endTime = Date.now(); // 设置 endTime
+    return this; // 返回结果
+  } // 结束代码块
 
-  getDuration() {
-    const end = this.endTime || Date.now();
-    return end - this.startTime;
-  }
+  getDuration() { // 调用 getDuration
+    const end = this.endTime || Date.now(); // 定义常量 end
+    return end - this.startTime; // 返回结果
+  } // 结束代码块
 
-  toJSON() {
-    return {
-      name: this.name,
-      traceId: this.traceId,
-      spanId: this.spanId,
-      parentSpanId: this.parentSpanId,
-      startTime: this.startTime,
-      endTime: this.endTime,
-      duration: this.getDuration(),
-      status: this.status,
-      attributes: Object.fromEntries(this.attributes),
-      events: this.events,
-    };
-  }
-}
+  toJSON() { // 调用 toJSON
+    return { // 返回结果
+      name: this.name, // 设置 name 字段
+      traceId: this.traceId, // 设置 traceId 字段
+      spanId: this.spanId, // 设置 spanId 字段
+      parentSpanId: this.parentSpanId, // 设置 parentSpanId 字段
+      startTime: this.startTime, // 设置 startTime 字段
+      endTime: this.endTime, // 设置 endTime 字段
+      duration: this.getDuration(), // 设置 duration 字段
+      status: this.status, // 设置 status 字段
+      attributes: Object.fromEntries(this.attributes), // 设置 attributes 字段
+      events: this.events, // 设置 events 字段
+    }; // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 追踪管理器
@@ -246,205 +246,205 @@ export class Span {
  * 请求追踪管理器
  * Request Tracing Manager
  */
-export class RequestTracingManager extends EventEmitter {
-  constructor(config = {}) {
-    super();
-    this.config = {
+export class RequestTracingManager extends EventEmitter { // 导出类 RequestTracingManager
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
+    this.config = { // 设置 config
       // 是否启用追踪 / Enable tracing
-      enabled: config.enabled !== false,
+      enabled: config.enabled !== false, // 设置 enabled 字段
 
       // 请求 ID 头名称 / Request ID header name
-      requestIdHeader: config.requestIdHeader || 'x-request-id',
+      requestIdHeader: config.requestIdHeader || 'x-request-id', // 设置 requestIdHeader 字段
 
       // 追踪 ID 头名称 / Trace ID header name
-      traceIdHeader: config.traceIdHeader || 'x-trace-id',
+      traceIdHeader: config.traceIdHeader || 'x-trace-id', // 设置 traceIdHeader 字段
 
       // 是否记录请求体 / Log request body
-      logRequestBody: config.logRequestBody || false,
+      logRequestBody: config.logRequestBody || false, // 设置 logRequestBody 字段
 
       // 是否记录响应体 / Log response body
-      logResponseBody: config.logResponseBody || false,
+      logResponseBody: config.logResponseBody || false, // 设置 logResponseBody 字段
 
       // 慢请求阈值 (ms) / Slow request threshold (ms)
-      slowRequestThreshold: config.slowRequestThreshold || 1000,
+      slowRequestThreshold: config.slowRequestThreshold || 1000, // 设置 slowRequestThreshold 字段
 
       // 排除的路径 / Excluded paths
-      excludePaths: config.excludePaths || ['/api/health', '/favicon.ico'],
+      excludePaths: config.excludePaths || ['/api/health', '/favicon.ico'], // 设置 excludePaths 字段
 
       // 敏感字段（不记录） / Sensitive fields (not logged)
-      sensitiveFields: config.sensitiveFields || ['password', 'token', 'secret', 'apiKey', 'authorization'],
+      sensitiveFields: config.sensitiveFields || ['password', 'token', 'secret', 'apiKey', 'authorization'], // 设置 sensitiveFields 字段
 
-      ...config,
-    };
+      ...config, // 展开对象或数组
+    }; // 结束代码块
 
     // 统计信息 / Statistics
-    this.stats = {
-      totalRequests: 0,
-      activeRequests: 0,
-      slowRequests: 0,
-      errorRequests: 0,
-    };
-  }
+    this.stats = { // 设置 stats
+      totalRequests: 0, // 设置 totalRequests 字段
+      activeRequests: 0, // 设置 activeRequests 字段
+      slowRequests: 0, // 设置 slowRequests 字段
+      errorRequests: 0, // 设置 errorRequests 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取当前请求上下文
    * Get current request context
    */
-  static getContext() {
-    return asyncLocalStorage.getStore();
-  }
+  static getContext() { // 执行语句
+    return asyncLocalStorage.getStore(); // 返回结果
+  } // 结束代码块
 
   /**
    * 获取当前请求 ID
    * Get current request ID
    */
-  static getRequestId() {
-    const context = RequestTracingManager.getContext();
-    return context?.requestId || null;
-  }
+  static getRequestId() { // 执行语句
+    const context = RequestTracingManager.getContext(); // 定义常量 context
+    return context?.requestId || null; // 返回结果
+  } // 结束代码块
 
   /**
    * 在上下文中运行函数
    * Run function within context
    */
-  static runWithContext(context, fn) {
-    return asyncLocalStorage.run(context, fn);
-  }
+  static runWithContext(context, fn) { // 执行语句
+    return asyncLocalStorage.run(context, fn); // 返回结果
+  } // 结束代码块
 
   /**
    * 创建 Express 中间件
    * Create Express middleware
    */
-  middleware() {
-    return (req, res, next) => {
-      if (!this.config.enabled) {
-        return next();
-      }
+  middleware() { // 调用 middleware
+    return (req, res, next) => { // 返回结果
+      if (!this.config.enabled) { // 条件判断 !this.config.enabled
+        return next(); // 返回结果
+      } // 结束代码块
 
       // 检查是否排除的路径
-      if (this.config.excludePaths.some(p => req.path.startsWith(p))) {
-        return next();
-      }
+      if (this.config.excludePaths.some(p => req.path.startsWith(p))) { // 条件判断 this.config.excludePaths.some(p => req.path.s...
+        return next(); // 返回结果
+      } // 结束代码块
 
       // 创建请求上下文
-      const context = new RequestContext({
-        requestId: req.headers[this.config.requestIdHeader] || undefined,
-        traceId: req.headers[this.config.traceIdHeader] || undefined,
-        method: req.method,
-        path: req.path,
-        userAgent: req.headers['user-agent'],
-        ip: req.ip || req.connection?.remoteAddress,
-      });
+      const context = new RequestContext({ // 定义常量 context
+        requestId: req.headers[this.config.requestIdHeader] || undefined, // 设置 requestId 字段
+        traceId: req.headers[this.config.traceIdHeader] || undefined, // 设置 traceId 字段
+        method: req.method, // 设置 method 字段
+        path: req.path, // 设置 path 字段
+        userAgent: req.headers['user-agent'], // 设置 userAgent 字段
+        ip: req.ip || req.connection?.remoteAddress, // 设置 ip 字段
+      }); // 结束代码块
 
       // 设置响应头
-      res.setHeader('X-Request-ID', context.requestId);
-      res.setHeader('X-Trace-ID', context.traceId);
+      res.setHeader('X-Request-ID', context.requestId); // 调用 res.setHeader
+      res.setHeader('X-Trace-ID', context.traceId); // 调用 res.setHeader
 
       // 将上下文附加到请求对象
-      req.context = context;
-      req.requestId = context.requestId;
+      req.context = context; // 赋值 req.context
+      req.requestId = context.requestId; // 赋值 req.requestId
 
       // 更新统计
-      this.stats.totalRequests++;
-      this.stats.activeRequests++;
+      this.stats.totalRequests++; // 访问 stats
+      this.stats.activeRequests++; // 访问 stats
 
       // 记录请求开始
-      this.emit('requestStart', {
-        requestId: context.requestId,
-        method: req.method,
-        path: req.path,
-        query: req.query,
-        ip: context.ip,
-        userAgent: context.userAgent,
-      });
+      this.emit('requestStart', { // 调用 emit
+        requestId: context.requestId, // 设置 requestId 字段
+        method: req.method, // 设置 method 字段
+        path: req.path, // 设置 path 字段
+        query: req.query, // 设置 query 字段
+        ip: context.ip, // 设置 ip 字段
+        userAgent: context.userAgent, // 设置 userAgent 字段
+      }); // 结束代码块
 
       // 监听响应完成
-      res.on('finish', () => {
-        this.stats.activeRequests--;
+      res.on('finish', () => { // 注册事件监听
+        this.stats.activeRequests--; // 访问 stats
 
-        const duration = context.getDuration();
-        context.setAttribute('http.status_code', res.statusCode);
-        context.setAttribute('http.response_size', res.get('content-length') || 0);
+        const duration = context.getDuration(); // 定义常量 duration
+        context.setAttribute('http.status_code', res.statusCode); // 调用 context.setAttribute
+        context.setAttribute('http.response_size', res.get('content-length') || 0); // 调用 context.setAttribute
 
         // 检查慢请求
-        if (duration > this.config.slowRequestThreshold) {
-          this.stats.slowRequests++;
-          context.addEvent('slow_request', { duration, threshold: this.config.slowRequestThreshold });
-          this.emit('slowRequest', {
-            requestId: context.requestId,
-            method: req.method,
-            path: req.path,
-            duration,
-            statusCode: res.statusCode,
-          });
-        }
+        if (duration > this.config.slowRequestThreshold) { // 条件判断 duration > this.config.slowRequestThreshold
+          this.stats.slowRequests++; // 访问 stats
+          context.addEvent('slow_request', { duration, threshold: this.config.slowRequestThreshold }); // 调用 context.addEvent
+          this.emit('slowRequest', { // 调用 emit
+            requestId: context.requestId, // 设置 requestId 字段
+            method: req.method, // 设置 method 字段
+            path: req.path, // 设置 path 字段
+            duration, // 执行语句
+            statusCode: res.statusCode, // 设置 statusCode 字段
+          }); // 结束代码块
+        } // 结束代码块
 
         // 检查错误
-        if (res.statusCode >= 400) {
-          this.stats.errorRequests++;
-        }
+        if (res.statusCode >= 400) { // 条件判断 res.statusCode >= 400
+          this.stats.errorRequests++; // 访问 stats
+        } // 结束代码块
 
         // 记录请求完成
-        this.emit('requestEnd', {
-          requestId: context.requestId,
-          method: req.method,
-          path: req.path,
-          statusCode: res.statusCode,
-          duration,
-          userId: context.userId,
-        });
-      });
+        this.emit('requestEnd', { // 调用 emit
+          requestId: context.requestId, // 设置 requestId 字段
+          method: req.method, // 设置 method 字段
+          path: req.path, // 设置 path 字段
+          statusCode: res.statusCode, // 设置 statusCode 字段
+          duration, // 执行语句
+          userId: context.userId, // 设置 userId 字段
+        }); // 结束代码块
+      }); // 结束代码块
 
       // 在上下文中运行后续中间件
-      asyncLocalStorage.run(context, () => {
-        next();
-      });
-    };
-  }
+      asyncLocalStorage.run(context, () => { // 调用 asyncLocalStorage.run
+        next(); // 调用 next
+      }); // 结束代码块
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 创建 Span 追踪装饰器
    * Create span tracing decorator
    */
-  traceFunction(name, fn) {
-    return async (...args) => {
-      const context = RequestTracingManager.getContext();
-      if (!context) {
-        return fn(...args);
-      }
+  traceFunction(name, fn) { // 调用 traceFunction
+    return async (...args) => { // 返回结果
+      const context = RequestTracingManager.getContext(); // 定义常量 context
+      if (!context) { // 条件判断 !context
+        return fn(...args); // 返回结果
+      } // 结束代码块
 
-      const span = context.createSpan(name);
-      try {
-        const result = await fn(...args);
-        span.end();
-        return result;
-      } catch (error) {
-        span.setError(error);
-        span.end();
-        throw error;
-      }
-    };
-  }
+      const span = context.createSpan(name); // 定义常量 span
+      try { // 尝试执行
+        const result = await fn(...args); // 定义常量 result
+        span.end(); // 调用 span.end
+        return result; // 返回结果
+      } catch (error) { // 执行语句
+        span.setError(error); // 调用 span.setError
+        span.end(); // 调用 span.end
+        throw error; // 抛出异常
+      } // 结束代码块
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取统计信息
    */
-  getStats() {
-    return { ...this.stats };
-  }
+  getStats() { // 调用 getStats
+    return { ...this.stats }; // 返回结果
+  } // 结束代码块
 
   /**
    * 重置统计
    */
-  resetStats() {
-    this.stats = {
-      totalRequests: 0,
-      activeRequests: 0,
-      slowRequests: 0,
-      errorRequests: 0,
-    };
-  }
-}
+  resetStats() { // 调用 resetStats
+    this.stats = { // 设置 stats
+      totalRequests: 0, // 设置 totalRequests 字段
+      activeRequests: 0, // 设置 activeRequests 字段
+      slowRequests: 0, // 设置 slowRequests 字段
+      errorRequests: 0, // 设置 errorRequests 字段
+    }; // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 上下文感知日志包装器
@@ -457,49 +457,49 @@ export class RequestTracingManager extends EventEmitter {
  * @param {Object} baseLogger - 基础日志记录器 (Winston logger)
  * @returns {Object} 包装后的日志记录器
  */
-export function createContextLogger(baseLogger) {
-  const wrapMethod = (method) => {
-    return (message, meta = {}) => {
-      const context = RequestTracingManager.getContext();
-      const contextMeta = context ? {
-        requestId: context.requestId,
-        traceId: context.traceId,
-        spanId: context.spanId,
-        userId: context.userId,
-      } : {};
+export function createContextLogger(baseLogger) { // 导出函数 createContextLogger
+  const wrapMethod = (method) => { // 定义函数 wrapMethod
+    return (message, meta = {}) => { // 返回结果
+      const context = RequestTracingManager.getContext(); // 定义常量 context
+      const contextMeta = context ? { // 定义常量 contextMeta
+        requestId: context.requestId, // 设置 requestId 字段
+        traceId: context.traceId, // 设置 traceId 字段
+        spanId: context.spanId, // 设置 spanId 字段
+        userId: context.userId, // 设置 userId 字段
+      } : {}; // 执行语句
 
-      baseLogger[method](message, { ...contextMeta, ...meta });
-    };
-  };
+      baseLogger[method](message, { ...contextMeta, ...meta }); // 执行语句
+    }; // 结束代码块
+  }; // 结束代码块
 
-  return {
-    error: wrapMethod('error'),
-    warn: wrapMethod('warn'),
-    info: wrapMethod('info'),
-    http: wrapMethod('http'),
-    verbose: wrapMethod('verbose'),
-    debug: wrapMethod('debug'),
-    silly: wrapMethod('silly'),
+  return { // 返回结果
+    error: wrapMethod('error'), // 设置 error 字段
+    warn: wrapMethod('warn'), // 设置 warn 字段
+    info: wrapMethod('info'), // 设置 info 字段
+    http: wrapMethod('http'), // 设置 http 字段
+    verbose: wrapMethod('verbose'), // 设置 verbose 字段
+    debug: wrapMethod('debug'), // 设置 debug 字段
+    silly: wrapMethod('silly'), // 设置 silly 字段
 
     // 直接访问基础日志记录器
-    _base: baseLogger,
+    _base: baseLogger, // 设置 _base 字段
 
     // 创建子日志记录器
-    child: (defaultMeta = {}) => {
-      return createContextLogger(baseLogger.child(defaultMeta));
-    },
+    child: (defaultMeta = {}) => { // 设置 child 字段
+      return createContextLogger(baseLogger.child(defaultMeta)); // 返回结果
+    }, // 结束代码块
 
     // 手动设置上下文
-    withContext: (additionalContext) => {
-      return {
-        error: (msg, meta = {}) => wrapMethod('error')(msg, { ...additionalContext, ...meta }),
-        warn: (msg, meta = {}) => wrapMethod('warn')(msg, { ...additionalContext, ...meta }),
-        info: (msg, meta = {}) => wrapMethod('info')(msg, { ...additionalContext, ...meta }),
-        debug: (msg, meta = {}) => wrapMethod('debug')(msg, { ...additionalContext, ...meta }),
-      };
-    },
-  };
-}
+    withContext: (additionalContext) => { // 设置 withContext 字段
+      return { // 返回结果
+        error: (msg, meta = {}) => wrapMethod('error')(msg, { ...additionalContext, ...meta }), // 设置 error 字段
+        warn: (msg, meta = {}) => wrapMethod('warn')(msg, { ...additionalContext, ...meta }), // 设置 warn 字段
+        info: (msg, meta = {}) => wrapMethod('info')(msg, { ...additionalContext, ...meta }), // 设置 info 字段
+        debug: (msg, meta = {}) => wrapMethod('debug')(msg, { ...additionalContext, ...meta }), // 设置 debug 字段
+      }; // 结束代码块
+    }, // 结束代码块
+  }; // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 辅助函数
@@ -508,77 +508,77 @@ export function createContextLogger(baseLogger) {
 /**
  * 获取当前请求上下文
  */
-export function getContext() {
-  return RequestTracingManager.getContext();
-}
+export function getContext() { // 导出函数 getContext
+  return RequestTracingManager.getContext(); // 返回结果
+} // 结束代码块
 
 /**
  * 获取当前请求 ID
  */
-export function getRequestId() {
-  return RequestTracingManager.getRequestId();
-}
+export function getRequestId() { // 导出函数 getRequestId
+  return RequestTracingManager.getRequestId(); // 返回结果
+} // 结束代码块
 
 /**
  * 在请求上下文中设置用户 ID
  */
-export function setUserId(userId) {
-  const context = getContext();
-  if (context) {
-    context.userId = userId;
-  }
-}
+export function setUserId(userId) { // 导出函数 setUserId
+  const context = getContext(); // 定义常量 context
+  if (context) { // 条件判断 context
+    context.userId = userId; // 赋值 context.userId
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * 添加自定义属性到当前上下文
  */
-export function addAttribute(key, value) {
-  const context = getContext();
-  if (context) {
-    context.setAttribute(key, value);
-  }
-}
+export function addAttribute(key, value) { // 导出函数 addAttribute
+  const context = getContext(); // 定义常量 context
+  if (context) { // 条件判断 context
+    context.setAttribute(key, value); // 调用 context.setAttribute
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * 添加事件到当前上下文
  */
-export function addEvent(name, attributes = {}) {
-  const context = getContext();
-  if (context) {
-    context.addEvent(name, attributes);
-  }
-}
+export function addEvent(name, attributes = {}) { // 导出函数 addEvent
+  const context = getContext(); // 定义常量 context
+  if (context) { // 条件判断 context
+    context.addEvent(name, attributes); // 调用 context.addEvent
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * 创建子 Span
  */
-export function createSpan(name) {
-  const context = getContext();
-  if (context) {
-    return context.createSpan(name);
-  }
-  return null;
-}
+export function createSpan(name) { // 导出函数 createSpan
+  const context = getContext(); // 定义常量 context
+  if (context) { // 条件判断 context
+    return context.createSpan(name); // 返回结果
+  } // 结束代码块
+  return null; // 返回结果
+} // 结束代码块
 
 /**
  * 追踪异步函数执行
  */
-export async function traceAsync(name, fn) {
-  const span = createSpan(name);
-  if (!span) {
-    return fn();
-  }
+export async function traceAsync(name, fn) { // 导出函数 traceAsync
+  const span = createSpan(name); // 定义常量 span
+  if (!span) { // 条件判断 !span
+    return fn(); // 返回结果
+  } // 结束代码块
 
-  try {
-    const result = await fn();
-    span.end();
-    return result;
-  } catch (error) {
-    span.setError(error);
-    span.end();
-    throw error;
-  }
-}
+  try { // 尝试执行
+    const result = await fn(); // 定义常量 result
+    span.end(); // 调用 span.end
+    return result; // 返回结果
+  } catch (error) { // 执行语句
+    span.setError(error); // 调用 span.setError
+    span.end(); // 调用 span.end
+    throw error; // 抛出异常
+  } // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 默认实例
@@ -587,29 +587,29 @@ export async function traceAsync(name, fn) {
 /**
  * 默认追踪管理器实例
  */
-export const defaultTracingManager = new RequestTracingManager();
+export const defaultTracingManager = new RequestTracingManager(); // 导出常量 defaultTracingManager
 
 /**
  * 创建追踪中间件
  */
-export function createTracingMiddleware(config = {}) {
-  const manager = new RequestTracingManager(config);
-  return manager.middleware();
-}
+export function createTracingMiddleware(config = {}) { // 导出函数 createTracingMiddleware
+  const manager = new RequestTracingManager(config); // 定义常量 manager
+  return manager.middleware(); // 返回结果
+} // 结束代码块
 
 // 默认导出
-export default {
-  RequestContext,
-  Span,
-  RequestTracingManager,
-  createContextLogger,
-  createTracingMiddleware,
-  getContext,
-  getRequestId,
-  setUserId,
-  addAttribute,
-  addEvent,
-  createSpan,
-  traceAsync,
-  defaultTracingManager,
-};
+export default { // 默认导出
+  RequestContext, // 执行语句
+  Span, // 执行语句
+  RequestTracingManager, // 执行语句
+  createContextLogger, // 执行语句
+  createTracingMiddleware, // 执行语句
+  getContext, // 执行语句
+  getRequestId, // 执行语句
+  setUserId, // 执行语句
+  addAttribute, // 执行语句
+  addEvent, // 执行语句
+  createSpan, // 执行语句
+  traceAsync, // 执行语句
+  defaultTracingManager, // 执行语句
+}; // 结束代码块

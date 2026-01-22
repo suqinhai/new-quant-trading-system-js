@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 回测模块导出文件
  * Backtest Module Export File
  *
@@ -7,10 +7,10 @@
  */
 
 // 导出原有回测引擎 / Export original backtest engine
-export { BacktestEngine } from './BacktestEngine.js';
+export { BacktestEngine } from './BacktestEngine.js'; // 导出命名成员
 
 // 导出回测运行器 / Export backtest runner
-export { BacktestRunner } from './runner.js';
+export { BacktestRunner } from './runner.js'; // 导出命名成员
 
 // ============================================
 // 高性能事件驱动回测引擎导出
@@ -18,24 +18,24 @@ export { BacktestRunner } from './runner.js';
 // ============================================
 
 // 导出常量 / Export constants
-export {
-  SIDE,
-  ORDER_TYPE,
-  ORDER_STATUS,
-  EVENT_TYPE,
-  POSITION_SIDE,
-} from './engine.js';
+export { // 导出命名成员
+  SIDE, // 执行语句
+  ORDER_TYPE, // 执行语句
+  ORDER_STATUS, // 执行语句
+  EVENT_TYPE, // 执行语句
+  POSITION_SIDE, // 执行语句
+} from './engine.js'; // 执行语句
 
 // 导出核心类 / Export core classes
-export {
-  BaseStrategy,
-  BacktestEngine as EventDrivenBacktestEngine,
-  Position,
-  Account,
-  OrderBook,
-  MatchingEngine,
-  ObjectPool,
-} from './engine.js';
+export { // 导出命名成员
+  BaseStrategy, // 执行语句
+  BacktestEngine as EventDrivenBacktestEngine, // 执行语句
+  Position, // 执行语句
+  Account, // 执行语句
+  OrderBook, // 执行语句
+  MatchingEngine, // 执行语句
+  ObjectPool, // 执行语句
+} from './engine.js'; // 执行语句
 
 // 默认导出回测引擎 / Default export backtest engine
-export { BacktestEngine as default } from './BacktestEngine.js';
+export { BacktestEngine as default } from './BacktestEngine.js'; // 导出命名成员

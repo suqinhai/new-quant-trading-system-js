@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 通知客户端
  * Notification Client
  *
@@ -10,104 +10,104 @@
  */
 
 // 导入 Redis 客户端 / Import Redis client
-import Redis from 'ioredis';
+import Redis from 'ioredis'; // 导入模块 ioredis
 
 /**
  * Redis 键配置 (与 NotificationService 保持一致)
  * Redis key configuration (keep consistent with NotificationService)
  */
-const REDIS_KEYS = {
+const REDIS_KEYS = { // 定义常量 REDIS_KEYS
   // 通知请求频道 / Notification request channel
-  NOTIFICATION_REQUEST: 'notification:request',
+  NOTIFICATION_REQUEST: 'notification:request', // 设置 NOTIFICATION_REQUEST 字段
 
   // 服务状态 / Service status
-  SERVICE_STATUS: 'notification:service:status',
-  SERVICE_HEARTBEAT: 'notification:service:heartbeat',
-};
+  SERVICE_STATUS: 'notification:service:status', // 设置 SERVICE_STATUS 字段
+  SERVICE_HEARTBEAT: 'notification:service:heartbeat', // 设置 SERVICE_HEARTBEAT 字段
+}; // 结束代码块
 
 /**
  * 消息类型
  * Message types
  */
-export const MESSAGE_TYPE = {
-  ALERT: 'alert',
-  TRADE: 'trade',
-  POSITION: 'position',
-  DAILY_REPORT: 'daily',
-  SYSTEM: 'system',
-  PERFORMANCE: 'performance',
-};
+export const MESSAGE_TYPE = { // 导出常量 MESSAGE_TYPE
+  ALERT: 'alert', // 设置 ALERT 字段
+  TRADE: 'trade', // 设置 TRADE 字段
+  POSITION: 'position', // 设置 POSITION 字段
+  DAILY_REPORT: 'daily', // 设置 DAILY_REPORT 字段
+  SYSTEM: 'system', // 设置 SYSTEM 字段
+  PERFORMANCE: 'performance', // 设置 PERFORMANCE 字段
+}; // 结束代码块
 
 /**
  * 消息优先级
  * Message priority
  */
-export const MESSAGE_PRIORITY = {
-  LOW: 0,
-  NORMAL: 1,
-  HIGH: 2,
-  URGENT: 3,
-  CRITICAL: 4,
-};
+export const MESSAGE_PRIORITY = { // 导出常量 MESSAGE_PRIORITY
+  LOW: 0, // 设置 LOW 字段
+  NORMAL: 1, // 设置 NORMAL 字段
+  HIGH: 2, // 设置 HIGH 字段
+  URGENT: 3, // 设置 URGENT 字段
+  CRITICAL: 4, // 设置 CRITICAL 字段
+}; // 结束代码块
 
 /**
  * 默认配置
  * Default configuration
  */
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 配置 / Redis configuration
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || null,
-    db: parseInt(process.env.REDIS_DB || '0', 10),
-  },
+  redis: { // 设置 redis 字段
+    host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
+    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
+    password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
+    db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  }, // 结束代码块
 
   // 来源标识 / Source identifier
-  source: process.env.INSTANCE_NAME || process.env.SERVICE_NAME || 'unknown',
+  source: process.env.INSTANCE_NAME || process.env.SERVICE_NAME || 'unknown', // 读取环境变量 INSTANCE_NAME
 
   // 是否在服务不可用时回退到本地日志 / Fallback to local log when service unavailable
-  fallbackToLog: true,
+  fallbackToLog: true, // 设置 fallbackToLog 字段
 
   // 服务检查间隔 (毫秒) / Service check interval (ms)
-  serviceCheckInterval: 30000,
-};
+  serviceCheckInterval: 30000, // 设置 serviceCheckInterval 字段
+}; // 结束代码块
 
 /**
  * 通知客户端类
  * Notification Client Class
  */
-export class NotificationClient {
+export class NotificationClient { // 导出类 NotificationClient
   /**
    * 构造函数
    * Constructor
    *
    * @param {Object} config - 配置对象 / Configuration object
    */
-  constructor(config = {}) {
+  constructor(config = {}) { // 构造函数
     // 合并配置 / Merge configuration
-    this.config = {
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis },
-      source: config.source || DEFAULT_CONFIG.source,
-      fallbackToLog: config.fallbackToLog !== undefined ? config.fallbackToLog : DEFAULT_CONFIG.fallbackToLog,
-      serviceCheckInterval: config.serviceCheckInterval || DEFAULT_CONFIG.serviceCheckInterval,
-    };
+    this.config = { // 设置 config
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
+      source: config.source || DEFAULT_CONFIG.source, // 设置 source 字段
+      fallbackToLog: config.fallbackToLog !== undefined ? config.fallbackToLog : DEFAULT_CONFIG.fallbackToLog, // 设置 fallbackToLog 字段
+      serviceCheckInterval: config.serviceCheckInterval || DEFAULT_CONFIG.serviceCheckInterval, // 设置 serviceCheckInterval 字段
+    }; // 结束代码块
 
     // Redis 客户端 / Redis client
-    this.redis = null;
+    this.redis = null; // 设置 redis
 
     // 连接状态 / Connection status
-    this.connected = false;
+    this.connected = false; // 设置 connected
 
     // 服务可用状态 / Service available status
-    this.serviceAvailable = false;
+    this.serviceAvailable = false; // 设置 serviceAvailable
 
     // 服务检查定时器 / Service check timer
-    this.serviceCheckTimer = null;
+    this.serviceCheckTimer = null; // 设置 serviceCheckTimer
 
     // 日志前缀 / Log prefix
-    this.logPrefix = `[NotificationClient:${this.config.source}]`;
-  }
+    this.logPrefix = `[NotificationClient:${this.config.source}]`; // 设置 logPrefix
+  } // 结束代码块
 
   /**
    * 连接到 Redis
@@ -115,43 +115,43 @@ export class NotificationClient {
    *
    * @returns {Promise<void>}
    */
-  async connect() {
-    if (this.connected) {
-      return;
-    }
+  async connect() { // 执行语句
+    if (this.connected) { // 条件判断 this.connected
+      return; // 返回结果
+    } // 结束代码块
 
-    console.log(`${this.logPrefix} 正在连接 Redis... / Connecting to Redis...`);
+    console.log(`${this.logPrefix} 正在连接 Redis... / Connecting to Redis...`); // 控制台输出
 
-    try {
+    try { // 尝试执行
       // 创建 Redis 连接 / Create Redis connection
-      this.redis = new Redis({
-        host: this.config.redis.host,
-        port: this.config.redis.port,
-        password: this.config.redis.password,
-        db: this.config.redis.db,
-        retryStrategy: (times) => Math.min(times * 100, 3000),
-      });
+      this.redis = new Redis({ // 设置 redis
+        host: this.config.redis.host, // 设置 host 字段
+        port: this.config.redis.port, // 设置 port 字段
+        password: this.config.redis.password, // 设置 password 字段
+        db: this.config.redis.db, // 设置 db 字段
+        retryStrategy: (times) => Math.min(times * 100, 3000), // 设置 retryStrategy 字段
+      }); // 结束代码块
 
       // 等待连接 / Wait for connection
-      await new Promise((resolve, reject) => {
-        this.redis.once('ready', resolve);
-        this.redis.once('error', reject);
-      });
+      await new Promise((resolve, reject) => { // 等待异步结果
+        this.redis.once('ready', resolve); // 访问 redis
+        this.redis.once('error', reject); // 访问 redis
+      }); // 结束代码块
 
-      this.connected = true;
-      console.log(`${this.logPrefix} Redis 连接成功 / Redis connected`);
+      this.connected = true; // 设置 connected
+      console.log(`${this.logPrefix} Redis 连接成功 / Redis connected`); // 控制台输出
 
       // 检查通知服务状态 / Check notification service status
-      await this._checkServiceStatus();
+      await this._checkServiceStatus(); // 等待异步结果
 
       // 启动定期检查 / Start periodic check
-      this._startServiceCheck();
+      this._startServiceCheck(); // 调用 _startServiceCheck
 
-    } catch (error) {
-      console.error(`${this.logPrefix} Redis 连接失败 / Redis connection failed:`, error.message);
-      throw error;
-    }
-  }
+    } catch (error) { // 执行语句
+      console.error(`${this.logPrefix} Redis 连接失败 / Redis connection failed:`, error.message); // 控制台输出
+      throw error; // 抛出异常
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 断开连接
@@ -159,22 +159,22 @@ export class NotificationClient {
    *
    * @returns {Promise<void>}
    */
-  async disconnect() {
+  async disconnect() { // 执行语句
     // 停止服务检查 / Stop service check
-    if (this.serviceCheckTimer) {
-      clearInterval(this.serviceCheckTimer);
-      this.serviceCheckTimer = null;
-    }
+    if (this.serviceCheckTimer) { // 条件判断 this.serviceCheckTimer
+      clearInterval(this.serviceCheckTimer); // 调用 clearInterval
+      this.serviceCheckTimer = null; // 设置 serviceCheckTimer
+    } // 结束代码块
 
     // 断开 Redis / Disconnect Redis
-    if (this.redis) {
-      this.redis.disconnect();
-      this.redis = null;
-    }
+    if (this.redis) { // 条件判断 this.redis
+      this.redis.disconnect(); // 访问 redis
+      this.redis = null; // 设置 redis
+    } // 结束代码块
 
-    this.connected = false;
-    console.log(`${this.logPrefix} 已断开连接 / Disconnected`);
-  }
+    this.connected = false; // 设置 connected
+    console.log(`${this.logPrefix} 已断开连接 / Disconnected`); // 控制台输出
+  } // 结束代码块
 
   /**
    * 发送通知
@@ -187,62 +187,62 @@ export class NotificationClient {
    * @param {Object} options.data - 附加数据 / Additional data
    * @returns {Promise<boolean>} 是否成功 / Success status
    */
-  async send(options) {
-    const {
-      type = MESSAGE_TYPE.SYSTEM,
-      message,
-      priority = MESSAGE_PRIORITY.NORMAL,
-      data = {},
-    } = options;
+  async send(options) { // 执行语句
+    const { // 解构赋值
+      type = MESSAGE_TYPE.SYSTEM, // 赋值 type
+      message, // 执行语句
+      priority = MESSAGE_PRIORITY.NORMAL, // 赋值 priority
+      data = {}, // 赋值 data
+    } = options; // 执行语句
 
     // 验证参数 / Validate parameters
-    if (!message) {
-      console.warn(`${this.logPrefix} 消息内容不能为空 / Message content cannot be empty`);
-      return false;
-    }
+    if (!message) { // 条件判断 !message
+      console.warn(`${this.logPrefix} 消息内容不能为空 / Message content cannot be empty`); // 控制台输出
+      return false; // 返回结果
+    } // 结束代码块
 
     // 构建请求 / Build request
-    const request = {
-      type,
-      message,
-      priority,
-      source: this.config.source,
-      data,
-      timestamp: Date.now(),
-    };
+    const request = { // 定义常量 request
+      type, // 执行语句
+      message, // 执行语句
+      priority, // 执行语句
+      source: this.config.source, // 设置 source 字段
+      data, // 执行语句
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }; // 结束代码块
 
     // 如果未连接，尝试连接 / If not connected, try to connect
-    if (!this.connected) {
-      try {
-        await this.connect();
-      } catch (error) {
-        this._fallbackLog(request);
-        return false;
-      }
-    }
+    if (!this.connected) { // 条件判断 !this.connected
+      try { // 尝试执行
+        await this.connect(); // 等待异步结果
+      } catch (error) { // 执行语句
+        this._fallbackLog(request); // 调用 _fallbackLog
+        return false; // 返回结果
+      } // 结束代码块
+    } // 结束代码块
 
     // 检查服务是否可用 / Check if service is available
-    if (!this.serviceAvailable) {
-      await this._checkServiceStatus();
-    }
+    if (!this.serviceAvailable) { // 条件判断 !this.serviceAvailable
+      await this._checkServiceStatus(); // 等待异步结果
+    } // 结束代码块
 
     // 如果服务不可用，回退到本地日志 / If service unavailable, fallback to local log
-    if (!this.serviceAvailable) {
-      this._fallbackLog(request);
-      return false;
-    }
+    if (!this.serviceAvailable) { // 条件判断 !this.serviceAvailable
+      this._fallbackLog(request); // 调用 _fallbackLog
+      return false; // 返回结果
+    } // 结束代码块
 
-    try {
+    try { // 尝试执行
       // 发布通知请求 / Publish notification request
-      await this.redis.publish(REDIS_KEYS.NOTIFICATION_REQUEST, JSON.stringify(request));
-      return true;
+      await this.redis.publish(REDIS_KEYS.NOTIFICATION_REQUEST, JSON.stringify(request)); // 等待异步结果
+      return true; // 返回结果
 
-    } catch (error) {
-      console.error(`${this.logPrefix} 发送通知失败 / Failed to send notification:`, error.message);
-      this._fallbackLog(request);
-      return false;
-    }
-  }
+    } catch (error) { // 执行语句
+      console.error(`${this.logPrefix} 发送通知失败 / Failed to send notification:`, error.message); // 控制台输出
+      this._fallbackLog(request); // 调用 _fallbackLog
+      return false; // 返回结果
+    } // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 便捷方法 / Convenience Methods
@@ -256,14 +256,14 @@ export class NotificationClient {
    * @param {Object} data - 附加数据 / Additional data
    * @returns {Promise<boolean>}
    */
-  async sendAlert(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.ALERT,
-      message,
-      priority: MESSAGE_PRIORITY.HIGH,
-      data,
-    });
-  }
+  async sendAlert(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.HIGH, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送交易通知
@@ -273,14 +273,14 @@ export class NotificationClient {
    * @param {Object} data - 交易数据 / Trade data
    * @returns {Promise<boolean>}
    */
-  async sendTrade(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.TRADE,
-      message,
-      priority: MESSAGE_PRIORITY.NORMAL,
-      data,
-    });
-  }
+  async sendTrade(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.TRADE, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送持仓通知
@@ -290,14 +290,14 @@ export class NotificationClient {
    * @param {Object} data - 持仓数据 / Position data
    * @returns {Promise<boolean>}
    */
-  async sendPosition(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.POSITION,
-      message,
-      priority: MESSAGE_PRIORITY.NORMAL,
-      data,
-    });
-  }
+  async sendPosition(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.POSITION, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送日报
@@ -307,14 +307,14 @@ export class NotificationClient {
    * @param {Object} data - 报告数据 / Report data
    * @returns {Promise<boolean>}
    */
-  async sendDailyReport(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.DAILY_REPORT,
-      message,
-      priority: MESSAGE_PRIORITY.LOW,
-      data,
-    });
-  }
+  async sendDailyReport(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.DAILY_REPORT, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.LOW, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送系统消息
@@ -324,14 +324,14 @@ export class NotificationClient {
    * @param {Object} data - 附加数据 / Additional data
    * @returns {Promise<boolean>}
    */
-  async sendSystem(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.SYSTEM,
-      message,
-      priority: MESSAGE_PRIORITY.NORMAL,
-      data,
-    });
-  }
+  async sendSystem(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.SYSTEM, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.NORMAL, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送性能报告
@@ -341,14 +341,14 @@ export class NotificationClient {
    * @param {Object} data - 性能数据 / Performance data
    * @returns {Promise<boolean>}
    */
-  async sendPerformance(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.PERFORMANCE,
-      message,
-      priority: MESSAGE_PRIORITY.LOW,
-      data,
-    });
-  }
+  async sendPerformance(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.PERFORMANCE, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.LOW, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送紧急通知
@@ -358,14 +358,14 @@ export class NotificationClient {
    * @param {Object} data - 附加数据 / Additional data
    * @returns {Promise<boolean>}
    */
-  async sendUrgent(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.ALERT,
-      message,
-      priority: MESSAGE_PRIORITY.URGENT,
-      data,
-    });
-  }
+  async sendUrgent(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.URGENT, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   /**
    * 发送严重警报
@@ -375,14 +375,14 @@ export class NotificationClient {
    * @param {Object} data - 附加数据 / Additional data
    * @returns {Promise<boolean>}
    */
-  async sendCritical(message, data = {}) {
-    return this.send({
-      type: MESSAGE_TYPE.ALERT,
-      message,
-      priority: MESSAGE_PRIORITY.CRITICAL,
-      data,
-    });
-  }
+  async sendCritical(message, data = {}) { // 执行语句
+    return this.send({ // 返回结果
+      type: MESSAGE_TYPE.ALERT, // 设置 type 字段
+      message, // 执行语句
+      priority: MESSAGE_PRIORITY.CRITICAL, // 设置 priority 字段
+      data, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 私有方法 / Private Methods
@@ -394,31 +394,31 @@ export class NotificationClient {
    *
    * @private
    */
-  async _checkServiceStatus() {
-    try {
-      const heartbeat = await this.redis.get(REDIS_KEYS.SERVICE_HEARTBEAT);
+  async _checkServiceStatus() { // 执行语句
+    try { // 尝试执行
+      const heartbeat = await this.redis.get(REDIS_KEYS.SERVICE_HEARTBEAT); // 定义常量 heartbeat
 
-      if (!heartbeat) {
-        this.serviceAvailable = false;
-        return;
-      }
+      if (!heartbeat) { // 条件判断 !heartbeat
+        this.serviceAvailable = false; // 设置 serviceAvailable
+        return; // 返回结果
+      } // 结束代码块
 
-      const data = JSON.parse(heartbeat);
-      const age = Date.now() - data.timestamp;
+      const data = JSON.parse(heartbeat); // 定义常量 data
+      const age = Date.now() - data.timestamp; // 定义常量 age
 
       // 心跳超过 30 秒认为服务不可用 / Heartbeat over 30s means service unavailable
-      if (age > 30000) {
-        this.serviceAvailable = false;
-        console.warn(`${this.logPrefix} 通知服务心跳过期 (${age}ms) / Notification service heartbeat expired`);
-      } else {
-        this.serviceAvailable = true;
-      }
+      if (age > 30000) { // 条件判断 age > 30000
+        this.serviceAvailable = false; // 设置 serviceAvailable
+        console.warn(`${this.logPrefix} 通知服务心跳过期 (${age}ms) / Notification service heartbeat expired`); // 控制台输出
+      } else { // 执行语句
+        this.serviceAvailable = true; // 设置 serviceAvailable
+      } // 结束代码块
 
-    } catch (error) {
-      this.serviceAvailable = false;
-      console.warn(`${this.logPrefix} 检查服务状态失败 / Failed to check service status:`, error.message);
-    }
-  }
+    } catch (error) { // 执行语句
+      this.serviceAvailable = false; // 设置 serviceAvailable
+      console.warn(`${this.logPrefix} 检查服务状态失败 / Failed to check service status:`, error.message); // 控制台输出
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 启动服务检查定时器
@@ -426,15 +426,15 @@ export class NotificationClient {
    *
    * @private
    */
-  _startServiceCheck() {
-    if (this.serviceCheckTimer) {
-      return;
-    }
+  _startServiceCheck() { // 调用 _startServiceCheck
+    if (this.serviceCheckTimer) { // 条件判断 this.serviceCheckTimer
+      return; // 返回结果
+    } // 结束代码块
 
-    this.serviceCheckTimer = setInterval(async () => {
-      await this._checkServiceStatus();
-    }, this.config.serviceCheckInterval);
-  }
+    this.serviceCheckTimer = setInterval(async () => { // 设置 serviceCheckTimer
+      await this._checkServiceStatus(); // 等待异步结果
+    }, this.config.serviceCheckInterval); // 执行语句
+  } // 结束代码块
 
   /**
    * 回退到本地日志
@@ -443,18 +443,18 @@ export class NotificationClient {
    * @param {Object} request - 通知请求 / Notification request
    * @private
    */
-  _fallbackLog(request) {
-    if (!this.config.fallbackToLog) {
-      return;
-    }
+  _fallbackLog(request) { // 调用 _fallbackLog
+    if (!this.config.fallbackToLog) { // 条件判断 !this.config.fallbackToLog
+      return; // 返回结果
+    } // 结束代码块
 
-    const { type, message, priority, source } = request;
-    const priorityName = Object.keys(MESSAGE_PRIORITY).find(
-      key => MESSAGE_PRIORITY[key] === priority
-    ) || 'UNKNOWN';
+    const { type, message, priority, source } = request; // 解构赋值
+    const priorityName = Object.keys(MESSAGE_PRIORITY).find( // 定义常量 priorityName
+      key => MESSAGE_PRIORITY[key] === priority // 赋值 key
+    ) || 'UNKNOWN'; // 执行语句
 
-    console.log(`${this.logPrefix} [FALLBACK] [${type}] [${priorityName}] ${message}`);
-  }
+    console.log(`${this.logPrefix} [FALLBACK] [${type}] [${priorityName}] ${message}`); // 控制台输出
+  } // 结束代码块
 
   /**
    * 检查服务是否可用
@@ -462,10 +462,10 @@ export class NotificationClient {
    *
    * @returns {Promise<boolean>}
    */
-  async isServiceAvailable() {
-    await this._checkServiceStatus();
-    return this.serviceAvailable;
-  }
+  async isServiceAvailable() { // 执行语句
+    await this._checkServiceStatus(); // 等待异步结果
+    return this.serviceAvailable; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取服务状态
@@ -473,22 +473,22 @@ export class NotificationClient {
    *
    * @returns {Promise<Object|null>}
    */
-  async getServiceStatus() {
-    try {
-      const heartbeat = await this.redis.get(REDIS_KEYS.SERVICE_HEARTBEAT);
-      if (!heartbeat) {
-        return null;
-      }
-      return JSON.parse(heartbeat);
-    } catch (error) {
-      return null;
-    }
-  }
-}
+  async getServiceStatus() { // 执行语句
+    try { // 尝试执行
+      const heartbeat = await this.redis.get(REDIS_KEYS.SERVICE_HEARTBEAT); // 定义常量 heartbeat
+      if (!heartbeat) { // 条件判断 !heartbeat
+        return null; // 返回结果
+      } // 结束代码块
+      return JSON.parse(heartbeat); // 返回结果
+    } catch (error) { // 执行语句
+      return null; // 返回结果
+    } // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // 导出创建函数 / Export creation function
-export function createNotificationClient(config) {
-  return new NotificationClient(config);
-}
+export function createNotificationClient(config) { // 导出函数 createNotificationClient
+  return new NotificationClient(config); // 返回结果
+} // 结束代码块
 
-export default NotificationClient;
+export default NotificationClient; // 默认导出

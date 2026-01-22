@@ -1,246 +1,246 @@
-/**
+﻿/**
  * RESTful API 路由 - 交易记录
  * Trade Records Routes
  *
  * @module src/api/routes/trades
  */
 
-import { Router } from 'express';
+import { Router } from 'express'; // 导入模块 express
 
 /**
  * 创建交易记录路由
  * @param {Object} deps - 依赖注入
  * @returns {Router}
  */
-export function createTradeRoutes(deps = {}) {
-  const router = Router();
-  const { tradeRepository, orderStore } = deps;
+export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
+  const router = Router(); // 定义常量 router
+  const { tradeRepository, orderStore } = deps; // 解构赋值
 
   /**
    * GET /api/trades
    * 获取交易列表
    */
-  router.get('/', async (req, res) => {
-    try {
-      const {
-        page = 1,
-        pageSize = 20,
-        symbol,
-        side,
-        strategy,
-        startDate,
-        endDate,
-        sortBy = 'timestamp',
-        sortOrder = 'desc'
-      } = req.query;
+  router.get('/', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { // 解构赋值
+        page = 1, // 赋值 page
+        pageSize = 20, // 赋值 pageSize
+        symbol, // 执行语句
+        side, // 执行语句
+        strategy, // 执行语句
+        startDate, // 执行语句
+        endDate, // 执行语句
+        sortBy = 'timestamp', // 赋值 sortBy
+        sortOrder = 'desc' // 赋值 sortOrder
+      } = req.query; // 执行语句
 
-      let trades = [];
-      let total = 0;
+      let trades = []; // 定义变量 trades
+      let total = 0; // 定义变量 total
 
-      if (tradeRepository) {
-        const result = await tradeRepository.getTradeHistory({
-          symbol,
-          side,
-          strategy,
-          startDate,
-          endDate,
-          limit: parseInt(pageSize),
-          offset: (page - 1) * pageSize,
-          sortBy,
-          sortOrder,
-        });
-        trades = result.trades || [];
-        total = result.total || trades.length;
-      }
+      if (tradeRepository) { // 条件判断 tradeRepository
+        const result = await tradeRepository.getTradeHistory({ // 定义常量 result
+          symbol, // 执行语句
+          side, // 执行语句
+          strategy, // 执行语句
+          startDate, // 执行语句
+          endDate, // 执行语句
+          limit: parseInt(pageSize), // 设置 limit 字段
+          offset: (page - 1) * pageSize, // 设置 offset 字段
+          sortBy, // 执行语句
+          sortOrder, // 执行语句
+        }); // 结束代码块
+        trades = result.trades || []; // 赋值 trades
+        total = result.total || trades.length; // 赋值 total
+      } // 结束代码块
 
-      res.json({
-        success: true,
-        data: trades,
-        total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize),
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ // 调用 res.json
+        success: true, // 设置 success 字段
+        data: trades, // 设置 data 字段
+        total, // 执行语句
+        page: parseInt(page), // 设置 page 字段
+        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+      }); // 结束代码块
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/trades/stats
    * 获取交易统计
    */
-  router.get('/stats', async (req, res) => {
-    try {
-      const { startDate, endDate, symbol, strategy } = req.query;
+  router.get('/stats', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { startDate, endDate, symbol, strategy } = req.query; // 解构赋值
 
-      let stats = {
-        totalTrades: 0,
-        buyCount: 0,
-        sellCount: 0,
-        totalVolume: 0,
-        totalFees: 0,
-        totalPnL: 0,
-        winCount: 0,
-        lossCount: 0,
-        winRate: 0,
-        avgPnL: 0,
-        avgWin: 0,
-        avgLoss: 0,
-      };
+      let stats = { // 定义变量 stats
+        totalTrades: 0, // 设置 totalTrades 字段
+        buyCount: 0, // 设置 buyCount 字段
+        sellCount: 0, // 设置 sellCount 字段
+        totalVolume: 0, // 设置 totalVolume 字段
+        totalFees: 0, // 设置 totalFees 字段
+        totalPnL: 0, // 设置 totalPnL 字段
+        winCount: 0, // 设置 winCount 字段
+        lossCount: 0, // 设置 lossCount 字段
+        winRate: 0, // 设置 winRate 字段
+        avgPnL: 0, // 设置 avgPnL 字段
+        avgWin: 0, // 设置 avgWin 字段
+        avgLoss: 0, // 设置 avgLoss 字段
+      }; // 结束代码块
 
-      if (tradeRepository) {
-        stats = await tradeRepository.getTradeStats({
-          startDate,
-          endDate,
-          symbol,
-          strategy,
-        });
-      }
+      if (tradeRepository) { // 条件判断 tradeRepository
+        stats = await tradeRepository.getTradeStats({ // 赋值 stats
+          startDate, // 执行语句
+          endDate, // 执行语句
+          symbol, // 执行语句
+          strategy, // 执行语句
+        }); // 结束代码块
+      } // 结束代码块
 
       // 计算衍生指标
-      if (stats.totalTrades > 0) {
-        stats.winRate = stats.winCount / stats.totalTrades;
-        stats.avgPnL = stats.totalPnL / stats.totalTrades;
-      }
+      if (stats.totalTrades > 0) { // 条件判断 stats.totalTrades > 0
+        stats.winRate = stats.winCount / stats.totalTrades; // 赋值 stats.winRate
+        stats.avgPnL = stats.totalPnL / stats.totalTrades; // 赋值 stats.avgPnL
+      } // 结束代码块
 
-      res.json({ success: true, data: stats });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: stats }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/trades/:id
    * 获取交易详情
    */
-  router.get('/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
+  router.get('/:id', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { id } = req.params; // 解构赋值
 
-      let trade = null;
-      if (tradeRepository) {
-        trade = await tradeRepository.getById(id);
-      }
+      let trade = null; // 定义变量 trade
+      if (tradeRepository) { // 条件判断 tradeRepository
+        trade = await tradeRepository.getById(id); // 赋值 trade
+      } // 结束代码块
 
-      if (!trade) {
-        return res.status(404).json({
-          success: false,
-          error: 'Trade not found',
-          code: 'NOT_FOUND'
-        });
-      }
+      if (!trade) { // 条件判断 !trade
+        return res.status(404).json({ // 返回结果
+          success: false, // 设置 success 字段
+          error: 'Trade not found', // 设置 error 字段
+          code: 'NOT_FOUND' // 设置 code 字段
+        }); // 结束代码块
+      } // 结束代码块
 
-      res.json({ success: true, data: trade });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: trade }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/trades/export
    * 导出交易数据
    */
-  router.get('/export', async (req, res) => {
-    try {
-      const { format = 'csv', startDate, endDate, symbol, strategy } = req.query;
+  router.get('/export', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { format = 'csv', startDate, endDate, symbol, strategy } = req.query; // 解构赋值
 
-      let trades = [];
-      if (tradeRepository) {
-        const result = await tradeRepository.getTradeHistory({
-          startDate,
-          endDate,
-          symbol,
-          strategy,
-          limit: 10000,
-        });
-        trades = result.trades || [];
-      }
+      let trades = []; // 定义变量 trades
+      if (tradeRepository) { // 条件判断 tradeRepository
+        const result = await tradeRepository.getTradeHistory({ // 定义常量 result
+          startDate, // 执行语句
+          endDate, // 执行语句
+          symbol, // 执行语句
+          strategy, // 执行语句
+          limit: 10000, // 设置 limit 字段
+        }); // 结束代码块
+        trades = result.trades || []; // 赋值 trades
+      } // 结束代码块
 
-      if (format === 'csv') {
+      if (format === 'csv') { // 条件判断 format === 'csv'
         // 生成 CSV
-        const headers = ['时间', '交易ID', '交易对', '方向', '类型', '数量', '价格', '金额', '手续费', '盈亏', '策略', '交易所'];
-        const rows = trades.map(t => [
-          new Date(t.timestamp).toISOString(),
-          t.tradeId,
-          t.symbol,
-          t.side,
-          t.type,
-          t.amount,
-          t.price,
-          t.cost,
-          t.fee,
-          t.realizedPnL || '',
-          t.strategy || '',
-          t.exchange,
-        ]);
+        const headers = ['时间', '交易ID', '交易对', '方向', '类型', '数量', '价格', '金额', '手续费', '盈亏', '策略', '交易所']; // 定义常量 headers
+        const rows = trades.map(t => [ // 定义函数 rows
+          new Date(t.timestamp).toISOString(), // 创建 Date 实例
+          t.tradeId, // 执行语句
+          t.symbol, // 执行语句
+          t.side, // 执行语句
+          t.type, // 执行语句
+          t.amount, // 执行语句
+          t.price, // 执行语句
+          t.cost, // 执行语句
+          t.fee, // 执行语句
+          t.realizedPnL || '', // 执行语句
+          t.strategy || '', // 执行语句
+          t.exchange, // 执行语句
+        ]); // 结束数组或索引
 
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n'); // 定义函数 csv
 
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename=trades_${Date.now()}.csv`);
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8'); // 调用 res.setHeader
+        res.setHeader('Content-Disposition', `attachment; filename=trades_${Date.now()}.csv`); // 调用 res.setHeader
         res.send('\uFEFF' + csv); // BOM for Excel
-      } else {
-        res.json({ success: true, data: trades });
-      }
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      } else { // 执行语句
+        res.json({ success: true, data: trades }); // 调用 res.json
+      } // 结束代码块
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/orders
    * 获取订单列表
    */
-  router.get('/orders', async (req, res) => {
-    try {
-      const { page = 1, pageSize = 20, status, symbol } = req.query;
+  router.get('/orders', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { page = 1, pageSize = 20, status, symbol } = req.query; // 解构赋值
 
-      let orders = [];
-      if (orderStore) {
-        orders = await orderStore.getAll();
+      let orders = []; // 定义变量 orders
+      if (orderStore) { // 条件判断 orderStore
+        orders = await orderStore.getAll(); // 赋值 orders
 
-        if (status) {
-          orders = orders.filter(o => o.status === status);
-        }
-        if (symbol) {
-          orders = orders.filter(o => o.symbol === symbol);
-        }
-      }
+        if (status) { // 条件判断 status
+          orders = orders.filter(o => o.status === status); // 赋值 orders
+        } // 结束代码块
+        if (symbol) { // 条件判断 symbol
+          orders = orders.filter(o => o.symbol === symbol); // 赋值 orders
+        } // 结束代码块
+      } // 结束代码块
 
-      const total = orders.length;
-      const offset = (page - 1) * pageSize;
-      const list = orders.slice(offset, offset + parseInt(pageSize));
+      const total = orders.length; // 定义常量 total
+      const offset = (page - 1) * pageSize; // 定义常量 offset
+      const list = orders.slice(offset, offset + parseInt(pageSize)); // 定义常量 list
 
-      res.json({
-        success: true,
-        data: list,
-        total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize),
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ // 调用 res.json
+        success: true, // 设置 success 字段
+        data: list, // 设置 data 字段
+        total, // 执行语句
+        page: parseInt(page), // 设置 page 字段
+        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+      }); // 结束代码块
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/orders/open
    * 获取未完成订单
    */
-  router.get('/orders/open', async (req, res) => {
-    try {
-      let orders = [];
-      if (orderStore) {
-        orders = await orderStore.getByStatus(['open', 'pending', 'partially_filled']);
-      }
+  router.get('/orders/open', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      let orders = []; // 定义变量 orders
+      if (orderStore) { // 条件判断 orderStore
+        orders = await orderStore.getByStatus(['open', 'pending', 'partially_filled']); // 赋值 orders
+      } // 结束代码块
 
-      res.json({ success: true, data: orders });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: orders }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
-  return router;
-}
+  return router; // 返回结果
+} // 结束代码块
 
-export default createTradeRoutes;
+export default createTradeRoutes; // 默认导出

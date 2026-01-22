@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Alpha 因子基类
  * Base Alpha Factor Class
  *
@@ -6,13 +6,13 @@
  * Base class for all factors, defines standard interface
  */
 
-import EventEmitter from 'eventemitter3';
+import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
 
 /**
  * 因子类别
  * Factor Categories
  */
-export const FACTOR_CATEGORY = {
+export const FACTOR_CATEGORY = { // 导出常量 FACTOR_CATEGORY
   MOMENTUM: 'momentum',           // 动量因子
   VOLATILITY: 'volatility',       // 波动率因子
   VOLUME: 'volume',               // 成交量因子
@@ -22,35 +22,35 @@ export const FACTOR_CATEGORY = {
   SENTIMENT: 'sentiment',         // 情绪因子
   TECHNICAL: 'technical',         // 技术因子
   FUNDAMENTAL: 'fundamental',     // 基本面因子
-};
+}; // 结束代码块
 
 /**
  * 因子方向 - 高因子值期望产生的收益方向
  * Factor Direction - expected return direction for high factor values
  */
-export const FACTOR_DIRECTION = {
+export const FACTOR_DIRECTION = { // 导出常量 FACTOR_DIRECTION
   POSITIVE: 'positive',   // 正向: 高因子值 → 预期正收益
   NEGATIVE: 'negative',   // 负向: 高因子值 → 预期负收益
   NEUTRAL: 'neutral',     // 中性: 无明确方向
-};
+}; // 结束代码块
 
 /**
  * 因子频率 - 建议的更新频率
  * Factor Frequency - suggested update frequency
  */
-export const FACTOR_FREQUENCY = {
+export const FACTOR_FREQUENCY = { // 导出常量 FACTOR_FREQUENCY
   TICK: 'tick',           // 每个 tick 更新
   MINUTE: '1m',           // 每分钟
   HOURLY: '1h',           // 每小时
   DAILY: '1d',            // 每天
   WEEKLY: '1w',           // 每周
-};
+}; // 结束代码块
 
 /**
  * 因子基类
  * Base Factor Class
  */
-export class BaseFactor extends EventEmitter {
+export class BaseFactor extends EventEmitter { // 导出类 BaseFactor
   /**
    * @param {Object} config - 因子配置
    * @param {string} config.name - 因子名称
@@ -59,43 +59,43 @@ export class BaseFactor extends EventEmitter {
    * @param {string} config.frequency - 更新频率
    * @param {Object} config.params - 因子参数
    */
-  constructor(config = {}) {
-    super();
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
     // 因子基本信息 / Factor basic info
-    this.name = config.name || 'BaseFactor';
-    this.category = config.category || FACTOR_CATEGORY.TECHNICAL;
-    this.direction = config.direction || FACTOR_DIRECTION.POSITIVE;
-    this.frequency = config.frequency || FACTOR_FREQUENCY.DAILY;
-    this.description = config.description || '';
+    this.name = config.name || 'BaseFactor'; // 设置 name
+    this.category = config.category || FACTOR_CATEGORY.TECHNICAL; // 设置 category
+    this.direction = config.direction || FACTOR_DIRECTION.POSITIVE; // 设置 direction
+    this.frequency = config.frequency || FACTOR_FREQUENCY.DAILY; // 设置 frequency
+    this.description = config.description || ''; // 设置 description
 
     // 因子参数 / Factor parameters
-    this.params = config.params || {};
+    this.params = config.params || {}; // 设置 params
 
     // 因子值缓存 (symbol -> { value, timestamp, raw }) / Factor value cache
-    this.values = new Map();
+    this.values = new Map(); // 设置 values
 
     // 因子历史 (symbol -> [{ value, timestamp }]) / Factor history
-    this.history = new Map();
-    this.maxHistory = config.maxHistory || 100;
+    this.history = new Map(); // 设置 history
+    this.maxHistory = config.maxHistory || 100; // 设置 maxHistory
 
     // 元数据 / Metadata
-    this.metadata = {
-      version: '1.0.0',
-      author: 'system',
-      createdAt: Date.now(),
-      lastUpdated: null,
-      ...config.metadata,
-    };
+    this.metadata = { // 设置 metadata
+      version: '1.0.0', // 设置 version 字段
+      author: 'system', // 设置 author 字段
+      createdAt: Date.now(), // 设置 createdAt 字段
+      lastUpdated: null, // 设置 lastUpdated 字段
+      ...config.metadata, // 展开对象或数组
+    }; // 结束代码块
 
     // 统计信息 / Statistics
-    this.stats = {
-      totalCalculations: 0,
-      lastCalculationTime: 0,
-      averageCalculationTime: 0,
-      errors: 0,
-    };
-  }
+    this.stats = { // 设置 stats
+      totalCalculations: 0, // 设置 totalCalculations 字段
+      lastCalculationTime: 0, // 设置 lastCalculationTime 字段
+      averageCalculationTime: 0, // 设置 averageCalculationTime 字段
+      errors: 0, // 设置 errors 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 计算因子值 - 子类必须实现
@@ -105,9 +105,9 @@ export class BaseFactor extends EventEmitter {
    * @param {Object} context - 上下文 (其他因子值、市场数据等)
    * @returns {Promise<number|null>} 因子值
    */
-  async calculate(symbol, data, context = {}) {
-    throw new Error('calculate() 必须由子类实现 / must be implemented by subclass');
-  }
+  async calculate(symbol, data, context = {}) { // 执行语句
+    throw new Error('calculate() 必须由子类实现 / must be implemented by subclass'); // 抛出异常
+  } // 结束代码块
 
   /**
    * 批量计算多个资产的因子值
@@ -116,35 +116,35 @@ export class BaseFactor extends EventEmitter {
    * @param {Object} context - 上下文
    * @returns {Promise<Map<string, number>>} { symbol: value } 结果映射
    */
-  async calculateBatch(dataMap, context = {}) {
-    const results = new Map();
-    const startTime = Date.now();
+  async calculateBatch(dataMap, context = {}) { // 执行语句
+    const results = new Map(); // 定义常量 results
+    const startTime = Date.now(); // 定义常量 startTime
 
-    const promises = Object.entries(dataMap).map(async ([symbol, data]) => {
-      try {
-        const value = await this.calculate(symbol, data, context);
-        results.set(symbol, value);
-        this._updateCache(symbol, value, data);
-      } catch (error) {
-        this.stats.errors++;
-        this.emit('error', { symbol, error, factor: this.name });
-        results.set(symbol, null);
-      }
-    });
+    const promises = Object.entries(dataMap).map(async ([symbol, data]) => { // 定义函数 promises
+      try { // 尝试执行
+        const value = await this.calculate(symbol, data, context); // 定义常量 value
+        results.set(symbol, value); // 调用 results.set
+        this._updateCache(symbol, value, data); // 调用 _updateCache
+      } catch (error) { // 执行语句
+        this.stats.errors++; // 访问 stats
+        this.emit('error', { symbol, error, factor: this.name }); // 调用 emit
+        results.set(symbol, null); // 调用 results.set
+      } // 结束代码块
+    }); // 结束代码块
 
-    await Promise.all(promises);
+    await Promise.all(promises); // 等待异步结果
 
     // 更新统计 / Update stats
-    const elapsed = Date.now() - startTime;
-    this.stats.totalCalculations++;
-    this.stats.lastCalculationTime = elapsed;
-    this.stats.averageCalculationTime =
-      (this.stats.averageCalculationTime * (this.stats.totalCalculations - 1) + elapsed) /
-      this.stats.totalCalculations;
+    const elapsed = Date.now() - startTime; // 定义常量 elapsed
+    this.stats.totalCalculations++; // 访问 stats
+    this.stats.lastCalculationTime = elapsed; // 访问 stats
+    this.stats.averageCalculationTime = // 访问 stats
+      (this.stats.averageCalculationTime * (this.stats.totalCalculations - 1) + elapsed) / // 执行语句
+      this.stats.totalCalculations; // 访问 stats
 
-    this.emit('calculated', { factor: this.name, count: results.size, elapsed });
-    return results;
-  }
+    this.emit('calculated', { factor: this.name, count: results.size, elapsed }); // 调用 emit
+    return results; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取因子值
@@ -152,23 +152,23 @@ export class BaseFactor extends EventEmitter {
    * @param {string} symbol - 交易对
    * @returns {number|null} 因子值
    */
-  getValue(symbol) {
-    const cached = this.values.get(symbol);
-    return cached ? cached.value : null;
-  }
+  getValue(symbol) { // 调用 getValue
+    const cached = this.values.get(symbol); // 定义常量 cached
+    return cached ? cached.value : null; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取所有因子值
    * Get all factor values
    * @returns {Map<string, number>} 因子值映射
    */
-  getAllValues() {
-    const result = new Map();
-    for (const [symbol, data] of this.values) {
-      result.set(symbol, data.value);
-    }
-    return result;
-  }
+  getAllValues() { // 调用 getAllValues
+    const result = new Map(); // 定义常量 result
+    for (const [symbol, data] of this.values) { // 循环 const [symbol, data] of this.values
+      result.set(symbol, data.value); // 调用 result.set
+    } // 结束代码块
+    return result; // 返回结果
+  } // 结束代码块
 
   /**
    * 获取因子历史
@@ -177,10 +177,10 @@ export class BaseFactor extends EventEmitter {
    * @param {number} limit - 限制数量
    * @returns {Array} 历史数据
    */
-  getHistory(symbol, limit = 0) {
-    const hist = this.history.get(symbol) || [];
-    return limit > 0 ? hist.slice(-limit) : hist;
-  }
+  getHistory(symbol, limit = 0) { // 调用 getHistory
+    const hist = this.history.get(symbol) || []; // 定义常量 hist
+    return limit > 0 ? hist.slice(-limit) : hist; // 返回结果
+  } // 结束代码块
 
   /**
    * 标准化因子值 (Z-Score)
@@ -188,27 +188,27 @@ export class BaseFactor extends EventEmitter {
    * @param {Map<string, number>} values - 因子值映射
    * @returns {Map<string, number>} 标准化后的值
    */
-  normalizeZScore(values) {
-    const vals = Array.from(values.values()).filter(v => v !== null && !isNaN(v));
-    if (vals.length < 2) return values;
+  normalizeZScore(values) { // 调用 normalizeZScore
+    const vals = Array.from(values.values()).filter(v => v !== null && !isNaN(v)); // 定义函数 vals
+    if (vals.length < 2) return values; // 条件判断 vals.length < 2
 
-    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-    const variance = vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vals.length;
-    const std = Math.sqrt(variance);
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length; // 定义函数 mean
+    const variance = vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vals.length; // 定义函数 variance
+    const std = Math.sqrt(variance); // 定义常量 std
 
-    if (std === 0) return values;
+    if (std === 0) return values; // 条件判断 std === 0
 
-    const normalized = new Map();
-    for (const [symbol, value] of values) {
-      if (value !== null && !isNaN(value)) {
-        normalized.set(symbol, (value - mean) / std);
-      } else {
-        normalized.set(symbol, null);
-      }
-    }
+    const normalized = new Map(); // 定义常量 normalized
+    for (const [symbol, value] of values) { // 循环 const [symbol, value] of values
+      if (value !== null && !isNaN(value)) { // 条件判断 value !== null && !isNaN(value)
+        normalized.set(symbol, (value - mean) / std); // 调用 normalized.set
+      } else { // 执行语句
+        normalized.set(symbol, null); // 调用 normalized.set
+      } // 结束代码块
+    } // 结束代码块
 
-    return normalized;
-  }
+    return normalized; // 返回结果
+  } // 结束代码块
 
   /**
    * 标准化因子值 (Min-Max)
@@ -216,27 +216,27 @@ export class BaseFactor extends EventEmitter {
    * @param {Map<string, number>} values - 因子值映射
    * @returns {Map<string, number>} 标准化后的值 (0-1)
    */
-  normalizeMinMax(values) {
-    const vals = Array.from(values.values()).filter(v => v !== null && !isNaN(v));
-    if (vals.length < 2) return values;
+  normalizeMinMax(values) { // 调用 normalizeMinMax
+    const vals = Array.from(values.values()).filter(v => v !== null && !isNaN(v)); // 定义函数 vals
+    if (vals.length < 2) return values; // 条件判断 vals.length < 2
 
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const range = max - min;
+    const min = Math.min(...vals); // 定义常量 min
+    const max = Math.max(...vals); // 定义常量 max
+    const range = max - min; // 定义常量 range
 
-    if (range === 0) return values;
+    if (range === 0) return values; // 条件判断 range === 0
 
-    const normalized = new Map();
-    for (const [symbol, value] of values) {
-      if (value !== null && !isNaN(value)) {
-        normalized.set(symbol, (value - min) / range);
-      } else {
-        normalized.set(symbol, null);
-      }
-    }
+    const normalized = new Map(); // 定义常量 normalized
+    for (const [symbol, value] of values) { // 循环 const [symbol, value] of values
+      if (value !== null && !isNaN(value)) { // 条件判断 value !== null && !isNaN(value)
+        normalized.set(symbol, (value - min) / range); // 调用 normalized.set
+      } else { // 执行语句
+        normalized.set(symbol, null); // 调用 normalized.set
+      } // 结束代码块
+    } // 结束代码块
 
-    return normalized;
-  }
+    return normalized; // 返回结果
+  } // 结束代码块
 
   /**
    * 百分位排名
@@ -244,111 +244,111 @@ export class BaseFactor extends EventEmitter {
    * @param {Map<string, number>} values - 因子值映射
    * @returns {Map<string, number>} 百分位排名 (0-1)
    */
-  percentileRank(values) {
-    const entries = Array.from(values.entries())
-      .filter(([, v]) => v !== null && !isNaN(v))
-      .sort((a, b) => a[1] - b[1]);
+  percentileRank(values) { // 调用 percentileRank
+    const entries = Array.from(values.entries()) // 定义常量 entries
+      .filter(([, v]) => v !== null && !isNaN(v)) // 定义箭头函数
+      .sort((a, b) => a[1] - b[1]); // 定义箭头函数
 
-    const n = entries.length;
-    if (n === 0) return values;
+    const n = entries.length; // 定义常量 n
+    if (n === 0) return values; // 条件判断 n === 0
 
-    const ranked = new Map();
+    const ranked = new Map(); // 定义常量 ranked
 
     // 处理空值
-    for (const [symbol, value] of values) {
-      if (value === null || isNaN(value)) {
-        ranked.set(symbol, null);
-      }
-    }
+    for (const [symbol, value] of values) { // 循环 const [symbol, value] of values
+      if (value === null || isNaN(value)) { // 条件判断 value === null || isNaN(value)
+        ranked.set(symbol, null); // 调用 ranked.set
+      } // 结束代码块
+    } // 结束代码块
 
     // 计算百分位
-    entries.forEach(([symbol], index) => {
-      ranked.set(symbol, (index + 1) / n);
-    });
+    entries.forEach(([symbol], index) => { // 调用 entries.forEach
+      ranked.set(symbol, (index + 1) / n); // 调用 ranked.set
+    }); // 结束代码块
 
-    return ranked;
-  }
+    return ranked; // 返回结果
+  } // 结束代码块
 
   /**
    * 更新缓存
    * Update cache
    * @private
    */
-  _updateCache(symbol, value, rawData = null) {
-    const timestamp = Date.now();
+  _updateCache(symbol, value, rawData = null) { // 调用 _updateCache
+    const timestamp = Date.now(); // 定义常量 timestamp
 
     // 更新当前值 / Update current value
-    this.values.set(symbol, {
-      value,
-      timestamp,
-      raw: rawData,
-    });
+    this.values.set(symbol, { // 访问 values
+      value, // 执行语句
+      timestamp, // 执行语句
+      raw: rawData, // 设置 raw 字段
+    }); // 结束代码块
 
     // 更新历史 / Update history
-    if (!this.history.has(symbol)) {
-      this.history.set(symbol, []);
-    }
-    const hist = this.history.get(symbol);
-    hist.push({ value, timestamp });
+    if (!this.history.has(symbol)) { // 条件判断 !this.history.has(symbol)
+      this.history.set(symbol, []); // 访问 history
+    } // 结束代码块
+    const hist = this.history.get(symbol); // 定义常量 hist
+    hist.push({ value, timestamp }); // 调用 hist.push
 
     // 限制历史长度 / Limit history length
-    if (hist.length > this.maxHistory) {
-      hist.shift();
-    }
+    if (hist.length > this.maxHistory) { // 条件判断 hist.length > this.maxHistory
+      hist.shift(); // 调用 hist.shift
+    } // 结束代码块
 
-    this.metadata.lastUpdated = timestamp;
-  }
+    this.metadata.lastUpdated = timestamp; // 访问 metadata
+  } // 结束代码块
 
   /**
    * 清除缓存
    * Clear cache
    * @param {string} symbol - 可选，指定交易对
    */
-  clearCache(symbol = null) {
-    if (symbol) {
-      this.values.delete(symbol);
-      this.history.delete(symbol);
-    } else {
-      this.values.clear();
-      this.history.clear();
-    }
-  }
+  clearCache(symbol = null) { // 调用 clearCache
+    if (symbol) { // 条件判断 symbol
+      this.values.delete(symbol); // 访问 values
+      this.history.delete(symbol); // 访问 history
+    } else { // 执行语句
+      this.values.clear(); // 访问 values
+      this.history.clear(); // 访问 history
+    } // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取因子信息
    * Get factor info
    * @returns {Object} 因子信息
    */
-  getInfo() {
-    return {
-      name: this.name,
-      category: this.category,
-      direction: this.direction,
-      frequency: this.frequency,
-      description: this.description,
-      params: this.params,
-      metadata: this.metadata,
-      stats: this.stats,
-      cachedSymbols: this.values.size,
-    };
-  }
+  getInfo() { // 调用 getInfo
+    return { // 返回结果
+      name: this.name, // 设置 name 字段
+      category: this.category, // 设置 category 字段
+      direction: this.direction, // 设置 direction 字段
+      frequency: this.frequency, // 设置 frequency 字段
+      description: this.description, // 设置 description 字段
+      params: this.params, // 设置 params 字段
+      metadata: this.metadata, // 设置 metadata 字段
+      stats: this.stats, // 设置 stats 字段
+      cachedSymbols: this.values.size, // 设置 cachedSymbols 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 序列化
    * Serialize
    * @returns {Object}
    */
-  toJSON() {
-    return {
-      name: this.name,
-      category: this.category,
-      direction: this.direction,
-      frequency: this.frequency,
-      description: this.description,
-      params: this.params,
-      values: Object.fromEntries(this.values),
-    };
-  }
-}
+  toJSON() { // 调用 toJSON
+    return { // 返回结果
+      name: this.name, // 设置 name 字段
+      category: this.category, // 设置 category 字段
+      direction: this.direction, // 设置 direction 字段
+      frequency: this.frequency, // 设置 frequency 字段
+      description: this.description, // 设置 description 字段
+      params: this.params, // 设置 params 字段
+      values: Object.fromEntries(this.values), // 设置 values 字段
+    }; // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
-export default BaseFactor;
+export default BaseFactor; // 默认导出

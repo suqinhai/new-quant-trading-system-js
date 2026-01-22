@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 交易所模块导出文件
  * Exchange Module Export File
  *
@@ -7,20 +7,20 @@
  */
 
 // 导出基类 / Export base class
-export { BaseExchange } from './BaseExchange.js';
+export { BaseExchange } from './BaseExchange.js'; // 导出命名成员
 
 // 导出各交易所实现 / Export exchange implementations
-export { BinanceExchange } from './BinanceExchange.js';
-export { BybitExchange } from './BybitExchange.js';
-export { OKXExchange } from './OKXExchange.js';
-export { GateExchange } from './GateExchange.js';
-export { DeribitExchange } from './DeribitExchange.js';
-export { BitgetExchange } from './BitgetExchange.js';
-export { KuCoinExchange } from './KuCoinExchange.js';
-export { KrakenExchange } from './KrakenExchange.js';
+export { BinanceExchange } from './BinanceExchange.js'; // 导出命名成员
+export { BybitExchange } from './BybitExchange.js'; // 导出命名成员
+export { OKXExchange } from './OKXExchange.js'; // 导出命名成员
+export { GateExchange } from './GateExchange.js'; // 导出命名成员
+export { DeribitExchange } from './DeribitExchange.js'; // 导出命名成员
+export { BitgetExchange } from './BitgetExchange.js'; // 导出命名成员
+export { KuCoinExchange } from './KuCoinExchange.js'; // 导出命名成员
+export { KrakenExchange } from './KrakenExchange.js'; // 导出命名成员
 
 // 导出工厂类 / Export factory class
-export { ExchangeFactory } from './ExchangeFactory.js';
+export { ExchangeFactory } from './ExchangeFactory.js'; // 导出命名成员
 
 // 默认导出工厂类 / Default export factory class
-export { ExchangeFactory as default } from './ExchangeFactory.js';
+export { ExchangeFactory as default } from './ExchangeFactory.js'; // 导出命名成员

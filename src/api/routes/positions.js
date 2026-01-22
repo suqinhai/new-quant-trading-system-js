@@ -1,219 +1,219 @@
-/**
+﻿/**
  * RESTful API 路由 - 持仓管理
  * Position Management Routes
  *
  * @module src/api/routes/positions
  */
 
-import { Router } from 'express';
+import { Router } from 'express'; // 导入模块 express
 
 /**
  * 创建持仓管理路由
  * @param {Object} deps - 依赖注入
  * @returns {Router}
  */
-export function createPositionRoutes(deps = {}) {
-  const router = Router();
-  const { positionStore, tradingEngine } = deps;
+export function createPositionRoutes(deps = {}) { // 导出函数 createPositionRoutes
+  const router = Router(); // 定义常量 router
+  const { positionStore, tradingEngine } = deps; // 解构赋值
 
   /**
    * GET /api/positions
    * 获取持仓列表
    */
-  router.get('/', async (req, res) => {
-    try {
-      const { symbol, exchange, minValue } = req.query;
+  router.get('/', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { symbol, exchange, minValue } = req.query; // 解构赋值
 
-      let positions = [];
+      let positions = []; // 定义变量 positions
 
-      if (positionStore) {
-        positions = await positionStore.getAll();
-      }
+      if (positionStore) { // 条件判断 positionStore
+        positions = await positionStore.getAll(); // 赋值 positions
+      } // 结束代码块
 
       // 过滤
-      if (symbol) {
-        positions = positions.filter(p => p.symbol === symbol);
-      }
-      if (exchange) {
-        positions = positions.filter(p => p.exchange === exchange);
-      }
-      if (minValue) {
-        positions = positions.filter(p => (p.currentValue || 0) >= parseFloat(minValue));
-      }
+      if (symbol) { // 条件判断 symbol
+        positions = positions.filter(p => p.symbol === symbol); // 赋值 positions
+      } // 结束代码块
+      if (exchange) { // 条件判断 exchange
+        positions = positions.filter(p => p.exchange === exchange); // 赋值 positions
+      } // 结束代码块
+      if (minValue) { // 条件判断 minValue
+        positions = positions.filter(p => (p.currentValue || 0) >= parseFloat(minValue)); // 赋值 positions
+      } // 结束代码块
 
-      res.json({ success: true, data: positions });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: positions }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/positions/:id
    * 获取持仓详情
    */
-  router.get('/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
+  router.get('/:id', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const { id } = req.params; // 解构赋值
 
-      let position = null;
-      if (positionStore) {
-        position = await positionStore.getById(id);
-      }
+      let position = null; // 定义变量 position
+      if (positionStore) { // 条件判断 positionStore
+        position = await positionStore.getById(id); // 赋值 position
+      } // 结束代码块
 
-      if (!position) {
-        return res.status(404).json({
-          success: false,
-          error: 'Position not found',
-          code: 'NOT_FOUND'
-        });
-      }
+      if (!position) { // 条件判断 !position
+        return res.status(404).json({ // 返回结果
+          success: false, // 设置 success 字段
+          error: 'Position not found', // 设置 error 字段
+          code: 'NOT_FOUND' // 设置 code 字段
+        }); // 结束代码块
+      } // 结束代码块
 
-      res.json({ success: true, data: position });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: position }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * POST /api/positions/:id/close
    * 平仓
    */
-  router.post('/:id/close', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { percentage = 100 } = req.body;
+  router.post('/:id/close', async (req, res) => { // 调用 router.post
+    try { // 尝试执行
+      const { id } = req.params; // 解构赋值
+      const { percentage = 100 } = req.body; // 解构赋值
 
       // 验证权限
-      if (req.user?.role !== 'admin' && req.user?.role !== 'trader') {
-        return res.status(403).json({
-          success: false,
-          error: 'Trader or admin permission required',
-          code: 'FORBIDDEN'
-        });
-      }
+      if (req.user?.role !== 'admin' && req.user?.role !== 'trader') { // 条件判断 req.user?.role !== 'admin' && req.user?.role ...
+        return res.status(403).json({ // 返回结果
+          success: false, // 设置 success 字段
+          error: 'Trader or admin permission required', // 设置 error 字段
+          code: 'FORBIDDEN' // 设置 code 字段
+        }); // 结束代码块
+      } // 结束代码块
 
-      let position = null;
-      if (positionStore) {
-        position = await positionStore.getById(id);
-      }
+      let position = null; // 定义变量 position
+      if (positionStore) { // 条件判断 positionStore
+        position = await positionStore.getById(id); // 赋值 position
+      } // 结束代码块
 
-      if (!position) {
-        return res.status(404).json({
-          success: false,
-          error: 'Position not found',
-          code: 'NOT_FOUND'
-        });
-      }
+      if (!position) { // 条件判断 !position
+        return res.status(404).json({ // 返回结果
+          success: false, // 设置 success 字段
+          error: 'Position not found', // 设置 error 字段
+          code: 'NOT_FOUND' // 设置 code 字段
+        }); // 结束代码块
+      } // 结束代码块
 
       // 执行平仓
-      if (tradingEngine?.closePosition) {
-        await tradingEngine.closePosition(id, percentage);
-      }
+      if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
+        await tradingEngine.closePosition(id, percentage); // 等待异步结果
+      } // 结束代码块
 
-      res.json({ success: true, message: `Position ${percentage}% closed` });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, message: `Position ${percentage}% closed` }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * POST /api/positions/close-all
    * 全部平仓
    */
-  router.post('/close-all', async (req, res) => {
-    try {
-      const { exchange, symbol } = req.body;
+  router.post('/close-all', async (req, res) => { // 调用 router.post
+    try { // 尝试执行
+      const { exchange, symbol } = req.body; // 解构赋值
 
       // 验证权限
-      if (req.user?.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          error: 'Admin permission required',
-          code: 'FORBIDDEN'
-        });
-      }
+      if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
+        return res.status(403).json({ // 返回结果
+          success: false, // 设置 success 字段
+          error: 'Admin permission required', // 设置 error 字段
+          code: 'FORBIDDEN' // 设置 code 字段
+        }); // 结束代码块
+      } // 结束代码块
 
-      let positions = [];
-      if (positionStore) {
-        positions = await positionStore.getAll();
-      }
+      let positions = []; // 定义变量 positions
+      if (positionStore) { // 条件判断 positionStore
+        positions = await positionStore.getAll(); // 赋值 positions
+      } // 结束代码块
 
       // 过滤
-      if (exchange) {
-        positions = positions.filter(p => p.exchange === exchange);
-      }
-      if (symbol) {
-        positions = positions.filter(p => p.symbol === symbol);
-      }
+      if (exchange) { // 条件判断 exchange
+        positions = positions.filter(p => p.exchange === exchange); // 赋值 positions
+      } // 结束代码块
+      if (symbol) { // 条件判断 symbol
+        positions = positions.filter(p => p.symbol === symbol); // 赋值 positions
+      } // 结束代码块
 
       // 执行平仓
-      let closedCount = 0;
-      if (tradingEngine?.closePosition) {
-        for (const position of positions) {
-          await tradingEngine.closePosition(position.id, 100);
-          closedCount++;
-        }
-      }
+      let closedCount = 0; // 定义变量 closedCount
+      if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
+        for (const position of positions) { // 循环 const position of positions
+          await tradingEngine.closePosition(position.id, 100); // 等待异步结果
+          closedCount++; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
 
-      res.json({
-        success: true,
-        message: `${closedCount} positions closed`,
-        data: { closedCount }
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ // 调用 res.json
+        success: true, // 设置 success 字段
+        message: `${closedCount} positions closed`, // 设置 message 字段
+        data: { closedCount } // 设置 data 字段
+      }); // 结束代码块
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
   /**
    * GET /api/positions/summary
    * 获取持仓汇总
    */
-  router.get('/summary', async (req, res) => {
-    try {
-      let positions = [];
-      if (positionStore) {
-        positions = await positionStore.getAll();
-      }
+  router.get('/summary', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      let positions = []; // 定义变量 positions
+      if (positionStore) { // 条件判断 positionStore
+        positions = await positionStore.getAll(); // 赋值 positions
+      } // 结束代码块
 
-      const summary = {
-        totalPositions: positions.length,
-        totalValue: 0,
-        totalUnrealizedPnL: 0,
-        byExchange: {},
-        bySymbol: {},
-      };
+      const summary = { // 定义常量 summary
+        totalPositions: positions.length, // 设置 totalPositions 字段
+        totalValue: 0, // 设置 totalValue 字段
+        totalUnrealizedPnL: 0, // 设置 totalUnrealizedPnL 字段
+        byExchange: {}, // 设置 byExchange 字段
+        bySymbol: {}, // 设置 bySymbol 字段
+      }; // 结束代码块
 
-      for (const position of positions) {
-        summary.totalValue += position.currentValue || 0;
-        summary.totalUnrealizedPnL += position.unrealizedPnL || 0;
+      for (const position of positions) { // 循环 const position of positions
+        summary.totalValue += position.currentValue || 0; // 执行语句
+        summary.totalUnrealizedPnL += position.unrealizedPnL || 0; // 执行语句
 
         // 按交易所统计
-        const exchange = position.exchange || 'unknown';
-        if (!summary.byExchange[exchange]) {
-          summary.byExchange[exchange] = { count: 0, value: 0, pnl: 0 };
-        }
-        summary.byExchange[exchange].count++;
-        summary.byExchange[exchange].value += position.currentValue || 0;
-        summary.byExchange[exchange].pnl += position.unrealizedPnL || 0;
+        const exchange = position.exchange || 'unknown'; // 定义常量 exchange
+        if (!summary.byExchange[exchange]) { // 条件判断 !summary.byExchange[exchange]
+          summary.byExchange[exchange] = { count: 0, value: 0, pnl: 0 }; // 执行语句
+        } // 结束代码块
+        summary.byExchange[exchange].count++; // 执行语句
+        summary.byExchange[exchange].value += position.currentValue || 0; // 执行语句
+        summary.byExchange[exchange].pnl += position.unrealizedPnL || 0; // 执行语句
 
         // 按交易对统计
-        const symbol = position.symbol || 'unknown';
-        if (!summary.bySymbol[symbol]) {
-          summary.bySymbol[symbol] = { count: 0, value: 0, pnl: 0 };
-        }
-        summary.bySymbol[symbol].count++;
-        summary.bySymbol[symbol].value += position.currentValue || 0;
-        summary.bySymbol[symbol].pnl += position.unrealizedPnL || 0;
-      }
+        const symbol = position.symbol || 'unknown'; // 定义常量 symbol
+        if (!summary.bySymbol[symbol]) { // 条件判断 !summary.bySymbol[symbol]
+          summary.bySymbol[symbol] = { count: 0, value: 0, pnl: 0 }; // 执行语句
+        } // 结束代码块
+        summary.bySymbol[symbol].count++; // 执行语句
+        summary.bySymbol[symbol].value += position.currentValue || 0; // 执行语句
+        summary.bySymbol[symbol].pnl += position.unrealizedPnL || 0; // 执行语句
+      } // 结束代码块
 
-      res.json({ success: true, data: summary });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      res.json({ success: true, data: summary }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
 
-  return router;
-}
+  return router; // 返回结果
+} // 结束代码块
 
-export default createPositionRoutes;
+export default createPositionRoutes; // 默认导出

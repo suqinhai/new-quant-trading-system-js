@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 技术指标计算工具
  * Technical Indicators Utility
  *
@@ -7,10 +7,10 @@
  */
 
 // 导入技术指标库 / Import technical indicators library
-import * as ti from 'technicalindicators';
+import * as ti from 'technicalindicators'; // 导入模块 technicalindicators
 
 // 导入辅助函数 / Import helper functions
-import { toNumber, average, standardDeviation } from './helpers.js';
+import { toNumber, average, standardDeviation } from './helpers.js'; // 导入模块 ./helpers.js
 
 // ============================================
 // 移动平均线 / Moving Averages
@@ -23,15 +23,15 @@ import { toNumber, average, standardDeviation } from './helpers.js';
  * @param {number} period - 周期 / Period
  * @returns {number[]} SMA 值数组 / SMA values array
  */
-export function SMA(values, period) {
+export function SMA(values, period) { // 导出函数 SMA
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.SMA.calculate({
-    values: values.map(toNumber),
-    period,
-  });
+  const result = ti.SMA.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算指数移动平均线
@@ -40,15 +40,15 @@ export function SMA(values, period) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} EMA 值数组 / EMA values array
  */
-export function EMA(values, period) {
+export function EMA(values, period) { // 导出函数 EMA
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.EMA.calculate({
-    values: values.map(toNumber),
-    period,
-  });
+  const result = ti.EMA.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算加权移动平均线
@@ -57,15 +57,15 @@ export function EMA(values, period) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} WMA 值数组 / WMA values array
  */
-export function WMA(values, period) {
+export function WMA(values, period) { // 导出函数 WMA
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.WMA.calculate({
-    values: values.map(toNumber),
-    period,
-  });
+  const result = ti.WMA.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算成交量加权移动平均线
@@ -74,16 +74,16 @@ export function WMA(values, period) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} VWMA 值数组 / VWMA values array
  */
-export function VWMA(candles, period) {
+export function VWMA(candles, period) { // 导出函数 VWMA
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.VWMA.calculate({
-    close: candles.map(c => toNumber(c.close)),
-    volume: candles.map(c => toNumber(c.volume)),
-    period,
-  });
+  const result = ti.VWMA.calculate({ // 定义常量 result
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 震荡指标 / Oscillators
@@ -96,15 +96,15 @@ export function VWMA(candles, period) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} RSI 值数组 / RSI values array
  */
-export function RSI(values, period = 14) {
+export function RSI(values, period = 14) { // 导出函数 RSI
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.RSI.calculate({
-    values: values.map(toNumber),
-    period,
-  });
+  const result = ti.RSI.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算随机指标
@@ -114,18 +114,18 @@ export function RSI(values, period = 14) {
  * @param {number} signalPeriod - D 周期 / D period
  * @returns {Object[]} 随机指标数组 { k, d } / Stochastic array
  */
-export function Stochastic(candles, period = 14, signalPeriod = 3) {
+export function Stochastic(candles, period = 14, signalPeriod = 3) { // 导出函数 Stochastic
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.Stochastic.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    period,
-    signalPeriod,
-  });
+  const result = ti.Stochastic.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    period, // 执行语句
+    signalPeriod, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算威廉指标
@@ -134,17 +134,17 @@ export function Stochastic(candles, period = 14, signalPeriod = 3) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} 威廉指标数组 / Williams %R array
  */
-export function WilliamsR(candles, period = 14) {
+export function WilliamsR(candles, period = 14) { // 导出函数 WilliamsR
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.WilliamsR.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    period,
-  });
+  const result = ti.WilliamsR.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算商品通道指数
@@ -153,17 +153,17 @@ export function WilliamsR(candles, period = 14) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} CCI 数组 / CCI array
  */
-export function CCI(candles, period = 20) {
+export function CCI(candles, period = 20) { // 导出函数 CCI
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.CCI.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    period,
-  });
+  const result = ti.CCI.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 趋势指标 / Trend Indicators
@@ -178,19 +178,19 @@ export function CCI(candles, period = 20) {
  * @param {number} signalPeriod - 信号线周期 / Signal period
  * @returns {Object[]} MACD 数组 { MACD, signal, histogram } / MACD array
  */
-export function MACD(values, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+export function MACD(values, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) { // 导出函数 MACD
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.MACD.calculate({
-    values: values.map(toNumber),
-    fastPeriod,
-    slowPeriod,
-    signalPeriod,
-    SimpleMAOscillator: false,
-    SimpleMASignal: false,
-  });
+  const result = ti.MACD.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    fastPeriod, // 执行语句
+    slowPeriod, // 执行语句
+    signalPeriod, // 执行语句
+    SimpleMAOscillator: false, // 设置 SimpleMAOscillator 字段
+    SimpleMASignal: false, // 设置 SimpleMASignal 字段
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算平均趋向指数
@@ -199,17 +199,17 @@ export function MACD(values, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9)
  * @param {number} period - 周期 / Period
  * @returns {Object[]} ADX 数组 { adx, pdi, mdi } / ADX array
  */
-export function ADX(candles, period = 14) {
+export function ADX(candles, period = 14) { // 导出函数 ADX
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.ADX.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    period,
-  });
+  const result = ti.ADX.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算抛物线转向指标
@@ -219,17 +219,17 @@ export function ADX(candles, period = 14) {
  * @param {number} max - 最大值 / Maximum
  * @returns {number[]} SAR 数组 / SAR array
  */
-export function PSAR(candles, step = 0.02, max = 0.2) {
+export function PSAR(candles, step = 0.02, max = 0.2) { // 导出函数 PSAR
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.PSAR.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    step,
-    max,
-  });
+  const result = ti.PSAR.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    step, // 执行语句
+    max, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 波动率指标 / Volatility Indicators
@@ -243,16 +243,16 @@ export function PSAR(candles, step = 0.02, max = 0.2) {
  * @param {number} stdDev - 标准差倍数 / Standard deviation multiplier
  * @returns {Object[]} 布林带数组 { upper, middle, lower, pb } / Bollinger Bands array
  */
-export function BollingerBands(values, period = 20, stdDev = 2) {
+export function BollingerBands(values, period = 20, stdDev = 2) { // 导出函数 BollingerBands
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.BollingerBands.calculate({
-    values: values.map(toNumber),
-    period,
-    stdDev,
-  });
+  const result = ti.BollingerBands.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+    stdDev, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算平均真实波幅
@@ -261,17 +261,17 @@ export function BollingerBands(values, period = 20, stdDev = 2) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} ATR 数组 / ATR array
  */
-export function ATR(candles, period = 14) {
+export function ATR(candles, period = 14) { // 导出函数 ATR
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.ATR.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    period,
-  });
+  const result = ti.ATR.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算真实波幅
@@ -279,16 +279,16 @@ export function ATR(candles, period = 14) {
  * @param {Object[]} candles - K线数据 / Candle data
  * @returns {number[]} TR 数组 / TR array
  */
-export function TrueRange(candles) {
+export function TrueRange(candles) { // 导出函数 TrueRange
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.TrueRange.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-  });
+  const result = ti.TrueRange.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算肯特纳通道
@@ -298,31 +298,31 @@ export function TrueRange(candles) {
  * @param {number} multiplier - ATR 倍数 / ATR multiplier
  * @returns {Object[]} 肯特纳通道数组 { upper, middle, lower } / Keltner Channels array
  */
-export function KeltnerChannels(candles, period = 20, multiplier = 2) {
+export function KeltnerChannels(candles, period = 20, multiplier = 2) { // 导出函数 KeltnerChannels
   // 计算 EMA / Calculate EMA
-  const closes = candles.map(c => toNumber(c.close));
-  const emaValues = EMA(closes, period);
+  const closes = candles.map(c => toNumber(c.close)); // 定义函数 closes
+  const emaValues = EMA(closes, period); // 定义常量 emaValues
 
   // 计算 ATR / Calculate ATR
-  const atrValues = ATR(candles, period);
+  const atrValues = ATR(candles, period); // 定义常量 atrValues
 
   // 计算通道 / Calculate channels
-  const result = [];
-  const offset = closes.length - emaValues.length;
+  const result = []; // 定义常量 result
+  const offset = closes.length - emaValues.length; // 定义常量 offset
 
-  for (let i = 0; i < emaValues.length; i++) {
-    const atrIndex = i - (emaValues.length - atrValues.length);
-    if (atrIndex >= 0) {
-      result.push({
-        upper: emaValues[i] + multiplier * atrValues[atrIndex],
-        middle: emaValues[i],
-        lower: emaValues[i] - multiplier * atrValues[atrIndex],
-      });
-    }
-  }
+  for (let i = 0; i < emaValues.length; i++) { // 循环 let i = 0; i < emaValues.length; i++
+    const atrIndex = i - (emaValues.length - atrValues.length); // 定义常量 atrIndex
+    if (atrIndex >= 0) { // 条件判断 atrIndex >= 0
+      result.push({ // 调用 result.push
+        upper: emaValues[i] + multiplier * atrValues[atrIndex], // 设置 upper 字段
+        middle: emaValues[i], // 设置 middle 字段
+        lower: emaValues[i] - multiplier * atrValues[atrIndex], // 设置 lower 字段
+      }); // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 成交量指标 / Volume Indicators
@@ -334,15 +334,15 @@ export function KeltnerChannels(candles, period = 20, multiplier = 2) {
  * @param {Object[]} candles - K线数据 / Candle data
  * @returns {number[]} OBV 数组 / OBV array
  */
-export function OBV(candles) {
+export function OBV(candles) { // 导出函数 OBV
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.OBV.calculate({
-    close: candles.map(c => toNumber(c.close)),
-    volume: candles.map(c => toNumber(c.volume)),
-  });
+  const result = ti.OBV.calculate({ // 定义常量 result
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算资金流量指数
@@ -351,18 +351,18 @@ export function OBV(candles) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} MFI 数组 / MFI array
  */
-export function MFI(candles, period = 14) {
+export function MFI(candles, period = 14) { // 导出函数 MFI
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.MFI.calculate({
-    high: candles.map(c => toNumber(c.high)),
-    low: candles.map(c => toNumber(c.low)),
-    close: candles.map(c => toNumber(c.close)),
-    volume: candles.map(c => toNumber(c.volume)),
-    period,
-  });
+  const result = ti.MFI.calculate({ // 定义常量 result
+    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
+    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算成交量变化率
@@ -371,15 +371,15 @@ export function MFI(candles, period = 14) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} VROC 数组 / VROC array
  */
-export function VROC(volumes, period = 14) {
+export function VROC(volumes, period = 14) { // 导出函数 VROC
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.ROC.calculate({
-    values: volumes.map(toNumber),
-    period,
-  });
+  const result = ti.ROC.calculate({ // 定义常量 result
+    values: volumes.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 动量指标 / Momentum Indicators
@@ -392,17 +392,17 @@ export function VROC(volumes, period = 14) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} 动量数组 / Momentum array
  */
-export function Momentum(values, period = 10) {
+export function Momentum(values, period = 10) { // 导出函数 Momentum
   // 手动计算动量 / Calculate momentum manually
-  const result = [];
-  const numericValues = values.map(toNumber);
+  const result = []; // 定义常量 result
+  const numericValues = values.map(toNumber); // 定义常量 numericValues
 
-  for (let i = period; i < numericValues.length; i++) {
-    result.push(numericValues[i] - numericValues[i - period]);
-  }
+  for (let i = period; i < numericValues.length; i++) { // 循环 let i = period; i < numericValues.length; i++
+    result.push(numericValues[i] - numericValues[i - period]); // 调用 result.push
+  } // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 /**
  * 计算变化率
@@ -411,15 +411,15 @@ export function Momentum(values, period = 10) {
  * @param {number} period - 周期 / Period
  * @returns {number[]} ROC 数组 / ROC array
  */
-export function ROC(values, period = 10) {
+export function ROC(values, period = 10) { // 导出函数 ROC
   // 使用技术指标库计算 / Calculate using library
-  const result = ti.ROC.calculate({
-    values: values.map(toNumber),
-    period,
-  });
+  const result = ti.ROC.calculate({ // 定义常量 result
+    values: values.map(toNumber), // 设置 values 字段
+    period, // 执行语句
+  }); // 结束代码块
 
-  return result;
-}
+  return result; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 支撑阻力 / Support and Resistance
@@ -433,28 +433,28 @@ export function ROC(values, period = 10) {
  * @param {number} close - 收盘价 / Close price
  * @returns {Object} 枢轴点对象 / Pivot points object
  */
-export function PivotPoints(high, low, close) {
+export function PivotPoints(high, low, close) { // 导出函数 PivotPoints
   // 计算枢轴点 / Calculate pivot point
-  const pp = (toNumber(high) + toNumber(low) + toNumber(close)) / 3;
+  const pp = (toNumber(high) + toNumber(low) + toNumber(close)) / 3; // 定义常量 pp
 
   // 计算支撑和阻力 / Calculate support and resistance
-  const r1 = 2 * pp - toNumber(low);
-  const s1 = 2 * pp - toNumber(high);
-  const r2 = pp + (toNumber(high) - toNumber(low));
-  const s2 = pp - (toNumber(high) - toNumber(low));
-  const r3 = toNumber(high) + 2 * (pp - toNumber(low));
-  const s3 = toNumber(low) - 2 * (toNumber(high) - pp);
+  const r1 = 2 * pp - toNumber(low); // 定义常量 r1
+  const s1 = 2 * pp - toNumber(high); // 定义常量 s1
+  const r2 = pp + (toNumber(high) - toNumber(low)); // 定义常量 r2
+  const s2 = pp - (toNumber(high) - toNumber(low)); // 定义常量 s2
+  const r3 = toNumber(high) + 2 * (pp - toNumber(low)); // 定义常量 r3
+  const s3 = toNumber(low) - 2 * (toNumber(high) - pp); // 定义常量 s3
 
-  return {
-    pp,
-    r1,
-    r2,
-    r3,
-    s1,
-    s2,
-    s3,
-  };
-}
+  return { // 返回结果
+    pp, // 执行语句
+    r1, // 执行语句
+    r2, // 执行语句
+    r3, // 执行语句
+    s1, // 执行语句
+    s2, // 执行语句
+    s3, // 执行语句
+  }; // 结束代码块
+} // 结束代码块
 
 /**
  * 计算斐波那契回撤
@@ -463,14 +463,14 @@ export function PivotPoints(high, low, close) {
  * @param {number} low - 最低价 / Low price
  * @returns {Object} 斐波那契回撤对象 / Fibonacci retracement object
  */
-export function FibonacciRetracement(high, low) {
+export function FibonacciRetracement(high, low) { // 导出函数 FibonacciRetracement
   // 计算差值 / Calculate difference
-  const h = toNumber(high);
-  const l = toNumber(low);
-  const diff = h - l;
+  const h = toNumber(high); // 定义常量 h
+  const l = toNumber(low); // 定义常量 l
+  const diff = h - l; // 定义常量 diff
 
   // 计算回撤水平 / Calculate retracement levels
-  return {
+  return { // 返回结果
     level0: l,           // 0%
     level236: l + diff * 0.236,  // 23.6%
     level382: l + diff * 0.382,  // 38.2%
@@ -478,8 +478,8 @@ export function FibonacciRetracement(high, low) {
     level618: l + diff * 0.618,  // 61.8%
     level786: l + diff * 0.786,  // 78.6%
     level1000: h,        // 100%
-  };
-}
+  }; // 结束代码块
+} // 结束代码块
 
 // ============================================
 // Regime 检测指标 / Regime Detection Indicators
@@ -498,107 +498,107 @@ export function FibonacciRetracement(high, low) {
  * @param {number} minPeriod - 最小分组大小 / Minimum group size
  * @returns {number} Hurst 指数 (0-1) / Hurst exponent
  */
-export function HurstExponent(values, minPeriod = 10) {
-  const prices = values.map(toNumber);
+export function HurstExponent(values, minPeriod = 10) { // 导出函数 HurstExponent
+  const prices = values.map(toNumber); // 定义常量 prices
 
-  if (prices.length < 20) return 0.5;
+  if (prices.length < 20) return 0.5; // 条件判断 prices.length < 20
 
-  try {
+  try { // 尝试执行
     // 计算对数收益率 / Calculate log returns
-    const logReturns = [];
-    for (let i = 1; i < prices.length; i++) {
-      if (prices[i] > 0 && prices[i - 1] > 0) {
-        logReturns.push(Math.log(prices[i] / prices[i - 1]));
-      }
-    }
+    const logReturns = []; // 定义常量 logReturns
+    for (let i = 1; i < prices.length; i++) { // 循环 let i = 1; i < prices.length; i++
+      if (prices[i] > 0 && prices[i - 1] > 0) { // 条件判断 prices[i] > 0 && prices[i - 1] > 0
+        logReturns.push(Math.log(prices[i] / prices[i - 1])); // 调用 logReturns.push
+      } // 结束代码块
+    } // 结束代码块
 
-    if (logReturns.length < minPeriod) return 0.5;
+    if (logReturns.length < minPeriod) return 0.5; // 条件判断 logReturns.length < minPeriod
 
     // 计算不同分组大小下的 R/S / Calculate R/S for different group sizes
-    const sizes = [];
-    const rsValues = [];
+    const sizes = []; // 定义常量 sizes
+    const rsValues = []; // 定义常量 rsValues
 
-    for (let size = minPeriod; size <= Math.floor(logReturns.length / 2); size += 5) {
-      const numGroups = Math.floor(logReturns.length / size);
-      if (numGroups < 2) continue;
+    for (let size = minPeriod; size <= Math.floor(logReturns.length / 2); size += 5) { // 循环 let size = minPeriod; size <= Math.floor(logR...
+      const numGroups = Math.floor(logReturns.length / size); // 定义常量 numGroups
+      if (numGroups < 2) continue; // 条件判断 numGroups < 2
 
-      let rsSum = 0;
-      let validGroups = 0;
+      let rsSum = 0; // 定义变量 rsSum
+      let validGroups = 0; // 定义变量 validGroups
 
-      for (let g = 0; g < numGroups; g++) {
-        const group = logReturns.slice(g * size, (g + 1) * size);
-        const rs = _calculateRescaledRange(group);
-        if (rs > 0) {
-          rsSum += rs;
-          validGroups++;
-        }
-      }
+      for (let g = 0; g < numGroups; g++) { // 循环 let g = 0; g < numGroups; g++
+        const group = logReturns.slice(g * size, (g + 1) * size); // 定义常量 group
+        const rs = _calculateRescaledRange(group); // 定义常量 rs
+        if (rs > 0) { // 条件判断 rs > 0
+          rsSum += rs; // 执行语句
+          validGroups++; // 执行语句
+        } // 结束代码块
+      } // 结束代码块
 
-      if (validGroups > 0) {
-        const avgRS = rsSum / validGroups;
-        sizes.push(Math.log(size));
-        rsValues.push(Math.log(avgRS));
-      }
-    }
+      if (validGroups > 0) { // 条件判断 validGroups > 0
+        const avgRS = rsSum / validGroups; // 定义常量 avgRS
+        sizes.push(Math.log(size)); // 调用 sizes.push
+        rsValues.push(Math.log(avgRS)); // 调用 rsValues.push
+      } // 结束代码块
+    } // 结束代码块
 
-    if (sizes.length < 3) return 0.5;
+    if (sizes.length < 3) return 0.5; // 条件判断 sizes.length < 3
 
     // 线性回归计算斜率 (即 Hurst 指数) / Linear regression for slope
-    const hurst = _linearRegressionSlope(sizes, rsValues);
+    const hurst = _linearRegressionSlope(sizes, rsValues); // 定义常量 hurst
 
     // 限制在合理范围 [0, 1] / Clamp to valid range
-    return Math.max(0, Math.min(1, hurst));
+    return Math.max(0, Math.min(1, hurst)); // 返回结果
 
-  } catch (e) {
-    return 0.5;
-  }
-}
+  } catch (e) { // 执行语句
+    return 0.5; // 返回结果
+  } // 结束代码块
+} // 结束代码块
 
 /**
  * 计算重标极差 (R/S)
  * Calculate Rescaled Range
  * @private
  */
-function _calculateRescaledRange(series) {
-  const n = series.length;
-  if (n < 2) return 0;
+function _calculateRescaledRange(series) { // 定义函数 _calculateRescaledRange
+  const n = series.length; // 定义常量 n
+  if (n < 2) return 0; // 条件判断 n < 2
 
   // 均值 / Mean
-  const mean = series.reduce((a, b) => a + b, 0) / n;
+  const mean = series.reduce((a, b) => a + b, 0) / n; // 定义函数 mean
 
   // 累积偏差 / Cumulative deviation
-  const cumDev = [];
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    sum += series[i] - mean;
-    cumDev.push(sum);
-  }
+  const cumDev = []; // 定义常量 cumDev
+  let sum = 0; // 定义变量 sum
+  for (let i = 0; i < n; i++) { // 循环 let i = 0; i < n; i++
+    sum += series[i] - mean; // 执行语句
+    cumDev.push(sum); // 调用 cumDev.push
+  } // 结束代码块
 
   // 极差 R / Range
-  const R = Math.max(...cumDev) - Math.min(...cumDev);
+  const R = Math.max(...cumDev) - Math.min(...cumDev); // 定义常量 R
 
   // 标准差 S / Standard deviation
-  const variance = series.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
-  const S = Math.sqrt(variance);
+  const variance = series.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n; // 定义函数 variance
+  const S = Math.sqrt(variance); // 定义常量 S
 
-  if (S === 0) return 0;
-  return R / S;
-}
+  if (S === 0) return 0; // 条件判断 S === 0
+  return R / S; // 返回结果
+} // 结束代码块
 
 /**
  * 线性回归斜率
  * Linear regression slope
  * @private
  */
-function _linearRegressionSlope(x, y) {
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
-  const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
+function _linearRegressionSlope(x, y) { // 定义函数 _linearRegressionSlope
+  const n = x.length; // 定义常量 n
+  const sumX = x.reduce((a, b) => a + b, 0); // 定义函数 sumX
+  const sumY = y.reduce((a, b) => a + b, 0); // 定义函数 sumY
+  const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0); // 定义函数 sumXY
+  const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0); // 定义函数 sumX2
 
-  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-}
+  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX); // 返回结果
+} // 结束代码块
 
 /**
  * 计算布林带宽度
@@ -613,14 +613,14 @@ function _linearRegressionSlope(x, y) {
  * @param {number} stdDev - 标准差倍数 / Standard deviation multiplier
  * @returns {number[]} 布林带宽度数组 / Bollinger Band Width array
  */
-export function BollingerBandWidth(values, period = 20, stdDev = 2) {
-  const bbValues = BollingerBands(values, period, stdDev);
+export function BollingerBandWidth(values, period = 20, stdDev = 2) { // 导出函数 BollingerBandWidth
+  const bbValues = BollingerBands(values, period, stdDev); // 定义常量 bbValues
 
-  return bbValues.map(bb => {
-    if (!bb || !bb.middle || bb.middle === 0) return 0;
-    return ((bb.upper - bb.lower) / bb.middle) * 100;
-  });
-}
+  return bbValues.map(bb => { // 返回结果
+    if (!bb || !bb.middle || bb.middle === 0) return 0; // 条件判断 !bb || !bb.middle || bb.middle === 0
+    return ((bb.upper - bb.lower) / bb.middle) * 100; // 返回结果
+  }); // 结束代码块
+} // 结束代码块
 
 /**
  * 计算波动率百分位
@@ -632,18 +632,18 @@ export function BollingerBandWidth(values, period = 20, stdDev = 2) {
  * @param {number[]} history - 历史数据 / Historical data
  * @returns {number} 百分位 (0-100) / Percentile
  */
-export function VolatilityPercentile(currentValue, history) {
-  if (!history || history.length < 10) return 50;
+export function VolatilityPercentile(currentValue, history) { // 导出函数 VolatilityPercentile
+  if (!history || history.length < 10) return 50; // 条件判断 !history || history.length < 10
 
-  const sorted = [...history].sort((a, b) => a - b);
-  let rank = 0;
+  const sorted = [...history].sort((a, b) => a - b); // 定义函数 sorted
+  let rank = 0; // 定义变量 rank
 
-  for (let i = 0; i < sorted.length; i++) {
-    if (sorted[i] <= currentValue) rank++;
-  }
+  for (let i = 0; i < sorted.length; i++) { // 循环 let i = 0; i < sorted.length; i++
+    if (sorted[i] <= currentValue) rank++; // 条件判断 sorted[i] <= currentValue
+  } // 结束代码块
 
-  return (rank / sorted.length) * 100;
-}
+  return (rank / sorted.length) * 100; // 返回结果
+} // 结束代码块
 
 // ============================================
 // 辅助函数 / Helper Functions
@@ -655,14 +655,14 @@ export function VolatilityPercentile(currentValue, history) {
  * @param {Array} indicatorValues - 指标数组 / Indicator array
  * @returns {any} 最新值 / Latest value
  */
-export function getLatest(indicatorValues) {
+export function getLatest(indicatorValues) { // 导出函数 getLatest
   // 检查数组是否有效 / Check if array is valid
-  if (!indicatorValues || indicatorValues.length === 0) {
-    return null;
-  }
+  if (!indicatorValues || indicatorValues.length === 0) { // 条件判断 !indicatorValues || indicatorValues.length === 0
+    return null; // 返回结果
+  } // 结束代码块
 
-  return indicatorValues[indicatorValues.length - 1];
-}
+  return indicatorValues[indicatorValues.length - 1]; // 返回结果
+} // 结束代码块
 
 /**
  * 检测交叉信号
@@ -671,71 +671,71 @@ export function getLatest(indicatorValues) {
  * @param {number[]} slow - 慢线数据 / Slow line data
  * @returns {Object} 交叉信号 { bullish, bearish } / Crossover signal
  */
-export function detectCrossover(fast, slow) {
+export function detectCrossover(fast, slow) { // 导出函数 detectCrossover
   // 至少需要 2 个数据点 / Need at least 2 data points
-  if (fast.length < 2 || slow.length < 2) {
-    return { bullish: false, bearish: false };
-  }
+  if (fast.length < 2 || slow.length < 2) { // 条件判断 fast.length < 2 || slow.length < 2
+    return { bullish: false, bearish: false }; // 返回结果
+  } // 结束代码块
 
   // 获取最后两个值 / Get last two values
-  const fastCurrent = fast[fast.length - 1];
-  const fastPrevious = fast[fast.length - 2];
-  const slowCurrent = slow[slow.length - 1];
-  const slowPrevious = slow[slow.length - 2];
+  const fastCurrent = fast[fast.length - 1]; // 定义常量 fastCurrent
+  const fastPrevious = fast[fast.length - 2]; // 定义常量 fastPrevious
+  const slowCurrent = slow[slow.length - 1]; // 定义常量 slowCurrent
+  const slowPrevious = slow[slow.length - 2]; // 定义常量 slowPrevious
 
   // 检测金叉 (快线从下方穿越慢线) / Detect bullish crossover
-  const bullish = fastPrevious <= slowPrevious && fastCurrent > slowCurrent;
+  const bullish = fastPrevious <= slowPrevious && fastCurrent > slowCurrent; // 定义常量 bullish
 
   // 检测死叉 (快线从上方穿越慢线) / Detect bearish crossover
-  const bearish = fastPrevious >= slowPrevious && fastCurrent < slowCurrent;
+  const bearish = fastPrevious >= slowPrevious && fastCurrent < slowCurrent; // 定义常量 bearish
 
-  return { bullish, bearish };
-}
+  return { bullish, bearish }; // 返回结果
+} // 结束代码块
 
 // 默认导出所有指标 / Default export all indicators
-export default {
+export default { // 默认导出
   // 移动平均线 / Moving averages
-  SMA,
-  EMA,
-  WMA,
-  VWMA,
+  SMA, // 执行语句
+  EMA, // 执行语句
+  WMA, // 执行语句
+  VWMA, // 执行语句
 
   // 震荡指标 / Oscillators
-  RSI,
-  Stochastic,
-  WilliamsR,
-  CCI,
+  RSI, // 执行语句
+  Stochastic, // 执行语句
+  WilliamsR, // 执行语句
+  CCI, // 执行语句
 
   // 趋势指标 / Trend indicators
-  MACD,
-  ADX,
-  PSAR,
+  MACD, // 执行语句
+  ADX, // 执行语句
+  PSAR, // 执行语句
 
   // 波动率指标 / Volatility indicators
-  BollingerBands,
-  ATR,
-  TrueRange,
-  KeltnerChannels,
+  BollingerBands, // 执行语句
+  ATR, // 执行语句
+  TrueRange, // 执行语句
+  KeltnerChannels, // 执行语句
 
   // 成交量指标 / Volume indicators
-  OBV,
-  MFI,
-  VROC,
+  OBV, // 执行语句
+  MFI, // 执行语句
+  VROC, // 执行语句
 
   // 动量指标 / Momentum indicators
-  Momentum,
-  ROC,
+  Momentum, // 执行语句
+  ROC, // 执行语句
 
   // 支撑阻力 / Support and resistance
-  PivotPoints,
-  FibonacciRetracement,
+  PivotPoints, // 执行语句
+  FibonacciRetracement, // 执行语句
 
   // Regime 检测指标 / Regime detection indicators
-  HurstExponent,
-  BollingerBandWidth,
-  VolatilityPercentile,
+  HurstExponent, // 执行语句
+  BollingerBandWidth, // 执行语句
+  VolatilityPercentile, // 执行语句
 
   // 辅助函数 / Helper functions
-  getLatest,
-  detectCrossover,
-};
+  getLatest, // 执行语句
+  detectCrossover, // 执行语句
+}; // 结束代码块

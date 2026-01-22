@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 订单执行质量监控器
  * Order Execution Quality Monitor
  *
@@ -11,7 +11,7 @@
  * 6. 异常执行检测 / Abnormal execution detection
  */
 
-import EventEmitter from 'eventemitter3';
+import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
 
 // ============================================
 // 常量定义 / Constants Definition
@@ -21,42 +21,42 @@ import EventEmitter from 'eventemitter3';
  * 执行质量级别
  * Execution quality level
  */
-const EXECUTION_QUALITY = {
+const EXECUTION_QUALITY = { // 定义常量 EXECUTION_QUALITY
   EXCELLENT: 'excellent',   // 优秀 / Excellent
   GOOD: 'good',             // 良好 / Good
   AVERAGE: 'average',       // 一般 / Average
   POOR: 'poor',             // 较差 / Poor
   CRITICAL: 'critical',     // 严重 / Critical
-};
+}; // 结束代码块
 
 /**
  * 滑点类型
  * Slippage type
  */
-const SLIPPAGE_TYPE = {
+const SLIPPAGE_TYPE = { // 定义常量 SLIPPAGE_TYPE
   POSITIVE: 'positive',     // 正滑点(有利) / Positive (favorable)
   ZERO: 'zero',             // 零滑点 / Zero
   NEGATIVE: 'negative',     // 负滑点(不利) / Negative (unfavorable)
-};
+}; // 结束代码块
 
 /**
  * 订单状态
  * Order status
  */
-const ORDER_STATUS = {
+const ORDER_STATUS = { // 定义常量 ORDER_STATUS
   PENDING: 'pending',       // 待成交 / Pending
   PARTIAL: 'partial',       // 部分成交 / Partial fill
   FILLED: 'filled',         // 完全成交 / Filled
   CANCELLED: 'cancelled',   // 已取消 / Cancelled
   REJECTED: 'rejected',     // 被拒绝 / Rejected
   EXPIRED: 'expired',       // 已过期 / Expired
-};
+}; // 结束代码块
 
 /**
  * 默认配置
  * Default configuration
  */
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
   // 滑点阈值 / Slippage Thresholds
   // ============================================
@@ -98,7 +98,7 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 统计窗口大小 / Statistics window size
-  statisticsWindowSize: 1000,
+  statisticsWindowSize: 1000, // 设置 statisticsWindowSize 字段
 
   // 滚动窗口时间 (毫秒) / Rolling window time (ms)
   rollingWindowTime: 24 * 60 * 60 * 1000, // 24小时
@@ -114,17 +114,17 @@ const DEFAULT_CONFIG = {
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true,
+  verbose: true, // 设置 verbose 字段
 
   // 日志前缀 / Log prefix
-  logPrefix: '[ExecutionQuality]',
+  logPrefix: '[ExecutionQuality]', // 设置 logPrefix 字段
 
   // 是否启用异常检测 / Enable anomaly detection
-  enableAnomalyDetection: true,
+  enableAnomalyDetection: true, // 设置 enableAnomalyDetection 字段
 
   // 异常检测敏感度 (标准差倍数) / Anomaly detection sensitivity (std dev multiplier)
-  anomalySensitivity: 3.0,
-};
+  anomalySensitivity: 3.0, // 设置 anomalySensitivity 字段
+}; // 结束代码块
 
 // ============================================
 // 主类 / Main Class
@@ -134,55 +134,55 @@ const DEFAULT_CONFIG = {
  * 订单执行质量监控器
  * Order Execution Quality Monitor
  */
-export class ExecutionQualityMonitor extends EventEmitter {
+export class ExecutionQualityMonitor extends EventEmitter { // 导出类 ExecutionQualityMonitor
   /**
    * 构造函数
    * Constructor
    *
    * @param {Object} config - 配置对象 / Configuration object
    */
-  constructor(config = {}) {
-    super();
+  constructor(config = {}) { // 构造函数
+    super(); // 调用父类
 
     // 合并配置 / Merge configuration
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...config }; // 设置 config
 
     // 执行记录 / Execution records
     // 格式: [{ orderId, symbol, side, expectedPrice, actualPrice, slippage, ... }]
-    this.executionRecords = [];
+    this.executionRecords = []; // 设置 executionRecords
 
     // 按交易对统计 / Statistics by symbol
     // 格式: { symbol: { slippages: [], times: [], fillRates: [], ... } }
-    this.symbolStats = new Map();
+    this.symbolStats = new Map(); // 设置 symbolStats
 
     // 按交易所统计 / Statistics by exchange
     // 格式: { exchange: { slippages: [], times: [], fillRates: [], ... } }
-    this.exchangeStats = new Map();
+    this.exchangeStats = new Map(); // 设置 exchangeStats
 
     // 按账户统计 / Statistics by account
     // 格式: { accountId: { slippages: [], times: [], fillRates: [], ... } }
-    this.accountStats = new Map();
+    this.accountStats = new Map(); // 设置 accountStats
 
     // 活跃订单追踪 / Active order tracking
     // 格式: { orderId: { startTime, expectedPrice, symbol, ... } }
-    this.activeOrders = new Map();
+    this.activeOrders = new Map(); // 设置 activeOrders
 
     // 汇总统计 / Aggregated statistics
-    this.aggregatedStats = {
-      total: this._createEmptyStats(),
-      lastHour: this._createEmptyStats(),
-      last24Hours: this._createEmptyStats(),
-    };
+    this.aggregatedStats = { // 设置 aggregatedStats
+      total: this._createEmptyStats(), // 设置 total 字段
+      lastHour: this._createEmptyStats(), // 设置 lastHour 字段
+      last24Hours: this._createEmptyStats(), // 设置 last24Hours 字段
+    }; // 结束代码块
 
     // 异常记录 / Anomaly records
-    this.anomalies = [];
+    this.anomalies = []; // 设置 anomalies
 
     // 运行状态 / Running state
-    this.running = false;
+    this.running = false; // 设置 running
 
     // 定时器 / Timers
-    this.aggregationTimer = null;
-  }
+    this.aggregationTimer = null; // 设置 aggregationTimer
+  } // 结束代码块
 
   // ============================================
   // 生命周期管理 / Lifecycle Management
@@ -192,38 +192,38 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * 启动
    * Start
    */
-  start() {
-    if (this.running) return;
+  start() { // 调用 start
+    if (this.running) return; // 条件判断 this.running
 
-    this.running = true;
+    this.running = true; // 设置 running
 
     // 启动定时汇总 / Start periodic aggregation
-    this.aggregationTimer = setInterval(
-      () => this._performAggregation(),
-      this.config.aggregationInterval
-    );
+    this.aggregationTimer = setInterval( // 设置 aggregationTimer
+      () => this._performAggregation(), // 定义箭头函数
+      this.config.aggregationInterval // 访问 config
+    ); // 结束调用或参数
 
-    this.log('执行质量监控器已启动 / Execution quality monitor started', 'info');
-    this.emit('started');
-  }
+    this.log('执行质量监控器已启动 / Execution quality monitor started', 'info'); // 调用 log
+    this.emit('started'); // 调用 emit
+  } // 结束代码块
 
   /**
    * 停止
    * Stop
    */
-  stop() {
-    if (!this.running) return;
+  stop() { // 调用 stop
+    if (!this.running) return; // 条件判断 !this.running
 
-    this.running = false;
+    this.running = false; // 设置 running
 
-    if (this.aggregationTimer) {
-      clearInterval(this.aggregationTimer);
-      this.aggregationTimer = null;
-    }
+    if (this.aggregationTimer) { // 条件判断 this.aggregationTimer
+      clearInterval(this.aggregationTimer); // 调用 clearInterval
+      this.aggregationTimer = null; // 设置 aggregationTimer
+    } // 结束代码块
 
-    this.log('执行质量监控器已停止 / Execution quality monitor stopped', 'info');
-    this.emit('stopped');
-  }
+    this.log('执行质量监控器已停止 / Execution quality monitor stopped', 'info'); // 调用 log
+    this.emit('stopped'); // 调用 emit
+  } // 结束代码块
 
   // ============================================
   // 订单追踪 / Order Tracking
@@ -235,39 +235,39 @@ export class ExecutionQualityMonitor extends EventEmitter {
    *
    * @param {Object} order - 订单信息 / Order info
    */
-  startTracking(order) {
-    const {
-      orderId,
-      symbol,
-      side,
-      type,
-      expectedPrice,
-      amount,
-      exchange,
-      accountId,
-    } = order;
+  startTracking(order) { // 调用 startTracking
+    const { // 解构赋值
+      orderId, // 执行语句
+      symbol, // 执行语句
+      side, // 执行语句
+      type, // 执行语句
+      expectedPrice, // 执行语句
+      amount, // 执行语句
+      exchange, // 执行语句
+      accountId, // 执行语句
+    } = order; // 执行语句
 
-    const tracking = {
-      orderId,
-      symbol,
-      side,
-      type: type || 'limit',
-      expectedPrice,
-      amount,
-      exchange: exchange || 'unknown',
-      accountId: accountId || 'default',
-      startTime: Date.now(),
-      lastUpdateTime: Date.now(),
-      filledAmount: 0,
-      filledValue: 0,
-      fills: [],
-      status: ORDER_STATUS.PENDING,
-    };
+    const tracking = { // 定义常量 tracking
+      orderId, // 执行语句
+      symbol, // 执行语句
+      side, // 执行语句
+      type: type || 'limit', // 设置 type 字段
+      expectedPrice, // 执行语句
+      amount, // 执行语句
+      exchange: exchange || 'unknown', // 设置 exchange 字段
+      accountId: accountId || 'default', // 设置 accountId 字段
+      startTime: Date.now(), // 设置 startTime 字段
+      lastUpdateTime: Date.now(), // 设置 lastUpdateTime 字段
+      filledAmount: 0, // 设置 filledAmount 字段
+      filledValue: 0, // 设置 filledValue 字段
+      fills: [], // 设置 fills 字段
+      status: ORDER_STATUS.PENDING, // 设置 status 字段
+    }; // 结束代码块
 
-    this.activeOrders.set(orderId, tracking);
+    this.activeOrders.set(orderId, tracking); // 访问 activeOrders
 
-    this.log(`开始追踪订单: ${orderId} ${symbol} ${side}`, 'info');
-  }
+    this.log(`开始追踪订单: ${orderId} ${symbol} ${side}`, 'info'); // 调用 log
+  } // 结束代码块
 
   /**
    * 更新订单成交
@@ -276,39 +276,39 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} orderId - 订单ID / Order ID
    * @param {Object} fill - 成交信息 / Fill info
    */
-  updateFill(orderId, fill) {
-    const tracking = this.activeOrders.get(orderId);
-    if (!tracking) {
-      this.log(`未找到订单追踪: ${orderId}`, 'warn');
-      return;
-    }
+  updateFill(orderId, fill) { // 调用 updateFill
+    const tracking = this.activeOrders.get(orderId); // 定义常量 tracking
+    if (!tracking) { // 条件判断 !tracking
+      this.log(`未找到订单追踪: ${orderId}`, 'warn'); // 调用 log
+      return; // 返回结果
+    } // 结束代码块
 
-    const { price, amount, timestamp, fee } = fill;
-    const fillTime = timestamp || Date.now();
+    const { price, amount, timestamp, fee } = fill; // 解构赋值
+    const fillTime = timestamp || Date.now(); // 定义常量 fillTime
 
     // 记录成交 / Record fill
-    tracking.fills.push({
-      price,
-      amount,
-      timestamp: fillTime,
-      fee: fee || 0,
-      latency: fillTime - tracking.startTime,
-    });
+    tracking.fills.push({ // 调用 tracking.fills.push
+      price, // 执行语句
+      amount, // 执行语句
+      timestamp: fillTime, // 设置 timestamp 字段
+      fee: fee || 0, // 设置 fee 字段
+      latency: fillTime - tracking.startTime, // 设置 latency 字段
+    }); // 结束代码块
 
     // 更新累计 / Update cumulative
-    tracking.filledAmount += amount;
-    tracking.filledValue += price * amount;
-    tracking.lastUpdateTime = fillTime;
+    tracking.filledAmount += amount; // 执行语句
+    tracking.filledValue += price * amount; // 执行语句
+    tracking.lastUpdateTime = fillTime; // 赋值 tracking.lastUpdateTime
 
     // 更新状态 / Update status
-    if (tracking.filledAmount >= tracking.amount * 0.9999) {
-      tracking.status = ORDER_STATUS.FILLED;
-    } else if (tracking.filledAmount > 0) {
-      tracking.status = ORDER_STATUS.PARTIAL;
-    }
+    if (tracking.filledAmount >= tracking.amount * 0.9999) { // 条件判断 tracking.filledAmount >= tracking.amount * 0....
+      tracking.status = ORDER_STATUS.FILLED; // 赋值 tracking.status
+    } else if (tracking.filledAmount > 0) { // 执行语句
+      tracking.status = ORDER_STATUS.PARTIAL; // 赋值 tracking.status
+    } // 结束代码块
 
-    this.log(`订单成交更新: ${orderId} 成交 ${amount} @ ${price}`, 'info');
-  }
+    this.log(`订单成交更新: ${orderId} 成交 ${amount} @ ${price}`, 'info'); // 调用 log
+  } // 结束代码块
 
   /**
    * 完成订单追踪
@@ -317,37 +317,37 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} orderId - 订单ID / Order ID
    * @param {Object} result - 最终结果 / Final result
    */
-  completeTracking(orderId, result = {}) {
-    const tracking = this.activeOrders.get(orderId);
-    if (!tracking) {
-      this.log(`未找到订单追踪: ${orderId}`, 'warn');
-      return;
-    }
+  completeTracking(orderId, result = {}) { // 调用 completeTracking
+    const tracking = this.activeOrders.get(orderId); // 定义常量 tracking
+    if (!tracking) { // 条件判断 !tracking
+      this.log(`未找到订单追踪: ${orderId}`, 'warn'); // 调用 log
+      return; // 返回结果
+    } // 结束代码块
 
-    const endTime = result.timestamp || Date.now();
-    const finalStatus = result.status || (tracking.filledAmount > 0 ? ORDER_STATUS.FILLED : ORDER_STATUS.CANCELLED);
+    const endTime = result.timestamp || Date.now(); // 定义常量 endTime
+    const finalStatus = result.status || (tracking.filledAmount > 0 ? ORDER_STATUS.FILLED : ORDER_STATUS.CANCELLED); // 定义常量 finalStatus
 
     // 计算执行质量指标 / Calculate execution quality metrics
-    const executionRecord = this._calculateExecutionMetrics(tracking, endTime, finalStatus);
+    const executionRecord = this._calculateExecutionMetrics(tracking, endTime, finalStatus); // 定义常量 executionRecord
 
     // 保存记录 / Save record
-    this._saveExecutionRecord(executionRecord);
+    this._saveExecutionRecord(executionRecord); // 调用 _saveExecutionRecord
 
     // 检测异常 / Detect anomalies
-    if (this.config.enableAnomalyDetection) {
-      this._detectAnomalies(executionRecord);
-    }
+    if (this.config.enableAnomalyDetection) { // 条件判断 this.config.enableAnomalyDetection
+      this._detectAnomalies(executionRecord); // 调用 _detectAnomalies
+    } // 结束代码块
 
     // 移除活跃订单 / Remove from active orders
-    this.activeOrders.delete(orderId);
+    this.activeOrders.delete(orderId); // 访问 activeOrders
 
-    this.log(`订单追踪完成: ${orderId} 状态=${finalStatus}`, 'info');
+    this.log(`订单追踪完成: ${orderId} 状态=${finalStatus}`, 'info'); // 调用 log
 
     // 发出完成事件 / Emit completion event
-    this.emit('executionComplete', executionRecord);
+    this.emit('executionComplete', executionRecord); // 调用 emit
 
-    return executionRecord;
-  }
+    return executionRecord; // 返回结果
+  } // 结束代码块
 
   /**
    * 取消订单追踪
@@ -356,12 +356,12 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} orderId - 订单ID / Order ID
    * @param {string} reason - 原因 / Reason
    */
-  cancelTracking(orderId, reason = '') {
-    return this.completeTracking(orderId, {
-      status: ORDER_STATUS.CANCELLED,
-      reason,
-    });
-  }
+  cancelTracking(orderId, reason = '') { // 调用 cancelTracking
+    return this.completeTracking(orderId, { // 返回结果
+      status: ORDER_STATUS.CANCELLED, // 设置 status 字段
+      reason, // 执行语句
+    }); // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 指标计算 / Metrics Calculation
@@ -377,96 +377,96 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @returns {Object} 执行记录 / Execution record
    * @private
    */
-  _calculateExecutionMetrics(tracking, endTime, finalStatus) {
-    const {
-      orderId,
-      symbol,
-      side,
-      type,
-      expectedPrice,
-      amount,
-      exchange,
-      accountId,
-      startTime,
-      filledAmount,
-      filledValue,
-      fills,
-    } = tracking;
+  _calculateExecutionMetrics(tracking, endTime, finalStatus) { // 调用 _calculateExecutionMetrics
+    const { // 解构赋值
+      orderId, // 执行语句
+      symbol, // 执行语句
+      side, // 执行语句
+      type, // 执行语句
+      expectedPrice, // 执行语句
+      amount, // 执行语句
+      exchange, // 执行语句
+      accountId, // 执行语句
+      startTime, // 执行语句
+      filledAmount, // 执行语句
+      filledValue, // 执行语句
+      fills, // 执行语句
+    } = tracking; // 执行语句
 
     // 计算平均成交价 / Calculate average fill price
-    const avgFillPrice = filledAmount > 0 ? filledValue / filledAmount : 0;
+    const avgFillPrice = filledAmount > 0 ? filledValue / filledAmount : 0; // 定义常量 avgFillPrice
 
     // 计算滑点 / Calculate slippage
-    let slippage = 0;
-    let slippageType = SLIPPAGE_TYPE.ZERO;
+    let slippage = 0; // 定义变量 slippage
+    let slippageType = SLIPPAGE_TYPE.ZERO; // 定义变量 slippageType
 
-    if (expectedPrice > 0 && avgFillPrice > 0) {
-      if (side === 'buy') {
+    if (expectedPrice > 0 && avgFillPrice > 0) { // 条件判断 expectedPrice > 0 && avgFillPrice > 0
+      if (side === 'buy') { // 条件判断 side === 'buy'
         // 买入: 实际价格 > 预期价格 = 负滑点
-        slippage = (avgFillPrice - expectedPrice) / expectedPrice;
-        slippageType = slippage > 0.0001 ? SLIPPAGE_TYPE.NEGATIVE :
-                       slippage < -0.0001 ? SLIPPAGE_TYPE.POSITIVE :
-                       SLIPPAGE_TYPE.ZERO;
-      } else {
+        slippage = (avgFillPrice - expectedPrice) / expectedPrice; // 赋值 slippage
+        slippageType = slippage > 0.0001 ? SLIPPAGE_TYPE.NEGATIVE : // 赋值 slippageType
+                       slippage < -0.0001 ? SLIPPAGE_TYPE.POSITIVE : // 执行语句
+                       SLIPPAGE_TYPE.ZERO; // 执行语句
+      } else { // 执行语句
         // 卖出: 实际价格 < 预期价格 = 负滑点
-        slippage = (expectedPrice - avgFillPrice) / expectedPrice;
-        slippageType = slippage > 0.0001 ? SLIPPAGE_TYPE.NEGATIVE :
-                       slippage < -0.0001 ? SLIPPAGE_TYPE.POSITIVE :
-                       SLIPPAGE_TYPE.ZERO;
-      }
-    }
+        slippage = (expectedPrice - avgFillPrice) / expectedPrice; // 赋值 slippage
+        slippageType = slippage > 0.0001 ? SLIPPAGE_TYPE.NEGATIVE : // 赋值 slippageType
+                       slippage < -0.0001 ? SLIPPAGE_TYPE.POSITIVE : // 执行语句
+                       SLIPPAGE_TYPE.ZERO; // 执行语句
+      } // 结束代码块
+    } // 结束代码块
 
     // 计算执行时间 / Calculate execution time
-    const executionTime = endTime - startTime;
+    const executionTime = endTime - startTime; // 定义常量 executionTime
 
     // 计算成交率 / Calculate fill rate
-    const fillRate = amount > 0 ? filledAmount / amount : 0;
+    const fillRate = amount > 0 ? filledAmount / amount : 0; // 定义常量 fillRate
 
     // 计算首次成交时间 / Calculate time to first fill
-    const timeToFirstFill = fills.length > 0 ? fills[0].timestamp - startTime : null;
+    const timeToFirstFill = fills.length > 0 ? fills[0].timestamp - startTime : null; // 定义常量 timeToFirstFill
 
     // 计算成交次数 / Fill count
-    const fillCount = fills.length;
+    const fillCount = fills.length; // 定义常量 fillCount
 
     // 计算平均成交延迟 / Calculate average fill latency
-    const avgFillLatency = fills.length > 0
-      ? fills.reduce((sum, f) => sum + f.latency, 0) / fills.length
-      : null;
+    const avgFillLatency = fills.length > 0 // 定义常量 avgFillLatency
+      ? fills.reduce((sum, f) => sum + f.latency, 0) / fills.length // 定义箭头函数
+      : null; // 执行语句
 
     // 计算总手续费 / Calculate total fees
-    const totalFees = fills.reduce((sum, f) => sum + (f.fee || 0), 0);
+    const totalFees = fills.reduce((sum, f) => sum + (f.fee || 0), 0); // 定义函数 totalFees
 
     // 确定执行质量 / Determine execution quality
-    const quality = this._determineQuality(slippage, executionTime, fillRate);
+    const quality = this._determineQuality(slippage, executionTime, fillRate); // 定义常量 quality
 
-    return {
-      orderId,
-      symbol,
-      side,
-      type,
-      exchange,
-      accountId,
-      expectedPrice,
-      avgFillPrice,
-      slippage,
-      slippageType,
-      slippagePercent: slippage * 100,
-      amount,
-      filledAmount,
-      fillRate,
-      executionTime,
-      timeToFirstFill,
-      fillCount,
-      avgFillLatency,
-      totalFees,
-      status: finalStatus,
-      quality,
-      startTime,
-      endTime,
-      fills,
-      timestamp: Date.now(),
-    };
-  }
+    return { // 返回结果
+      orderId, // 执行语句
+      symbol, // 执行语句
+      side, // 执行语句
+      type, // 执行语句
+      exchange, // 执行语句
+      accountId, // 执行语句
+      expectedPrice, // 执行语句
+      avgFillPrice, // 执行语句
+      slippage, // 执行语句
+      slippageType, // 执行语句
+      slippagePercent: slippage * 100, // 设置 slippagePercent 字段
+      amount, // 执行语句
+      filledAmount, // 执行语句
+      fillRate, // 执行语句
+      executionTime, // 执行语句
+      timeToFirstFill, // 执行语句
+      fillCount, // 执行语句
+      avgFillLatency, // 执行语句
+      totalFees, // 执行语句
+      status: finalStatus, // 设置 status 字段
+      quality, // 执行语句
+      startTime, // 执行语句
+      endTime, // 执行语句
+      fills, // 执行语句
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 确定执行质量
@@ -478,38 +478,38 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @returns {string} 质量级别 / Quality level
    * @private
    */
-  _determineQuality(slippage, executionTime, fillRate) {
-    const absSlippage = Math.abs(slippage);
+  _determineQuality(slippage, executionTime, fillRate) { // 调用 _determineQuality
+    const absSlippage = Math.abs(slippage); // 定义常量 absSlippage
 
     // 检查严重问题 / Check critical issues
-    if (absSlippage >= this.config.slippageAnomalyThreshold ||
-        executionTime >= this.config.executionTimeAnomaly ||
-        fillRate < this.config.fillRateCritical) {
-      return EXECUTION_QUALITY.CRITICAL;
-    }
+    if (absSlippage >= this.config.slippageAnomalyThreshold || // 条件判断 absSlippage >= this.config.slippageAnomalyThr...
+        executionTime >= this.config.executionTimeAnomaly || // 执行语句
+        fillRate < this.config.fillRateCritical) { // 执行语句
+      return EXECUTION_QUALITY.CRITICAL; // 返回结果
+    } // 结束代码块
 
     // 检查较差情况 / Check poor conditions
-    if (absSlippage >= this.config.slippageCriticalThreshold ||
-        executionTime >= this.config.executionTimeCritical) {
-      return EXECUTION_QUALITY.POOR;
-    }
+    if (absSlippage >= this.config.slippageCriticalThreshold || // 条件判断 absSlippage >= this.config.slippageCriticalTh...
+        executionTime >= this.config.executionTimeCritical) { // 执行语句
+      return EXECUTION_QUALITY.POOR; // 返回结果
+    } // 结束代码块
 
     // 检查一般情况 / Check average conditions
-    if (absSlippage >= this.config.slippageWarningThreshold ||
-        executionTime >= this.config.executionTimeWarning ||
-        fillRate < this.config.fillRateWarning) {
-      return EXECUTION_QUALITY.AVERAGE;
-    }
+    if (absSlippage >= this.config.slippageWarningThreshold || // 条件判断 absSlippage >= this.config.slippageWarningThr...
+        executionTime >= this.config.executionTimeWarning || // 执行语句
+        fillRate < this.config.fillRateWarning) { // 执行语句
+      return EXECUTION_QUALITY.AVERAGE; // 返回结果
+    } // 结束代码块
 
     // 检查良好情况 / Check good conditions
-    if (absSlippage < this.config.slippageWarningThreshold * 0.5 &&
-        executionTime < this.config.executionTimeWarning * 0.5 &&
-        fillRate > 0.95) {
-      return EXECUTION_QUALITY.EXCELLENT;
-    }
+    if (absSlippage < this.config.slippageWarningThreshold * 0.5 && // 条件判断 absSlippage < this.config.slippageWarningThre...
+        executionTime < this.config.executionTimeWarning * 0.5 && // 执行语句
+        fillRate > 0.95) { // 执行语句
+      return EXECUTION_QUALITY.EXCELLENT; // 返回结果
+    } // 结束代码块
 
-    return EXECUTION_QUALITY.GOOD;
-  }
+    return EXECUTION_QUALITY.GOOD; // 返回结果
+  } // 结束代码块
 
   // ============================================
   // 记录管理 / Record Management
@@ -522,24 +522,24 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {Object} record - 执行记录 / Execution record
    * @private
    */
-  _saveExecutionRecord(record) {
+  _saveExecutionRecord(record) { // 调用 _saveExecutionRecord
     // 添加到总记录 / Add to total records
-    this.executionRecords.push(record);
+    this.executionRecords.push(record); // 访问 executionRecords
 
     // 限制记录数量 / Limit record count
-    if (this.executionRecords.length > this.config.statisticsWindowSize) {
-      this.executionRecords.shift();
-    }
+    if (this.executionRecords.length > this.config.statisticsWindowSize) { // 条件判断 this.executionRecords.length > this.config.st...
+      this.executionRecords.shift(); // 访问 executionRecords
+    } // 结束代码块
 
     // 更新按交易对统计 / Update symbol stats
-    this._updateStats(this.symbolStats, record.symbol, record);
+    this._updateStats(this.symbolStats, record.symbol, record); // 调用 _updateStats
 
     // 更新按交易所统计 / Update exchange stats
-    this._updateStats(this.exchangeStats, record.exchange, record);
+    this._updateStats(this.exchangeStats, record.exchange, record); // 调用 _updateStats
 
     // 更新按账户统计 / Update account stats
-    this._updateStats(this.accountStats, record.accountId, record);
-  }
+    this._updateStats(this.accountStats, record.accountId, record); // 调用 _updateStats
+  } // 结束代码块
 
   /**
    * 更新统计数据
@@ -550,45 +550,45 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {Object} record - 执行记录 / Execution record
    * @private
    */
-  _updateStats(statsMap, key, record) {
-    if (!statsMap.has(key)) {
-      statsMap.set(key, this._createEmptyStats());
-    }
+  _updateStats(statsMap, key, record) { // 调用 _updateStats
+    if (!statsMap.has(key)) { // 条件判断 !statsMap.has(key)
+      statsMap.set(key, this._createEmptyStats()); // 调用 statsMap.set
+    } // 结束代码块
 
-    const stats = statsMap.get(key);
+    const stats = statsMap.get(key); // 定义常量 stats
 
     // 添加滑点数据 / Add slippage data
-    stats.slippages.push({
-      value: record.slippage,
-      timestamp: record.timestamp,
-    });
+    stats.slippages.push({ // 调用 stats.slippages.push
+      value: record.slippage, // 设置 value 字段
+      timestamp: record.timestamp, // 设置 timestamp 字段
+    }); // 结束代码块
 
     // 添加执行时间数据 / Add execution time data
-    stats.executionTimes.push({
-      value: record.executionTime,
-      timestamp: record.timestamp,
-    });
+    stats.executionTimes.push({ // 调用 stats.executionTimes.push
+      value: record.executionTime, // 设置 value 字段
+      timestamp: record.timestamp, // 设置 timestamp 字段
+    }); // 结束代码块
 
     // 添加成交率数据 / Add fill rate data
-    stats.fillRates.push({
-      value: record.fillRate,
-      timestamp: record.timestamp,
-    });
+    stats.fillRates.push({ // 调用 stats.fillRates.push
+      value: record.fillRate, // 设置 value 字段
+      timestamp: record.timestamp, // 设置 timestamp 字段
+    }); // 结束代码块
 
     // 更新计数 / Update counts
-    stats.totalOrders++;
-    stats.totalVolume += record.filledAmount;
-    stats.totalFees += record.totalFees;
+    stats.totalOrders++; // 执行语句
+    stats.totalVolume += record.filledAmount; // 执行语句
+    stats.totalFees += record.totalFees; // 执行语句
 
-    if (record.status === ORDER_STATUS.FILLED) {
-      stats.filledOrders++;
-    } else if (record.status === ORDER_STATUS.CANCELLED) {
-      stats.cancelledOrders++;
-    }
+    if (record.status === ORDER_STATUS.FILLED) { // 条件判断 record.status === ORDER_STATUS.FILLED
+      stats.filledOrders++; // 执行语句
+    } else if (record.status === ORDER_STATUS.CANCELLED) { // 执行语句
+      stats.cancelledOrders++; // 执行语句
+    } // 结束代码块
 
     // 清理过期数据 / Clean expired data
-    this._cleanExpiredData(stats);
-  }
+    this._cleanExpiredData(stats); // 调用 _cleanExpiredData
+  } // 结束代码块
 
   /**
    * 创建空统计对象
@@ -597,18 +597,18 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @returns {Object} 空统计对象 / Empty stats object
    * @private
    */
-  _createEmptyStats() {
-    return {
-      slippages: [],
-      executionTimes: [],
-      fillRates: [],
-      totalOrders: 0,
-      filledOrders: 0,
-      cancelledOrders: 0,
-      totalVolume: 0,
-      totalFees: 0,
-    };
-  }
+  _createEmptyStats() { // 调用 _createEmptyStats
+    return { // 返回结果
+      slippages: [], // 设置 slippages 字段
+      executionTimes: [], // 设置 executionTimes 字段
+      fillRates: [], // 设置 fillRates 字段
+      totalOrders: 0, // 设置 totalOrders 字段
+      filledOrders: 0, // 设置 filledOrders 字段
+      cancelledOrders: 0, // 设置 cancelledOrders 字段
+      totalVolume: 0, // 设置 totalVolume 字段
+      totalFees: 0, // 设置 totalFees 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 清理过期数据
@@ -617,13 +617,13 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {Object} stats - 统计对象 / Stats object
    * @private
    */
-  _cleanExpiredData(stats) {
-    const cutoffTime = Date.now() - this.config.rollingWindowTime;
+  _cleanExpiredData(stats) { // 调用 _cleanExpiredData
+    const cutoffTime = Date.now() - this.config.rollingWindowTime; // 定义常量 cutoffTime
 
-    stats.slippages = stats.slippages.filter(s => s.timestamp >= cutoffTime);
-    stats.executionTimes = stats.executionTimes.filter(t => t.timestamp >= cutoffTime);
-    stats.fillRates = stats.fillRates.filter(f => f.timestamp >= cutoffTime);
-  }
+    stats.slippages = stats.slippages.filter(s => s.timestamp >= cutoffTime); // 赋值 stats.slippages
+    stats.executionTimes = stats.executionTimes.filter(t => t.timestamp >= cutoffTime); // 赋值 stats.executionTimes
+    stats.fillRates = stats.fillRates.filter(f => f.timestamp >= cutoffTime); // 赋值 stats.fillRates
+  } // 结束代码块
 
   // ============================================
   // 统计汇总 / Statistics Aggregation
@@ -634,27 +634,27 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * Perform statistics aggregation
    * @private
    */
-  _performAggregation() {
-    const now = Date.now();
-    const hourAgo = now - this.config.shortTermWindowTime;
-    const dayAgo = now - this.config.rollingWindowTime;
+  _performAggregation() { // 调用 _performAggregation
+    const now = Date.now(); // 定义常量 now
+    const hourAgo = now - this.config.shortTermWindowTime; // 定义常量 hourAgo
+    const dayAgo = now - this.config.rollingWindowTime; // 定义常量 dayAgo
 
     // 汇总最近1小时 / Aggregate last hour
-    this.aggregatedStats.lastHour = this._aggregateRecords(
-      this.executionRecords.filter(r => r.timestamp >= hourAgo)
-    );
+    this.aggregatedStats.lastHour = this._aggregateRecords( // 访问 aggregatedStats
+      this.executionRecords.filter(r => r.timestamp >= hourAgo) // 访问 executionRecords
+    ); // 结束调用或参数
 
     // 汇总最近24小时 / Aggregate last 24 hours
-    this.aggregatedStats.last24Hours = this._aggregateRecords(
-      this.executionRecords.filter(r => r.timestamp >= dayAgo)
-    );
+    this.aggregatedStats.last24Hours = this._aggregateRecords( // 访问 aggregatedStats
+      this.executionRecords.filter(r => r.timestamp >= dayAgo) // 访问 executionRecords
+    ); // 结束调用或参数
 
     // 汇总全部 / Aggregate all
-    this.aggregatedStats.total = this._aggregateRecords(this.executionRecords);
+    this.aggregatedStats.total = this._aggregateRecords(this.executionRecords); // 访问 aggregatedStats
 
     // 发出汇总事件 / Emit aggregation event
-    this.emit('statsAggregated', this.aggregatedStats);
-  }
+    this.emit('statsAggregated', this.aggregatedStats); // 调用 emit
+  } // 结束代码块
 
   /**
    * 汇总记录
@@ -664,59 +664,59 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @returns {Object} 汇总结果 / Aggregation result
    * @private
    */
-  _aggregateRecords(records) {
-    if (records.length === 0) {
-      return {
-        count: 0,
-        slippage: { avg: 0, min: 0, max: 0, std: 0, median: 0 },
-        executionTime: { avg: 0, min: 0, max: 0, std: 0, median: 0 },
-        fillRate: { avg: 0, min: 0, max: 0 },
-        qualityDistribution: {},
-      };
-    }
+  _aggregateRecords(records) { // 调用 _aggregateRecords
+    if (records.length === 0) { // 条件判断 records.length === 0
+      return { // 返回结果
+        count: 0, // 设置 count 字段
+        slippage: { avg: 0, min: 0, max: 0, std: 0, median: 0 }, // 设置 slippage 字段
+        executionTime: { avg: 0, min: 0, max: 0, std: 0, median: 0 }, // 设置 executionTime 字段
+        fillRate: { avg: 0, min: 0, max: 0 }, // 设置 fillRate 字段
+        qualityDistribution: {}, // 设置 qualityDistribution 字段
+      }; // 结束代码块
+    } // 结束代码块
 
     // 提取数据 / Extract data
-    const slippages = records.map(r => r.slippage);
-    const executionTimes = records.map(r => r.executionTime);
-    const fillRates = records.map(r => r.fillRate);
+    const slippages = records.map(r => r.slippage); // 定义函数 slippages
+    const executionTimes = records.map(r => r.executionTime); // 定义函数 executionTimes
+    const fillRates = records.map(r => r.fillRate); // 定义函数 fillRates
 
     // 计算滑点统计 / Calculate slippage stats
-    const slippageStats = this._calculateArrayStats(slippages);
+    const slippageStats = this._calculateArrayStats(slippages); // 定义常量 slippageStats
 
     // 计算执行时间统计 / Calculate execution time stats
-    const executionTimeStats = this._calculateArrayStats(executionTimes);
+    const executionTimeStats = this._calculateArrayStats(executionTimes); // 定义常量 executionTimeStats
 
     // 计算成交率统计 / Calculate fill rate stats
-    const fillRateStats = {
-      avg: fillRates.reduce((a, b) => a + b, 0) / fillRates.length,
-      min: Math.min(...fillRates),
-      max: Math.max(...fillRates),
-    };
+    const fillRateStats = { // 定义常量 fillRateStats
+      avg: fillRates.reduce((a, b) => a + b, 0) / fillRates.length, // 设置 avg 字段
+      min: Math.min(...fillRates), // 设置 min 字段
+      max: Math.max(...fillRates), // 设置 max 字段
+    }; // 结束代码块
 
     // 计算质量分布 / Calculate quality distribution
-    const qualityDistribution = {};
-    for (const record of records) {
-      qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
-    }
+    const qualityDistribution = {}; // 定义常量 qualityDistribution
+    for (const record of records) { // 循环 const record of records
+      qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1; // 执行语句
+    } // 结束代码块
 
     // 计算滑点类型分布 / Calculate slippage type distribution
-    const slippageTypeDistribution = {};
-    for (const record of records) {
-      slippageTypeDistribution[record.slippageType] = (slippageTypeDistribution[record.slippageType] || 0) + 1;
-    }
+    const slippageTypeDistribution = {}; // 定义常量 slippageTypeDistribution
+    for (const record of records) { // 循环 const record of records
+      slippageTypeDistribution[record.slippageType] = (slippageTypeDistribution[record.slippageType] || 0) + 1; // 执行语句
+    } // 结束代码块
 
-    return {
-      count: records.length,
-      slippage: slippageStats,
-      executionTime: executionTimeStats,
-      fillRate: fillRateStats,
-      qualityDistribution,
-      slippageTypeDistribution,
-      totalVolume: records.reduce((sum, r) => sum + r.filledAmount, 0),
-      totalFees: records.reduce((sum, r) => sum + r.totalFees, 0),
-      avgFillCount: records.reduce((sum, r) => sum + r.fillCount, 0) / records.length,
-    };
-  }
+    return { // 返回结果
+      count: records.length, // 设置 count 字段
+      slippage: slippageStats, // 设置 slippage 字段
+      executionTime: executionTimeStats, // 设置 executionTime 字段
+      fillRate: fillRateStats, // 设置 fillRate 字段
+      qualityDistribution, // 执行语句
+      slippageTypeDistribution, // 执行语句
+      totalVolume: records.reduce((sum, r) => sum + r.filledAmount, 0), // 设置 totalVolume 字段
+      totalFees: records.reduce((sum, r) => sum + r.totalFees, 0), // 设置 totalFees 字段
+      avgFillCount: records.reduce((sum, r) => sum + r.fillCount, 0) / records.length, // 设置 avgFillCount 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 计算数组统计
@@ -726,35 +726,35 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @returns {Object} 统计结果 / Statistics result
    * @private
    */
-  _calculateArrayStats(arr) {
-    if (arr.length === 0) {
-      return { avg: 0, min: 0, max: 0, std: 0, median: 0 };
-    }
+  _calculateArrayStats(arr) { // 调用 _calculateArrayStats
+    if (arr.length === 0) { // 条件判断 arr.length === 0
+      return { avg: 0, min: 0, max: 0, std: 0, median: 0 }; // 返回结果
+    } // 结束代码块
 
-    const sorted = [...arr].sort((a, b) => a - b);
-    const sum = arr.reduce((a, b) => a + b, 0);
-    const avg = sum / arr.length;
+    const sorted = [...arr].sort((a, b) => a - b); // 定义函数 sorted
+    const sum = arr.reduce((a, b) => a + b, 0); // 定义函数 sum
+    const avg = sum / arr.length; // 定义常量 avg
 
     // 计算标准差 / Calculate standard deviation
-    const variance = arr.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / arr.length;
-    const std = Math.sqrt(variance);
+    const variance = arr.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / arr.length; // 定义函数 variance
+    const std = Math.sqrt(variance); // 定义常量 std
 
     // 计算中位数 / Calculate median
-    const mid = Math.floor(sorted.length / 2);
-    const median = sorted.length % 2 !== 0
-      ? sorted[mid]
-      : (sorted[mid - 1] + sorted[mid]) / 2;
+    const mid = Math.floor(sorted.length / 2); // 定义常量 mid
+    const median = sorted.length % 2 !== 0 // 定义常量 median
+      ? sorted[mid] // 执行语句
+      : (sorted[mid - 1] + sorted[mid]) / 2; // 执行语句
 
-    return {
-      avg,
-      min: sorted[0],
-      max: sorted[sorted.length - 1],
-      std,
-      median,
-      p5: sorted[Math.floor(sorted.length * 0.05)] || sorted[0],
-      p95: sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length - 1],
-    };
-  }
+    return { // 返回结果
+      avg, // 执行语句
+      min: sorted[0], // 设置 min 字段
+      max: sorted[sorted.length - 1], // 设置 max 字段
+      std, // 执行语句
+      median, // 执行语句
+      p5: sorted[Math.floor(sorted.length * 0.05)] || sorted[0], // 设置 p5 字段
+      p95: sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length - 1], // 设置 p95 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 异常检测 / Anomaly Detection
@@ -767,111 +767,111 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {Object} record - 执行记录 / Execution record
    * @private
    */
-  _detectAnomalies(record) {
-    const anomalies = [];
+  _detectAnomalies(record) { // 调用 _detectAnomalies
+    const anomalies = []; // 定义常量 anomalies
 
     // 检查滑点异常 / Check slippage anomaly
-    if (Math.abs(record.slippage) >= this.config.slippageAnomalyThreshold) {
-      anomalies.push({
-        type: 'slippage_anomaly',
-        severity: 'critical',
-        message: `滑点异常: ${(record.slippage * 100).toFixed(3)}%`,
-        value: record.slippage,
-        threshold: this.config.slippageAnomalyThreshold,
-      });
-    } else if (Math.abs(record.slippage) >= this.config.slippageCriticalThreshold) {
-      anomalies.push({
-        type: 'slippage_high',
-        severity: 'warning',
-        message: `滑点较高: ${(record.slippage * 100).toFixed(3)}%`,
-        value: record.slippage,
-        threshold: this.config.slippageCriticalThreshold,
-      });
-    }
+    if (Math.abs(record.slippage) >= this.config.slippageAnomalyThreshold) { // 条件判断 Math.abs(record.slippage) >= this.config.slip...
+      anomalies.push({ // 调用 anomalies.push
+        type: 'slippage_anomaly', // 设置 type 字段
+        severity: 'critical', // 设置 severity 字段
+        message: `滑点异常: ${(record.slippage * 100).toFixed(3)}%`, // 设置 message 字段
+        value: record.slippage, // 设置 value 字段
+        threshold: this.config.slippageAnomalyThreshold, // 设置 threshold 字段
+      }); // 结束代码块
+    } else if (Math.abs(record.slippage) >= this.config.slippageCriticalThreshold) { // 执行语句
+      anomalies.push({ // 调用 anomalies.push
+        type: 'slippage_high', // 设置 type 字段
+        severity: 'warning', // 设置 severity 字段
+        message: `滑点较高: ${(record.slippage * 100).toFixed(3)}%`, // 设置 message 字段
+        value: record.slippage, // 设置 value 字段
+        threshold: this.config.slippageCriticalThreshold, // 设置 threshold 字段
+      }); // 结束代码块
+    } // 结束代码块
 
     // 检查执行时间异常 / Check execution time anomaly
-    if (record.executionTime >= this.config.executionTimeAnomaly) {
-      anomalies.push({
-        type: 'execution_time_anomaly',
-        severity: 'critical',
-        message: `执行时间异常: ${(record.executionTime / 1000).toFixed(1)}秒`,
-        value: record.executionTime,
-        threshold: this.config.executionTimeAnomaly,
-      });
-    } else if (record.executionTime >= this.config.executionTimeCritical) {
-      anomalies.push({
-        type: 'execution_time_high',
-        severity: 'warning',
-        message: `执行时间较长: ${(record.executionTime / 1000).toFixed(1)}秒`,
-        value: record.executionTime,
-        threshold: this.config.executionTimeCritical,
-      });
-    }
+    if (record.executionTime >= this.config.executionTimeAnomaly) { // 条件判断 record.executionTime >= this.config.execution...
+      anomalies.push({ // 调用 anomalies.push
+        type: 'execution_time_anomaly', // 设置 type 字段
+        severity: 'critical', // 设置 severity 字段
+        message: `执行时间异常: ${(record.executionTime / 1000).toFixed(1)}秒`, // 设置 message 字段
+        value: record.executionTime, // 设置 value 字段
+        threshold: this.config.executionTimeAnomaly, // 设置 threshold 字段
+      }); // 结束代码块
+    } else if (record.executionTime >= this.config.executionTimeCritical) { // 执行语句
+      anomalies.push({ // 调用 anomalies.push
+        type: 'execution_time_high', // 设置 type 字段
+        severity: 'warning', // 设置 severity 字段
+        message: `执行时间较长: ${(record.executionTime / 1000).toFixed(1)}秒`, // 设置 message 字段
+        value: record.executionTime, // 设置 value 字段
+        threshold: this.config.executionTimeCritical, // 设置 threshold 字段
+      }); // 结束代码块
+    } // 结束代码块
 
     // 检查成交率异常 / Check fill rate anomaly
-    if (record.fillRate < this.config.fillRateCritical) {
-      anomalies.push({
-        type: 'fill_rate_low',
-        severity: 'critical',
-        message: `成交率过低: ${(record.fillRate * 100).toFixed(1)}%`,
-        value: record.fillRate,
-        threshold: this.config.fillRateCritical,
-      });
-    } else if (record.fillRate < this.config.fillRateWarning) {
-      anomalies.push({
-        type: 'fill_rate_warning',
-        severity: 'warning',
-        message: `成交率较低: ${(record.fillRate * 100).toFixed(1)}%`,
-        value: record.fillRate,
-        threshold: this.config.fillRateWarning,
-      });
-    }
+    if (record.fillRate < this.config.fillRateCritical) { // 条件判断 record.fillRate < this.config.fillRateCritical
+      anomalies.push({ // 调用 anomalies.push
+        type: 'fill_rate_low', // 设置 type 字段
+        severity: 'critical', // 设置 severity 字段
+        message: `成交率过低: ${(record.fillRate * 100).toFixed(1)}%`, // 设置 message 字段
+        value: record.fillRate, // 设置 value 字段
+        threshold: this.config.fillRateCritical, // 设置 threshold 字段
+      }); // 结束代码块
+    } else if (record.fillRate < this.config.fillRateWarning) { // 执行语句
+      anomalies.push({ // 调用 anomalies.push
+        type: 'fill_rate_warning', // 设置 type 字段
+        severity: 'warning', // 设置 severity 字段
+        message: `成交率较低: ${(record.fillRate * 100).toFixed(1)}%`, // 设置 message 字段
+        value: record.fillRate, // 设置 value 字段
+        threshold: this.config.fillRateWarning, // 设置 threshold 字段
+      }); // 结束代码块
+    } // 结束代码块
 
     // 统计异常检测 - 使用历史数据 / Statistical anomaly detection using historical data
-    if (this.executionRecords.length >= 30) {
-      const historicalSlippages = this.executionRecords.slice(-100).map(r => r.slippage);
-      const stats = this._calculateArrayStats(historicalSlippages);
+    if (this.executionRecords.length >= 30) { // 条件判断 this.executionRecords.length >= 30
+      const historicalSlippages = this.executionRecords.slice(-100).map(r => r.slippage); // 定义函数 historicalSlippages
+      const stats = this._calculateArrayStats(historicalSlippages); // 定义常量 stats
 
       // 检查是否超出N个标准差 / Check if exceeds N standard deviations
-      if (stats.std > 0) {
-        const zScore = (record.slippage - stats.avg) / stats.std;
-        if (Math.abs(zScore) > this.config.anomalySensitivity) {
-          anomalies.push({
-            type: 'statistical_anomaly',
-            severity: 'warning',
-            message: `滑点统计异常: Z-Score=${zScore.toFixed(2)}`,
-            value: record.slippage,
-            zScore,
-            historicalAvg: stats.avg,
-            historicalStd: stats.std,
-          });
-        }
-      }
-    }
+      if (stats.std > 0) { // 条件判断 stats.std > 0
+        const zScore = (record.slippage - stats.avg) / stats.std; // 定义常量 zScore
+        if (Math.abs(zScore) > this.config.anomalySensitivity) { // 条件判断 Math.abs(zScore) > this.config.anomalySensiti...
+          anomalies.push({ // 调用 anomalies.push
+            type: 'statistical_anomaly', // 设置 type 字段
+            severity: 'warning', // 设置 severity 字段
+            message: `滑点统计异常: Z-Score=${zScore.toFixed(2)}`, // 设置 message 字段
+            value: record.slippage, // 设置 value 字段
+            zScore, // 执行语句
+            historicalAvg: stats.avg, // 设置 historicalAvg 字段
+            historicalStd: stats.std, // 设置 historicalStd 字段
+          }); // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
 
     // 记录并发出异常事件 / Record and emit anomaly events
-    if (anomalies.length > 0) {
-      const anomalyRecord = {
-        orderId: record.orderId,
-        symbol: record.symbol,
-        exchange: record.exchange,
-        anomalies,
-        record,
-        timestamp: Date.now(),
-      };
+    if (anomalies.length > 0) { // 条件判断 anomalies.length > 0
+      const anomalyRecord = { // 定义常量 anomalyRecord
+        orderId: record.orderId, // 设置 orderId 字段
+        symbol: record.symbol, // 设置 symbol 字段
+        exchange: record.exchange, // 设置 exchange 字段
+        anomalies, // 执行语句
+        record, // 执行语句
+        timestamp: Date.now(), // 设置 timestamp 字段
+      }; // 结束代码块
 
-      this.anomalies.push(anomalyRecord);
+      this.anomalies.push(anomalyRecord); // 访问 anomalies
 
       // 限制异常记录数量 / Limit anomaly record count
-      if (this.anomalies.length > 500) {
-        this.anomalies.shift();
-      }
+      if (this.anomalies.length > 500) { // 条件判断 this.anomalies.length > 500
+        this.anomalies.shift(); // 访问 anomalies
+      } // 结束代码块
 
-      this.emit('anomalyDetected', anomalyRecord);
+      this.emit('anomalyDetected', anomalyRecord); // 调用 emit
 
-      this.log(`检测到执行异常: ${record.orderId} - ${anomalies.map(a => a.message).join(', ')}`, 'warn');
-    }
-  }
+      this.log(`检测到执行异常: ${record.orderId} - ${anomalies.map(a => a.message).join(', ')}`, 'warn'); // 调用 log
+    } // 结束代码块
+  } // 结束代码块
 
   // ============================================
   // 公共API / Public API
@@ -884,42 +884,42 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {Object} options - 选项 / Options
    * @returns {Object} 质量报告 / Quality report
    */
-  getReport(options = {}) {
-    const { symbol, exchange, accountId, timeRange } = options;
+  getReport(options = {}) { // 调用 getReport
+    const { symbol, exchange, accountId, timeRange } = options; // 解构赋值
 
-    let records = [...this.executionRecords];
+    let records = [...this.executionRecords]; // 定义变量 records
 
     // 按交易对过滤 / Filter by symbol
-    if (symbol) {
-      records = records.filter(r => r.symbol === symbol);
-    }
+    if (symbol) { // 条件判断 symbol
+      records = records.filter(r => r.symbol === symbol); // 赋值 records
+    } // 结束代码块
 
     // 按交易所过滤 / Filter by exchange
-    if (exchange) {
-      records = records.filter(r => r.exchange === exchange);
-    }
+    if (exchange) { // 条件判断 exchange
+      records = records.filter(r => r.exchange === exchange); // 赋值 records
+    } // 结束代码块
 
     // 按账户过滤 / Filter by account
-    if (accountId) {
-      records = records.filter(r => r.accountId === accountId);
-    }
+    if (accountId) { // 条件判断 accountId
+      records = records.filter(r => r.accountId === accountId); // 赋值 records
+    } // 结束代码块
 
     // 按时间范围过滤 / Filter by time range
-    if (timeRange) {
-      const cutoffTime = Date.now() - timeRange;
-      records = records.filter(r => r.timestamp >= cutoffTime);
-    }
+    if (timeRange) { // 条件判断 timeRange
+      const cutoffTime = Date.now() - timeRange; // 定义常量 cutoffTime
+      records = records.filter(r => r.timestamp >= cutoffTime); // 赋值 records
+    } // 结束代码块
 
-    const aggregated = this._aggregateRecords(records);
+    const aggregated = this._aggregateRecords(records); // 定义常量 aggregated
 
-    return {
-      timestamp: Date.now(),
-      filters: { symbol, exchange, accountId, timeRange },
-      summary: aggregated,
-      recentRecords: records.slice(-20),
-      activeOrders: this.activeOrders.size,
-    };
-  }
+    return { // 返回结果
+      timestamp: Date.now(), // 设置 timestamp 字段
+      filters: { symbol, exchange, accountId, timeRange }, // 设置 filters 字段
+      summary: aggregated, // 设置 summary 字段
+      recentRecords: records.slice(-20), // 设置 recentRecords 字段
+      activeOrders: this.activeOrders.size, // 设置 activeOrders 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取交易对统计
@@ -928,24 +928,24 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} symbol - 交易对 / Trading pair
    * @returns {Object} 统计数据 / Statistics
    */
-  getSymbolStats(symbol) {
-    const stats = this.symbolStats.get(symbol);
-    if (!stats) {
-      return { error: '无该交易对数据 / No data for this symbol' };
-    }
+  getSymbolStats(symbol) { // 调用 getSymbolStats
+    const stats = this.symbolStats.get(symbol); // 定义常量 stats
+    if (!stats) { // 条件判断 !stats
+      return { error: '无该交易对数据 / No data for this symbol' }; // 返回结果
+    } // 结束代码块
 
-    return {
-      symbol,
-      slippage: this._calculateArrayStats(stats.slippages.map(s => s.value)),
-      executionTime: this._calculateArrayStats(stats.executionTimes.map(t => t.value)),
-      fillRate: this._calculateArrayStats(stats.fillRates.map(f => f.value)),
-      totalOrders: stats.totalOrders,
-      filledOrders: stats.filledOrders,
-      cancelledOrders: stats.cancelledOrders,
-      totalVolume: stats.totalVolume,
-      totalFees: stats.totalFees,
-    };
-  }
+    return { // 返回结果
+      symbol, // 执行语句
+      slippage: this._calculateArrayStats(stats.slippages.map(s => s.value)), // 设置 slippage 字段
+      executionTime: this._calculateArrayStats(stats.executionTimes.map(t => t.value)), // 设置 executionTime 字段
+      fillRate: this._calculateArrayStats(stats.fillRates.map(f => f.value)), // 设置 fillRate 字段
+      totalOrders: stats.totalOrders, // 设置 totalOrders 字段
+      filledOrders: stats.filledOrders, // 设置 filledOrders 字段
+      cancelledOrders: stats.cancelledOrders, // 设置 cancelledOrders 字段
+      totalVolume: stats.totalVolume, // 设置 totalVolume 字段
+      totalFees: stats.totalFees, // 设置 totalFees 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取交易所统计
@@ -954,24 +954,24 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} exchange - 交易所 / Exchange
    * @returns {Object} 统计数据 / Statistics
    */
-  getExchangeStats(exchange) {
-    const stats = this.exchangeStats.get(exchange);
-    if (!stats) {
-      return { error: '无该交易所数据 / No data for this exchange' };
-    }
+  getExchangeStats(exchange) { // 调用 getExchangeStats
+    const stats = this.exchangeStats.get(exchange); // 定义常量 stats
+    if (!stats) { // 条件判断 !stats
+      return { error: '无该交易所数据 / No data for this exchange' }; // 返回结果
+    } // 结束代码块
 
-    return {
-      exchange,
-      slippage: this._calculateArrayStats(stats.slippages.map(s => s.value)),
-      executionTime: this._calculateArrayStats(stats.executionTimes.map(t => t.value)),
-      fillRate: this._calculateArrayStats(stats.fillRates.map(f => f.value)),
-      totalOrders: stats.totalOrders,
-      filledOrders: stats.filledOrders,
-      cancelledOrders: stats.cancelledOrders,
-      totalVolume: stats.totalVolume,
-      totalFees: stats.totalFees,
-    };
-  }
+    return { // 返回结果
+      exchange, // 执行语句
+      slippage: this._calculateArrayStats(stats.slippages.map(s => s.value)), // 设置 slippage 字段
+      executionTime: this._calculateArrayStats(stats.executionTimes.map(t => t.value)), // 设置 executionTime 字段
+      fillRate: this._calculateArrayStats(stats.fillRates.map(f => f.value)), // 设置 fillRate 字段
+      totalOrders: stats.totalOrders, // 设置 totalOrders 字段
+      filledOrders: stats.filledOrders, // 设置 filledOrders 字段
+      cancelledOrders: stats.cancelledOrders, // 设置 cancelledOrders 字段
+      totalVolume: stats.totalVolume, // 设置 totalVolume 字段
+      totalFees: stats.totalFees, // 设置 totalFees 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取汇总统计
@@ -979,12 +979,12 @@ export class ExecutionQualityMonitor extends EventEmitter {
    *
    * @returns {Object} 汇总统计 / Aggregated statistics
    */
-  getAggregatedStats() {
-    return {
-      ...this.aggregatedStats,
-      timestamp: Date.now(),
-    };
-  }
+  getAggregatedStats() { // 调用 getAggregatedStats
+    return { // 返回结果
+      ...this.aggregatedStats, // 展开对象或数组
+      timestamp: Date.now(), // 设置 timestamp 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 获取异常列表
@@ -993,9 +993,9 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {number} limit - 数量限制 / Limit
    * @returns {Array} 异常列表 / Anomaly list
    */
-  getAnomalies(limit = 50) {
-    return this.anomalies.slice(-limit);
-  }
+  getAnomalies(limit = 50) { // 调用 getAnomalies
+    return this.anomalies.slice(-limit); // 返回结果
+  } // 结束代码块
 
   /**
    * 获取状态
@@ -1003,37 +1003,37 @@ export class ExecutionQualityMonitor extends EventEmitter {
    *
    * @returns {Object} 状态信息 / Status info
    */
-  getStatus() {
-    return {
-      running: this.running,
-      activeOrders: this.activeOrders.size,
-      totalRecords: this.executionRecords.length,
-      symbolCount: this.symbolStats.size,
-      exchangeCount: this.exchangeStats.size,
-      accountCount: this.accountStats.size,
-      anomalyCount: this.anomalies.length,
-      lastAggregation: this.aggregatedStats.total.count,
-    };
-  }
+  getStatus() { // 调用 getStatus
+    return { // 返回结果
+      running: this.running, // 设置 running 字段
+      activeOrders: this.activeOrders.size, // 设置 activeOrders 字段
+      totalRecords: this.executionRecords.length, // 设置 totalRecords 字段
+      symbolCount: this.symbolStats.size, // 设置 symbolCount 字段
+      exchangeCount: this.exchangeStats.size, // 设置 exchangeCount 字段
+      accountCount: this.accountStats.size, // 设置 accountCount 字段
+      anomalyCount: this.anomalies.length, // 设置 anomalyCount 字段
+      lastAggregation: this.aggregatedStats.total.count, // 设置 lastAggregation 字段
+    }; // 结束代码块
+  } // 结束代码块
 
   /**
    * 清除历史数据
    * Clear historical data
    */
-  clearHistory() {
-    this.executionRecords = [];
-    this.symbolStats.clear();
-    this.exchangeStats.clear();
-    this.accountStats.clear();
-    this.anomalies = [];
-    this.aggregatedStats = {
-      total: this._createEmptyStats(),
-      lastHour: this._createEmptyStats(),
-      last24Hours: this._createEmptyStats(),
-    };
+  clearHistory() { // 调用 clearHistory
+    this.executionRecords = []; // 设置 executionRecords
+    this.symbolStats.clear(); // 访问 symbolStats
+    this.exchangeStats.clear(); // 访问 exchangeStats
+    this.accountStats.clear(); // 访问 accountStats
+    this.anomalies = []; // 设置 anomalies
+    this.aggregatedStats = { // 设置 aggregatedStats
+      total: this._createEmptyStats(), // 设置 total 字段
+      lastHour: this._createEmptyStats(), // 设置 lastHour 字段
+      last24Hours: this._createEmptyStats(), // 设置 last24Hours 字段
+    }; // 结束代码块
 
-    this.log('历史数据已清除 / Historical data cleared', 'info');
-  }
+    this.log('历史数据已清除 / Historical data cleared', 'info'); // 调用 log
+  } // 结束代码块
 
   /**
    * 日志输出
@@ -1042,29 +1042,29 @@ export class ExecutionQualityMonitor extends EventEmitter {
    * @param {string} message - 消息 / Message
    * @param {string} level - 级别 / Level
    */
-  log(message, level = 'info') {
-    if (!this.config.verbose && level === 'info') return;
+  log(message, level = 'info') { // 调用 log
+    if (!this.config.verbose && level === 'info') return; // 条件判断 !this.config.verbose && level === 'info'
 
-    const fullMessage = `${this.config.logPrefix} ${message}`;
+    const fullMessage = `${this.config.logPrefix} ${message}`; // 定义常量 fullMessage
 
-    switch (level) {
-      case 'error':
-        console.error(fullMessage);
-        break;
-      case 'warn':
-        console.warn(fullMessage);
-        break;
-      case 'info':
-      default:
-        console.log(fullMessage);
-        break;
-    }
-  }
-}
+    switch (level) { // 分支选择 level
+      case 'error': // 分支 'error'
+        console.error(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+      case 'warn': // 分支 'warn'
+        console.warn(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+      case 'info': // 分支 'info'
+      default: // 默认分支
+        console.log(fullMessage); // 控制台输出
+        break; // 跳出循环或分支
+    } // 结束代码块
+  } // 结束代码块
+} // 结束代码块
 
 // ============================================
 // 导出 / Exports
 // ============================================
 
-export { EXECUTION_QUALITY, SLIPPAGE_TYPE, ORDER_STATUS, DEFAULT_CONFIG };
-export default ExecutionQualityMonitor;
+export { EXECUTION_QUALITY, SLIPPAGE_TYPE, ORDER_STATUS, DEFAULT_CONFIG }; // 导出命名成员
+export default ExecutionQualityMonitor; // 默认导出
