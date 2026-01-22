@@ -230,7 +230,7 @@ export class PositionCalculator { // 导出类 PositionCalculator
       baseAmount,                   // 基础金额 / Base amount
       multiplier,                   // 倍数 / Multiplier
       consecutiveLosses,            // 连续亏损次数 / Consecutive losses
-      warning: '高风险策略，请谨慎使用 / High risk strategy, use with caution', // 设置 warning 字段
+      warning: '高风险策略，请谨慎使用 / High risk strategy, use with caution', // 警告
     }; // 结束代码块
   } // 结束代码块
 

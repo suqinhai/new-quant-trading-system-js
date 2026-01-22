@@ -45,21 +45,21 @@ async function start() { // 定义函数 start
 
   // 创建服务实例 / Create service instance
   service = new NotificationService({ // 赋值 service
-    redis: { // 设置 redis 字段
-      host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-      port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-      password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-      db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+    redis: { // redis
+      host: process.env.REDIS_HOST || 'localhost', // 主机
+      port: parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+      password: process.env.REDIS_PASSWORD || null, // 密码
+      db: parseInt(process.env.REDIS_DB || '0', 10), // db
     }, // 结束代码块
-    telegram: { // 设置 telegram 字段
-      botToken: process.env.TELEGRAM_BOT_TOKEN || '', // 读取环境变量 TELEGRAM_BOT_TOKEN
-      chatId: process.env.TELEGRAM_CHAT_ID || '', // 读取环境变量 TELEGRAM_CHAT_ID
-      enabled: process.env.TELEGRAM_ENABLED !== 'false', // 读取环境变量 TELEGRAM_ENABLED
+    telegram: { // Telegram
+      botToken: process.env.TELEGRAM_BOT_TOKEN || '', // 机器人令牌
+      chatId: process.env.TELEGRAM_CHAT_ID || '', // 聊天ID
+      enabled: process.env.TELEGRAM_ENABLED !== 'false', // 启用
     }, // 结束代码块
-    rateLimit: { // 设置 rateLimit 字段
-      maxMessagesPerSecond: parseInt(process.env.RATE_LIMIT_PER_SECOND || '1', 10), // 读取环境变量 RATE_LIMIT_PER_SECOND
-      maxMessagesPerMinute: parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10), // 读取环境变量 RATE_LIMIT_PER_MINUTE
-      maxQueueLength: parseInt(process.env.MAX_QUEUE_LENGTH || '100', 10), // 读取环境变量 MAX_QUEUE_LENGTH
+    rateLimit: { // 频率限制
+      maxMessagesPerSecond: parseInt(process.env.RATE_LIMIT_PER_SECOND || '1', 10), // 最大Messages每秒
+      maxMessagesPerMinute: parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10), // 最大Messages每分钟
+      maxQueueLength: parseInt(process.env.MAX_QUEUE_LENGTH || '100', 10), // 最大队列Length
     }, // 结束代码块
   }); // 结束代码块
 

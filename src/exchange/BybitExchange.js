@@ -44,22 +44,22 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
     // 构建配置对象，只在有值时添加 apiKey/secret / Build config object, only add apiKey/secret if they have values
     const exchangeConfig = { // 定义常量 exchangeConfig
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout, // 设置 timeout 字段
+      timeout: this.config.timeout, // 超时设置 (毫秒)
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
         // spot = 现货 / Spot
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
         // option = 期权 / Options
-        defaultType: this.config.defaultType, // 设置 defaultType 字段
+        defaultType: this.config.defaultType, // option = 期权
 
         // 调整时间戳 / Adjust timestamp
-        adjustForTimeDifference: true, // 设置 adjustForTimeDifference 字段
+        adjustForTimeDifference: true, // adjust用于时间Difference
 
         // Bybit V5 API
         // Bybit 使用统一账户，V5 API 是最新版本
@@ -204,7 +204,7 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
 
         // 构建请求参数 / Build request parameters
         const params = { // 定义常量 params
-          category: this.config.defaultType === 'swap' ? 'linear' : 'linear', // 设置 category 字段
+          category: this.config.defaultType === 'swap' ? 'linear' : 'linear', // category
           mode, // 执行语句
         }; // 结束代码块
 
@@ -406,11 +406,11 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
       if (!result) { // 条件判断 !result
         return { // 返回结果
           accountType, // 执行语句
-          totalEquity: 0, // 设置 totalEquity 字段
-          totalAvailableBalance: 0, // 设置 totalAvailableBalance 字段
-          coins: [], // 设置 coins 字段
-          exchange: this.name, // 设置 exchange 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          totalEquity: 0, // 总Equity
+          totalAvailableBalance: 0, // 总Available余额
+          coins: [], // coins
+          exchange: this.name, // 交易所
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
       } // 结束代码块
 
@@ -422,7 +422,7 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
         totalMarginBalance: parseFloat(result.totalMarginBalance || 0),        // 保证金余额 / Margin balance
         totalInitialMargin: parseFloat(result.totalInitialMargin || 0),        // 初始保证金 / Initial margin
         totalMaintenanceMargin: parseFloat(result.totalMaintenanceMargin || 0), // 维持保证金 / Maintenance margin
-        coins: (result.coin || []).map(coin => ({ // 设置 coins 字段
+        coins: (result.coin || []).map(coin => ({ // coins
           coin: coin.coin,                                         // 币种 / Coin
           equity: parseFloat(coin.equity || 0),                    // 权益 / Equity
           walletBalance: parseFloat(coin.walletBalance || 0),      // 钱包余额 / Wallet balance
@@ -456,7 +456,7 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
     return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
       const params = { // 定义常量 params
-        category: this.config.defaultType === 'spot' ? 'spot' : 'linear', // 设置 category 字段
+        category: this.config.defaultType === 'spot' ? 'spot' : 'linear', // category
         limit, // 执行语句
       }; // 结束代码块
 
@@ -506,7 +506,7 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
     return this._executeWithRetry(async () => { // 返回结果
       // 构建请求参数 / Build request parameters
       const params = { // 定义常量 params
-        category: this.config.defaultType === 'swap' ? 'linear' : 'linear', // 设置 category 字段
+        category: this.config.defaultType === 'swap' ? 'linear' : 'linear', // category
         settleCoin: 'USDT',  // 结算币种 / Settlement coin
       }; // 结束代码块
 
@@ -527,55 +527,55 @@ export class BybitExchange extends BaseExchange { // 导出类 BybitExchange
         }) // 结束代码块
         .map(pos => ({ // 定义箭头函数
           // 交易对 / Symbol
-          symbol: pos.symbol, // 设置 symbol 字段
+          symbol: pos.symbol, // 交易对
 
           // 持仓方向 / Position side
-          side: pos.side?.toLowerCase() === 'buy' ? 'long' : 'short', // 设置 side 字段
+          side: pos.side?.toLowerCase() === 'buy' ? 'long' : 'short', // 方向
 
           // 持仓数量 (合约数) / Position size (contracts)
-          contracts: parseFloat(pos.size || 0), // 设置 contracts 字段
+          contracts: parseFloat(pos.size || 0), // 持仓数量 (合约数)
 
           // 持仓价值 / Notional value
-          notional: parseFloat(pos.positionValue || 0), // 设置 notional 字段
+          notional: parseFloat(pos.positionValue || 0), // notional
 
           // 开仓均价 / Entry price
-          entryPrice: parseFloat(pos.avgPrice || 0), // 设置 entryPrice 字段
+          entryPrice: parseFloat(pos.avgPrice || 0), // 开仓均价
 
           // 标记价格 / Mark price
-          markPrice: parseFloat(pos.markPrice || 0), // 设置 markPrice 字段
+          markPrice: parseFloat(pos.markPrice || 0), // mark价格
 
           // 清算价格 / Liquidation price
-          liquidationPrice: parseFloat(pos.liqPrice || 0), // 设置 liquidationPrice 字段
+          liquidationPrice: parseFloat(pos.liqPrice || 0), // 强平价格
 
           // 杠杆倍数 / Leverage
-          leverage: parseFloat(pos.leverage || 1), // 设置 leverage 字段
+          leverage: parseFloat(pos.leverage || 1), // 杠杆
 
           // 未实现盈亏 / Unrealized PnL
-          unrealizedPnl: parseFloat(pos.unrealisedPnl || 0), // 设置 unrealizedPnl 字段
+          unrealizedPnl: parseFloat(pos.unrealisedPnl || 0), // 未实现盈亏
 
           // 已实现盈亏 / Realized PnL
-          realizedPnl: parseFloat(pos.cumRealisedPnl || 0), // 设置 realizedPnl 字段
+          realizedPnl: parseFloat(pos.cumRealisedPnl || 0), // 已实现盈亏
 
           // 保证金模式 (cross/isolated) / Margin mode
-          marginMode: pos.tradeMode === '0' ? 'cross' : 'isolated', // 设置 marginMode 字段
+          marginMode: pos.tradeMode === '0' ? 'cross' : 'isolated', // 保证金模式 (cross/isolated)
 
           // 保证金 / Collateral
-          collateral: parseFloat(pos.positionIM || 0), // 设置 collateral 字段
+          collateral: parseFloat(pos.positionIM || 0), // collateral
 
           // 止盈价格 / Take profit price
-          takeProfit: parseFloat(pos.takeProfit || 0) || null, // 设置 takeProfit 字段
+          takeProfit: parseFloat(pos.takeProfit || 0) || null, // 止盈价格
 
           // 止损价格 / Stop loss price
-          stopLoss: parseFloat(pos.stopLoss || 0) || null, // 设置 stopLoss 字段
+          stopLoss: parseFloat(pos.stopLoss || 0) || null, // 止损价格
 
           // 交易所名称 / Exchange name
-          exchange: this.name, // 设置 exchange 字段
+          exchange: this.name, // 交易所
 
           // 时间戳 / Timestamp
-          timestamp: parseInt(pos.updatedTime || Date.now()), // 设置 timestamp 字段
+          timestamp: parseInt(pos.updatedTime || Date.now()), // 时间戳
 
           // 原始数据 / Raw data
-          raw: pos, // 设置 raw 字段
+          raw: pos, // raw
         })); // 结束代码块
     }, '获取持仓 / Fetch positions'); // 执行语句
   } // 结束代码块

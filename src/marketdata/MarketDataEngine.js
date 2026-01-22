@@ -29,50 +29,50 @@ import Redis from 'ioredis'; // 导入模块 ioredis
  */
 const WS_ENDPOINTS = { // 定义常量 WS_ENDPOINTS
   // Binance 端点 / Binance endpoints
-  binance: { // 设置 binance 字段
+  binance: { // BINANCE交易所配置
     spot: 'wss://stream.binance.com:9443/ws',           // 现货 / Spot
     futures: 'wss://fstream.binance.com/ws',            // U 本位永续 / USDT-M futures
     delivery: 'wss://dstream.binance.com/ws',           // 币本位 / COIN-M futures
   }, // 结束代码块
   // Bybit 端点 / Bybit endpoints
-  bybit: { // 设置 bybit 字段
+  bybit: { // BYBIT交易所配置
     spot: 'wss://stream.bybit.com/v5/public/spot',      // 现货 / Spot
     linear: 'wss://stream.bybit.com/v5/public/linear',  // USDT 永续 / USDT perpetual
     inverse: 'wss://stream.bybit.com/v5/public/inverse', // 反向合约 / Inverse perpetual
   }, // 结束代码块
   // OKX 端点 / OKX endpoints
-  okx: { // 设置 okx 字段
+  okx: { // OKX交易所配置
     public: 'wss://ws.okx.com:8443/ws/v5/public',       // 公共频道 / Public channel
     business: 'wss://ws.okx.com:8443/ws/v5/business',   // 业务频道 / Business channel
   }, // 结束代码块
   // Deribit 端点 / Deribit endpoints
-  deribit: { // 设置 deribit 字段
+  deribit: { // DERIBIT交易所配置
     public: 'wss://www.deribit.com/ws/api/v2',          // 生产环境 / Production
     testnet: 'wss://test.deribit.com/ws/api/v2',        // 测试网 / Testnet
   }, // 结束代码块
   // Gate.io 端点 / Gate.io endpoints
-  gate: { // 设置 gate 字段
+  gate: { // GATE交易所配置
     spot: 'wss://api.gateio.ws/ws/v4/',                 // 现货 / Spot
     futures: 'wss://fx-ws.gateio.ws/v4/ws/usdt',        // USDT 永续 / USDT perpetual
     delivery: 'wss://fx-ws.gateio.ws/v4/ws/btc',        // BTC 永续 / BTC perpetual
   }, // 结束代码块
   // Bitget 端点 / Bitget endpoints
-  bitget: { // 设置 bitget 字段
+  bitget: { // BITGET交易所配置
     spot: 'wss://ws.bitget.com/v2/ws/public',           // 现货公共频道 / Spot public channel
     futures: 'wss://ws.bitget.com/v2/ws/public',        // 合约公共频道 / Futures public channel
     private: 'wss://ws.bitget.com/v2/ws/private',       // 私有频道 / Private channel
   }, // 结束代码块
   // KuCoin 端点 / KuCoin endpoints
   // 注意: KuCoin 需要先获取动态 token，这里仅作为备用 / Note: KuCoin requires dynamic token, these are fallbacks
-  kucoin: { // 设置 kucoin 字段
+  kucoin: { // KUCOIN交易所配置
     spot: 'wss://ws-api-spot.kucoin.com',               // 现货公共频道 / Spot public channel
     futures: 'wss://ws-api-futures.kucoin.com',         // 合约公共频道 / Futures public channel
     // REST API 端点用于获取 WebSocket token / REST API endpoints to get WebSocket token
-    spotTokenApi: 'https://api.kucoin.com/api/v1/bullet-public', // 设置 spotTokenApi 字段
-    futuresTokenApi: 'https://api-futures.kucoin.com/api/v1/bullet-public', // 设置 futuresTokenApi 字段
+    spotTokenApi: 'https://api.kucoin.com/api/v1/bullet-public', // REST API 端点用于获取 WebSocket token
+    futuresTokenApi: 'https://api-futures.kucoin.com/api/v1/bullet-public', // futures令牌API
   }, // 结束代码块
   // Kraken 端点 / Kraken endpoints
-  kraken: { // 设置 kraken 字段
+  kraken: { // KRAKEN交易所配置
     spot: 'wss://ws.kraken.com',                        // 现货公共频道 / Spot public channel
     spotPrivate: 'wss://ws-auth.kraken.com',            // 现货私有频道 / Spot private channel
     futures: 'wss://futures.kraken.com/ws/v1',          // 合约公共频道 / Futures public channel
@@ -96,11 +96,11 @@ const DATA_TYPES = { // 定义常量 DATA_TYPES
  * Redis key prefix configuration
  */
 const REDIS_KEYS = { // 定义常量 REDIS_KEYS
-  TICKER_HASH: 'market:ticker:',         // 行情哈希键前缀 / Ticker hash key prefix
-  DEPTH_HASH: 'market:depth:',           // 深度哈希键前缀 / Depth hash key prefix
-  TRADE_STREAM: 'market:trades:',        // 成交流键前缀 / Trade stream key prefix
-  FUNDING_HASH: 'market:funding:',       // 资金费率哈希键前缀 / Funding hash key prefix
-  KLINE_HASH: 'market:kline:',           // K线哈希键前缀 / Kline hash key prefix
+  TICKER_HASH: 'market:ticker:',         // TICKERHASH权限
+  DEPTH_HASH: 'market:depth:',           // DEPTHHASH权限
+  TRADE_STREAM: 'market:trades:',        // 交易STREAM权限
+  FUNDING_HASH: 'market:funding:',       // 资金费率HASH权限
+  KLINE_HASH: 'market:kline:',           // KLINEHASH权限
   CHANNEL: 'market_data',                // 发布频道名称 / Publish channel name
 }; // 结束代码块
 
@@ -110,7 +110,7 @@ const REDIS_KEYS = { // 定义常量 REDIS_KEYS
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 配置 / Redis configuration
-  redis: { // 设置 redis 字段
+  redis: { // Redis 配置
     host: process.env.REDIS_HOST || 'localhost',        // Redis 主机 / Redis host
     port: parseInt(process.env.REDIS_PORT || '6379', 10),  // Redis 端口 / Redis port
     password: process.env.REDIS_PASSWORD || null,       // Redis 密码 / Redis password
@@ -118,38 +118,38 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
     keyPrefix: '',            // 键前缀 / Key prefix
   }, // 结束代码块
   // 重连配置 / Reconnection configuration
-  reconnect: { // 设置 reconnect 字段
+  reconnect: { // reconnect
     enabled: true,            // 是否启用自动重连 / Enable auto reconnect
     maxAttempts: 10,          // 最大重连次数 / Maximum reconnection attempts
     baseDelay: 1000,          // 基础延迟毫秒 / Base delay in milliseconds
     maxDelay: 30000,          // 最大延迟毫秒 / Maximum delay in milliseconds
   }, // 结束代码块
   // 心跳配置 / Heartbeat configuration
-  heartbeat: { // 设置 heartbeat 字段
+  heartbeat: { // heartbeat
     enabled: true,            // 是否启用心跳 / Enable heartbeat
     interval: 20000,          // 心跳间隔毫秒 / Heartbeat interval in milliseconds
     timeout: 30000,           // 心跳超时毫秒 / Heartbeat timeout in milliseconds
   }, // 结束代码块
   // 流配置 / Stream configuration
-  stream: { // 设置 stream 字段
+  stream: { // stream
     maxLen: 10000,            // 最大流长度 / Maximum stream length
     trimApprox: true,         // 近似裁剪 / Approximate trimming
   }, // 结束代码块
   // WebSocket 连接池配置 / WebSocket connection pool configuration
-  connectionPool: { // 设置 connectionPool 字段
+  connectionPool: { // WebSocket 连接池配置
     maxSubscriptionsPerConnection: 100,  // 每个连接的最大订阅数 / Max subscriptions per connection
     useCombinedStream: true,             // 是否使用 Binance Combined Stream / Use Binance Combined Stream
   }, // 结束代码块
   // 数据超时配置 / Data timeout configuration
-  dataTimeout: { // 设置 dataTimeout 字段
+  dataTimeout: { // 数据超时
     enabled: true,            // 是否启用数据超时检测 / Enable data timeout detection
     timeout: 30000,           // 无数据超时毫秒 / No data timeout in milliseconds
     checkInterval: 5000,      // 检查间隔毫秒 / Check interval in milliseconds
   }, // 结束代码块
   // Cache configuration
-  cache: { // 设置 cache 字段
-    maxCandles: 1000, // 设置 maxCandles 字段
-    historyCandles: 200, // 设置 historyCandles 字段
+  cache: { // Cache configuration
+    maxCandles: 1000, // 最大Candles
+    historyCandles: 200, // 历史Candles
   }, // 结束代码块
 }; // 结束代码块
 
@@ -179,24 +179,24 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     // 合并默认配置 / Merge default configuration
     this.config = { // 设置 config
       // Redis 配置 / Redis configuration
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
-      enableRedis: config.enableRedis ?? true, // 设置 enableRedis 字段
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // Redis 配置
+      enableRedis: config.enableRedis ?? true, // 启用Redis
       // 重连配置 / Reconnection configuration
-      reconnect: { ...DEFAULT_CONFIG.reconnect, ...config.reconnect }, // 设置 reconnect 字段
+      reconnect: { ...DEFAULT_CONFIG.reconnect, ...config.reconnect }, // reconnect
       // 心跳配置 / Heartbeat configuration
-      heartbeat: { ...DEFAULT_CONFIG.heartbeat, ...config.heartbeat }, // 设置 heartbeat 字段
+      heartbeat: { ...DEFAULT_CONFIG.heartbeat, ...config.heartbeat }, // heartbeat
       // 流配置 / Stream configuration
-      stream: { ...DEFAULT_CONFIG.stream, ...config.stream }, // 设置 stream 字段
+      stream: { ...DEFAULT_CONFIG.stream, ...config.stream }, // stream
       // 连接池配置 / Connection pool configuration
-      connectionPool: { ...DEFAULT_CONFIG.connectionPool, ...config.connectionPool }, // 设置 connectionPool 字段
+      connectionPool: { ...DEFAULT_CONFIG.connectionPool, ...config.connectionPool }, // connectionPool
       // 数据超时配置 / Data timeout configuration
-      dataTimeout: { ...DEFAULT_CONFIG.dataTimeout, ...config.dataTimeout }, // 设置 dataTimeout 字段
+      dataTimeout: { ...DEFAULT_CONFIG.dataTimeout, ...config.dataTimeout }, // 数据超时
       // Cache configuration
-      cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // 设置 cache 字段
+      cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // Cache configuration
       // 启用的交易所 / Enabled exchanges
-      exchanges: config.exchanges || ['binance', 'bybit', 'okx'], // 设置 exchanges 字段
+      exchanges: config.exchanges || ['binance', 'bybit', 'okx'], // 交易所
       // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
-      tradingType: config.tradingType || 'swap', // 设置 tradingType 字段
+      tradingType: config.tradingType || 'swap', // 交易类型 (swap = 永续合约)
     }; // 结束代码块
 
     const maxCandles = Number.isFinite(this.config.cache.maxCandles) // 定义常量 maxCandles
@@ -570,11 +570,11 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     return { // 返回结果
       ...this.stats, // 展开对象或数组
       // 运行时长秒数 / Running duration in seconds
-      uptimeSeconds: this.stats.startTime // 设置 uptimeSeconds 字段
+      uptimeSeconds: this.stats.startTime // 运行时长秒数
         ? Math.floor((Date.now() - this.stats.startTime) / 1000) // 执行语句
         : 0, // 执行语句
       // 每个交易所的订阅数 / Subscription count per exchange
-      subscriptions: this._getSubscriptionCounts(), // 设置 subscriptions 字段
+      subscriptions: this._getSubscriptionCounts(), // 每个交易所的订阅数
     }; // 结束代码块
   } // 结束代码块
 
@@ -633,7 +633,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       db: this.config.redis.db,           // 数据库 / Database
       keyPrefix: this.config.redis.keyPrefix, // 键前缀 / Key prefix
       // 连接选项 / Connection options
-      retryStrategy: (times) => { // 设置 retryStrategy 字段
+      retryStrategy: (times) => { // 重试策略
         // 重试策略: 指数退避，最大 30 秒 / Retry strategy: exponential backoff, max 30s
         const delay = Math.min(times * 100, 30000); // 定义常量 delay
         return delay; // 返回结果
@@ -836,7 +836,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         return `${binanceSymbol}@markPrice@1s`; // 返回结果
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         return `${binanceSymbol}@kline_1h`; // 返回结果
-      default: // 默认分支
+      default: // 默认
         return `${binanceSymbol}@ticker`; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -871,8 +871,8 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
           // 创建连接信息对象 / Create connection info object
           const connInfo = { // 定义常量 connInfo
             ws, // 执行语句
-            subscriptions: new Set(subscriptionKeys), // 设置 subscriptions 字段
-            lastDataTime: Date.now(), // 设置 lastDataTime 字段
+            subscriptions: new Set(subscriptionKeys), // subscriptions
+            lastDataTime: Date.now(), // last数据时间
             connectionId, // 执行语句
           }; // 结束代码块
 
@@ -1105,9 +1105,9 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     // Send subscription message
     const stream = this._subscriptionKeyToBinanceStream(subKey); // 定义常量 stream
     const message = { // 定义常量 message
-      method: 'SUBSCRIBE', // 设置 method 字段
-      params: [stream], // 设置 params 字段
-      id: Date.now(), // 设置 id 字段
+      method: 'SUBSCRIBE', // method
+      params: [stream], // params
+      id: Date.now(), // ID
     }; // 结束代码块
     connInfo.ws.send(JSON.stringify(message)); // 调用 connInfo.ws.send
 
@@ -1140,9 +1140,9 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       if (connInfo.ws && connInfo.ws.readyState === WebSocket.OPEN) { // 条件判断 connInfo.ws && connInfo.ws.readyState === Web...
         const stream = this._subscriptionKeyToBinanceStream(subKey); // 定义常量 stream
         const message = { // 定义常量 message
-          method: 'UNSUBSCRIBE', // 设置 method 字段
-          params: [stream], // 设置 params 字段
-          id: Date.now(), // 设置 id 字段
+          method: 'UNSUBSCRIBE', // method
+          params: [stream], // params
+          id: Date.now(), // ID
         }; // 结束代码块
         connInfo.ws.send(JSON.stringify(message)); // 调用 connInfo.ws.send
       } // 结束代码块
@@ -1358,7 +1358,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
           ? WS_ENDPOINTS.kraken.spot // 执行语句
           : WS_ENDPOINTS.kraken.futures; // 执行语句
 
-      default: // 默认分支
+      default: // 默认
         // 不支持的交易所 / Unsupported exchange
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`); // 抛出异常
     } // 结束代码块
@@ -1384,9 +1384,9 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     try { // 尝试执行
       // 调用 KuCoin REST API 获取 WebSocket token / Call KuCoin REST API to get WebSocket token
       const response = await fetch(apiUrl, { // 定义常量 response
-        method: 'POST', // 设置 method 字段
-        headers: { // 设置 headers 字段
-          'Content-Type': 'application/json', // 设置 Content-Type 字段
+        method: 'POST', // method
+        headers: { // headers
+          'Content-Type': 'application/json', // Content类型
         }, // 结束代码块
       }); // 结束代码块
 
@@ -1424,11 +1424,11 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       console.log(`${this.logPrefix} KuCoin Ping 间隔 / KuCoin Ping interval: ${this._kucoinPingInterval}ms`); // 控制台输出
 
       return { // 返回结果
-        url: wsUrl, // 设置 url 字段
+        url: wsUrl, // URL
         token, // 执行语句
         connectId, // 执行语句
-        pingInterval: server.pingInterval, // 设置 pingInterval 字段
-        pingTimeout: server.pingTimeout, // 设置 pingTimeout 字段
+        pingInterval: server.pingInterval, // ping间隔
+        pingTimeout: server.pingTimeout, // ping超时
       }; // 结束代码块
 
     } catch (error) { // 执行语句
@@ -1549,10 +1549,10 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         } else if (exchange === 'deribit') { // 执行语句
           // Deribit 使用 JSON-RPC 2.0 格式的 test 方法 / Deribit uses JSON-RPC 2.0 test method
           ws.send(JSON.stringify({ // 调用 ws.send
-            jsonrpc: '2.0', // 设置 jsonrpc 字段
-            method: 'public/test', // 设置 method 字段
-            id: Date.now(), // 设置 id 字段
-            params: {}, // 设置 params 字段
+            jsonrpc: '2.0', // jsonrpc
+            method: 'public/test', // method
+            id: Date.now(), // ID
+            params: {}, // params
           })); // 结束代码块
         } else if (exchange === 'gate') { // 执行语句
           // Gate.io 使用 ping 消息 / Gate.io uses ping message
@@ -1568,8 +1568,8 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
           // KuCoin 使用 JSON 格式的 ping 消息 / KuCoin uses JSON format ping message
           // 格式: {"id":"xxx","type":"ping"}
           ws.send(JSON.stringify({ // 调用 ws.send
-            id: Date.now().toString(), // 设置 id 字段
-            type: 'ping', // 设置 type 字段
+            id: Date.now().toString(), // ID
+            type: 'ping', // 类型
           })); // 结束代码块
         } else if (exchange === 'kraken') { // 执行语句
           // Kraken 根据交易类型使用不同的心跳格式 / Kraken uses different heartbeat format based on trading type
@@ -2030,7 +2030,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       case 'kraken': // 分支 'kraken'
         return this._buildKrakenSubscribeMessage(symbol, dataType); // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的交易所 / Unsupported exchange: ${exchange}`); // 抛出异常
     } // 结束代码块
   } // 结束代码块
@@ -2064,7 +2064,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // Deribit 取消订阅只需修改方法名 / Deribit unsubscribe just needs to change method name
         return { // 返回结果
           ...subMsg, // 展开对象或数组
-          method: subMsg.method.replace('subscribe', 'unsubscribe'), // 设置 method 字段
+          method: subMsg.method.replace('subscribe', 'unsubscribe'), // method
         }; // 结束代码块
 
       case 'gate': // 分支 'gate'
@@ -2083,7 +2083,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // Kraken 取消订阅使用相同格式但 event 为 unsubscribe / Kraken unsubscribe uses same format but event is unsubscribe
         return { ...subMsg, event: 'unsubscribe' }; // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return subMsg; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -2129,7 +2129,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         stream = `${binanceSymbol}@kline_1h`; // 赋值 stream
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2182,7 +2182,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         topic = `kline.60.${bybitSymbol}`; // 赋值 topic
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2237,7 +2237,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         args = [{ channel: 'candle1H', instId: okxSymbol }]; // 赋值 args
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2294,7 +2294,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         channels = [`chart.trades.${deribitSymbol}.60`]; // 赋值 channels
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2303,7 +2303,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       jsonrpc: '2.0',               // JSON-RPC 版本 / JSON-RPC version
       method: 'public/subscribe',   // 订阅方法 / Subscribe method
       id: Date.now(),               // 请求 ID / Request ID
-      params: { // 设置 params 字段
+      params: { // params
         channels,                   // 频道数组 / Channel array
       }, // 结束代码块
     }; // 结束代码块
@@ -2374,7 +2374,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         payload = ['1h', gateSymbol]; // 赋值 payload
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2444,14 +2444,14 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         channel = 'candle1H'; // 赋值 channel
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
     // 返回 Bitget V2 格式的订阅消息 / Return Bitget V2 format subscription message
     return { // 返回结果
-      op: 'subscribe', // 设置 op 字段
-      args: [{ // 设置 args 字段
+      op: 'subscribe', // op
+      args: [{ // args
         instType,      // 产品类型 / Instrument type
         channel,       // 频道名称 / Channel name
         instId,        // 产品 ID / Instrument ID
@@ -2540,7 +2540,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         } // 结束代码块
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2622,7 +2622,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         subscription = { name: 'ohlc', interval: 60 }; // 赋值 subscription
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -2677,7 +2677,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // Kline data (Kraken Futures doesn't support WebSocket kline yet)
         throw new Error('Kraken 合约暂不支持 WebSocket K线订阅 / Kraken futures does not support WebSocket kline subscription'); // 抛出异常
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的数据类型 / Unsupported data type: ${dataType}`); // 抛出异常
     } // 结束代码块
 
@@ -3037,7 +3037,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         this._processFundingRate('okx', message); // 调用 _processFundingRate
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         // 检查是否是K线频道 (candle1H, candle1D 等) / Check if it's a kline channel (candle1H, candle1D, etc.)
         if (channel.startsWith('candle')) { // 条件判断 channel.startsWith('candle')
           this._processKline('okx', message); // 调用 _processKline
@@ -3203,7 +3203,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         this._processTrade('bitget', message); // 调用 _processTrade
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         // 检查是否是K线频道 (candle1H, candle1D 等) / Check if it's a kline channel
         if (channel.startsWith('candle')) { // 条件判断 channel.startsWith('candle')
           this._processKline('bitget', message); // 调用 _processKline
@@ -3568,8 +3568,8 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
     // 更新最后发出的资金费率缓存 / Update last emitted funding rate cache
     this.cache.lastEmittedFundingRates.set(cacheKey, { // 访问 cache
-      fundingRate: fundingRate.fundingRate, // 设置 fundingRate 字段
-      nextFundingTime: fundingRate.nextFundingTime, // 设置 nextFundingTime 字段
+      fundingRate: fundingRate.fundingRate, // 资金费率频率
+      nextFundingTime: fundingRate.nextFundingTime, // next资金费率时间
     }); // 结束代码块
 
     // 发出事件 / Emit event
@@ -3633,7 +3633,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
     this.emit('candle', { // 调用 emit
       ...candle, // 展开对象或数组
-      history: klineCache.slice(-historyCandles), // Attach recent candles history
+      history: klineCache.slice(-historyCandles), // 历史
     }); // 结束代码块
   } // 结束代码块
 
@@ -3678,7 +3678,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         case 'kraken': // 分支 'kraken'
           return this._normalizeKrakenTicker(message); // 返回结果
 
-        default: // 默认分支
+        default: // 默认
           return null; // 返回结果
       } // 结束代码块
     } catch (error) { // 执行语句
@@ -3828,7 +3828,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         case 'kraken': // 分支 'kraken'
           return this._normalizeKrakenDepth(message); // 返回结果
 
-        default: // 默认分支
+        default: // 默认
           return null; // 返回结果
       } // 结束代码块
     } catch (error) { // 执行语句
@@ -3853,12 +3853,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'binance',                    // 交易所 / Exchange
       symbol,                                  // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.b || []).map(([price, amount]) => [ // 设置 bids 字段
+      bids: (data.b || []).map(([price, amount]) => [ // 买单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.a || []).map(([price, amount]) => [ // 设置 asks 字段
+      asks: (data.a || []).map(([price, amount]) => [ // 卖单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -3886,12 +3886,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'bybit',                      // 交易所 / Exchange
       symbol,                                  // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.b || []).map(([price, amount]) => [ // 设置 bids 字段
+      bids: (data.b || []).map(([price, amount]) => [ // 买单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.a || []).map(([price, amount]) => [ // 设置 asks 字段
+      asks: (data.a || []).map(([price, amount]) => [ // 卖单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -3919,12 +3919,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'okx',                        // 交易所 / Exchange
       symbol,                                  // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.bids || []).map(([price, amount]) => [ // 设置 bids 字段
+      bids: (data.bids || []).map(([price, amount]) => [ // 买单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.asks || []).map(([price, amount]) => [ // 设置 asks 字段
+      asks: (data.asks || []).map(([price, amount]) => [ // 卖单 [[价格, 数量], ...]
         parseFloat(price), // 调用 parseFloat
         parseFloat(amount), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -3970,7 +3970,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         case 'kraken': // 分支 'kraken'
           return this._normalizeKrakenTrade(message); // 返回结果
 
-        default: // 默认分支
+        default: // 默认
           return null; // 返回结果
       } // 结束代码块
     } catch (error) { // 执行语句
@@ -4099,7 +4099,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         case 'kraken': // 分支 'kraken'
           return this._normalizeKrakenFundingRate(message); // 返回结果
 
-        default: // 默认分支
+        default: // 默认
           return null; // 返回结果
       } // 结束代码块
     } catch (error) { // 执行语句
@@ -4195,7 +4195,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         case 'kraken': // 分支 'kraken'
           return this._normalizeKrakenKline(message); // 返回结果
 
-        default: // 默认分支
+        default: // 默认
           return null; // 返回结果
       } // 结束代码块
     } catch (error) { // 执行语句
@@ -4378,12 +4378,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       symbol,                                  // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
       // Deribit 格式: [action, price, amount] -> [price, amount]
-      bids: (data.bids || []).map(item => [ // 设置 bids 字段
+      bids: (data.bids || []).map(item => [ // Deribit 格式: [action, price, amount] -> [price, amount]
         parseFloat(Array.isArray(item) ? item[1] : item.price), // 调用 parseFloat
         parseFloat(Array.isArray(item) ? item[2] : item.amount), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.asks || []).map(item => [ // 设置 asks 字段
+      asks: (data.asks || []).map(item => [ // 卖单 [[价格, 数量], ...]
         parseFloat(Array.isArray(item) ? item[1] : item.price), // 调用 parseFloat
         parseFloat(Array.isArray(item) ? item[2] : item.amount), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -4583,7 +4583,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'gate',                          // 交易所 / Exchange
       symbol,                                     // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.bids || []).map(item => { // 设置 bids 字段
+      bids: (data.bids || []).map(item => { // 买单 [[价格, 数量], ...]
         // Gate.io 格式: [price, amount] 或 { p: price, s: amount }
         if (Array.isArray(item)) { // 条件判断 Array.isArray(item)
           return [parseFloat(item[0]), parseFloat(item[1])]; // 返回结果
@@ -4591,7 +4591,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         return [parseFloat(item.p || 0), parseFloat(item.s || 0)]; // 返回结果
       }), // 结束代码块
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.asks || []).map(item => { // 设置 asks 字段
+      asks: (data.asks || []).map(item => { // 卖单 [[价格, 数量], ...]
         if (Array.isArray(item)) { // 条件判断 Array.isArray(item)
           return [parseFloat(item[0]), parseFloat(item[1])]; // 返回结果
         } // 结束代码块
@@ -4674,7 +4674,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       markPrice: parseFloat(data.mark_price || 0),    // 标记价格 / Mark price
       indexPrice: parseFloat(data.index_price || 0),  // 指数价格 / Index price
       fundingRate: parseFloat(data.funding_rate || 0), // 当前资金费率 / Current funding rate
-      fundingRateIndicative: data.funding_rate_indicative // 设置 fundingRateIndicative 字段
+      fundingRateIndicative: data.funding_rate_indicative // 资金费率频率Indicative
         ? parseFloat(data.funding_rate_indicative) // 执行语句
         : null,                                        // 预测资金费率 / Predicted funding rate
       nextFundingTime: Date.now() + 8 * 3600 * 1000,  // 下次资金费率时间 (8小时后) / Next funding time (8h later)
@@ -4813,12 +4813,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'bitget',                          // 交易所 / Exchange
       symbol,                                       // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.bids || []).map(item => [ // 设置 bids 字段
+      bids: (data.bids || []).map(item => [ // 买单 [[价格, 数量], ...]
         parseFloat(item[0]), // 调用 parseFloat
         parseFloat(item[1]), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.asks || []).map(item => [ // 设置 asks 字段
+      asks: (data.asks || []).map(item => [ // 卖单 [[价格, 数量], ...]
         parseFloat(item[0]), // 调用 parseFloat
         parseFloat(item[1]), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -5230,12 +5230,12 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       exchange: 'kucoin',                               // 交易所 / Exchange
       symbol,                                            // 交易对 / Trading pair
       // 买单 [[价格, 数量], ...] / Bids [[price, amount], ...]
-      bids: (data.bids || []).map(item => [ // 设置 bids 字段
+      bids: (data.bids || []).map(item => [ // 买单 [[价格, 数量], ...]
         parseFloat(Array.isArray(item) ? item[0] : item.price), // 调用 parseFloat
         parseFloat(Array.isArray(item) ? item[1] : item.size), // 调用 parseFloat
       ]), // 结束数组或索引
       // 卖单 [[价格, 数量], ...] / Asks [[price, amount], ...]
-      asks: (data.asks || []).map(item => [ // 设置 asks 字段
+      asks: (data.asks || []).map(item => [ // 卖单 [[价格, 数量], ...]
         parseFloat(Array.isArray(item) ? item[0] : item.price), // 调用 parseFloat
         parseFloat(Array.isArray(item) ? item[1] : item.size), // 调用 parseFloat
       ]), // 结束数组或索引
@@ -5637,14 +5637,14 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     // 批量成交 / Batch trades
     const trades = message.trades || []; // 定义常量 trades
     return trades.map(trade => ({ // 返回结果
-      exchange: 'kraken', // 设置 exchange 字段
+      exchange: 'kraken', // 交易所
       symbol, // 执行语句
-      tradeId: trade.uid || trade.trade_id || `${Date.now()}_${Math.random()}`, // 设置 tradeId 字段
-      price: parseFloat(trade.price), // 设置 price 字段
-      amount: parseFloat(trade.qty || trade.size), // 设置 amount 字段
-      side: trade.side?.toLowerCase() || 'buy', // 设置 side 字段
-      exchangeTimestamp: trade.time || Date.now(), // 设置 exchangeTimestamp 字段
-      localTimestamp: Date.now(), // 设置 localTimestamp 字段
+      tradeId: trade.uid || trade.trade_id || `${Date.now()}_${Math.random()}`, // 交易ID
+      price: parseFloat(trade.price), // 价格
+      amount: parseFloat(trade.qty || trade.size), // 数量
+      side: trade.side?.toLowerCase() || 'buy', // 方向
+      exchangeTimestamp: trade.time || Date.now(), // 交易所时间戳
+      localTimestamp: Date.now(), // local时间戳
     })); // 结束代码块
   } // 结束代码块
 

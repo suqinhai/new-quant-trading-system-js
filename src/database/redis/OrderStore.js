@@ -40,15 +40,15 @@ import { KEY_PREFIX } from './RedisClient.js'; // 导入模块 ./RedisClient.js
  * Order status enum
  */
 export const ORDER_STATUS = { // 导出常量 ORDER_STATUS
-  PENDING: 'pending', // 设置 PENDING 字段
-  SUBMITTED: 'submitted', // 设置 SUBMITTED 字段
-  OPEN: 'open', // 设置 OPEN 字段
-  PARTIALLY_FILLED: 'partially_filled', // 设置 PARTIALLY_FILLED 字段
-  FILLED: 'filled', // 设置 FILLED 字段
-  CANCELED: 'canceled', // 设置 CANCELED 字段
-  REJECTED: 'rejected', // 设置 REJECTED 字段
-  EXPIRED: 'expired', // 设置 EXPIRED 字段
-  FAILED: 'failed', // 设置 FAILED 字段
+  PENDING: 'pending', // 待处理
+  SUBMITTED: 'submitted', // SUBMITTED
+  OPEN: 'open', // 开盘
+  PARTIALLY_FILLED: 'partially_filled', // PARTIALLYFILLED
+  FILLED: 'filled', // FILLED
+  CANCELED: 'canceled', // CANCELED
+  REJECTED: 'rejected', // REJECTED
+  EXPIRED: 'expired', // EXPIRED
+  FAILED: 'failed', // FAILED
 }; // 结束代码块
 
 /**
@@ -135,26 +135,26 @@ class OrderStore { // 定义类 OrderStore
    */
   _serialize(order) { // 调用 _serialize
     const data = { // 定义常量 data
-      orderId: order.orderId || order.id || '', // 设置 orderId 字段
-      clientOrderId: order.clientOrderId || '', // 设置 clientOrderId 字段
-      symbol: order.symbol || '', // 设置 symbol 字段
-      side: order.side || '', // 设置 side 字段
-      type: order.type || '', // 设置 type 字段
-      status: order.status || ORDER_STATUS.PENDING, // 设置 status 字段
-      amount: String(order.amount || 0), // 设置 amount 字段
-      filled: String(order.filled || 0), // 设置 filled 字段
-      remaining: String(order.remaining ?? order.amount ?? 0), // 设置 remaining 字段
-      price: String(order.price || 0), // 设置 price 字段
-      averagePrice: String(order.averagePrice || 0), // 设置 averagePrice 字段
-      stopPrice: String(order.stopPrice || 0), // 设置 stopPrice 字段
-      cost: String(order.cost || 0), // 设置 cost 字段
-      fee: String(order.fee || 0), // 设置 fee 字段
-      exchange: order.exchange || '', // 设置 exchange 字段
-      strategy: order.strategy || '', // 设置 strategy 字段
-      createdAt: String(order.createdAt || Date.now()), // 设置 createdAt 字段
-      updatedAt: String(order.updatedAt || Date.now()), // 设置 updatedAt 字段
-      closedAt: String(order.closedAt || 0), // 设置 closedAt 字段
-      errorMessage: order.errorMessage || '', // 设置 errorMessage 字段
+      orderId: order.orderId || order.id || '', // 订单ID
+      clientOrderId: order.clientOrderId || '', // client订单ID
+      symbol: order.symbol || '', // 交易对
+      side: order.side || '', // 方向
+      type: order.type || '', // 类型
+      status: order.status || ORDER_STATUS.PENDING, // 状态
+      amount: String(order.amount || 0), // 数量
+      filled: String(order.filled || 0), // filled
+      remaining: String(order.remaining ?? order.amount ?? 0), // remaining
+      price: String(order.price || 0), // 价格
+      averagePrice: String(order.averagePrice || 0), // 平均价格
+      stopPrice: String(order.stopPrice || 0), // 停止价格
+      cost: String(order.cost || 0), // cost
+      fee: String(order.fee || 0), // 手续费
+      exchange: order.exchange || '', // 交易所
+      strategy: order.strategy || '', // 策略
+      createdAt: String(order.createdAt || Date.now()), // createdAt
+      updatedAt: String(order.updatedAt || Date.now()), // updatedAt
+      closedAt: String(order.closedAt || 0), // closedAt
+      errorMessage: order.errorMessage || '', // 错误消息
     }; // 结束代码块
 
     // 序列化 metadata
@@ -175,26 +175,26 @@ class OrderStore { // 定义类 OrderStore
     } // 结束代码块
 
     const order = { // 定义常量 order
-      orderId: data.orderId, // 设置 orderId 字段
-      clientOrderId: data.clientOrderId || null, // 设置 clientOrderId 字段
-      symbol: data.symbol, // 设置 symbol 字段
-      side: data.side, // 设置 side 字段
-      type: data.type, // 设置 type 字段
-      status: data.status, // 设置 status 字段
-      amount: parseFloat(data.amount), // 设置 amount 字段
-      filled: parseFloat(data.filled), // 设置 filled 字段
-      remaining: parseFloat(data.remaining), // 设置 remaining 字段
-      price: parseFloat(data.price) || null, // 设置 price 字段
-      averagePrice: parseFloat(data.averagePrice) || null, // 设置 averagePrice 字段
-      stopPrice: parseFloat(data.stopPrice) || null, // 设置 stopPrice 字段
-      cost: parseFloat(data.cost), // 设置 cost 字段
-      fee: parseFloat(data.fee), // 设置 fee 字段
-      exchange: data.exchange, // 设置 exchange 字段
-      strategy: data.strategy || null, // 设置 strategy 字段
-      createdAt: parseInt(data.createdAt, 10), // 设置 createdAt 字段
-      updatedAt: parseInt(data.updatedAt, 10) || null, // 设置 updatedAt 字段
-      closedAt: parseInt(data.closedAt, 10) || null, // 设置 closedAt 字段
-      errorMessage: data.errorMessage || null, // 设置 errorMessage 字段
+      orderId: data.orderId, // 订单ID
+      clientOrderId: data.clientOrderId || null, // client订单ID
+      symbol: data.symbol, // 交易对
+      side: data.side, // 方向
+      type: data.type, // 类型
+      status: data.status, // 状态
+      amount: parseFloat(data.amount), // 数量
+      filled: parseFloat(data.filled), // filled
+      remaining: parseFloat(data.remaining), // remaining
+      price: parseFloat(data.price) || null, // 价格
+      averagePrice: parseFloat(data.averagePrice) || null, // 平均价格
+      stopPrice: parseFloat(data.stopPrice) || null, // 停止价格
+      cost: parseFloat(data.cost), // cost
+      fee: parseFloat(data.fee), // 手续费
+      exchange: data.exchange, // 交易所
+      strategy: data.strategy || null, // 策略
+      createdAt: parseInt(data.createdAt, 10), // createdAt
+      updatedAt: parseInt(data.updatedAt, 10) || null, // updatedAt
+      closedAt: parseInt(data.closedAt, 10) || null, // closedAt
+      errorMessage: data.errorMessage || null, // 错误消息
     }; // 结束代码块
 
     // 解析 metadata
@@ -284,7 +284,7 @@ class OrderStore { // 定义类 OrderStore
 
     // 准备更新数据 / Prepare update data
     const updates = { // 定义常量 updates
-      updatedAt: String(updatedAt), // 设置 updatedAt 字段
+      updatedAt: String(updatedAt), // updatedAt
     }; // 结束代码块
 
     if (order.status !== undefined) updates.status = order.status; // 条件判断 order.status !== undefined
@@ -579,8 +579,8 @@ class OrderStore { // 定义类 OrderStore
    */
   async getStats() { // 执行语句
     const stats = { // 定义常量 stats
-      total: 0, // 设置 total 字段
-      byStatus: {}, // 设置 byStatus 字段
+      total: 0, // 总
+      byStatus: {}, // by状态
     }; // 结束代码块
 
     // 总数 / Total count

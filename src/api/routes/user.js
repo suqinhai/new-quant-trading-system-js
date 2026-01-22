@@ -26,9 +26,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
       if (!username || !password) { // 条件判断 !username || !password
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Username and password are required', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Username and password are required', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -36,17 +36,17 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
         const result = await authManager.login(username, password); // 定义常量 result
         if (result.success) { // 条件判断 result.success
           return res.json({ // 返回结果
-            success: true, // 设置 success 字段
-            data: { // 设置 data 字段
-              token: result.token, // 设置 token 字段
-              user: result.user, // 设置 user 字段
+            success: true, // 成功标记
+            data: { // 数据
+              token: result.token, // 令牌
+              user: result.user, // 用户
             } // 结束代码块
           }); // 结束代码块
         } else { // 执行语句
           return res.status(401).json({ // 返回结果
-            success: false, // 设置 success 字段
-            error: result.error || 'Invalid credentials', // 设置 error 字段
-            code: 'UNAUTHORIZED' // 设置 code 字段
+            success: false, // 成功标记
+            error: result.error || 'Invalid credentials', // 错误
+            code: 'UNAUTHORIZED' // 代码
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -54,23 +54,23 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       // 默认测试用户
       if (username === 'admin' && password === 'admin123') { // 条件判断 username === 'admin' && password === 'admin123'
         return res.json({ // 返回结果
-          success: true, // 设置 success 字段
-          data: { // 设置 data 字段
-            token: 'test_token_' + Date.now(), // 设置 token 字段
-            user: { // 设置 user 字段
-              id: 'user_1', // 设置 id 字段
-              username: 'admin', // 设置 username 字段
-              role: 'admin', // 设置 role 字段
-              email: 'admin@example.com', // 设置 email 字段
+          success: true, // 成功标记
+          data: { // 数据
+            token: 'test_token_' + Date.now(), // 令牌
+            user: { // 用户
+              id: 'user_1', // ID
+              username: 'admin', // username
+              role: 'admin', // role
+              email: 'admin@example.com', // 邮箱
             } // 结束代码块
           } // 结束代码块
         }); // 结束代码块
       } // 结束代码块
 
       res.status(401).json({ // 调用 res.status
-        success: false, // 设置 success 字段
-        error: 'Invalid credentials', // 设置 error 字段
-        code: 'UNAUTHORIZED' // 设置 code 字段
+        success: false, // 成功标记
+        error: 'Invalid credentials', // 错误
+        code: 'UNAUTHORIZED' // 代码
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -103,9 +103,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
       if (!refreshToken) { // 条件判断 !refreshToken
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Refresh token is required', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Refresh token is required', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -113,16 +113,16 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
         const result = await authManager.refreshToken(refreshToken); // 定义常量 result
         if (result.success) { // 条件判断 result.success
           return res.json({ // 返回结果
-            success: true, // 设置 success 字段
-            data: { token: result.token } // 设置 data 字段
+            success: true, // 成功标记
+            data: { token: result.token } // 数据
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
 
       res.status(401).json({ // 调用 res.status
-        success: false, // 设置 success 字段
-        error: 'Invalid refresh token', // 设置 error 字段
-        code: 'UNAUTHORIZED' // 设置 code 字段
+        success: false, // 成功标记
+        error: 'Invalid refresh token', // 错误
+        code: 'UNAUTHORIZED' // 代码
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -137,17 +137,17 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (!req.user) { // 条件判断 !req.user
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Authentication required', // 设置 error 字段
-          code: 'UNAUTHORIZED' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Authentication required', // 错误
+          code: 'UNAUTHORIZED' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       let profile = { // 定义变量 profile
-        id: req.user.sub, // 设置 id 字段
-        username: req.user.username, // 设置 username 字段
-        role: req.user.role, // 设置 role 字段
-        email: req.user.email, // 设置 email 字段
+        id: req.user.sub, // ID
+        username: req.user.username, // username
+        role: req.user.role, // role
+        email: req.user.email, // 邮箱
       }; // 结束代码块
 
       if (userStore?.getById) { // 条件判断 userStore?.getById
@@ -156,7 +156,7 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
           profile = { // 赋值 profile
             ...profile, // 展开对象或数组
             ...user, // 展开对象或数组
-            password: undefined, // 不返回密码
+            password: undefined, // 密码
           }; // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -175,9 +175,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (!req.user) { // 条件判断 !req.user
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Authentication required', // 设置 error 字段
-          code: 'UNAUTHORIZED' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Authentication required', // 错误
+          code: 'UNAUTHORIZED' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -201,9 +201,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (!req.user) { // 条件判断 !req.user
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Authentication required', // 设置 error 字段
-          code: 'UNAUTHORIZED' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Authentication required', // 错误
+          code: 'UNAUTHORIZED' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -211,17 +211,17 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
       if (!oldPassword || !newPassword) { // 条件判断 !oldPassword || !newPassword
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Old password and new password are required', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Old password and new password are required', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       if (newPassword.length < 8) { // 条件判断 newPassword.length < 8
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'New password must be at least 8 characters', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'New password must be at least 8 characters', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -234,9 +234,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
         if (!result.success) { // 条件判断 !result.success
           return res.status(400).json({ // 返回结果
-            success: false, // 设置 success 字段
-            error: result.error || 'Failed to change password', // 设置 error 字段
-            code: 'PASSWORD_CHANGE_FAILED' // 设置 code 字段
+            success: false, // 成功标记
+            error: result.error || 'Failed to change password', // 错误
+            code: 'PASSWORD_CHANGE_FAILED' // 代码
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -255,9 +255,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -282,9 +282,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -292,18 +292,18 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
       if (!username || !password) { // 条件判断 !username || !password
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Username and password are required', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Username and password are required', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       const user = { // 定义常量 user
-        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 设置 id 字段
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // ID
         username, // 执行语句
         email, // 执行语句
-        role: role || 'viewer', // 设置 role 字段
-        createdAt: Date.now(), // 设置 createdAt 字段
+        role: role || 'viewer', // role
+        createdAt: Date.now(), // createdAt
       }; // 结束代码块
 
       if (authManager?.createUser) { // 条件判断 authManager?.createUser
@@ -326,9 +326,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
     try { // 尝试执行
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -337,9 +337,9 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       // 防止删除自己
       if (id === req.user.sub) { // 条件判断 id === req.user.sub
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Cannot delete yourself', // 设置 error 字段
-          code: 'SELF_DELETE' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Cannot delete yourself', // 错误
+          code: 'SELF_DELETE' // 代码
         }); // 结束代码块
       } // 结束代码块
 

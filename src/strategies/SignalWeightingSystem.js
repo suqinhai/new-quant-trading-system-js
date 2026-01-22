@@ -18,20 +18,20 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * 策略状态枚举
  */
 export const StrategyStatus = { // 导出常量 StrategyStatus
-  ACTIVE: 'active',           // 正常运行
-  CIRCUIT_BREAK: 'circuit_break', // 熔断中
-  COOLING: 'cooling',         // 冷却期
-  DISABLED: 'disabled',       // 已禁用
+  ACTIVE: 'active',           // 活跃
+  CIRCUIT_BREAK: 'circuit_break', // CIRCUITBREAK
+  COOLING: 'cooling',         // 冷却
+  DISABLED: 'disabled',       // DISABLED权限
 }; // 结束代码块
 
 /**
  * 熔断原因枚举
  */
 export const CircuitBreakReason = { // 导出常量 CircuitBreakReason
-  CONSECUTIVE_LOSS: 'consecutive_loss',   // 连续亏损
-  DRAWDOWN: 'drawdown',                   // 超过最大回撤
-  WIN_RATE_LOW: 'win_rate_low',           // 胜率过低
-  MANUAL: 'manual',                        // 手动熔断
+  CONSECUTIVE_LOSS: 'consecutive_loss',   // CONSECUTIVE亏损
+  DRAWDOWN: 'drawdown',                   // 回撤
+  WIN_RATE_LOW: 'win_rate_low',           // WIN频率最低
+  MANUAL: 'manual',                        // MANUAL
 }; // 结束代码块
 
 /**
@@ -68,15 +68,15 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     // 权重动态调整参数
     this.weightAdjustment = { // 设置 weightAdjustment
       // 是否启用动态权重
-      enabled: config.dynamicWeights !== false, // 设置 enabled 字段
+      enabled: config.dynamicWeights !== false, // 是否启用动态权重
       // 权重调整因子 (0-1, 基于表现调整的幅度)
-      adjustmentFactor: config.adjustmentFactor || 0.2, // 设置 adjustmentFactor 字段
+      adjustmentFactor: config.adjustmentFactor || 0.2, // 权重调整因子 (0-1, 基于表现调整的幅度)
       // 评估周期 (交易次数)
-      evaluationPeriod: config.evaluationPeriod || 20, // 设置 evaluationPeriod 字段
+      evaluationPeriod: config.evaluationPeriod || 20, // 评估周期 (交易次数)
       // 最小权重
-      minWeight: config.minWeight || 0.05, // 设置 minWeight 字段
+      minWeight: config.minWeight || 0.05, // 最小Weight
       // 最大权重
-      maxWeight: config.maxWeight || 0.6, // 设置 maxWeight 字段
+      maxWeight: config.maxWeight || 0.6, // 最大Weight
     }; // 结束代码块
 
     // ============================================
@@ -85,13 +85,13 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
 
     this.correlationConfig = { // 设置 correlationConfig
       // 是否启用相关性限制
-      enabled: config.correlationLimit !== false, // 设置 enabled 字段
+      enabled: config.correlationLimit !== false, // 是否启用相关性限制
       // 最大允许相关性
-      maxCorrelation: config.maxCorrelation || 0.7, // 设置 maxCorrelation 字段
+      maxCorrelation: config.maxCorrelation || 0.7, // 最大Correlation
       // 相关性惩罚系数: 相关性高时降低组合权重
-      penaltyFactor: config.correlationPenaltyFactor || 0.5, // 设置 penaltyFactor 字段
+      penaltyFactor: config.correlationPenaltyFactor || 0.5, // 相关性惩罚系数: 相关性高时降低组合权重
       // 相关性矩阵 (策略间相关性)
-      matrix: config.correlationMatrix || {}, // 设置 matrix 字段
+      matrix: config.correlationMatrix || {}, // 相关性矩阵 (策略间相关性)
     }; // 结束代码块
 
     // ============================================
@@ -100,19 +100,19 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
 
     this.circuitBreaker = { // 设置 circuitBreaker
       // 是否启用熔断
-      enabled: config.circuitBreaker !== false, // 设置 enabled 字段
+      enabled: config.circuitBreaker !== false, // 启用
       // 连续亏损次数触发熔断
-      consecutiveLossLimit: config.consecutiveLossLimit || 5, // 设置 consecutiveLossLimit 字段
+      consecutiveLossLimit: config.consecutiveLossLimit || 5, // 连续亏损次数触发熔断
       // 最大回撤触发熔断 (百分比)
-      maxDrawdown: config.maxDrawdownLimit || 0.15, // 设置 maxDrawdown 字段
+      maxDrawdown: config.maxDrawdownLimit || 0.15, // 最大回撤触发熔断 (百分比)
       // 最低胜率触发熔断
-      minWinRate: config.minWinRate || 0.3, // 设置 minWinRate 字段
+      minWinRate: config.minWinRate || 0.3, // 最低胜率触发熔断
       // 评估窗口 (交易次数)
-      evaluationWindow: config.evaluationWindow || 30, // 设置 evaluationWindow 字段
+      evaluationWindow: config.evaluationWindow || 30, // 评估窗口 (交易次数)
       // 冷却时间 (毫秒)
-      coolingPeriod: config.coolingPeriod || 3600000, // 默认 1 小时
+      coolingPeriod: config.coolingPeriod || 3600000, // 冷却时间 (毫秒)
       // 自动恢复
-      autoRecover: config.autoRecover !== false, // 设置 autoRecover 字段
+      autoRecover: config.autoRecover !== false, // 自动Recover
     }; // 结束代码块
 
     // ============================================
@@ -153,23 +153,23 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     this.currentWeights[name] = weight; // 访问 currentWeights
 
     this._strategyStatus[name] = { // 访问 _strategyStatus
-      status: StrategyStatus.ACTIVE, // 设置 status 字段
-      reason: null, // 设置 reason 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
-      cooldownUntil: null, // 设置 cooldownUntil 字段
+      status: StrategyStatus.ACTIVE, // 状态
+      reason: null, // reason
+      timestamp: Date.now(), // 时间戳
+      cooldownUntil: null, // 冷却Until
     }; // 结束代码块
 
     this._strategyPerformance[name] = { // 访问 _strategyPerformance
-      trades: 0, // 设置 trades 字段
-      wins: 0, // 设置 wins 字段
-      losses: 0, // 设置 losses 字段
-      consecutiveLosses: 0, // 设置 consecutiveLosses 字段
-      totalPnL: 0, // 设置 totalPnL 字段
-      maxDrawdown: 0, // 设置 maxDrawdown 字段
-      equity: 0, // 设置 equity 字段
-      peakEquity: 0, // 设置 peakEquity 字段
-      signals: [], // 设置 signals 字段
-      lastUpdate: Date.now(), // 设置 lastUpdate 字段
+      trades: 0, // 成交
+      wins: 0, // wins
+      losses: 0, // losses
+      consecutiveLosses: 0, // consecutiveLosses
+      totalPnL: 0, // 总PnL
+      maxDrawdown: 0, // 最大回撤
+      equity: 0, // equity
+      peakEquity: 0, // peakEquity
+      signals: [], // 信号
+      lastUpdate: Date.now(), // last更新
     }; // 结束代码块
 
     this.emit('strategyRegistered', { name, weight, options }); // 调用 emit
@@ -250,8 +250,8 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     // 记录信号
     this._currentSignals[strategy] = { // 访问 _currentSignals
       score, // 执行语句
-      weight: this.currentWeights[strategy], // 设置 weight 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      weight: this.currentWeights[strategy], // weight
+      timestamp: Date.now(), // 时间戳
       metadata, // 执行语句
     }; // 结束代码块
 
@@ -259,7 +259,7 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     this._signalHistory.push({ // 访问 _signalHistory
       strategy, // 执行语句
       score, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近 1000 条记录
@@ -280,12 +280,12 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
 
     if (strategies.length === 0) { // 条件判断 strategies.length === 0
       return { // 返回结果
-        score: 0.5, // 设置 score 字段
-        buyScore: 0, // 设置 buyScore 字段
-        sellScore: 0, // 设置 sellScore 字段
-        signals: {}, // 设置 signals 字段
-        shouldTrade: false, // 设置 shouldTrade 字段
-        action: 'hold', // 设置 action 字段
+        score: 0.5, // 分数
+        buyScore: 0, // buy分数
+        sellScore: 0, // sell分数
+        signals: {}, // 信号
+        shouldTrade: false, // 是否需要交易
+        action: 'hold', // action
       }; // 结束代码块
     } // 结束代码块
 
@@ -314,10 +314,10 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
       } // 结束代码块
 
       signalDetails[strategy] = { // 执行语句
-        rawScore: signal.score, // 设置 rawScore 字段
-        weight: weight, // 设置 weight 字段
-        contribution: signal.score * weight, // 设置 contribution 字段
-        status: this._strategyStatus[strategy]?.status || StrategyStatus.ACTIVE, // 设置 status 字段
+        rawScore: signal.score, // raw分数
+        weight: weight, // weight
+        contribution: signal.score * weight, // contribution
+        status: this._strategyStatus[strategy]?.status || StrategyStatus.ACTIVE, // 状态
       }; // 结束代码块
     } // 结束代码块
 
@@ -339,16 +339,16 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     } // 结束代码块
 
     const result = { // 定义常量 result
-      score: normalizedScore, // 设置 score 字段
-      buyScore: normalizedBuy, // 设置 buyScore 字段
-      sellScore: normalizedSell, // 设置 sellScore 字段
-      signals: signalDetails, // 设置 signals 字段
+      score: normalizedScore, // 分数
+      buyScore: normalizedBuy, // buy分数
+      sellScore: normalizedSell, // sell分数
+      signals: signalDetails, // 信号
       shouldTrade, // 执行语句
       action, // 执行语句
-      threshold: this.threshold, // 设置 threshold 字段
-      sellThreshold: this.sellThreshold, // 设置 sellThreshold 字段
+      threshold: this.threshold, // 阈值
+      sellThreshold: this.sellThreshold, // sell阈值
       totalWeight, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     // 记录历史得分
@@ -644,8 +644,8 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     this.emit('circuitBreak', { // 调用 emit
       strategy, // 执行语句
       reason, // 执行语句
-      performance: this._strategyPerformance[strategy], // 设置 performance 字段
-      cooldownUntil: status.cooldownUntil, // 设置 cooldownUntil 字段
+      performance: this._strategyPerformance[strategy], // performance
+      cooldownUntil: status.cooldownUntil, // 冷却Until
     }); // 结束代码块
 
     console.warn(`[SignalWeightingSystem] 策略熔断: ${strategy}, 原因: ${reason}`); // 控制台输出
@@ -719,9 +719,9 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     for (const [name, status] of Object.entries(this._strategyStatus)) { // 循环 const [name, status] of Object.entries(this._...
       result[name] = { // 执行语句
         ...status, // 展开对象或数组
-        weight: this.currentWeights[name], // 设置 weight 字段
-        baseWeight: this.baseWeights[name], // 设置 baseWeight 字段
-        performance: this._strategyPerformance[name], // 设置 performance 字段
+        weight: this.currentWeights[name], // weight
+        baseWeight: this.baseWeights[name], // baseWeight
+        performance: this._strategyPerformance[name], // performance
       }; // 结束代码块
     } // 结束代码块
     return result; // 返回结果
@@ -771,15 +771,15 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
     ).length; // 执行语句
 
     return { // 返回结果
-      totalStrategies: strategies.length, // 设置 totalStrategies 字段
-      activeStrategies: activeCount, // 设置 activeStrategies 字段
-      circuitBrokenStrategies: breakCount, // 设置 circuitBrokenStrategies 字段
-      threshold: this.threshold, // 设置 threshold 字段
-      sellThreshold: this.sellThreshold, // 设置 sellThreshold 字段
-      weights: this.currentWeights, // 设置 weights 字段
-      dynamicWeightsEnabled: this.weightAdjustment.enabled, // 设置 dynamicWeightsEnabled 字段
-      correlationLimitEnabled: this.correlationConfig.enabled, // 设置 correlationLimitEnabled 字段
-      circuitBreakerEnabled: this.circuitBreaker.enabled, // 设置 circuitBreakerEnabled 字段
+      totalStrategies: strategies.length, // 总策略
+      activeStrategies: activeCount, // 活跃策略
+      circuitBrokenStrategies: breakCount, // circuitBroken策略
+      threshold: this.threshold, // 阈值
+      sellThreshold: this.sellThreshold, // sell阈值
+      weights: this.currentWeights, // weights
+      dynamicWeightsEnabled: this.weightAdjustment.enabled, // dynamicWeights启用
+      correlationLimitEnabled: this.correlationConfig.enabled, // correlation限制启用
+      circuitBreakerEnabled: this.circuitBreaker.enabled, // circuitBreaker启用
     }; // 结束代码块
   } // 结束代码块
 
@@ -825,16 +825,16 @@ export class SignalWeightingSystem extends EventEmitter { // 导出类 SignalWei
    */
   _resetStrategyPerformance(strategy) { // 调用 _resetStrategyPerformance
     this._strategyPerformance[strategy] = { // 访问 _strategyPerformance
-      trades: 0, // 设置 trades 字段
-      wins: 0, // 设置 wins 字段
-      losses: 0, // 设置 losses 字段
-      consecutiveLosses: 0, // 设置 consecutiveLosses 字段
-      totalPnL: 0, // 设置 totalPnL 字段
-      maxDrawdown: 0, // 设置 maxDrawdown 字段
-      equity: 0, // 设置 equity 字段
-      peakEquity: 0, // 设置 peakEquity 字段
-      signals: [], // 设置 signals 字段
-      lastUpdate: Date.now(), // 设置 lastUpdate 字段
+      trades: 0, // 成交
+      wins: 0, // wins
+      losses: 0, // losses
+      consecutiveLosses: 0, // consecutiveLosses
+      totalPnL: 0, // 总PnL
+      maxDrawdown: 0, // 最大回撤
+      equity: 0, // equity
+      peakEquity: 0, // peakEquity
+      signals: [], // 信号
+      lastUpdate: Date.now(), // last更新
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

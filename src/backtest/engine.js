@@ -503,20 +503,20 @@ class Position { // 定义类 Position
    */
   clone() { // 调用 clone
     return { // 返回结果
-      symbol: this.symbol, // 设置 symbol 字段
-      side: this.side, // 设置 side 字段
-      size: this.size, // 设置 size 字段
-      entryPrice: this.entryPrice, // 设置 entryPrice 字段
-      markPrice: this.markPrice, // 设置 markPrice 字段
-      leverage: this.leverage, // 设置 leverage 字段
-      unrealizedPnl: this.unrealizedPnl, // 设置 unrealizedPnl 字段
-      realizedPnl: this.realizedPnl, // 设置 realizedPnl 字段
-      fundingFee: this.fundingFee, // 设置 fundingFee 字段
-      tradingFee: this.tradingFee, // 设置 tradingFee 字段
-      liquidationPrice: this.liquidationPrice, // 设置 liquidationPrice 字段
-      notional: this.notional, // 设置 notional 字段
-      initialMargin: this.initialMargin, // 设置 initialMargin 字段
-      maintenanceMargin: this.maintenanceMargin, // 设置 maintenanceMargin 字段
+      symbol: this.symbol, // 交易对
+      side: this.side, // 方向
+      size: this.size, // 大小
+      entryPrice: this.entryPrice, // 入场价格
+      markPrice: this.markPrice, // mark价格
+      leverage: this.leverage, // 杠杆
+      unrealizedPnl: this.unrealizedPnl, // 未实现盈亏
+      realizedPnl: this.realizedPnl, // 已实现盈亏
+      fundingFee: this.fundingFee, // 资金费率手续费
+      tradingFee: this.tradingFee, // 交易手续费
+      liquidationPrice: this.liquidationPrice, // 强平价格
+      notional: this.notional, // notional
+      initialMargin: this.initialMargin, // 初始保证金
+      maintenanceMargin: this.maintenanceMargin, // maintenance保证金
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -634,11 +634,11 @@ class OrderBook { // 定义类 OrderBook
     // 如果订单簿为空，返回失败 / If book empty, return failure
     if (book.length === 0) { // 条件判断 book.length === 0
       return { // 返回结果
-        success: false, // 设置 success 字段
-        avgPrice: 0, // 设置 avgPrice 字段
-        fills: [], // 设置 fills 字段
-        slippage: 0, // 设置 slippage 字段
-        reason: 'Empty order book', // 设置 reason 字段
+        success: false, // 成功标记
+        avgPrice: 0, // avg价格
+        fills: [], // fills
+        slippage: 0, // 滑点
+        reason: 'Empty order book', // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -681,12 +681,12 @@ class OrderBook { // 定义类 OrderBook
     // 如果未能完全成交 / If not fully filled
     if (remaining > 0) { // 条件判断 remaining > 0
       return { // 返回结果
-        success: false, // 设置 success 字段
-        avgPrice: totalFilled > 0 ? totalValue / totalFilled : 0, // 设置 avgPrice 字段
+        success: false, // 成功标记
+        avgPrice: totalFilled > 0 ? totalValue / totalFilled : 0, // avg价格
         fills, // 执行语句
-        slippage: 0, // 设置 slippage 字段
-        reason: 'Insufficient liquidity', // 设置 reason 字段
-        filled: totalFilled, // 设置 filled 字段
+        slippage: 0, // 滑点
+        reason: 'Insufficient liquidity', // reason
+        filled: totalFilled, // filled
         remaining, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -701,11 +701,11 @@ class OrderBook { // 定义类 OrderBook
 
     // 返回成交结果 / Return execution result
     return { // 返回结果
-      success: true, // 设置 success 字段
+      success: true, // 成功标记
       avgPrice, // 执行语句
       fills, // 执行语句
       slippage, // 执行语句
-      filled: totalFilled, // 设置 filled 字段
+      filled: totalFilled, // filled
     }; // 结束代码块
   } // 结束代码块
 
@@ -737,11 +737,11 @@ class OrderBook { // 定义类 OrderBook
 
     // 无法立即成交，挂单等待 / Cannot fill immediately, place order and wait
     return { // 返回结果
-      success: false, // 设置 success 字段
-      avgPrice: 0, // 设置 avgPrice 字段
-      fills: [], // 设置 fills 字段
-      slippage: 0, // 设置 slippage 字段
-      reason: 'Price not reached', // 设置 reason 字段
+      success: false, // 成功标记
+      avgPrice: 0, // avg价格
+      fills: [], // fills
+      slippage: 0, // 滑点
+      reason: 'Price not reached', // reason
     }; // 结束代码块
   } // 结束代码块
 
@@ -961,16 +961,16 @@ class Account { // 定义类 Account
    */
   getSnapshot() { // 调用 getSnapshot
     return { // 返回结果
-      balance: this.balance, // 设置 balance 字段
-      equity: this.equity, // 设置 equity 字段
-      available: this.available, // 设置 available 字段
-      usedMargin: this.usedMargin, // 设置 usedMargin 字段
-      unrealizedPnl: this.unrealizedPnl, // 设置 unrealizedPnl 字段
-      realizedPnl: this.realizedPnl, // 设置 realizedPnl 字段
-      totalFees: this.totalFees, // 设置 totalFees 字段
-      totalFundingFees: this.totalFundingFees, // 设置 totalFundingFees 字段
-      liquidationCount: this.liquidationCount, // 设置 liquidationCount 字段
-      positions: Array.from(this.positions.values()).map(p => p.clone()), // 设置 positions 字段
+      balance: this.balance, // 余额
+      equity: this.equity, // equity
+      available: this.available, // available
+      usedMargin: this.usedMargin, // used保证金
+      unrealizedPnl: this.unrealizedPnl, // 未实现盈亏
+      realizedPnl: this.realizedPnl, // 已实现盈亏
+      totalFees: this.totalFees, // 总Fees
+      totalFundingFees: this.totalFundingFees, // 总资金费率Fees
+      liquidationCount: this.liquidationCount, // 强平数量
+      positions: Array.from(this.positions.values()).map(p => p.clone()), // 持仓
     }; // 结束代码块
   } // 结束代码块
 
@@ -1447,29 +1447,29 @@ class MatchingEngine { // 定义类 MatchingEngine
     // 记录成交订单 / Record filled order
     if (order.status === ORDER_STATUS.FILLED) { // 条件判断 order.status === ORDER_STATUS.FILLED
       this.filledOrders.push({ // 访问 filledOrders
-        id: order.id, // 设置 id 字段
-        symbol: order.symbol, // 设置 symbol 字段
-        side: order.side, // 设置 side 字段
-        type: order.type, // 设置 type 字段
-        price: order.avgPrice, // 设置 price 字段
-        amount: order.filled, // 设置 amount 字段
-        fee: order.fee, // 设置 fee 字段
-        realizedPnl: order.realizedPnl, // 设置 realizedPnl 字段
-        timestamp: timestamp, // 设置 timestamp 字段
+        id: order.id, // ID
+        symbol: order.symbol, // 交易对
+        side: order.side, // 方向
+        type: order.type, // 类型
+        price: order.avgPrice, // 价格
+        amount: order.filled, // 数量
+        fee: order.fee, // 手续费
+        realizedPnl: order.realizedPnl, // 已实现盈亏
+        timestamp: timestamp, // 时间戳
       }); // 结束代码块
     } // 结束代码块
 
     // 触发成交回调 / Trigger fill callback
     if (this.onFill) { // 条件判断 this.onFill
       this.onFill({ // 调用 onFill
-        orderId: order.id, // 设置 orderId 字段
-        symbol: order.symbol, // 设置 symbol 字段
-        side: order.side, // 设置 side 字段
-        price: fillPrice, // 设置 price 字段
-        amount: fillAmount, // 设置 amount 字段
+        orderId: order.id, // 订单ID
+        symbol: order.symbol, // 交易对
+        side: order.side, // 方向
+        price: fillPrice, // 价格
+        amount: fillAmount, // 数量
         fee, // 执行语句
         realizedPnl, // 执行语句
-        slippage: result.slippage, // 设置 slippage 字段
+        slippage: result.slippage, // 滑点
         timestamp, // 执行语句
       }); // 结束代码块
     } // 结束代码块
@@ -1646,8 +1646,8 @@ class BaseStrategy { // 定义类 BaseStrategy
   marketBuy(symbol, amount, options = {}) { // 调用 marketBuy
     return this.engine.submitOrder({ // 返回结果
       symbol, // 执行语句
-      side: SIDE.BUY, // 设置 side 字段
-      type: ORDER_TYPE.MARKET, // 设置 type 字段
+      side: SIDE.BUY, // 方向
+      type: ORDER_TYPE.MARKET, // 类型
       amount, // 执行语句
       ...options, // 展开对象或数组
     }); // 结束代码块
@@ -1665,8 +1665,8 @@ class BaseStrategy { // 定义类 BaseStrategy
   marketSell(symbol, amount, options = {}) { // 调用 marketSell
     return this.engine.submitOrder({ // 返回结果
       symbol, // 执行语句
-      side: SIDE.SELL, // 设置 side 字段
-      type: ORDER_TYPE.MARKET, // 设置 type 字段
+      side: SIDE.SELL, // 方向
+      type: ORDER_TYPE.MARKET, // 类型
       amount, // 执行语句
       ...options, // 展开对象或数组
     }); // 结束代码块
@@ -1685,8 +1685,8 @@ class BaseStrategy { // 定义类 BaseStrategy
   limitBuy(symbol, price, amount, options = {}) { // 调用 limitBuy
     return this.engine.submitOrder({ // 返回结果
       symbol, // 执行语句
-      side: SIDE.BUY, // 设置 side 字段
-      type: ORDER_TYPE.LIMIT, // 设置 type 字段
+      side: SIDE.BUY, // 方向
+      type: ORDER_TYPE.LIMIT, // 类型
       price, // 执行语句
       amount, // 执行语句
       ...options, // 展开对象或数组
@@ -1706,8 +1706,8 @@ class BaseStrategy { // 定义类 BaseStrategy
   limitSell(symbol, price, amount, options = {}) { // 调用 limitSell
     return this.engine.submitOrder({ // 返回结果
       symbol, // 执行语句
-      side: SIDE.SELL, // 设置 side 字段
-      type: ORDER_TYPE.LIMIT, // 设置 type 字段
+      side: SIDE.SELL, // 方向
+      type: ORDER_TYPE.LIMIT, // 类型
       price, // 执行语句
       amount, // 执行语句
       ...options, // 展开对象或数组
@@ -1793,10 +1793,10 @@ class BaseStrategy { // 定义类 BaseStrategy
     const orderBook = this.engine.matchingEngine.getOrderBook(symbol); // 定义常量 orderBook
     return { // 返回结果
       symbol, // 执行语句
-      bids: orderBook.bids.slice(0, 20), // 设置 bids 字段
-      asks: orderBook.asks.slice(0, 20), // 设置 asks 字段
-      midPrice: orderBook.getMidPrice(), // 设置 midPrice 字段
-      lastPrice: orderBook.lastPrice, // 设置 lastPrice 字段
+      bids: orderBook.bids.slice(0, 20), // bids
+      asks: orderBook.asks.slice(0, 20), // asks
+      midPrice: orderBook.getMidPrice(), // mid价格
+      lastPrice: orderBook.lastPrice, // last价格
     }; // 结束代码块
   } // 结束代码块
 
@@ -1975,13 +1975,13 @@ class BacktestEngine { // 定义类 BacktestEngine
   loadTrades(symbol, trades) { // 调用 loadTrades
     // 转换为事件格式 / Convert to event format
     const events = trades.map(trade => ({ // 定义函数 events
-      type: EVENT_TYPE.TRADE, // 设置 type 字段
-      timestamp: trade[0], // 设置 timestamp 字段
+      type: EVENT_TYPE.TRADE, // 类型
+      timestamp: trade[0], // 时间戳
       symbol, // 执行语句
-      data: { // 设置 data 字段
-        price: trade[1], // 设置 price 字段
-        amount: trade[2], // 设置 amount 字段
-        side: trade[3], // 设置 side 字段
+      data: { // 数据
+        price: trade[1], // 价格
+        amount: trade[2], // 数量
+        side: trade[3], // 方向
       }, // 结束代码块
     })); // 结束代码块
 
@@ -2002,12 +2002,12 @@ class BacktestEngine { // 定义类 BacktestEngine
   loadDepthSnapshots(symbol, snapshots) { // 调用 loadDepthSnapshots
     // 转换为事件格式 / Convert to event format
     const events = snapshots.map(snapshot => ({ // 定义函数 events
-      type: EVENT_TYPE.DEPTH, // 设置 type 字段
-      timestamp: snapshot.timestamp, // 设置 timestamp 字段
+      type: EVENT_TYPE.DEPTH, // 类型
+      timestamp: snapshot.timestamp, // 时间戳
       symbol, // 执行语句
-      data: { // 设置 data 字段
-        bids: snapshot.bids, // 设置 bids 字段
-        asks: snapshot.asks, // 设置 asks 字段
+      data: { // 数据
+        bids: snapshot.bids, // bids
+        asks: snapshot.asks, // asks
       }, // 结束代码块
     })); // 结束代码块
 
@@ -2028,11 +2028,11 @@ class BacktestEngine { // 定义类 BacktestEngine
   loadFundingRates(symbol, fundingRates) { // 调用 loadFundingRates
     // 转换为事件格式 / Convert to event format
     const events = fundingRates.map(funding => ({ // 定义函数 events
-      type: EVENT_TYPE.FUNDING, // 设置 type 字段
-      timestamp: funding[0], // 设置 timestamp 字段
+      type: EVENT_TYPE.FUNDING, // 类型
+      timestamp: funding[0], // 时间戳
       symbol, // 执行语句
-      data: { // 设置 data 字段
-        rate: funding[1], // 设置 rate 字段
+      data: { // 数据
+        rate: funding[1], // 频率
       }, // 结束代码块
     })); // 结束代码块
 
@@ -2053,15 +2053,15 @@ class BacktestEngine { // 定义类 BacktestEngine
   loadKlines(symbol, klines) { // 调用 loadKlines
     // 转换为事件格式 / Convert to event format
     const events = klines.map(kline => ({ // 定义函数 events
-      type: EVENT_TYPE.KLINE, // 设置 type 字段
-      timestamp: kline[0], // 设置 timestamp 字段
+      type: EVENT_TYPE.KLINE, // 类型
+      timestamp: kline[0], // 时间戳
       symbol, // 执行语句
-      data: { // 设置 data 字段
-        open: kline[1], // 设置 open 字段
-        high: kline[2], // 设置 high 字段
-        low: kline[3], // 设置 low 字段
-        close: kline[4], // 设置 close 字段
-        volume: kline[5], // 设置 volume 字段
+      data: { // 数据
+        open: kline[1], // 开盘
+        high: kline[2], // 最高
+        low: kline[3], // 最低
+        close: kline[4], // 收盘
+        volume: kline[5], // 成交量
       }, // 结束代码块
     })); // 结束代码块
 
@@ -2217,11 +2217,11 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 通知策略 / Notify strategy
     if (this.strategy) { // 条件判断 this.strategy
       this.strategy.onTrade({ // 访问 strategy
-        symbol: event.symbol, // 设置 symbol 字段
-        price: event.data.price, // 设置 price 字段
-        amount: event.data.amount, // 设置 amount 字段
-        side: event.data.side, // 设置 side 字段
-        timestamp: event.timestamp, // 设置 timestamp 字段
+        symbol: event.symbol, // 交易对
+        price: event.data.price, // 价格
+        amount: event.data.amount, // 数量
+        side: event.data.side, // 方向
+        timestamp: event.timestamp, // 时间戳
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -2245,10 +2245,10 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 通知策略 / Notify strategy
     if (this.strategy) { // 条件判断 this.strategy
       this.strategy.onDepth({ // 访问 strategy
-        symbol: event.symbol, // 设置 symbol 字段
-        bids: event.data.bids, // 设置 bids 字段
-        asks: event.data.asks, // 设置 asks 字段
-        timestamp: event.timestamp, // 设置 timestamp 字段
+        symbol: event.symbol, // 交易对
+        bids: event.data.bids, // bids
+        asks: event.data.asks, // asks
+        timestamp: event.timestamp, // 时间戳
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -2267,9 +2267,9 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 通知策略 / Notify strategy
     if (this.strategy) { // 条件判断 this.strategy
       this.strategy.onFunding({ // 访问 strategy
-        symbol: event.symbol, // 设置 symbol 字段
-        rate: event.data.rate, // 设置 rate 字段
-        timestamp: event.timestamp, // 设置 timestamp 字段
+        symbol: event.symbol, // 交易对
+        rate: event.data.rate, // 频率
+        timestamp: event.timestamp, // 时间戳
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -2292,13 +2292,13 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 通知策略 / Notify strategy
     if (this.strategy) { // 条件判断 this.strategy
       this.strategy.onKline({ // 访问 strategy
-        symbol: event.symbol, // 设置 symbol 字段
-        open: event.data.open, // 设置 open 字段
-        high: event.data.high, // 设置 high 字段
-        low: event.data.low, // 设置 low 字段
-        close: event.data.close, // 设置 close 字段
-        volume: event.data.volume, // 设置 volume 字段
-        timestamp: event.timestamp, // 设置 timestamp 字段
+        symbol: event.symbol, // 交易对
+        open: event.data.open, // 开盘
+        high: event.data.high, // 最高
+        low: event.data.low, // 最低
+        close: event.data.close, // 收盘
+        volume: event.data.volume, // 成交量
+        timestamp: event.timestamp, // 时间戳
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -2385,10 +2385,10 @@ class BacktestEngine { // 定义类 BacktestEngine
 
     // 记录权益点 / Record equity point
     this.equityCurve.push({ // 访问 equityCurve
-      timestamp: this.currentTime, // 设置 timestamp 字段
-      equity: this.account.equity, // 设置 equity 字段
-      balance: this.account.balance, // 设置 balance 字段
-      unrealizedPnl: this.account.unrealizedPnl, // 设置 unrealizedPnl 字段
+      timestamp: this.currentTime, // 时间戳
+      equity: this.account.equity, // equity
+      balance: this.account.balance, // 余额
+      unrealizedPnl: this.account.unrealizedPnl, // 未实现盈亏
     }); // 结束代码块
   } // 结束代码块
 
@@ -2450,11 +2450,11 @@ class BacktestEngine { // 定义类 BacktestEngine
 
       // 提交市价平仓单 / Submit market close order
       this.submitOrder({ // 调用 submitOrder
-        symbol: sym, // 设置 symbol 字段
-        side: position.side === POSITION_SIDE.LONG ? SIDE.SELL : SIDE.BUY, // 设置 side 字段
-        type: ORDER_TYPE.MARKET, // 设置 type 字段
-        amount: position.size, // 设置 amount 字段
-        reduceOnly: true, // 设置 reduceOnly 字段
+        symbol: sym, // 交易对
+        side: position.side === POSITION_SIDE.LONG ? SIDE.SELL : SIDE.BUY, // 方向
+        type: ORDER_TYPE.MARKET, // 类型
+        amount: position.size, // 数量
+        reduceOnly: true, // 减仓仅
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -2485,22 +2485,22 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 构建回测结果 / Build backtest result
     return { // 返回结果
       // 基本信息 / Basic info
-      startTime: this.events[0]?.timestamp, // 设置 startTime 字段
-      endTime: this.events[this.events.length - 1]?.timestamp, // 设置 endTime 字段
-      duration: this.perfStats.endTime - this.perfStats.startTime, // 设置 duration 字段
+      startTime: this.events[0]?.timestamp, // 启动时间
+      endTime: this.events[this.events.length - 1]?.timestamp, // end时间
+      duration: this.perfStats.endTime - this.perfStats.startTime, // duration
 
       // 账户结果 / Account result
-      initialCapital: this.config.initialCapital, // 设置 initialCapital 字段
-      finalEquity: account.equity, // 设置 finalEquity 字段
-      finalBalance: account.balance, // 设置 finalBalance 字段
+      initialCapital: this.config.initialCapital, // 初始资金
+      finalEquity: account.equity, // finalEquity
+      finalBalance: account.balance, // final余额
       totalReturn, // 执行语句
-      totalReturnPct: (totalReturn * 100).toFixed(2) + '%', // 设置 totalReturnPct 字段
+      totalReturnPct: (totalReturn * 100).toFixed(2) + '%', // 总ReturnPct
 
       // 盈亏统计 / PnL statistics
-      realizedPnl: account.realizedPnl, // 设置 realizedPnl 字段
-      unrealizedPnl: account.unrealizedPnl, // 设置 unrealizedPnl 字段
-      totalFees: account.totalFees, // 设置 totalFees 字段
-      totalFundingFees: account.totalFundingFees, // 设置 totalFundingFees 字段
+      realizedPnl: account.realizedPnl, // 已实现盈亏
+      unrealizedPnl: account.unrealizedPnl, // 未实现盈亏
+      totalFees: account.totalFees, // 总Fees
+      totalFundingFees: account.totalFundingFees, // 总资金费率Fees
 
       // 交易统计 / Trade statistics
       ...tradeStats, // 展开对象或数组
@@ -2509,15 +2509,15 @@ class BacktestEngine { // 定义类 BacktestEngine
       ...riskMetrics, // 展开对象或数组
 
       // 性能统计 / Performance stats
-      eventsProcessed: this.perfStats.eventsProcessed, // 设置 eventsProcessed 字段
-      ordersSubmitted: this.perfStats.ordersSubmitted, // 设置 ordersSubmitted 字段
-      ordersFilled: this.perfStats.ordersFilled, // 设置 ordersFilled 字段
-      liquidationCount: account.liquidationCount, // 设置 liquidationCount 字段
+      eventsProcessed: this.perfStats.eventsProcessed, // eventsProcessed
+      ordersSubmitted: this.perfStats.ordersSubmitted, // 订单Submitted
+      ordersFilled: this.perfStats.ordersFilled, // 订单Filled
+      liquidationCount: account.liquidationCount, // 强平数量
 
       // 详细数据 / Detailed data
-      equityCurve: this.equityCurve, // 设置 equityCurve 字段
-      trades: this.trades, // 设置 trades 字段
-      finalPositions: account.positions, // 设置 finalPositions 字段
+      equityCurve: this.equityCurve, // equityCurve
+      trades: this.trades, // 成交
+      finalPositions: account.positions, // final持仓
     }; // 结束代码块
   } // 结束代码块
 
@@ -2535,14 +2535,14 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 如果没有成交，返回空统计 / If no fills, return empty stats
     if (filledOrders.length === 0) { // 条件判断 filledOrders.length === 0
       return { // 返回结果
-        totalTrades: 0, // 设置 totalTrades 字段
-        winningTrades: 0, // 设置 winningTrades 字段
-        losingTrades: 0, // 设置 losingTrades 字段
-        winRate: 0, // 设置 winRate 字段
-        avgWin: 0, // 设置 avgWin 字段
-        avgLoss: 0, // 设置 avgLoss 字段
-        profitFactor: 0, // 设置 profitFactor 字段
-        avgTradeReturn: 0, // 设置 avgTradeReturn 字段
+        totalTrades: 0, // 总成交
+        winningTrades: 0, // winning成交
+        losingTrades: 0, // losing成交
+        winRate: 0, // win频率
+        avgWin: 0, // avgWin
+        avgLoss: 0, // avg亏损
+        profitFactor: 0, // 盈利Factor
+        avgTradeReturn: 0, // avg交易Return
       }; // 结束代码块
     } // 结束代码块
 
@@ -2580,13 +2580,13 @@ class BacktestEngine { // 定义类 BacktestEngine
     const avgTradeReturn = filledOrders.length > 0 ? totalPnl / filledOrders.length : 0; // 定义常量 avgTradeReturn
 
     return { // 返回结果
-      totalTrades: filledOrders.length, // 设置 totalTrades 字段
+      totalTrades: filledOrders.length, // 总成交
       winningTrades, // 执行语句
       losingTrades, // 执行语句
-      winRate: winRate.toFixed(2) + '%', // 设置 winRate 字段
+      winRate: winRate.toFixed(2) + '%', // win频率
       avgWin, // 执行语句
       avgLoss, // 执行语句
-      profitFactor: profitFactor.toFixed(2), // 设置 profitFactor 字段
+      profitFactor: profitFactor.toFixed(2), // 盈利Factor
       avgTradeReturn, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -2602,11 +2602,11 @@ class BacktestEngine { // 定义类 BacktestEngine
     // 如果权益曲线为空，返回空指标 / If equity curve empty, return empty metrics
     if (this.equityCurve.length < 2) { // 条件判断 this.equityCurve.length < 2
       return { // 返回结果
-        maxDrawdown: 0, // 设置 maxDrawdown 字段
-        maxDrawdownPct: '0%', // 设置 maxDrawdownPct 字段
-        sharpeRatio: 0, // 设置 sharpeRatio 字段
-        sortinoRatio: 0, // 设置 sortinoRatio 字段
-        calmarRatio: 0, // 设置 calmarRatio 字段
+        maxDrawdown: 0, // 最大回撤
+        maxDrawdownPct: '0%', // 最大回撤Pct
+        sharpeRatio: 0, // sharpe比例
+        sortinoRatio: 0, // sortino比例
+        calmarRatio: 0, // calmar比例
       }; // 结束代码块
     } // 结束代码块
 
@@ -2655,10 +2655,10 @@ class BacktestEngine { // 定义类 BacktestEngine
 
     return { // 返回结果
       maxDrawdown, // 执行语句
-      maxDrawdownPct: (maxDrawdown * 100).toFixed(2) + '%', // 设置 maxDrawdownPct 字段
-      sharpeRatio: sharpeRatio.toFixed(2), // 设置 sharpeRatio 字段
-      sortinoRatio: sortinoRatio.toFixed(2), // 设置 sortinoRatio 字段
-      calmarRatio: calmarRatio.toFixed(2), // 设置 calmarRatio 字段
+      maxDrawdownPct: (maxDrawdown * 100).toFixed(2) + '%', // 最大回撤Pct
+      sharpeRatio: sharpeRatio.toFixed(2), // sharpe比例
+      sortinoRatio: sortinoRatio.toFixed(2), // sortino比例
+      calmarRatio: calmarRatio.toFixed(2), // calmar比例
     }; // 结束代码块
   } // 结束代码块
 
@@ -2717,11 +2717,11 @@ class BacktestEngine { // 定义类 BacktestEngine
 
     // 重置性能统计 / Reset performance stats
     this.perfStats = { // 设置 perfStats
-      startTime: 0, // 设置 startTime 字段
-      endTime: 0, // 设置 endTime 字段
-      eventsProcessed: 0, // 设置 eventsProcessed 字段
-      ordersSubmitted: 0, // 设置 ordersSubmitted 字段
-      ordersFilled: 0, // 设置 ordersFilled 字段
+      startTime: 0, // 启动时间
+      endTime: 0, // end时间
+      eventsProcessed: 0, // eventsProcessed
+      ordersSubmitted: 0, // 订单Submitted
+      ordersFilled: 0, // 订单Filled
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

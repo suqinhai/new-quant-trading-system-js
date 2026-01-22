@@ -44,9 +44,9 @@ import { KEY_PREFIX } from './RedisClient.js'; // 导入模块 ./RedisClient.js
  * Position status enum
  */
 export const POSITION_STATUS = { // 导出常量 POSITION_STATUS
-  OPEN: 'open', // 设置 OPEN 字段
-  CLOSED: 'closed', // 设置 CLOSED 字段
-  LIQUIDATED: 'liquidated', // 设置 LIQUIDATED 字段
+  OPEN: 'open', // 开盘
+  CLOSED: 'closed', // CLOSED权限
+  LIQUIDATED: 'liquidated', // LIQUIDATED
 }; // 结束代码块
 
 /**
@@ -54,8 +54,8 @@ export const POSITION_STATUS = { // 导出常量 POSITION_STATUS
  * Position side enum
  */
 export const POSITION_SIDE = { // 导出常量 POSITION_SIDE
-  LONG: 'long', // 设置 LONG 字段
-  SHORT: 'short', // 设置 SHORT 字段
+  LONG: 'long', // LONG
+  SHORT: 'short', // SHORT
 }; // 结束代码块
 
 /**
@@ -147,23 +147,23 @@ class PositionStore { // 定义类 PositionStore
    */
   _serialize(position) { // 调用 _serialize
     const data = { // 定义常量 data
-      positionId: position.positionId || position.id || '', // 设置 positionId 字段
-      symbol: position.symbol || '', // 设置 symbol 字段
-      side: position.side || POSITION_SIDE.LONG, // 设置 side 字段
-      entryPrice: String(position.entryPrice || 0), // 设置 entryPrice 字段
-      currentPrice: String(position.currentPrice || position.entryPrice || 0), // 设置 currentPrice 字段
-      amount: String(position.amount || 0), // 设置 amount 字段
-      leverage: String(position.leverage || 1), // 设置 leverage 字段
-      margin: String(position.margin || 0), // 设置 margin 字段
-      unrealizedPnl: String(position.unrealizedPnl || 0), // 设置 unrealizedPnl 字段
-      realizedPnl: String(position.realizedPnl || 0), // 设置 realizedPnl 字段
-      liquidationPrice: String(position.liquidationPrice || 0), // 设置 liquidationPrice 字段
-      exchange: position.exchange || '', // 设置 exchange 字段
-      strategy: position.strategy || '', // 设置 strategy 字段
-      openedAt: String(position.openedAt || Date.now()), // 设置 openedAt 字段
-      updatedAt: String(position.updatedAt || Date.now()), // 设置 updatedAt 字段
-      closedAt: String(position.closedAt || 0), // 设置 closedAt 字段
-      status: position.status || POSITION_STATUS.OPEN, // 设置 status 字段
+      positionId: position.positionId || position.id || '', // 持仓ID
+      symbol: position.symbol || '', // 交易对
+      side: position.side || POSITION_SIDE.LONG, // 方向
+      entryPrice: String(position.entryPrice || 0), // 入场价格
+      currentPrice: String(position.currentPrice || position.entryPrice || 0), // current价格
+      amount: String(position.amount || 0), // 数量
+      leverage: String(position.leverage || 1), // 杠杆
+      margin: String(position.margin || 0), // 保证金
+      unrealizedPnl: String(position.unrealizedPnl || 0), // 未实现盈亏
+      realizedPnl: String(position.realizedPnl || 0), // 已实现盈亏
+      liquidationPrice: String(position.liquidationPrice || 0), // 强平价格
+      exchange: position.exchange || '', // 交易所
+      strategy: position.strategy || '', // 策略
+      openedAt: String(position.openedAt || Date.now()), // openedAt
+      updatedAt: String(position.updatedAt || Date.now()), // updatedAt
+      closedAt: String(position.closedAt || 0), // closedAt
+      status: position.status || POSITION_STATUS.OPEN, // 状态
     }; // 结束代码块
 
     // 序列化 metadata
@@ -184,23 +184,23 @@ class PositionStore { // 定义类 PositionStore
     } // 结束代码块
 
     const position = { // 定义常量 position
-      positionId: data.positionId, // 设置 positionId 字段
-      symbol: data.symbol, // 设置 symbol 字段
-      side: data.side, // 设置 side 字段
-      entryPrice: parseFloat(data.entryPrice), // 设置 entryPrice 字段
-      currentPrice: parseFloat(data.currentPrice), // 设置 currentPrice 字段
-      amount: parseFloat(data.amount), // 设置 amount 字段
-      leverage: parseFloat(data.leverage), // 设置 leverage 字段
-      margin: parseFloat(data.margin), // 设置 margin 字段
-      unrealizedPnl: parseFloat(data.unrealizedPnl), // 设置 unrealizedPnl 字段
-      realizedPnl: parseFloat(data.realizedPnl), // 设置 realizedPnl 字段
-      liquidationPrice: parseFloat(data.liquidationPrice) || null, // 设置 liquidationPrice 字段
-      exchange: data.exchange, // 设置 exchange 字段
-      strategy: data.strategy || null, // 设置 strategy 字段
-      openedAt: parseInt(data.openedAt, 10), // 设置 openedAt 字段
-      updatedAt: parseInt(data.updatedAt, 10) || null, // 设置 updatedAt 字段
-      closedAt: parseInt(data.closedAt, 10) || null, // 设置 closedAt 字段
-      status: data.status, // 设置 status 字段
+      positionId: data.positionId, // 持仓ID
+      symbol: data.symbol, // 交易对
+      side: data.side, // 方向
+      entryPrice: parseFloat(data.entryPrice), // 入场价格
+      currentPrice: parseFloat(data.currentPrice), // current价格
+      amount: parseFloat(data.amount), // 数量
+      leverage: parseFloat(data.leverage), // 杠杆
+      margin: parseFloat(data.margin), // 保证金
+      unrealizedPnl: parseFloat(data.unrealizedPnl), // 未实现盈亏
+      realizedPnl: parseFloat(data.realizedPnl), // 已实现盈亏
+      liquidationPrice: parseFloat(data.liquidationPrice) || null, // 强平价格
+      exchange: data.exchange, // 交易所
+      strategy: data.strategy || null, // 策略
+      openedAt: parseInt(data.openedAt, 10), // openedAt
+      updatedAt: parseInt(data.updatedAt, 10) || null, // updatedAt
+      closedAt: parseInt(data.closedAt, 10) || null, // closedAt
+      status: data.status, // 状态
     }; // 结束代码块
 
     // 解析 metadata
@@ -301,7 +301,7 @@ class PositionStore { // 定义类 PositionStore
 
     // 准备更新数据 / Prepare update data
     const updates = { // 定义常量 updates
-      updatedAt: String(updatedAt), // 设置 updatedAt 字段
+      updatedAt: String(updatedAt), // updatedAt
     }; // 结束代码块
 
     if (position.currentPrice !== undefined) updates.currentPrice = String(position.currentPrice); // 条件判断 position.currentPrice !== undefined
@@ -347,9 +347,9 @@ class PositionStore { // 定义类 PositionStore
       for (const update of updates) { // 循环 const update of updates
         const key = this._positionKey(update.positionId); // 定义常量 key
         pipe.hSet(key, { // 调用 pipe.hSet
-          currentPrice: String(update.currentPrice), // 设置 currentPrice 字段
-          unrealizedPnl: String(update.unrealizedPnl), // 设置 unrealizedPnl 字段
-          updatedAt: now, // 设置 updatedAt 字段
+          currentPrice: String(update.currentPrice), // current价格
+          unrealizedPnl: String(update.unrealizedPnl), // 未实现盈亏
+          updatedAt: now, // updatedAt
         }); // 结束代码块
       } // 结束代码块
     }); // 结束代码块
@@ -367,10 +367,10 @@ class PositionStore { // 定义类 PositionStore
   async close(positionId, closeData = {}) { // 执行语句
     return this.update({ // 返回结果
       positionId, // 执行语句
-      status: closeData.status || POSITION_STATUS.CLOSED, // 设置 status 字段
-      closedAt: closeData.closedAt || Date.now(), // 设置 closedAt 字段
-      realizedPnl: closeData.realizedPnl, // 设置 realizedPnl 字段
-      currentPrice: closeData.currentPrice, // 设置 currentPrice 字段
+      status: closeData.status || POSITION_STATUS.CLOSED, // 状态
+      closedAt: closeData.closedAt || Date.now(), // closedAt
+      realizedPnl: closeData.realizedPnl, // 已实现盈亏
+      currentPrice: closeData.currentPrice, // current价格
     }); // 结束代码块
   } // 结束代码块
 
@@ -576,13 +576,13 @@ class PositionStore { // 定义类 PositionStore
    */
   async getStats() { // 执行语句
     const stats = { // 定义常量 stats
-      total: 0, // 设置 total 字段
-      open: 0, // 设置 open 字段
-      closed: 0, // 设置 closed 字段
-      liquidated: 0, // 设置 liquidated 字段
-      bySymbol: {}, // 设置 bySymbol 字段
-      totalUnrealizedPnl: 0, // 设置 totalUnrealizedPnl 字段
-      totalRealizedPnl: 0, // 设置 totalRealizedPnl 字段
+      total: 0, // 总
+      open: 0, // 开盘
+      closed: 0, // closed
+      liquidated: 0, // liquidated
+      bySymbol: {}, // by交易对
+      totalUnrealizedPnl: 0, // 总未实现盈亏
+      totalRealizedPnl: 0, // 总已实现盈亏
     }; // 结束代码块
 
     // 状态统计 / Status counts
@@ -628,12 +628,12 @@ class PositionStore { // 定义类 PositionStore
     } // 结束代码块
 
     return { // 返回结果
-      count: openPositions.length, // 设置 count 字段
+      count: openPositions.length, // 数量
       longCount, // 执行语句
       shortCount, // 执行语句
       totalMargin, // 执行语句
       totalUnrealizedPnl, // 执行语句
-      positions: openPositions, // 设置 positions 字段
+      positions: openPositions, // 持仓
     }; // 结束代码块
   } // 结束代码块
 

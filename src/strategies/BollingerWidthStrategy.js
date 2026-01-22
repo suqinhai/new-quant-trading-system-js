@@ -20,7 +20,7 @@ export class BollingerWidthStrategy extends BaseStrategy { // 导出类 Bollinge
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: 'BollingerWidthStrategy', // 设置 name 字段
+      name: 'BollingerWidthStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 

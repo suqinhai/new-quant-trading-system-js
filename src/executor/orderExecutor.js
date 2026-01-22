@@ -73,7 +73,7 @@ const ORDER_STATUS = { // 定义常量 ORDER_STATUS
 const ERROR_TYPE = { // 定义常量 ERROR_TYPE
   RATE_LIMIT: 'rate_limit',       // 429 限频 / Rate limit (429)
   NONCE_CONFLICT: 'nonce',        // Nonce 冲突 / Nonce conflict
-  INSUFFICIENT_BALANCE: 'balance', // 余额不足 / Insufficient balance
+  INSUFFICIENT_BALANCE: 'balance', // 余额不足余额权限
   INVALID_ORDER: 'invalid',       // 无效订单 / Invalid order
   NETWORK: 'network',             // 网络错误 / Network error
   EXCHANGE: 'exchange',           // 交易所错误 / Exchange error
@@ -90,81 +90,81 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 未成交自动撤单时间 (毫秒) / Auto-cancel time for unfilled orders (ms)
-  unfillTimeout: 500, // 设置 unfillTimeout 字段
+  unfillTimeout: 500, // 未成交自动撤单时间 (毫秒)
 
   // 订单状态检查间隔 (毫秒) / Order status check interval (ms)
-  checkInterval: 100, // 设置 checkInterval 字段
+  checkInterval: 100, // 订单状态检查间隔 (毫秒)
 
   // 最大重下次数 / Maximum re-submit attempts
-  maxResubmitAttempts: 5, // 设置 maxResubmitAttempts 字段
+  maxResubmitAttempts: 5, // 最大重下次数
 
   // 价格滑点容忍度 / Price slippage tolerance
-  priceSlippage: 0.001,  // 0.1%
+  priceSlippage: 0.001,  // 价格滑点
 
   // ============================================
   // 限频处理配置 / Rate Limit Configuration
   // ============================================
 
   // 429 错误初始等待时间 (毫秒) / Initial wait time for 429 errors (ms)
-  rateLimitInitialWait: 1000, // 设置 rateLimitInitialWait 字段
+  rateLimitInitialWait: 1000, // 429 错误初始等待时间 (毫秒)
 
   // 429 错误最大等待时间 (毫秒) / Maximum wait time for 429 errors (ms)
-  rateLimitMaxWait: 30000, // 设置 rateLimitMaxWait 字段
+  rateLimitMaxWait: 30000, // 429 错误最大等待时间 (毫秒)
 
   // 429 错误退避乘数 / Backoff multiplier for 429 errors
-  rateLimitBackoffMultiplier: 2, // 设置 rateLimitBackoffMultiplier 字段
+  rateLimitBackoffMultiplier: 2, // 429 错误退避乘数
 
   // 429 错误最大重试次数 / Maximum retries for 429 errors
-  rateLimitMaxRetries: 5, // 设置 rateLimitMaxRetries 字段
+  rateLimitMaxRetries: 5, // 429 错误最大重试次数
 
   // ============================================
   // Nonce 处理配置 / Nonce Configuration
   // ============================================
 
   // Nonce 冲突重试次数 / Nonce conflict retry attempts
-  nonceRetryAttempts: 3, // 设置 nonceRetryAttempts 字段
+  nonceRetryAttempts: 3, // Nonce 冲突重试次数
 
   // Nonce 冲突重试延迟 (毫秒) / Nonce conflict retry delay (ms)
-  nonceRetryDelay: 100, // 设置 nonceRetryDelay 字段
+  nonceRetryDelay: 100, // Nonce 冲突重试延迟 (毫秒)
 
   // 时间戳偏移修正 (毫秒) / Timestamp offset correction (ms)
-  timestampOffset: 0, // 设置 timestampOffset 字段
+  timestampOffset: 0, // 时间戳偏移修正 (毫秒)
 
   // ============================================
   // 并发控制配置 / Concurrency Configuration
   // ============================================
 
   // 每个账户的最大并发订单数 / Max concurrent orders per account
-  maxConcurrentPerAccount: 5, // 设置 maxConcurrentPerAccount 字段
+  maxConcurrentPerAccount: 5, // 每个账户的最大并发订单数
 
   // 全局最大并发订单数 / Global max concurrent orders
-  maxConcurrentGlobal: 20, // 设置 maxConcurrentGlobal 字段
+  maxConcurrentGlobal: 20, // 全局最大并发订单数
 
   // 订单队列超时 (毫秒) / Order queue timeout (ms)
-  queueTimeout: 30000, // 设置 queueTimeout 字段
+  queueTimeout: 30000, // 订单队列超时 (毫秒)
 
   // ============================================
   // 智能下单配置 / Smart Order Configuration
   // ============================================
 
   // 默认使用 post-only / Default to post-only orders
-  defaultPostOnly: false, // 设置 defaultPostOnly 字段
+  defaultPostOnly: false, // 默认使用 post-only
 
   // 自动调整价格使订单成为 Maker / Auto-adjust price to be maker
-  autoMakerPrice: true, // 设置 autoMakerPrice 字段
+  autoMakerPrice: true, // 自动调整价格使订单成为 Maker
 
   // Maker 价格偏移 (相对于最佳价格) / Maker price offset from best price
-  makerPriceOffset: 0.0001,  // 0.01%
+  makerPriceOffset: 0.0001,  // Maker 价格偏移 (相对于最佳价格)
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[SmartExecutor]', // 设置 logPrefix 字段
+  logPrefix: '[SmartExecutor]', // 日志前缀
 
   // ============================================
   // DryRun 配置 / DryRun Configuration
@@ -173,13 +173,13 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 是否启用 dryRun 模式 (影子模式) / Enable dryRun mode (shadow mode)
   // 启用后订单不会真实执行，仅模拟成交
   // When enabled, orders will not be actually executed, only simulated
-  dryRun: false, // 设置 dryRun 字段
+  dryRun: false, // When enabled, orders will not be actually executed, only simulated
 
   // dryRun 模式下的模拟成交延迟 (毫秒) / Simulated fill delay in dryRun mode (ms)
-  dryRunFillDelay: 100, // 设置 dryRunFillDelay 字段
+  dryRunFillDelay: 100, // dryRun 模式下的模拟成交延迟 (毫秒)
 
   // dryRun 模式下的滑点模拟 / Slippage simulation in dryRun mode
-  dryRunSlippage: 0.0001,  // 0.01%
+  dryRunSlippage: 0.0001,  // dryRun 模式下的滑点模拟
 }; // 结束代码块
 
 // ============================================
@@ -229,7 +229,7 @@ class AccountLockManager { // 定义类 AccountLockManager
         concurrency, // 执行语句
 
         // 设置超时 / Set timeout
-        timeout: DEFAULT_CONFIG.queueTimeout, // 设置 timeout 字段
+        timeout: DEFAULT_CONFIG.queueTimeout, // 超时
       }); // 结束代码块
 
       // 返回锁信息 / Return lock info
@@ -238,10 +238,10 @@ class AccountLockManager { // 定义类 AccountLockManager
         queue, // 执行语句
 
         // 活跃订单计数 / Active order count
-        activeCount: 0, // 设置 activeCount 字段
+        activeCount: 0, // 活跃数量
 
         // 创建时间 / Creation time
-        createdAt: Date.now(), // 设置 createdAt 字段
+        createdAt: Date.now(), // createdAt
       }; // 结束代码块
     }); // 结束代码块
 
@@ -264,7 +264,7 @@ class AccountLockManager { // 定义类 AccountLockManager
     // 原子增加活跃计数 / Atomically increment active count
     await this.locks.update(accountId, (lockInfo) => ({ // 等待异步结果
       ...lockInfo, // 展开对象或数组
-      activeCount: lockInfo.activeCount + 1, // 设置 activeCount 字段
+      activeCount: lockInfo.activeCount + 1, // 活跃数量
     })); // 结束代码块
 
     try { // 尝试执行
@@ -276,7 +276,7 @@ class AccountLockManager { // 定义类 AccountLockManager
       // 原子减少活跃计数 / Atomically decrement active count
       await this.locks.update(accountId, (lockInfo) => ({ // 等待异步结果
         ...lockInfo, // 展开对象或数组
-        activeCount: lockInfo.activeCount - 1, // 设置 activeCount 字段
+        activeCount: lockInfo.activeCount - 1, // 活跃数量
       })); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -424,8 +424,8 @@ class RateLimitManager { // 定义类 RateLimitManager
 
       return { // 返回结果
         consecutiveErrors, // 执行语句
-        lastError: error, // 设置 lastError 字段
-        waitUntil: Date.now() + waitTime, // 设置 waitUntil 字段
+        lastError: error, // last错误
+        waitUntil: Date.now() + waitTime, // waitUntil
       }; // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -440,7 +440,7 @@ class RateLimitManager { // 定义类 RateLimitManager
     // 使用原子操作更新状态 / Use atomic operation to update status
     await this.rateLimitStatus.updateIfPresent(exchangeId, (status) => ({ // 等待异步结果
       ...status, // 展开对象或数组
-      consecutiveErrors: 0, // 设置 consecutiveErrors 字段
+      consecutiveErrors: 0, // consecutive错误列表
     })); // 结束代码块
   } // 结束代码块
 
@@ -511,7 +511,7 @@ class NonceManager { // 定义类 NonceManager
       // 返回更新后的状态 / Return updated status
       return { // 返回结果
         ...current, // 展开对象或数组
-        lastNonce: newNonce, // 设置 lastNonce 字段
+        lastNonce: newNonce, // lastNonce
       }; // 结束代码块
     }); // 结束代码块
 
@@ -536,14 +536,14 @@ class NonceManager { // 定义类 NonceManager
     // 使用原子操作更新状态 / Use atomic operation to update status
     await this.nonceStatus.compute(exchangeId, (key, status) => { // 等待异步结果
       const current = status || { // 定义常量 current
-        lastNonce: 0, // 设置 lastNonce 字段
-        timestampOffset: 0, // 设置 timestampOffset 字段
-        serverTime: 0, // 设置 serverTime 字段
+        lastNonce: 0, // lastNonce
+        timestampOffset: 0, // 时间戳Offset
+        serverTime: 0, // server时间
       }; // 结束代码块
 
       return { // 返回结果
         ...current, // 展开对象或数组
-        timestampOffset: offset, // 设置 timestampOffset 字段
+        timestampOffset: offset, // 时间戳Offset
         serverTime, // 执行语句
       }; // 结束代码块
     }); // 结束代码块
@@ -564,9 +564,9 @@ class NonceManager { // 定义类 NonceManager
     await this.nonceStatus.compute(exchangeId, (key, status) => { // 等待异步结果
       if (!status) { // 条件判断 !status
         return { // 返回结果
-          lastNonce: 0, // 设置 lastNonce 字段
+          lastNonce: 0, // lastNonce
           timestampOffset: 1000,  // 默认增加 1 秒 / Default add 1 second
-          serverTime: 0, // 设置 serverTime 字段
+          serverTime: 0, // server时间
         }; // 结束代码块
       } // 结束代码块
 
@@ -583,7 +583,7 @@ class NonceManager { // 定义类 NonceManager
 
       return { // 返回结果
         ...status, // 展开对象或数组
-        timestampOffset: newOffset, // 设置 timestampOffset 字段
+        timestampOffset: newOffset, // 时间戳Offset
         lastNonce: 0,  // 重置最后 nonce / Reset last nonce
       }; // 结束代码块
     }); // 结束代码块
@@ -820,8 +820,8 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
       // 返回结果 / Return result
       return { // 返回结果
-        success: result.success || false, // 设置 success 字段
-        orderId: result.orderInfo?.exchangeOrderId || result.exchangeOrder?.id, // 设置 orderId 字段
+        success: result.success || false, // 成功标记
+        orderId: result.orderInfo?.exchangeOrderId || result.exchangeOrder?.id, // 订单ID
         ...result, // 展开对象或数组
       }; // 结束代码块
 
@@ -833,8 +833,8 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       ); // 结束调用或参数
 
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: error.message, // 设置 error 字段
+        success: false, // 成功标记
+        error: error.message, // 错误
         params, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -886,7 +886,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       clientOrderId, // 执行语句
 
       // 交易所订单 ID (待填充) / Exchange order ID (to be filled)
-      exchangeOrderId: null, // 设置 exchangeOrderId 字段
+      exchangeOrderId: null, // 交易所订单 ID (待填充)
 
       // 交易所 ID / Exchange ID
       exchangeId, // 执行语句
@@ -904,13 +904,13 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       amount, // 执行语句
 
       // 原始价格 / Original price
-      originalPrice: price, // 设置 originalPrice 字段
+      originalPrice: price, // original价格
 
       // 当前价格 / Current price
-      currentPrice: price, // 设置 currentPrice 字段
+      currentPrice: price, // current价格
 
       // 订单类型 / Order type
-      type: postOnly ? ORDER_TYPE.POST_ONLY : ORDER_TYPE.LIMIT, // 设置 type 字段
+      type: postOnly ? ORDER_TYPE.POST_ONLY : ORDER_TYPE.LIMIT, // 类型订单类型
 
       // 是否 post-only / Whether post-only
       postOnly, // 执行语句
@@ -919,22 +919,22 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       reduceOnly, // 执行语句
 
       // 订单状态 / Order status
-      status: ORDER_STATUS.PENDING, // 设置 status 字段
+      status: ORDER_STATUS.PENDING, // 状态订单状态
 
       // 已成交数量 / Filled amount
-      filledAmount: 0, // 设置 filledAmount 字段
+      filledAmount: 0, // 已成交数量
 
       // 平均成交价 / Average fill price
-      avgPrice: 0, // 设置 avgPrice 字段
+      avgPrice: 0, // avg价格
 
       // 重下次数 / Resubmit count
-      resubmitCount: 0, // 设置 resubmitCount 字段
+      resubmitCount: 0, // 重下次数
 
       // 创建时间 / Creation time
-      createdAt: Date.now(), // 设置 createdAt 字段
+      createdAt: Date.now(), // createdAt
 
       // 最后更新时间 / Last update time
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
 
       // 额外选项 / Extra options
       options, // 执行语句
@@ -1010,20 +1010,20 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
     // 创建订单信息 / Create order info
     const orderInfo = { // 定义常量 orderInfo
       clientOrderId, // 执行语句
-      exchangeOrderId: null, // 设置 exchangeOrderId 字段
+      exchangeOrderId: null, // 交易所订单ID
       exchangeId, // 执行语句
       accountId, // 执行语句
       symbol, // 执行语句
       side, // 执行语句
       amount, // 执行语句
       currentPrice: price,              // 当前价格 (用于 dryRun 模式) / Current price (for dryRun mode)
-      type: ORDER_TYPE.MARKET, // 设置 type 字段
+      type: ORDER_TYPE.MARKET, // 类型
       reduceOnly, // 执行语句
-      status: ORDER_STATUS.PENDING, // 设置 status 字段
-      filledAmount: 0, // 设置 filledAmount 字段
-      avgPrice: 0, // 设置 avgPrice 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      status: ORDER_STATUS.PENDING, // 状态
+      filledAmount: 0, // filled数量
+      avgPrice: 0, // avg价格
+      createdAt: Date.now(), // createdAt
+      updatedAt: Date.now(), // updatedAt
       options, // 执行语句
     }; // 结束代码块
 
@@ -1178,7 +1178,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
             // 无效订单，直接失败 / Invalid order, fail directly
             throw new Error(`无效订单 / Invalid order: ${error.message}`); // 抛出异常
 
-          default: // 默认分支
+          default: // 默认
             // 其他错误，根据重试次数决定 / Other errors, decide based on retry count
             if (orderInfo.resubmitCount >= this.config.maxResubmitAttempts) { // 条件判断 orderInfo.resubmitCount >= this.config.maxRes...
               throw error; // 抛出异常
@@ -1227,24 +1227,24 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
     // 构建模拟交易所订单响应 / Build simulated exchange order response
     const simulatedExchangeOrder = { // 定义常量 simulatedExchangeOrder
-      id: simulatedOrderId, // 设置 id 字段
-      clientOrderId: orderInfo.clientOrderId, // 设置 clientOrderId 字段
-      symbol: orderInfo.symbol, // 设置 symbol 字段
-      type: orderInfo.type === ORDER_TYPE.MARKET ? 'market' : 'limit', // 设置 type 字段
-      side: orderInfo.side, // 设置 side 字段
-      amount: orderInfo.amount, // 设置 amount 字段
-      price: orderInfo.currentPrice, // 设置 price 字段
-      average: simulatedPrice, // 设置 average 字段
-      filled: orderInfo.amount, // 设置 filled 字段
-      remaining: 0, // 设置 remaining 字段
-      status: 'closed', // 设置 status 字段
-      fee: { // 设置 fee 字段
-        cost: orderInfo.amount * simulatedPrice * 0.0004,  // 模拟 0.04% 手续费
-        currency: 'USDT', // 设置 currency 字段
+      id: simulatedOrderId, // ID
+      clientOrderId: orderInfo.clientOrderId, // client订单ID
+      symbol: orderInfo.symbol, // 交易对
+      type: orderInfo.type === ORDER_TYPE.MARKET ? 'market' : 'limit', // 类型
+      side: orderInfo.side, // 方向
+      amount: orderInfo.amount, // 数量
+      price: orderInfo.currentPrice, // 价格
+      average: simulatedPrice, // 平均
+      filled: orderInfo.amount, // filled
+      remaining: 0, // remaining
+      status: 'closed', // 状态
+      fee: { // 手续费
+        cost: orderInfo.amount * simulatedPrice * 0.0004,  // cost
+        currency: 'USDT', // currency
       }, // 结束代码块
-      timestamp: Date.now(), // 设置 timestamp 字段
-      datetime: new Date().toISOString(), // 设置 datetime 字段
-      info: { dryRun: true },  // 标记为 dryRun 订单
+      timestamp: Date.now(), // 时间戳
+      datetime: new Date().toISOString(), // datetime
+      info: { dryRun: true },  // info
     }; // 结束代码块
 
     // 更新订单信息 / Update order info
@@ -1272,10 +1272,10 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
     // 返回结果 / Return result
     return { // 返回结果
-      success: true, // 设置 success 字段
-      dryRun: true, // 设置 dryRun 字段
+      success: true, // 成功标记
+      dryRun: true, // dryRun
       orderInfo, // 执行语句
-      exchangeOrder: simulatedExchangeOrder, // 设置 exchangeOrder 字段
+      exchangeOrder: simulatedExchangeOrder, // 交易所订单
     }; // 结束代码块
   } // 结束代码块
 
@@ -1367,7 +1367,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
         // 返回结果 / Return result
         return { // 返回结果
-          success: true, // 设置 success 字段
+          success: true, // 成功标记
           orderInfo, // 执行语句
           exchangeOrder, // 执行语句
         }; // 结束代码块
@@ -1414,10 +1414,10 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
     // 结果对象 / Result object
     const result = { // 定义常量 result
       // 订单类型 / Order type
-      type: 'limit', // 设置 type 字段
+      type: 'limit', // 类型订单类型
 
       // 额外参数 / Extra params
-      params: {}, // 设置 params 字段
+      params: {}, // params
     }; // 结束代码块
 
     // 添加 post-only 参数 / Add post-only param
@@ -1602,9 +1602,9 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
             // 返回成功 / Return success
             resolve({ // 调用 resolve
-              success: true, // 设置 success 字段
+              success: true, // 成功标记
               orderInfo, // 执行语句
-              status: 'filled', // 设置 status 字段
+              status: 'filled', // 状态
             }); // 结束代码块
 
             return; // 返回结果
@@ -1641,10 +1641,10 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
             orderInfo.status !== ORDER_STATUS.FAILED) { // 执行语句
           // 返回当前状态 / Return current status
           resolve({ // 调用 resolve
-            success: orderInfo.filledAmount > 0, // 设置 success 字段
+            success: orderInfo.filledAmount > 0, // 成功标记
             orderInfo, // 执行语句
-            status: 'timeout', // 设置 status 字段
-            filledAmount: orderInfo.filledAmount, // 设置 filledAmount 字段
+            status: 'timeout', // 状态
+            filledAmount: orderInfo.filledAmount, // filled数量
           }); // 结束代码块
         } // 结束代码块
       }, 60000);  // 60 秒总超时 / 60 second total timeout
@@ -1931,8 +1931,8 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
     // 返回统计信息副本 / Return copy of statistics
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      activeOrders: this.activeOrders.size, // 设置 activeOrders 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      activeOrders: this.activeOrders.size, // 活跃订单
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -1967,7 +1967,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         if (this.config.verbose) { // 条件判断 this.config.verbose
           console.log(fullMessage); // 控制台输出
         } // 结束代码块

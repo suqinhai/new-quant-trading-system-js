@@ -54,43 +54,43 @@ const REBALANCE_TRIGGER = { // 定义常量 REBALANCE_TRIGGER
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 总资金 / Total capital
-  totalCapital: 100000, // 设置 totalCapital 字段
+  totalCapital: 100000, // 总资金
 
   // 默认分配方法 / Default allocation method
-  defaultMethod: ALLOCATION_METHOD.RISK_PARITY, // 设置 defaultMethod 字段
+  defaultMethod: ALLOCATION_METHOD.RISK_PARITY, // 默认Method
 
   // 最小策略权重 / Minimum strategy weight
-  minWeight: 0.05, // 设置 minWeight 字段
+  minWeight: 0.05, // 最小Weight
 
   // 最大策略权重 / Maximum strategy weight
-  maxWeight: 0.40, // 设置 maxWeight 字段
+  maxWeight: 0.40, // 最大Weight
 
   // 再平衡偏离阈值 / Rebalance deviation threshold
-  rebalanceThreshold: 0.05, // 设置 rebalanceThreshold 字段
+  rebalanceThreshold: 0.05, // 再平衡偏离阈值
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
   rebalancePeriod: 24 * 60 * 60 * 1000, // 每天 / Daily
 
   // 无风险利率 (年化) / Risk-free rate (annualized)
-  riskFreeRate: 0.02, // 设置 riskFreeRate 字段
+  riskFreeRate: 0.02, // 无风险利率 (年化)
 
   // 凯利分数 (保守调整) / Kelly fraction (conservative adjustment)
-  kellyFraction: 0.25, // 设置 kellyFraction 字段
+  kellyFraction: 0.25, // 凯利分数 (保守调整)
 
   // 是否启用杠杆 / Enable leverage
-  enableLeverage: false, // 设置 enableLeverage 字段
+  enableLeverage: false, // 启用杠杆
 
   // 最大总杠杆 / Maximum total leverage
-  maxLeverage: 1.0, // 设置 maxLeverage 字段
+  maxLeverage: 1.0, // 最大杠杆
 
   // 优化迭代次数 / Optimization iterations
-  optimizationIterations: 1000, // 设置 optimizationIterations 字段
+  optimizationIterations: 1000, // 优化迭代次数
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[CapitalAllocator]', // 设置 logPrefix 字段
+  logPrefix: '[CapitalAllocator]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -204,7 +204,7 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
     this.strategyStats.set(strategyId, { // 访问 strategyStats
       ...existing, // 展开对象或数组
       ...stats, // 展开对象或数组
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
 
     this.emit('strategyStatsUpdated', { strategyId, stats }); // 调用 emit
@@ -259,9 +259,9 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
 
     if (strategies.length === 0) { // 条件判断 strategies.length === 0
       return { // 返回结果
-        error: '没有注册的策略 / No registered strategies', // 设置 error 字段
-        weights: {}, // 设置 weights 字段
-        allocations: {}, // 设置 allocations 字段
+        error: '没有注册的策略 / No registered strategies', // 错误
+        weights: {}, // weights
+        allocations: {}, // allocations
       }; // 结束代码块
     } // 结束代码块
 
@@ -296,7 +296,7 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
         weights = options.customWeights || this._equalWeightAllocation(strategies); // 赋值 weights
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         weights = this._equalWeightAllocation(strategies); // 赋值 weights
     } // 结束代码块
 
@@ -310,12 +310,12 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
     this.targetAllocation = new Map(Object.entries(weights)); // 设置 targetAllocation
 
     const result = { // 定义常量 result
-      method: allocMethod, // 设置 method 字段
+      method: allocMethod, // method
       weights, // 执行语句
       allocations, // 执行语句
-      totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
-      metrics: this._calculatePortfolioMetrics(weights), // 设置 metrics 字段
+      totalCapital: this.config.totalCapital, // 总资金
+      timestamp: Date.now(), // 时间戳
+      metrics: this._calculatePortfolioMetrics(weights), // 指标
     }; // 结束代码块
 
     this.emit('allocationCalculated', result); // 调用 emit
@@ -656,8 +656,8 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
     for (const [strategy, weight] of Object.entries(weights)) { // 循环 const [strategy, weight] of Object.entries(we...
       allocations[strategy] = { // 执行语句
         weight, // 执行语句
-        amount: new Decimal(totalCapital).mul(weight).toDP(2).toNumber(), // 设置 amount 字段
-        percentage: (weight * 100).toFixed(2) + '%', // 设置 percentage 字段
+        amount: new Decimal(totalCapital).mul(weight).toDP(2).toNumber(), // 数量
+        percentage: (weight * 100).toFixed(2) + '%', // 百分比
       }; // 结束代码块
     } // 结束代码块
 
@@ -684,10 +684,10 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
 
     // 记录历史 / Record history
     this.allocationHistory.push({ // 访问 allocationHistory
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       trigger, // 执行语句
-      previousAllocation: Object.fromEntries(this.currentAllocation), // 设置 previousAllocation 字段
-      newAllocation: newAllocation.weights, // 设置 newAllocation 字段
+      previousAllocation: Object.fromEntries(this.currentAllocation), // previousAllocation
+      newAllocation: newAllocation.weights, // newAllocation
       adjustments, // 执行语句
     }); // 结束代码块
 
@@ -702,9 +702,9 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
 
     const result = { // 定义常量 result
       trigger, // 执行语句
-      allocation: newAllocation, // 设置 allocation 字段
+      allocation: newAllocation, // allocation
       adjustments, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     this.log(`再平衡完成 / Rebalance completed: ${trigger}`, 'info'); // 调用 log
@@ -734,8 +734,8 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
         currentWeight, // 执行语句
         targetWeight, // 执行语句
         weightChange, // 执行语句
-        amountChange: new Decimal(amountChange).toDP(2).toNumber(), // 设置 amountChange 字段
-        action: weightChange > 0.001 ? 'increase' : weightChange < -0.001 ? 'decrease' : 'hold', // 设置 action 字段
+        amountChange: new Decimal(amountChange).toDP(2).toNumber(), // 数量修改
+        action: weightChange > 0.001 ? 'increase' : weightChange < -0.001 ? 'decrease' : 'hold', // action
       }; // 结束代码块
     } // 结束代码块
 
@@ -777,11 +777,11 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
       needed, // 执行语句
       maxDeviation, // 执行语句
       deviatingStrategy, // 执行语句
-      threshold: this.config.rebalanceThreshold, // 设置 threshold 字段
+      threshold: this.config.rebalanceThreshold, // 阈值
       timeSinceLastRebalance, // 执行语句
-      rebalancePeriod: this.config.rebalancePeriod, // 设置 rebalancePeriod 字段
+      rebalancePeriod: this.config.rebalancePeriod, // rebalance周期
       periodExceeded, // 执行语句
-      trigger: maxDeviation >= this.config.rebalanceThreshold // 设置 trigger 字段
+      trigger: maxDeviation >= this.config.rebalanceThreshold // trigger
         ? REBALANCE_TRIGGER.THRESHOLD // 执行语句
         : periodExceeded // 执行语句
           ? REBALANCE_TRIGGER.PERIODIC // 执行语句
@@ -870,11 +870,11 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
       : 1; // 执行语句
 
     return { // 返回结果
-      expectedReturn: portfolioReturn, // 设置 expectedReturn 字段
-      volatility: portfolioVolatility, // 设置 volatility 字段
+      expectedReturn: portfolioReturn, // expectedReturn
+      volatility: portfolioVolatility, // 波动率
       sharpeRatio, // 执行语句
       diversificationRatio, // 执行语句
-      effectiveStrategies: strategies.filter(s => weights[s] >= 0.05).length, // 设置 effectiveStrategies 字段
+      effectiveStrategies: strategies.filter(s => weights[s] >= 0.05).length, // effective策略
     }; // 结束代码块
   } // 结束代码块
 
@@ -1024,10 +1024,10 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
    */
   getCurrentAllocation() { // 调用 getCurrentAllocation
     return { // 返回结果
-      weights: Object.fromEntries(this.currentAllocation), // 设置 weights 字段
-      allocations: this._calculateCapitalAmounts(Object.fromEntries(this.currentAllocation)), // 设置 allocations 字段
-      totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-      lastRebalanceTime: this.lastRebalanceTime, // 设置 lastRebalanceTime 字段
+      weights: Object.fromEntries(this.currentAllocation), // weights
+      allocations: this._calculateCapitalAmounts(Object.fromEntries(this.currentAllocation)), // allocations
+      totalCapital: this.config.totalCapital, // 总资金
+      lastRebalanceTime: this.lastRebalanceTime, // lastRebalance时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -1039,20 +1039,20 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      totalCapital: this.config.totalCapital, // 设置 totalCapital 字段
-      strategyCount: this.strategyStats.size, // 设置 strategyCount 字段
-      strategies: [...this.strategyStats.keys()], // 设置 strategies 字段
-      currentAllocation: Object.fromEntries(this.currentAllocation), // 设置 currentAllocation 字段
-      targetAllocation: Object.fromEntries(this.targetAllocation), // 设置 targetAllocation 字段
-      lastRebalanceTime: this.lastRebalanceTime, // 设置 lastRebalanceTime 字段
-      rebalanceCheck: this.checkRebalanceNeeded(), // 设置 rebalanceCheck 字段
-      config: { // 设置 config 字段
-        defaultMethod: this.config.defaultMethod, // 设置 defaultMethod 字段
-        minWeight: this.config.minWeight, // 设置 minWeight 字段
-        maxWeight: this.config.maxWeight, // 设置 maxWeight 字段
-        rebalanceThreshold: this.config.rebalanceThreshold, // 设置 rebalanceThreshold 字段
-        kellyFraction: this.config.kellyFraction, // 设置 kellyFraction 字段
+      running: this.running, // running
+      totalCapital: this.config.totalCapital, // 总资金
+      strategyCount: this.strategyStats.size, // 策略数量
+      strategies: [...this.strategyStats.keys()], // 策略
+      currentAllocation: Object.fromEntries(this.currentAllocation), // currentAllocation
+      targetAllocation: Object.fromEntries(this.targetAllocation), // targetAllocation
+      lastRebalanceTime: this.lastRebalanceTime, // lastRebalance时间
+      rebalanceCheck: this.checkRebalanceNeeded(), // rebalanceCheck
+      config: { // 配置
+        defaultMethod: this.config.defaultMethod, // 默认Method
+        minWeight: this.config.minWeight, // 最小Weight
+        maxWeight: this.config.maxWeight, // 最大Weight
+        rebalanceThreshold: this.config.rebalanceThreshold, // rebalance阈值
+        kellyFraction: this.config.kellyFraction, // kellyFraction
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1083,9 +1083,9 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
     ); // 结束调用或参数
 
     return { // 返回结果
-      recommended: best, // 设置 recommended 字段
-      alternatives: results.filter(r => r.method !== best.method), // 设置 alternatives 字段
-      reasoning: `基于预期夏普比率 ${best.metrics?.sharpeRatio?.toFixed(2) || 'N/A'}，推荐使用 ${best.method} 方法 / Based on expected Sharpe ratio, recommending ${best.method} method`, // 设置 reasoning 字段
+      recommended: best, // recommended
+      alternatives: results.filter(r => r.method !== best.method), // alternatives
+      reasoning: `基于预期夏普比率 ${best.metrics?.sharpeRatio?.toFixed(2) || 'N/A'}，推荐使用 ${best.method} 方法 / Based on expected Sharpe ratio, recommending ${best.method} method`, // reasoning
     }; // 结束代码块
   } // 结束代码块
 
@@ -1109,7 +1109,7 @@ export class CapitalAllocator extends EventEmitter { // 导出类 CapitalAllocat
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

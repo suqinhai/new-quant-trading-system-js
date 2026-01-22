@@ -52,23 +52,23 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 分析的深度档位数 / Number of depth levels to analyze
-  depthLevels: 20, // 设置 depthLevels 字段
+  depthLevels: 20, // 分析的深度档位数
 
   // 深度数据更新间隔 (毫秒) / Depth data update interval (ms)
-  updateInterval: 1000, // 设置 updateInterval 字段
+  updateInterval: 1000, // 深度数据更新间隔 (毫秒)
 
   // 深度历史保留数量 / Depth history retention count
-  historyLength: 100, // 设置 historyLength 字段
+  historyLength: 100, // 深度历史保留数量
 
   // ============================================
   // 滑点估算配置 / Slippage Estimation Configuration
   // ============================================
 
   // 滑点警告阈值 / Slippage warning threshold
-  slippageWarning: 0.002,    // 0.2%
+  slippageWarning: 0.002,    // 滑点警告阈值
 
   // 滑点严重阈值 / Slippage critical threshold
-  slippageCritical: 0.005,   // 0.5%
+  slippageCritical: 0.005,   // 滑点严重阈值
 
   // 滑点计算安全边际 / Slippage calculation safety margin
   slippageSafetyMargin: 1.2, // 实际滑点可能比预估高20% / Actual slippage may be 20% higher
@@ -78,38 +78,38 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 大单阈值 (相对于最佳档深度) / Large order threshold (relative to best level depth)
-  largeOrderThreshold: 0.5, // 订单量超过最佳档深度50%视为大单
+  largeOrderThreshold: 0.5, // 大单阈值 (相对于最佳档深度)
 
   // 单笔最大执行比例 / Maximum execution ratio per order
-  maxExecutionRatio: 0.3, // 单笔最多消耗30%深度
+  maxExecutionRatio: 0.3, // 单笔最大执行比例
 
   // 最小拆分数量 / Minimum split count
-  minSplitCount: 2, // 设置 minSplitCount 字段
+  minSplitCount: 2, // 最小拆分数量
 
   // 最大拆分数量 / Maximum split count
-  maxSplitCount: 20, // 设置 maxSplitCount 字段
+  maxSplitCount: 20, // 最大拆分数量
 
   // 拆分间隔 (毫秒) / Split interval (ms)
-  splitInterval: 500, // 设置 splitInterval 字段
+  splitInterval: 500, // 拆分间隔 (毫秒)
 
   // ============================================
   // 流动性评分配置 / Liquidity Scoring Configuration
   // ============================================
 
   // 评分权重 / Scoring weights
-  scoreWeights: { // 设置 scoreWeights 字段
-    bidAskSpread: 0.25,      // 买卖价差权重
-    depthImbalance: 0.20,    // 深度不平衡权重
-    totalDepth: 0.25,        // 总深度权重
-    priceImpact: 0.30,       // 价格冲击权重
+  scoreWeights: { // 分数Weights
+    bidAskSpread: 0.25,      // bidAsk价差
+    depthImbalance: 0.20,    // depthImbalance
+    totalDepth: 0.25,        // 总Depth
+    priceImpact: 0.30,       // 价格Impact
   }, // 结束代码块
 
   // 流动性级别阈值 / Liquidity level thresholds
-  liquidityThresholds: { // 设置 liquidityThresholds 字段
-    excellent: 80, // 设置 excellent 字段
-    good: 60, // 设置 good 字段
-    moderate: 40, // 设置 moderate 字段
-    poor: 20, // 设置 poor 字段
+  liquidityThresholds: { // 流动性级别阈值
+    excellent: 80, // excellent
+    good: 60, // good
+    moderate: 40, // moderate
+    poor: 20, // poor
   }, // 结束代码块
 
   // ============================================
@@ -121,17 +121,17 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   impactBeta: 0.5,      // 冲击指数 / Impact exponent
 
   // 日均成交量百分比警告 / ADV percentage warning
-  advPercentWarning: 0.05, // 5%
+  advPercentWarning: 0.05, // 日均成交量百分比警告
 
   // ============================================
   // 监控配置 / Monitoring Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[LiquidityMonitor]', // 设置 logPrefix 字段
+  logPrefix: '[LiquidityMonitor]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -240,8 +240,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     // 保存当前订单簿 / Save current order book
     this.orderBooks.set(symbol, { // 访问 orderBooks
-      bids: bids || [], // 设置 bids 字段
-      asks: asks || [], // 设置 asks 字段
+      bids: bids || [], // bids
+      asks: asks || [], // asks
       timestamp, // 执行语句
     }); // 结束代码块
 
@@ -308,8 +308,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!orderBook) { // 条件判断 !orderBook
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: '无订单簿数据 / No order book data', // 设置 error 字段
+        success: false, // 成功标记
+        error: '无订单簿数据 / No order book data', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -318,8 +318,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!levels || levels.length === 0) { // 条件判断 !levels || levels.length === 0
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: '订单簿为空 / Order book is empty', // 设置 error 字段
+        success: false, // 成功标记
+        error: '订单簿为空 / Order book is empty', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -341,7 +341,7 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     } // 结束代码块
 
     return { // 返回结果
-      success: true, // 设置 success 字段
+      success: true, // 成功标记
       symbol, // 执行语句
       side, // 执行语句
       amount, // 执行语句
@@ -378,9 +378,9 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
       executionLevels.push({ // 调用 executionLevels.push
         price, // 执行语句
-        quantity: qty, // 设置 quantity 字段
-        filled: fillAmount, // 设置 filled 字段
-        cost: fillCost, // 设置 cost 字段
+        quantity: qty, // quantity
+        filled: fillAmount, // filled
+        cost: fillCost, // cost
       }); // 结束代码块
     } // 结束代码块
 
@@ -400,14 +400,14 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     return { // 返回结果
       bestPrice, // 执行语句
-      avgExecutionPrice: avgPrice, // 设置 avgExecutionPrice 字段
-      estimatedSlippage: Math.max(0, slippage), // 设置 estimatedSlippage 字段
+      avgExecutionPrice: avgPrice, // avgExecution价格
+      estimatedSlippage: Math.max(0, slippage), // estimated滑点
       totalCost, // 执行语句
-      filledAmount: totalFilled, // 设置 filledAmount 字段
+      filledAmount: totalFilled, // filled数量
       unfilledAmount, // 执行语句
-      levelsUsed: executionLevels.length, // 设置 levelsUsed 字段
+      levelsUsed: executionLevels.length, // levelsUsed
       executionLevels, // 执行语句
-      fullyFillable: unfilledAmount === 0, // 设置 fullyFillable 字段
+      fullyFillable: unfilledAmount === 0, // fullyFillable
     }; // 结束代码块
   } // 结束代码块
 
@@ -430,8 +430,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!orderBook) { // 条件判断 !orderBook
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: '无订单簿数据 / No order book data', // 设置 error 字段
+        success: false, // 成功标记
+        error: '无订单簿数据 / No order book data', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -440,8 +440,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!levels || levels.length === 0) { // 条件判断 !levels || levels.length === 0
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: '订单簿为空 / Order book is empty', // 设置 error 字段
+        success: false, // 成功标记
+        error: '订单簿为空 / Order book is empty', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -456,14 +456,14 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!needsSplit) { // 条件判断 !needsSplit
       return { // 返回结果
-        success: true, // 设置 success 字段
-        needsSplit: false, // 设置 needsSplit 字段
-        reason: '订单规模适中，无需拆分 / Order size is moderate, no split needed', // 设置 reason 字段
-        recommendedStrategy: EXECUTION_STRATEGY.IMMEDIATE, // 设置 recommendedStrategy 字段
-        orders: [{ // 设置 orders 字段
+        success: true, // 成功标记
+        needsSplit: false, // needsSplit
+        reason: '订单规模适中，无需拆分 / Order size is moderate, no split needed', // reason
+        recommendedStrategy: EXECUTION_STRATEGY.IMMEDIATE, // recommended策略
+        orders: [{ // 订单
           amount, // 执行语句
-          percentage: 100, // 设置 percentage 字段
-          estimatedSlippage: this.estimateSlippage(symbol, side, amount), // 设置 estimatedSlippage 字段
+          percentage: 100, // 百分比
+          estimatedSlippage: this.estimateSlippage(symbol, side, amount), // estimated滑点
         }], // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -477,9 +477,9 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     }); // 结束代码块
 
     return { // 返回结果
-      success: true, // 设置 success 字段
-      needsSplit: true, // 设置 needsSplit 字段
-      reason: `订单占最佳档深度 ${(orderRatio * 100).toFixed(1)}%，建议拆分`, // 设置 reason 字段
+      success: true, // 成功标记
+      needsSplit: true, // needsSplit
+      reason: `订单占最佳档深度 ${(orderRatio * 100).toFixed(1)}%，建议拆分`, // reason
       ...splitPlan, // 展开对象或数组
     }; // 结束代码块
   } // 结束代码块
@@ -519,11 +519,11 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
       const slippageEstimate = this.estimateSlippage(symbol, side, orderAmount); // 定义常量 slippageEstimate
 
       orders.push({ // 调用 orders.push
-        index: i + 1, // 设置 index 字段
-        amount: orderAmount, // 设置 amount 字段
-        percentage: (orderAmount / amount * 100).toFixed(2), // 设置 percentage 字段
-        delayMs: i * this.config.splitInterval, // 设置 delayMs 字段
-        estimatedSlippage: slippageEstimate.success ? slippageEstimate.estimatedSlippage : null, // 设置 estimatedSlippage 字段
+        index: i + 1, // index
+        amount: orderAmount, // 数量
+        percentage: (orderAmount / amount * 100).toFixed(2), // 百分比
+        delayMs: i * this.config.splitInterval, // 延迟毫秒
+        estimatedSlippage: slippageEstimate.success ? slippageEstimate.estimatedSlippage : null, // estimated滑点
       }); // 结束代码块
     } // 结束代码块
 
@@ -553,17 +553,17 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
       recommendedStrategy, // 执行语句
       splitCount, // 执行语句
       amountPerOrder, // 执行语句
-      totalExecutionTime: (splitCount - 1) * this.config.splitInterval, // 设置 totalExecutionTime 字段
+      totalExecutionTime: (splitCount - 1) * this.config.splitInterval, // 总Execution时间
       orders, // 执行语句
-      comparison: { // 设置 comparison 字段
-        immediateSlippage: totalSlippage.success ? totalSlippage.estimatedSlippage : null, // 设置 immediateSlippage 字段
-        splitSlippage: orders.reduce((sum, o) => sum + (o.estimatedSlippage || 0), 0) / orders.length, // 设置 splitSlippage 字段
-        slippageSaving: totalSlippage.success // 设置 slippageSaving 字段
+      comparison: { // comparison
+        immediateSlippage: totalSlippage.success ? totalSlippage.estimatedSlippage : null, // immediate滑点
+        splitSlippage: orders.reduce((sum, o) => sum + (o.estimatedSlippage || 0), 0) / orders.length, // split滑点
+        slippageSaving: totalSlippage.success // 滑点Saving
           ? totalSlippage.estimatedSlippage - (orders.reduce((sum, o) => sum + (o.estimatedSlippage || 0), 0) / orders.length) // 定义箭头函数
           : null, // 执行语句
       }, // 结束代码块
-      advPercentage: advRatio * 100, // 设置 advPercentage 字段
-      depthPercentage: (amount / totalDepth * 100).toFixed(2), // 设置 depthPercentage 字段
+      advPercentage: advRatio * 100, // adv百分比
+      depthPercentage: (amount / totalDepth * 100).toFixed(2), // depth百分比
     }; // 结束代码块
   } // 结束代码块
 
@@ -602,9 +602,9 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     if (!orderBook || !orderBook.bids || !orderBook.asks) { // 条件判断 !orderBook || !orderBook.bids || !orderBook.asks
       return { // 返回结果
         symbol, // 执行语句
-        score: 0, // 设置 score 字段
-        level: LIQUIDITY_LEVEL.CRITICAL, // 设置 level 字段
-        error: '无订单簿数据 / No order book data', // 设置 error 字段
+        score: 0, // 分数
+        level: LIQUIDITY_LEVEL.CRITICAL, // 级别
+        error: '无订单簿数据 / No order book data', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -613,9 +613,9 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     if (bids.length === 0 || asks.length === 0) { // 条件判断 bids.length === 0 || asks.length === 0
       return { // 返回结果
         symbol, // 执行语句
-        score: 0, // 设置 score 字段
-        level: LIQUIDITY_LEVEL.CRITICAL, // 设置 level 字段
-        error: '订单簿为空 / Order book is empty', // 设置 error 字段
+        score: 0, // 分数
+        level: LIQUIDITY_LEVEL.CRITICAL, // 级别
+        error: '订单簿为空 / Order book is empty', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -656,20 +656,20 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     const result = { // 定义常量 result
       symbol, // 执行语句
-      score: Math.round(totalScore), // 设置 score 字段
+      score: Math.round(totalScore), // 分数
       level, // 执行语句
-      details: { // 设置 details 字段
-        spreadScore: Math.round(spreadScore), // 设置 spreadScore 字段
-        imbalanceScore: Math.round(imbalanceScore), // 设置 imbalanceScore 字段
-        depthScore: Math.round(depthScore), // 设置 depthScore 字段
-        impactScore: Math.round(impactScore), // 设置 impactScore 字段
+      details: { // details
+        spreadScore: Math.round(spreadScore), // 价差分数
+        imbalanceScore: Math.round(imbalanceScore), // imbalance分数
+        depthScore: Math.round(depthScore), // depth分数
+        impactScore: Math.round(impactScore), // impact分数
       }, // 结束代码块
-      metrics: { // 设置 metrics 字段
-        spread: (asks[0][0] - bids[0][0]) / bids[0][0], // 设置 spread 字段
-        bidDepth: bids.slice(0, this.config.depthLevels).reduce((s, [, q]) => s + q, 0), // 设置 bidDepth 字段
-        askDepth: asks.slice(0, this.config.depthLevels).reduce((s, [, q]) => s + q, 0), // 设置 askDepth 字段
+      metrics: { // 指标
+        spread: (asks[0][0] - bids[0][0]) / bids[0][0], // 价差
+        bidDepth: bids.slice(0, this.config.depthLevels).reduce((s, [, q]) => s + q, 0), // bidDepth
+        askDepth: asks.slice(0, this.config.depthLevels).reduce((s, [, q]) => s + q, 0), // askDepth
       }, // 结束代码块
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     // 缓存结果 / Cache result
@@ -828,8 +828,8 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
 
     if (!orderBook) { // 条件判断 !orderBook
       return { // 返回结果
-        success: false, // 设置 success 字段
-        error: '无订单簿数据 / No order book data', // 设置 error 字段
+        success: false, // 成功标记
+        error: '无订单簿数据 / No order book data', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -861,34 +861,34 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     const totalCostUSD = orderValue * totalImpact; // 定义常量 totalCostUSD
 
     return { // 返回结果
-      success: true, // 设置 success 字段
+      success: true, // 成功标记
       symbol, // 执行语句
       side, // 执行语句
       amount, // 执行语句
       orderValue, // 执行语句
-      costs: { // 设置 costs 字段
-        immediateCost: { // 设置 immediateCost 字段
-          percentage: immediateCost * 100, // 设置 percentage 字段
-          usd: orderValue * immediateCost, // 设置 usd 字段
-          description: '买卖价差成本 / Bid-ask spread cost', // 设置 description 字段
+      costs: { // costs
+        immediateCost: { // immediateCost
+          percentage: immediateCost * 100, // 百分比
+          usd: orderValue * immediateCost, // usd
+          description: '买卖价差成本 / Bid-ask spread cost', // description
         }, // 结束代码块
-        temporaryImpact: { // 设置 temporaryImpact 字段
-          percentage: temporaryImpact * 100, // 设置 percentage 字段
-          usd: orderValue * temporaryImpact, // 设置 usd 字段
-          description: '临时市场冲击 / Temporary market impact', // 设置 description 字段
+        temporaryImpact: { // temporaryImpact
+          percentage: temporaryImpact * 100, // 百分比
+          usd: orderValue * temporaryImpact, // usd
+          description: '临时市场冲击 / Temporary market impact', // description
         }, // 结束代码块
-        slippage: { // 设置 slippage 字段
-          percentage: actualSlippage * 100, // 设置 percentage 字段
-          usd: orderValue * actualSlippage, // 设置 usd 字段
-          description: '订单簿滑点 / Order book slippage', // 设置 description 字段
+        slippage: { // 滑点
+          percentage: actualSlippage * 100, // 百分比
+          usd: orderValue * actualSlippage, // usd
+          description: '订单簿滑点 / Order book slippage', // description
         }, // 结束代码块
       }, // 结束代码块
-      total: { // 设置 total 字段
-        percentage: totalImpact * 100, // 设置 percentage 字段
-        usd: totalCostUSD, // 设置 usd 字段
+      total: { // 总
+        percentage: totalImpact * 100, // 百分比
+        usd: totalCostUSD, // usd
       }, // 结束代码块
-      advPercentage: advData ? (amount / advData.volume) * 100 : null, // 设置 advPercentage 字段
-      recommendation: totalImpact > 0.01 // 设置 recommendation 字段
+      advPercentage: advData ? (amount / advData.volume) * 100 : null, // adv百分比
+      recommendation: totalImpact > 0.01 // recommendation
         ? '建议分批执行以减少冲击 / Recommend splitting to reduce impact' // 执行语句
         : '冲击成本可接受 / Impact cost is acceptable', // 执行语句
     }; // 结束代码块
@@ -909,9 +909,9 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     const { symbol, side, amount } = order; // 解构赋值
 
     const result = { // 定义常量 result
-      allowed: true, // 设置 allowed 字段
-      warnings: [], // 设置 warnings 字段
-      recommendations: [], // 设置 recommendations 字段
+      allowed: true, // allowed
+      warnings: [], // warnings
+      recommendations: [], // recommendations
     }; // 结束代码块
 
     // 1. 检查流动性评分 / Check liquidity score
@@ -962,19 +962,19 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
     const scores = {}; // 定义常量 scores
     for (const [symbol, score] of this.liquidityScores) { // 循环 const [symbol, score] of this.liquidityScores
       scores[symbol] = { // 执行语句
-        score: score.score, // 设置 score 字段
-        level: score.level, // 设置 level 字段
+        score: score.score, // 分数
+        level: score.level, // 级别
       }; // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      symbolCount: this.orderBooks.size, // 设置 symbolCount 字段
-      liquidityScores: scores, // 设置 liquidityScores 字段
-      config: { // 设置 config 字段
-        slippageWarning: this.config.slippageWarning, // 设置 slippageWarning 字段
-        slippageCritical: this.config.slippageCritical, // 设置 slippageCritical 字段
-        largeOrderThreshold: this.config.largeOrderThreshold, // 设置 largeOrderThreshold 字段
+      running: this.running, // running
+      symbolCount: this.orderBooks.size, // 交易对数量
+      liquidityScores: scores, // liquidityScores
+      config: { // 配置
+        slippageWarning: this.config.slippageWarning, // 滑点警告
+        slippageCritical: this.config.slippageCritical, // 滑点Critical
+        largeOrderThreshold: this.config.largeOrderThreshold, // 大额订单阈值
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -999,7 +999,7 @@ export class LiquidityRiskMonitor extends EventEmitter { // 导出类 LiquidityR
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

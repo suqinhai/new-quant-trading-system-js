@@ -16,12 +16,12 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
  * Funding Rate Calculation Methods
  */
 export const FUNDING_RATE_METHOD = { // 导出常量 FUNDING_RATE_METHOD
-  CURRENT: 'current',                    // 当前费率
-  AVERAGE: 'average',                    // 平均费率
-  CUMULATIVE: 'cumulative',              // 累计费率
-  PERCENTILE: 'percentile',              // 费率百分位
-  ZSCORE: 'zscore',                      // 费率Z-Score
-  EXTREME_SIGNAL: 'extreme_signal',      // 极值信号 (-1, 0, 1)
+  CURRENT: 'current',                    // CURRENT
+  AVERAGE: 'average',                    // 平均
+  CUMULATIVE: 'cumulative',              // CUMULATIVE
+  PERCENTILE: 'percentile',              // PERCENTILE
+  ZSCORE: 'zscore',                      // Z分数
+  EXTREME_SIGNAL: 'extreme_signal',      // 极端信号
 }; // 结束代码块
 
 /**
@@ -40,18 +40,18 @@ export class FundingRateFactor extends BaseFactor { // 导出类 FundingRateFact
     const method = config.method || FUNDING_RATE_METHOD.PERCENTILE; // 定义常量 method
 
     super({ // 调用父类
-      name: config.name || `FundingRate_${method}`, // 设置 name 字段
-      category: FACTOR_CATEGORY.FUNDING, // 设置 category 字段
-      direction: FACTOR_DIRECTION.NEGATIVE, // 负费率 → 做多机会
-      frequency: FACTOR_FREQUENCY.HOURLY, // 设置 frequency 字段
-      description: `资金费率极值因子 (${method})`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `FundingRate_${method}`, // name
+      category: FACTOR_CATEGORY.FUNDING, // category
+      direction: FACTOR_DIRECTION.NEGATIVE, // direction
+      frequency: FACTOR_FREQUENCY.HOURLY, // frequency
+      description: `资金费率极值因子 (${method})`, // description
+      params: { // params
         method, // 执行语句
         lookbackPeriod: config.lookbackPeriod || 168, // 7天 * 24 / 8 = 21次，取更多历史
         extremeThreshold: config.extremeThreshold || 0.05, // 5%/95% 百分位
-        zScoreThreshold: config.zScoreThreshold || 2.0, // 设置 zScoreThreshold 字段
-        fundingInterval: config.fundingInterval || 8, // 8小时一次
-        minDataPoints: config.minDataPoints || 10, // 设置 minDataPoints 字段
+        zScoreThreshold: config.zScoreThreshold || 2.0, // Z分数阈值
+        fundingInterval: config.fundingInterval || 8, // 资金费率间隔
+        minDataPoints: config.minDataPoints || 10, // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -107,7 +107,7 @@ export class FundingRateFactor extends BaseFactor { // 导出类 FundingRateFact
         value = this._calculateExtremeSignal(fundingRates); // 赋值 value
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         value = this._calculatePercentile(fundingRates); // 赋值 value
     } // 结束代码块
 
@@ -245,44 +245,44 @@ export class FundingRateFactor extends BaseFactor { // 导出类 FundingRateFact
 
 // 当前资金费率
 export const FundingRateCurrent = new FundingRateFactor({ // 导出常量 FundingRateCurrent
-  name: 'Funding_Current', // 设置 name 字段
-  method: FUNDING_RATE_METHOD.CURRENT, // 设置 method 字段
+  name: 'Funding_Current', // name
+  method: FUNDING_RATE_METHOD.CURRENT, // method
 }); // 结束代码块
 
 // 平均资金费率 (7天)
 export const FundingRateAvg7D = new FundingRateFactor({ // 导出常量 FundingRateAvg7D
-  name: 'Funding_Avg_7d', // 设置 name 字段
-  lookbackPeriod: 21, // 7天约21次费率
-  method: FUNDING_RATE_METHOD.AVERAGE, // 设置 method 字段
+  name: 'Funding_Avg_7d', // name
+  lookbackPeriod: 21, // 回溯周期
+  method: FUNDING_RATE_METHOD.AVERAGE, // method
 }); // 结束代码块
 
 // 资金费率百分位
 export const FundingRatePercentile = new FundingRateFactor({ // 导出常量 FundingRatePercentile
-  name: 'Funding_Percentile', // 设置 name 字段
-  lookbackPeriod: 90, // 30天历史
-  method: FUNDING_RATE_METHOD.PERCENTILE, // 设置 method 字段
+  name: 'Funding_Percentile', // name
+  lookbackPeriod: 90, // 回溯周期
+  method: FUNDING_RATE_METHOD.PERCENTILE, // method
 }); // 结束代码块
 
 // 资金费率 Z-Score
 export const FundingRateZScore = new FundingRateFactor({ // 导出常量 FundingRateZScore
-  name: 'Funding_ZScore', // 设置 name 字段
-  lookbackPeriod: 90, // 设置 lookbackPeriod 字段
-  method: FUNDING_RATE_METHOD.ZSCORE, // 设置 method 字段
+  name: 'Funding_ZScore', // name
+  lookbackPeriod: 90, // 回溯周期
+  method: FUNDING_RATE_METHOD.ZSCORE, // method
 }); // 结束代码块
 
 // 资金费率极值信号
 export const FundingRateExtreme = new FundingRateFactor({ // 导出常量 FundingRateExtreme
-  name: 'Funding_Extreme_Signal', // 设置 name 字段
-  lookbackPeriod: 90, // 设置 lookbackPeriod 字段
-  method: FUNDING_RATE_METHOD.EXTREME_SIGNAL, // 设置 method 字段
+  name: 'Funding_Extreme_Signal', // name
+  lookbackPeriod: 90, // 回溯周期
+  method: FUNDING_RATE_METHOD.EXTREME_SIGNAL, // method
   extremeThreshold: 0.05, // 5%/95%
 }); // 结束代码块
 
 // 累计年化费率
 export const FundingRateCumulative = new FundingRateFactor({ // 导出常量 FundingRateCumulative
-  name: 'Funding_Cumulative_APR', // 设置 name 字段
-  lookbackPeriod: 21, // 设置 lookbackPeriod 字段
-  method: FUNDING_RATE_METHOD.CUMULATIVE, // 设置 method 字段
+  name: 'Funding_Cumulative_APR', // name
+  lookbackPeriod: 21, // 回溯周期
+  method: FUNDING_RATE_METHOD.CUMULATIVE, // method
 }); // 结束代码块
 
 /**

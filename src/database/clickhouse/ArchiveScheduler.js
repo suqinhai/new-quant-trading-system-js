@@ -19,29 +19,29 @@ import { POSITION_STATUS } from '../redis/PositionStore.js'; // 导入模块 ../
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 订单归档间隔 (ms) / Order archive interval (ms)
-  orderArchiveInterval: 60 * 60 * 1000, // 1 hour
+  orderArchiveInterval: 60 * 60 * 1000, // 订单归档间隔 (ms)
   // 持仓归档间隔 (ms) / Position archive interval (ms)
-  positionArchiveInterval: 60 * 60 * 1000, // 1 hour
+  positionArchiveInterval: 60 * 60 * 1000, // 持仓归档间隔 (ms)
   // 交易归档间隔 (ms) / Trade archive interval (ms)
-  tradeArchiveInterval: 30 * 60 * 1000, // 30 minutes
+  tradeArchiveInterval: 30 * 60 * 1000, // 交易归档间隔 (ms)
   // 审计日志归档间隔 (ms) / Audit log archive interval (ms)
-  auditLogArchiveInterval: 10 * 60 * 1000, // 10 minutes
+  auditLogArchiveInterval: 10 * 60 * 1000, // 审计日志归档间隔 (ms)
   // 余额快照归档间隔 (ms) / Balance snapshot archive interval (ms)
-  balanceArchiveInterval: 60 * 60 * 1000, // 1 hour
+  balanceArchiveInterval: 60 * 60 * 1000, // 余额快照归档间隔 (ms)
   // 订单归档阈值 (秒) / Order archive threshold (seconds)
-  orderArchiveAfterSeconds: 3600, // 1 hour
+  orderArchiveAfterSeconds: 3600, // 订单归档阈值 (秒)
   // 持仓归档阈值 (秒) / Position archive threshold (seconds)
-  positionArchiveAfterSeconds: 86400, // 24 hours
+  positionArchiveAfterSeconds: 86400, // 持仓归档阈值 (秒)
   // 交易归档阈值 (秒) / Trade archive threshold (seconds)
-  tradeArchiveAfterSeconds: 3600, // 1 hour
+  tradeArchiveAfterSeconds: 3600, // 交易归档阈值 (秒)
   // 审计日志归档阈值 (秒) / Audit log archive threshold (seconds)
-  auditLogArchiveAfterSeconds: 300, // 5 minutes
+  auditLogArchiveAfterSeconds: 300, // 审计日志归档阈值 (秒)
   // 是否在归档后删除 Redis 数据 / Whether to delete from Redis after archiving
-  deleteAfterArchive: true, // 设置 deleteAfterArchive 字段
+  deleteAfterArchive: true, // 是否在归档后删除 Redis 数据
   // 批量大小 / Batch size
-  batchSize: 100, // 设置 batchSize 字段
+  batchSize: 100, // 批次大小
   // 是否启用 / Whether enabled
-  enabled: true, // 设置 enabled 字段
+  enabled: true, // 启用
 }; // 结束代码块
 
 /**
@@ -65,11 +65,11 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
 
     // 定时器 / Timers
     this.timers = { // 设置 timers
-      orders: null, // 设置 orders 字段
-      positions: null, // 设置 positions 字段
-      trades: null, // 设置 trades 字段
-      auditLogs: null, // 设置 auditLogs 字段
-      balances: null, // 设置 balances 字段
+      orders: null, // 订单
+      positions: null, // 持仓
+      trades: null, // 成交
+      auditLogs: null, // 审计Logs
+      balances: null, // 余额
     }; // 结束代码块
 
     // 状态 / State
@@ -77,11 +77,11 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      orders: { archived: 0, lastRun: null, errors: 0 }, // 设置 orders 字段
-      positions: { archived: 0, lastRun: null, errors: 0 }, // 设置 positions 字段
-      trades: { archived: 0, lastRun: null, errors: 0 }, // 设置 trades 字段
-      auditLogs: { archived: 0, lastRun: null, errors: 0 }, // 设置 auditLogs 字段
-      balances: { archived: 0, lastRun: null, errors: 0 }, // 设置 balances 字段
+      orders: { archived: 0, lastRun: null, errors: 0 }, // 订单
+      positions: { archived: 0, lastRun: null, errors: 0 }, // 持仓
+      trades: { archived: 0, lastRun: null, errors: 0 }, // 成交
+      auditLogs: { archived: 0, lastRun: null, errors: 0 }, // 审计Logs
+      balances: { archived: 0, lastRun: null, errors: 0 }, // 余额
     }; // 结束代码块
   } // 结束代码块
 
@@ -96,17 +96,17 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
         this.redisManager.orders, // 访问 redisManager
         this.clickhouse, // 访问 clickhouse
         { // 开始代码块
-          batchSize: this.config.batchSize, // 设置 batchSize 字段
-          archiveAfterSeconds: this.config.orderArchiveAfterSeconds, // 设置 archiveAfterSeconds 字段
-          deleteAfterArchive: this.config.deleteAfterArchive, // 设置 deleteAfterArchive 字段
+          batchSize: this.config.batchSize, // 批次大小
+          archiveAfterSeconds: this.config.orderArchiveAfterSeconds, // 归档之后秒
+          deleteAfterArchive: this.config.deleteAfterArchive, // 删除之后归档
         } // 结束代码块
       ); // 结束调用或参数
     } // 结束代码块
 
     // 初始化审计日志写入器 / Initialize audit log writer
     this.auditLogWriter = new AuditLogWriter(this.clickhouse, { // 设置 auditLogWriter
-      batchSize: this.config.batchSize, // 设置 batchSize 字段
-      async: true, // 设置 async 字段
+      batchSize: this.config.batchSize, // 批次大小
+      async: true, // 异步
     }); // 结束代码块
 
     this.emit('initialized'); // 调用 emit
@@ -200,11 +200,11 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
    */
   async runAll() { // 执行语句
     const results = { // 定义常量 results
-      orders: null, // 设置 orders 字段
-      positions: null, // 设置 positions 字段
-      trades: null, // 设置 trades 字段
-      auditLogs: null, // 设置 auditLogs 字段
-      balances: null, // 设置 balances 字段
+      orders: null, // 订单
+      positions: null, // 持仓
+      trades: null, // 成交
+      auditLogs: null, // 审计Logs
+      balances: null, // 余额
     }; // 结束代码块
 
     try { // 尝试执行
@@ -412,23 +412,23 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
    */
   _transformPosition(position) { // 调用 _transformPosition
     return { // 返回结果
-      position_id: position.positionId || '', // 设置 position_id 字段
-      symbol: position.symbol || '', // 设置 symbol 字段
-      side: position.side || 'long', // 设置 side 字段
-      entry_price: position.entryPrice || 0, // 设置 entry_price 字段
-      exit_price: position.currentPrice || 0, // 设置 exit_price 字段
-      amount: position.amount || 0, // 设置 amount 字段
-      leverage: position.leverage || 1, // 设置 leverage 字段
-      margin: position.margin || 0, // 设置 margin 字段
-      unrealized_pnl: position.unrealizedPnl || 0, // 设置 unrealized_pnl 字段
-      realized_pnl: position.realizedPnl || 0, // 设置 realized_pnl 字段
-      liquidation_price: position.liquidationPrice || 0, // 设置 liquidation_price 字段
-      exchange: position.exchange || '', // 设置 exchange 字段
-      strategy: position.strategy || '', // 设置 strategy 字段
-      opened_at: this._toDateTime(position.openedAt), // 设置 opened_at 字段
-      closed_at: this._toDateTime(position.closedAt), // 设置 closed_at 字段
-      status: position.status || 'closed', // 设置 status 字段
-      metadata: position.metadata ? JSON.stringify(position.metadata) : '', // 设置 metadata 字段
+      position_id: position.positionId || '', // 持仓ID
+      symbol: position.symbol || '', // 交易对
+      side: position.side || 'long', // 方向
+      entry_price: position.entryPrice || 0, // 入场价格
+      exit_price: position.currentPrice || 0, // 出场价格
+      amount: position.amount || 0, // 数量
+      leverage: position.leverage || 1, // 杠杆
+      margin: position.margin || 0, // 保证金
+      unrealized_pnl: position.unrealizedPnl || 0, // 未实现盈亏
+      realized_pnl: position.realizedPnl || 0, // 已实现盈亏
+      liquidation_price: position.liquidationPrice || 0, // 强平价格
+      exchange: position.exchange || '', // 交易所
+      strategy: position.strategy || '', // 策略
+      opened_at: this._toDateTime(position.openedAt), // openedat
+      closed_at: this._toDateTime(position.closedAt), // closedat
+      status: position.status || 'closed', // 状态
+      metadata: position.metadata ? JSON.stringify(position.metadata) : '', // 元数据
     }; // 结束代码块
   } // 结束代码块
 
@@ -439,21 +439,21 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
    */
   _transformTrade(trade) { // 调用 _transformTrade
     return { // 返回结果
-      trade_id: trade.tradeId || '', // 设置 trade_id 字段
-      order_id: trade.orderId || '', // 设置 order_id 字段
-      symbol: trade.symbol || '', // 设置 symbol 字段
-      side: trade.side || 'buy', // 设置 side 字段
-      type: trade.type || 'market', // 设置 type 字段
-      amount: trade.amount || 0, // 设置 amount 字段
-      price: trade.price || 0, // 设置 price 字段
-      cost: trade.cost || 0, // 设置 cost 字段
-      fee: trade.fee || 0, // 设置 fee 字段
-      fee_currency: trade.feeCurrency || '', // 设置 fee_currency 字段
-      realized_pnl: trade.realizedPnl || 0, // 设置 realized_pnl 字段
-      exchange: trade.exchange || '', // 设置 exchange 字段
-      strategy: trade.strategy || '', // 设置 strategy 字段
-      timestamp: this._toDateTime(trade.timestamp), // 设置 timestamp 字段
-      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 设置 metadata 字段
+      trade_id: trade.tradeId || '', // 交易ID
+      order_id: trade.orderId || '', // 订单ID
+      symbol: trade.symbol || '', // 交易对
+      side: trade.side || 'buy', // 方向
+      type: trade.type || 'market', // 类型
+      amount: trade.amount || 0, // 数量
+      price: trade.price || 0, // 价格
+      cost: trade.cost || 0, // cost
+      fee: trade.fee || 0, // 手续费
+      fee_currency: trade.feeCurrency || '', // 手续费currency
+      realized_pnl: trade.realizedPnl || 0, // 已实现盈亏
+      exchange: trade.exchange || '', // 交易所
+      strategy: trade.strategy || '', // 策略
+      timestamp: this._toDateTime(trade.timestamp), // 时间戳
+      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 元数据
     }; // 结束代码块
   } // 结束代码块
 
@@ -479,7 +479,7 @@ class ArchiveScheduler extends EventEmitter { // 定义类 ArchiveScheduler(继�
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      isRunning: this.isRunning, // 设置 isRunning 字段
+      isRunning: this.isRunning, // 是否Running
       ...this.stats, // 展开对象或数组
     }; // 结束代码块
   } // 结束代码块

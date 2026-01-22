@@ -24,7 +24,7 @@ export class MACDStrategy extends BaseStrategy { // 导出类 MACDStrategy
   constructor(params = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super({ // 调用父类
-      name: 'MACDStrategy', // 设置 name 字段
+      name: 'MACDStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -104,28 +104,28 @@ export class MACDStrategy extends BaseStrategy { // 导出类 MACDStrategy
 
     // === ATR 计算 / ATR Calculation ===
     const atrResult = ATR.calculate({ // 定义常量 atrResult
-      period: this.atrPeriod, // 设置 period 字段
-      high: highs, // 设置 high 字段
-      low: lows, // 设置 low 字段
-      close: closes, // 设置 close 字段
+      period: this.atrPeriod, // 周期
+      high: highs, // 最高
+      low: lows, // 最低
+      close: closes, // 收盘
     }); // 结束代码块
     const atr = atrResult.at(-1); // 定义常量 atr
 
     // === EMA200 趋势线 / EMA200 Trend Line ===
     const ema200Result = EMA.calculate({ // 定义常量 ema200Result
-      period: this.trendPeriod, // 设置 period 字段
-      values: closes, // 设置 values 字段
+      period: this.trendPeriod, // 周期
+      values: closes, // values
     }); // 结束代码块
     const ema200 = ema200Result.at(-1); // 定义常量 ema200
 
     // === MACD 计算 / MACD Calculation ===
     const macdList = MACD.calculate({ // 定义常量 macdList
-      fastPeriod: this.fastPeriod, // 设置 fastPeriod 字段
-      slowPeriod: this.slowPeriod, // 设置 slowPeriod 字段
-      signalPeriod: this.signalPeriod, // 设置 signalPeriod 字段
-      values: closes, // 设置 values 字段
-      SimpleMAOscillator: false, // 设置 SimpleMAOscillator 字段
-      SimpleMASignal: false, // 设置 SimpleMASignal 字段
+      fastPeriod: this.fastPeriod, // fast周期
+      slowPeriod: this.slowPeriod, // slow周期
+      signalPeriod: this.signalPeriod, // 信号周期
+      values: closes, // values
+      SimpleMAOscillator: false, // Simple均线Oscillator
+      SimpleMASignal: false, // Simple均线信号
     }); // 结束代码块
 
     const macd = macdList.at(-1); // 定义常量 macd

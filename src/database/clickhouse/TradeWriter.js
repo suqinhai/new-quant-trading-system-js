@@ -16,17 +16,17 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 批量写入大小 / Batch write size
-  batchSize: 100, // 设置 batchSize 字段
+  batchSize: 100, // 批次大小
   // 刷新间隔 (ms) / Flush interval (ms)
-  flushInterval: 5000, // 设置 flushInterval 字段
+  flushInterval: 5000, // 刷新间隔 (ms)
   // 是否异步写入 / Whether to write asynchronously
-  async: true, // 设置 async 字段
+  async: true, // 异步
   // 最大缓冲区大小 / Max buffer size
-  maxBufferSize: 1000, // 设置 maxBufferSize 字段
+  maxBufferSize: 1000, // 最大Buffer大小
   // 重试次数 / Retry count
-  maxRetries: 3, // 设置 maxRetries 字段
+  maxRetries: 3, // 重试次数
   // 重试延迟 (ms) / Retry delay (ms)
-  retryDelay: 1000, // 设置 retryDelay 字段
+  retryDelay: 1000, // 重试延迟 (ms)
 }; // 结束代码块
 
 /**
@@ -52,12 +52,12 @@ class TradeWriter extends EventEmitter { // 定义类 TradeWriter(继承EventEmi
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalWritten: 0, // 设置 totalWritten 字段
-      totalErrors: 0, // 设置 totalErrors 字段
-      lastFlushTime: null, // 设置 lastFlushTime 字段
-      bufferSize: 0, // 设置 bufferSize 字段
-      totalVolume: 0, // 设置 totalVolume 字段
-      totalFees: 0, // 设置 totalFees 字段
+      totalWritten: 0, // 总Written
+      totalErrors: 0, // 总错误列表
+      lastFlushTime: null, // lastFlush时间
+      bufferSize: 0, // buffer大小
+      totalVolume: 0, // 总成交量
+      totalFees: 0, // 总Fees
     }; // 结束代码块
   } // 结束代码块
 
@@ -208,21 +208,21 @@ class TradeWriter extends EventEmitter { // 定义类 TradeWriter(继承EventEmi
       : new Date().toISOString().replace('T', ' ').replace('Z', ''); // 执行语句
 
     return { // 返回结果
-      trade_id: trade.tradeId || trade.id || this._generateTradeId(), // 设置 trade_id 字段
-      order_id: trade.orderId || '', // 设置 order_id 字段
-      symbol: trade.symbol || '', // 设置 symbol 字段
-      side: trade.side || 'buy', // 设置 side 字段
-      type: trade.type || 'market', // 设置 type 字段
-      amount: parseFloat(trade.amount) || 0, // 设置 amount 字段
-      price: parseFloat(trade.price) || 0, // 设置 price 字段
-      cost: parseFloat(trade.cost) || (parseFloat(trade.amount) * parseFloat(trade.price)) || 0, // 设置 cost 字段
-      fee: parseFloat(trade.fee) || 0, // 设置 fee 字段
-      fee_currency: trade.feeCurrency || '', // 设置 fee_currency 字段
-      realized_pnl: parseFloat(trade.realizedPnl) || 0, // 设置 realized_pnl 字段
-      exchange: trade.exchange || '', // 设置 exchange 字段
-      strategy: trade.strategy || '', // 设置 strategy 字段
+      trade_id: trade.tradeId || trade.id || this._generateTradeId(), // 交易ID
+      order_id: trade.orderId || '', // 订单ID
+      symbol: trade.symbol || '', // 交易对
+      side: trade.side || 'buy', // 方向
+      type: trade.type || 'market', // 类型
+      amount: parseFloat(trade.amount) || 0, // 数量
+      price: parseFloat(trade.price) || 0, // 价格
+      cost: parseFloat(trade.cost) || (parseFloat(trade.amount) * parseFloat(trade.price)) || 0, // cost
+      fee: parseFloat(trade.fee) || 0, // 手续费
+      fee_currency: trade.feeCurrency || '', // 手续费currency
+      realized_pnl: parseFloat(trade.realizedPnl) || 0, // 已实现盈亏
+      exchange: trade.exchange || '', // 交易所
+      strategy: trade.strategy || '', // 策略
       timestamp, // 执行语句
-      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 设置 metadata 字段
+      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 元数据
     }; // 结束代码块
   } // 结束代码块
 
@@ -671,12 +671,12 @@ class TradeWriter extends EventEmitter { // 定义类 TradeWriter(继承EventEmi
    */
   resetStats() { // 调用 resetStats
     this.stats = { // 设置 stats
-      totalWritten: 0, // 设置 totalWritten 字段
-      totalErrors: 0, // 设置 totalErrors 字段
-      lastFlushTime: null, // 设置 lastFlushTime 字段
-      bufferSize: 0, // 设置 bufferSize 字段
-      totalVolume: 0, // 设置 totalVolume 字段
-      totalFees: 0, // 设置 totalFees 字段
+      totalWritten: 0, // 总Written
+      totalErrors: 0, // 总错误列表
+      lastFlushTime: null, // lastFlush时间
+      bufferSize: 0, // buffer大小
+      totalVolume: 0, // 总成交量
+      totalFees: 0, // 总Fees
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

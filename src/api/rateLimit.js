@@ -11,10 +11,10 @@ import { SafeMap, SafeTTLMap, AsyncLock } from '../utils/SafeCollection.js'; // 
  * 限流策略枚举
  */
 export const RateLimitStrategy = { // 导出常量 RateLimitStrategy
-  FIXED_WINDOW: 'fixed_window',      // 固定窗口
-  SLIDING_WINDOW: 'sliding_window',   // 滑动窗口
-  TOKEN_BUCKET: 'token_bucket',       // 令牌桶
-  LEAKY_BUCKET: 'leaky_bucket',       // 漏桶
+  FIXED_WINDOW: 'fixed_window',      // FIXED窗口
+  SLIDING_WINDOW: 'sliding_window',   // SLIDING窗口
+  TOKEN_BUCKET: 'token_bucket',       // 令牌BUCKET
+  LEAKY_BUCKET: 'leaky_bucket',       // LEAKYBUCKET
 }; // 结束代码块
 
 /**
@@ -22,96 +22,96 @@ export const RateLimitStrategy = { // 导出常量 RateLimitStrategy
  */
 export const DEFAULT_RATE_LIMIT_CONFIG = { // 导出常量 DEFAULT_RATE_LIMIT_CONFIG
   // 全局限流
-  global: { // 设置 global 字段
-    windowMs: 60 * 1000,        // 1 分钟
-    maxRequests: 100,           // 最大请求数
-    strategy: RateLimitStrategy.SLIDING_WINDOW, // 设置 strategy 字段
+  global: { // 全局
+    windowMs: 60 * 1000,        // 窗口毫秒
+    maxRequests: 100,           // 最大Requests
+    strategy: RateLimitStrategy.SLIDING_WINDOW, // 策略
   }, // 结束代码块
 
   // 按路由限流
-  routes: { // 设置 routes 字段
+  routes: { // routes
     // 认证相关 - 严格限流
     '/api/auth/login': { // 执行语句
-      windowMs: 15 * 60 * 1000,  // 15 分钟
-      maxRequests: 5,            // 最多 5 次
-      blockDuration: 30 * 60 * 1000, // 超限后封禁 30 分钟
+      windowMs: 15 * 60 * 1000,  // 窗口毫秒
+      maxRequests: 5,            // 最大Requests
+      blockDuration: 30 * 60 * 1000, // blockDuration
     }, // 结束代码块
     '/api/auth/refresh': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
 
     // 交易操作 - 中等限流
     '/api/positions/*/close': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 20, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 20, // 最大Requests
     }, // 结束代码块
     '/api/strategies/*/start': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
     '/api/strategies/*/stop': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
 
     // 数据查询 - 宽松限流
     '/api/dashboard/*': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 60, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 60, // 最大Requests
     }, // 结束代码块
     '/api/trades': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 30, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 30, // 最大Requests
     }, // 结束代码块
     '/api/positions': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 60, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 60, // 最大Requests
     }, // 结束代码块
 
     // 导出操作 - 严格限流
     '/api/trades/export': { // 执行语句
-      windowMs: 60 * 60 * 1000,  // 1 小时
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 60 * 1000,  // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
 
     // 系统配置 - 严格限流
     '/api/system/config': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
     '/api/risk/config': { // 执行语句
-      windowMs: 60 * 1000, // 设置 windowMs 字段
-      maxRequests: 10, // 设置 maxRequests 字段
+      windowMs: 60 * 1000, // 窗口毫秒
+      maxRequests: 10, // 最大Requests
     }, // 结束代码块
   }, // 结束代码块
 
   // 按用户角色限流
-  roles: { // 设置 roles 字段
-    admin: { // 设置 admin 字段
-      multiplier: 2,  // 管理员限流上限 x2
+  roles: { // roles
+    admin: { // admin
+      multiplier: 2,  // 倍数
     }, // 结束代码块
-    trader: { // 设置 trader 字段
-      multiplier: 1.5, // 设置 multiplier 字段
+    trader: { // trader
+      multiplier: 1.5, // 倍数
     }, // 结束代码块
-    viewer: { // 设置 viewer 字段
-      multiplier: 1, // 设置 multiplier 字段
+    viewer: { // viewer
+      multiplier: 1, // 倍数
     }, // 结束代码块
   }, // 结束代码块
 
   // 白名单 IP (不限流)
-  whitelist: [ // 设置 whitelist 字段
+  whitelist: [ // 白名单 IP (不限流)
     '127.0.0.1', // 执行语句
     '::1', // 执行语句
     // 'your-trusted-ip',
   ], // 结束数组或索引
 
   // 响应头配置
-  headers: { // 设置 headers 字段
-    remaining: 'X-RateLimit-Remaining', // 设置 remaining 字段
-    limit: 'X-RateLimit-Limit', // 设置 limit 字段
-    reset: 'X-RateLimit-Reset', // 设置 reset 字段
-    retryAfter: 'Retry-After', // 设置 retryAfter 字段
+  headers: { // headers
+    remaining: 'X-RateLimit-Remaining', // remaining
+    limit: 'X-RateLimit-Limit', // 限制
+    reset: 'X-RateLimit-Reset', // reset
+    retryAfter: 'Retry-After', // 重试之后
   }, // 结束代码块
 }; // 结束代码块
 
@@ -216,8 +216,8 @@ export class RateLimiter { // 导出类 RateLimiter
    */
   async block(key, duration) { // 执行语句
     await this.blocked.set(key, { // 等待异步结果
-      until: Date.now() + duration, // 设置 until 字段
-      blockedAt: Date.now(), // 设置 blockedAt 字段
+      until: Date.now() + duration, // until
+      blockedAt: Date.now(), // blockedAt
     }, duration); // 执行语句
   } // 结束代码块
 
@@ -259,19 +259,19 @@ export class RateLimiter { // 导出类 RateLimiter
 
     if (!allowed) { // 条件判断 !allowed
       return { // 返回结果
-        allowed: false, // 设置 allowed 字段
-        remaining: 0, // 设置 remaining 字段
-        limit: maxRequests, // 设置 limit 字段
-        reset: timestamps[0] + config.windowMs, // 设置 reset 字段
-        retryAfter: Math.ceil((timestamps[0] + config.windowMs - now) / 1000), // 设置 retryAfter 字段
+        allowed: false, // allowed
+        remaining: 0, // remaining
+        limit: maxRequests, // 限制
+        reset: timestamps[0] + config.windowMs, // reset
+        retryAfter: Math.ceil((timestamps[0] + config.windowMs - now) / 1000), // 重试之后
       }; // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      allowed: true, // 设置 allowed 字段
-      remaining: maxRequests - timestamps.length, // 设置 remaining 字段
-      limit: maxRequests, // 设置 limit 字段
-      reset: now + config.windowMs, // 设置 reset 字段
+      allowed: true, // allowed
+      remaining: maxRequests - timestamps.length, // remaining
+      limit: maxRequests, // 限制
+      reset: now + config.windowMs, // reset
     }; // 结束代码块
   } // 结束代码块
 
@@ -306,18 +306,18 @@ export class RateLimiter { // 导出类 RateLimiter
 
     if (!result.allowed) { // 条件判断 !result.allowed
       return { // 返回结果
-        allowed: false, // 设置 allowed 字段
-        remaining: 0, // 设置 remaining 字段
-        limit: maxRequests, // 设置 limit 字段
+        allowed: false, // allowed
+        remaining: 0, // remaining
+        limit: maxRequests, // 限制
         reset, // 执行语句
-        retryAfter: Math.ceil((reset - now) / 1000), // 设置 retryAfter 字段
+        retryAfter: Math.ceil((reset - now) / 1000), // 重试之后
       }; // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
-      allowed: true, // 设置 allowed 字段
-      remaining: maxRequests - result.count, // 设置 remaining 字段
-      limit: maxRequests, // 设置 limit 字段
+      allowed: true, // allowed
+      remaining: maxRequests - result.count, // remaining
+      limit: maxRequests, // 限制
       reset, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -338,12 +338,12 @@ export class RateLimiter { // 导出类 RateLimiter
     if (this.isBlocked(key)) { // 条件判断 this.isBlocked(key)
       const blockInfo = this.blocked.get(key); // 定义常量 blockInfo
       return { // 返回结果
-        allowed: false, // 设置 allowed 字段
-        remaining: 0, // 设置 remaining 字段
-        limit: 0, // 设置 limit 字段
-        reset: blockInfo?.until || Date.now() + 60000, // 设置 reset 字段
-        retryAfter: blockInfo ? Math.ceil((blockInfo.until - Date.now()) / 1000) : 60, // 设置 retryAfter 字段
-        blocked: true, // 设置 blocked 字段
+        allowed: false, // allowed
+        remaining: 0, // remaining
+        limit: 0, // 限制
+        reset: blockInfo?.until || Date.now() + 60000, // reset
+        retryAfter: blockInfo ? Math.ceil((blockInfo.until - Date.now()) / 1000) : 60, // 重试之后
+        blocked: true, // blocked
       }; // 结束代码块
     } // 结束代码块
 
@@ -384,10 +384,10 @@ export class RateLimiter { // 导出类 RateLimiter
       if (!result.allowed) { // 条件判断 !result.allowed
         res.setHeader(this.config.headers.retryAfter, result.retryAfter); // 调用 res.setHeader
         return res.status(429).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: result.blocked ? 'Client blocked due to too many requests' : 'Too many requests', // 设置 error 字段
-          code: 'RATE_LIMIT_EXCEEDED', // 设置 code 字段
-          retryAfter: result.retryAfter, // 设置 retryAfter 字段
+          success: false, // 成功标记
+          error: result.blocked ? 'Client blocked due to too many requests' : 'Too many requests', // 错误
+          code: 'RATE_LIMIT_EXCEEDED', // 代码
+          retryAfter: result.retryAfter, // 重试之后
         }); // 结束代码块
       } // 结束代码块
 
@@ -468,11 +468,11 @@ export class RateLimiter { // 导出类 RateLimiter
    */
   getStats() { // 调用 getStats
     return { // 返回结果
-      activeClients: this.stores.size, // 设置 activeClients 字段
-      blockedClients: this.blocked.size, // 设置 blockedClients 字段
-      config: { // 设置 config 字段
-        global: this.config.global, // 设置 global 字段
-        routes: Object.keys(this.config.routes).length, // 设置 routes 字段
+      activeClients: this.stores.size, // 活跃Clients
+      blockedClients: this.blocked.size, // blockedClients
+      config: { // 配置
+        global: this.config.global, // 全局
+        routes: Object.keys(this.config.routes).length, // routes
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块

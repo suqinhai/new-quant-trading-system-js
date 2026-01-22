@@ -37,8 +37,8 @@ class RateLimiter { // 定义类 RateLimiter
 
     if (!record || now > record.resetTime) { // 条件判断 !record || now > record.resetTime
       record = { // 赋值 record
-        count: 0, // 设置 count 字段
-        resetTime: now + this.windowMs, // 设置 resetTime 字段
+        count: 0, // 数量
+        resetTime: now + this.windowMs, // reset时间
       }; // 结束代码块
       this.requests.set(key, record); // 访问 requests
     } // 结束代码块
@@ -50,8 +50,8 @@ class RateLimiter { // 定义类 RateLimiter
     return { // 返回结果
       allowed, // 执行语句
       remaining, // 执行语句
-      resetTime: record.resetTime, // 设置 resetTime 字段
-      retryAfter: allowed ? 0 : Math.ceil((record.resetTime - now) / 1000), // 设置 retryAfter 字段
+      resetTime: record.resetTime, // reset时间
+      retryAfter: allowed ? 0 : Math.ceil((record.resetTime - now) / 1000), // 重试之后
     }; // 结束代码块
   } // 结束代码块
 
@@ -86,30 +86,30 @@ class SecurityManager { // 定义类 SecurityManager
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
       // 是否启用签名验证
-      enableSignature: config.enableSignature ?? false, // 设置 enableSignature 字段
+      enableSignature: config.enableSignature ?? false, // 是否启用签名验证
       // 签名密钥 (API Key -> Secret)
-      apiKeys: config.apiKeys || new Map(), // 设置 apiKeys 字段
+      apiKeys: config.apiKeys || new Map(), // 签名密钥 (API Key -> Secret)
       // 签名过期时间 (毫秒)
-      signatureExpiry: config.signatureExpiry || 30000, // 设置 signatureExpiry 字段
+      signatureExpiry: config.signatureExpiry || 30000, // 签名过期时间 (毫秒)
       // 是否启用 IP 白名单
-      enableIpWhitelist: config.enableIpWhitelist ?? false, // 设置 enableIpWhitelist 字段
+      enableIpWhitelist: config.enableIpWhitelist ?? false, // 是否启用 IP 白名单
       // IP 白名单
-      ipWhitelist: new Set(config.ipWhitelist || []), // 设置 ipWhitelist 字段
+      ipWhitelist: new Set(config.ipWhitelist || []), // ipWhitelist
       // 是否启用速率限制
-      enableRateLimit: config.enableRateLimit ?? true, // 设置 enableRateLimit 字段
+      enableRateLimit: config.enableRateLimit ?? true, // 是否启用速率限制
       // 速率限制配置
-      rateLimitWindow: config.rateLimitWindow || 60000, // 设置 rateLimitWindow 字段
-      rateLimitMax: config.rateLimitMax || 100, // 设置 rateLimitMax 字段
+      rateLimitWindow: config.rateLimitWindow || 60000, // 频率限制窗口
+      rateLimitMax: config.rateLimitMax || 100, // 频率限制最大
       // 公开路径 (不需要认证)
-      publicPaths: new Set(config.publicPaths || ['/health', '/api/health']), // 设置 publicPaths 字段
+      publicPaths: new Set(config.publicPaths || ['/health', '/api/health']), // 公开路径 (不需要认证)
       // 是否启用防重放攻击
-      enableNonceCheck: config.enableNonceCheck ?? true, // 设置 enableNonceCheck 字段
+      enableNonceCheck: config.enableNonceCheck ?? true, // 是否启用防重放攻击
     }; // 结束代码块
 
     // 速率限制器
     this.rateLimiter = new RateLimiter({ // 设置 rateLimiter
-      windowMs: this.config.rateLimitWindow, // 设置 windowMs 字段
-      maxRequests: this.config.rateLimitMax, // 设置 maxRequests 字段
+      windowMs: this.config.rateLimitWindow, // 窗口毫秒
+      maxRequests: this.config.rateLimitMax, // 最大Requests
     }); // 结束代码块
 
     // 已使用的 nonce (防重放)
@@ -130,9 +130,9 @@ class SecurityManager { // 定义类 SecurityManager
   addApiKey(apiKey, secret, options = {}) { // 调用 addApiKey
     this.config.apiKeys.set(apiKey, { // 访问 config
       secret, // 执行语句
-      permissions: options.permissions || ['read'], // 设置 permissions 字段
-      rateLimit: options.rateLimit || this.config.rateLimitMax, // 设置 rateLimit 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
+      permissions: options.permissions || ['read'], // permissions
+      rateLimit: options.rateLimit || this.config.rateLimitMax, // 频率限制
+      createdAt: Date.now(), // createdAt
     }); // 结束代码块
   } // 结束代码块
 
@@ -333,11 +333,11 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
 
     // 记录请求开始
     const requestInfo = { // 定义常量 requestInfo
-      method: req.method, // 设置 method 字段
+      method: req.method, // method
       path, // 执行语句
-      ip: clientIp, // 设置 ip 字段
-      userAgent: req.headers['user-agent'], // 设置 userAgent 字段
-      timestamp: new Date().toISOString(), // 设置 timestamp 字段
+      ip: clientIp, // ip
+      userAgent: req.headers['user-agent'], // 用户Agent
+      timestamp: new Date().toISOString(), // 时间戳
     }; // 结束代码块
 
     // 检查是否是公开路径
@@ -355,9 +355,9 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
           auditLogger.log('ip_blocked', { ...requestInfo, reason: 'not_in_whitelist' }); // 调用 auditLogger.log
         } // 结束代码块
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Access denied: IP not in whitelist', // 设置 error 字段
-          code: 'IP_BLOCKED', // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Access denied: IP not in whitelist', // 错误
+          code: 'IP_BLOCKED', // 代码
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -378,10 +378,10 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
           auditLogger.log('rate_limited', { ...requestInfo, retryAfter: rateResult.retryAfter }); // 调用 auditLogger.log
         } // 结束代码块
         return res.status(429).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Too many requests', // 设置 error 字段
-          code: 'RATE_LIMITED', // 设置 code 字段
-          retryAfter: rateResult.retryAfter, // 设置 retryAfter 字段
+          success: false, // 成功标记
+          error: 'Too many requests', // 错误
+          code: 'RATE_LIMITED', // 代码
+          retryAfter: rateResult.retryAfter, // 重试之后
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -398,10 +398,10 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
           auditLogger.log('auth_failed', { ...requestInfo, reason: 'missing_headers' }); // 调用 auditLogger.log
         } // 结束代码块
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Missing authentication headers', // 设置 error 字段
-          code: 'AUTH_MISSING', // 设置 code 字段
-          required: ['x-api-key', 'x-timestamp', 'x-nonce', 'x-signature'], // 设置 required 字段
+          success: false, // 成功标记
+          error: 'Missing authentication headers', // 错误
+          code: 'AUTH_MISSING', // 代码
+          required: ['x-api-key', 'x-timestamp', 'x-nonce', 'x-signature'], // required
         }); // 结束代码块
       } // 结束代码块
 
@@ -413,7 +413,7 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
         timestamp, // 执行语句
         nonce, // 执行语句
         signature, // 执行语句
-        body: bodyString, // 设置 body 字段
+        body: bodyString, // body
       }); // 结束代码块
 
       if (!verifyResult.valid) { // 条件判断 !verifyResult.valid
@@ -421,9 +421,9 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
           auditLogger.log('auth_failed', { ...requestInfo, reason: verifyResult.error }); // 调用 auditLogger.log
         } // 结束代码块
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: verifyResult.error, // 设置 error 字段
-          code: 'AUTH_FAILED', // 设置 code 字段
+          success: false, // 成功标记
+          error: verifyResult.error, // 错误
+          code: 'AUTH_FAILED', // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -437,9 +437,9 @@ function createSecurityMiddleware(securityManager, options = {}) { // 定义函�
       res.on('finish', () => { // 注册事件监听
         auditLogger.log('api_access', { // 调用 auditLogger.log
           ...requestInfo, // 展开对象或数组
-          statusCode: res.statusCode, // 设置 statusCode 字段
-          duration: Date.now() - startTime, // 设置 duration 字段
-          authenticated: !!req.apiKeyInfo, // 设置 authenticated 字段
+          statusCode: res.statusCode, // 状态代码
+          duration: Date.now() - startTime, // duration
+          authenticated: !!req.apiKeyInfo, // authenticated
         }); // 结束代码块
       }); // 结束代码块
     } // 结束代码块
@@ -468,11 +468,11 @@ function generateSignature(params) { // 定义函数 generateSignature
     timestamp, // 执行语句
     nonce, // 执行语句
     signature, // 执行语句
-    headers: { // 设置 headers 字段
-      'X-Api-Key': apiKey, // 设置 X-Api-Key 字段
-      'X-Timestamp': timestamp, // 设置 X-Timestamp 字段
-      'X-Nonce': nonce, // 设置 X-Nonce 字段
-      'X-Signature': signature, // 设置 X-Signature 字段
+    headers: { // headers
+      'X-Api-Key': apiKey, // XAPI密钥
+      'X-Timestamp': timestamp, // X时间戳
+      'X-Nonce': nonce, // XNonce
+      'X-Signature': signature, // XSignature
     }, // 结束代码块
   }; // 结束代码块
 } // 结束代码块

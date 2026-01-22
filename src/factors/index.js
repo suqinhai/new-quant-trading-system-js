@@ -218,7 +218,7 @@ export { // 导出命名成员
  */
 export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   // 动量因子
-  momentum: { // 设置 momentum 字段
+  momentum: { // 动量
     Momentum1D, // 执行语句
     Momentum7D, // 执行语句
     Momentum30D, // 执行语句
@@ -227,7 +227,7 @@ export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   }, // 结束代码块
 
   // 波动率因子
-  volatility: { // 设置 volatility 字段
+  volatility: { // 波动率
     BollingerWidth20, // 执行语句
     ATRRatio, // 执行语句
     KeltnerSqueeze, // 执行语句
@@ -235,7 +235,7 @@ export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   }, // 结束代码块
 
   // 资金流向因子
-  moneyFlow: { // 设置 moneyFlow 字段
+  moneyFlow: { // money流
     MFI14, // 执行语句
     OBVSlope20, // 执行语句
     CMF20, // 执行语句
@@ -243,7 +243,7 @@ export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   }, // 结束代码块
 
   // 换手率因子
-  turnover: { // 设置 turnover 字段
+  turnover: { // turnover
     VolumeMAR20, // 执行语句
     VolumeRank60, // 执行语句
     RelativeVolume, // 执行语句
@@ -251,7 +251,7 @@ export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   }, // 结束代码块
 
   // 资金费率因子
-  fundingRate: { // 设置 fundingRate 字段
+  fundingRate: { // 资金费率频率
     FundingRateCurrent, // 执行语句
     FundingRateAvg7D, // 执行语句
     FundingRatePercentile, // 执行语句
@@ -261,7 +261,7 @@ export const PREDEFINED_FACTORS = { // 导出常量 PREDEFINED_FACTORS
   }, // 结束代码块
 
   // 大单因子
-  largeOrder: { // 设置 largeOrder 字段
+  largeOrder: { // 大额订单
     LargeOrderVolumeRatio, // 执行语句
     LargeOrderNetFlow, // 执行语句
     LargeOrderBuySell, // 执行语句

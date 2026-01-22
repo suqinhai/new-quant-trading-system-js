@@ -38,7 +38,7 @@ const BLACK_SWAN_TYPE = { // 定义常量 BLACK_SWAN_TYPE
   FLASH_RALLY: 'flash_rally',           // 暴涨 / Flash rally
   VOLATILITY_SPIKE: 'volatility_spike', // 波动率飙升 / Volatility spike
   LIQUIDITY_CRISIS: 'liquidity_crisis', // 流动性危机 / Liquidity crisis
-  SPREAD_BLOWOUT: 'spread_blowout',     // 点差扩大 / Spread blowout
+  SPREAD_BLOWOUT: 'spread_blowout',     // 价差BLOWOUT权限
   EXCHANGE_ANOMALY: 'exchange_anomaly', // 交易所异常 / Exchange anomaly
 }; // 结束代码块
 
@@ -52,45 +52,45 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 1分钟内价格变动警告阈值 / 1-minute price change warning threshold
-  priceChange1mWarning: 0.03,    // 3%
+  priceChange1mWarning: 0.03,    // 1分钟内价格变动警告阈值
 
   // 1分钟内价格变动熔断阈值 / 1-minute price change circuit breaker threshold
-  priceChange1mCircuitBreaker: 0.05, // 5%
+  priceChange1mCircuitBreaker: 0.05, // 1分钟内价格变动熔断阈值
 
   // 5分钟内价格变动警告阈值 / 5-minute price change warning threshold
-  priceChange5mWarning: 0.05,    // 5%
+  priceChange5mWarning: 0.05,    // 5分钟内价格变动警告阈值
 
   // 5分钟内价格变动熔断阈值 / 5-minute price change circuit breaker threshold
-  priceChange5mCircuitBreaker: 0.08, // 8%
+  priceChange5mCircuitBreaker: 0.08, // 5分钟内价格变动熔断阈值
 
   // 15分钟内价格变动紧急阈值 / 15-minute price change emergency threshold
-  priceChange15mEmergency: 0.15, // 15%
+  priceChange15mEmergency: 0.15, // 15分钟内价格变动紧急阈值
 
   // ============================================
   // 波动率阈值 / Volatility Thresholds
   // ============================================
 
   // 波动率突变倍数 (相对于历史波动率) / Volatility spike multiplier (relative to historical)
-  volatilitySpikeMultiplier: 3.0, // 设置 volatilitySpikeMultiplier 字段
+  volatilitySpikeMultiplier: 3.0, // 波动率突变倍数 (相对于历史波动率)
 
   // 历史波动率计算窗口 (小时) / Historical volatility calculation window (hours)
-  volatilityWindow: 24, // 设置 volatilityWindow 字段
+  volatilityWindow: 24, // 历史波动率计算窗口 (小时)
 
   // 超高波动率阈值 (年化) / Ultra high volatility threshold (annualized)
-  ultraHighVolatility: 2.0, // 200%
+  ultraHighVolatility: 2.0, // 超高波动率阈值 (年化)
 
   // ============================================
   // 点差阈值 / Spread Thresholds
   // ============================================
 
   // 点差扩大警告倍数 / Spread widening warning multiplier
-  spreadWarningMultiplier: 3.0, // 设置 spreadWarningMultiplier 字段
+  spreadWarningMultiplier: 3.0, // 点差扩大警告倍数
 
   // 点差扩大熔断倍数 / Spread widening circuit breaker multiplier
-  spreadCircuitBreakerMultiplier: 5.0, // 设置 spreadCircuitBreakerMultiplier 字段
+  spreadCircuitBreakerMultiplier: 5.0, // 点差扩大熔断倍数
 
   // 最大可接受点差 (百分比) / Maximum acceptable spread (percentage)
-  maxSpreadPercent: 0.02, // 2%
+  maxSpreadPercent: 0.02, // 最大可接受点差 (百分比)
 
   // ============================================
   // 深度阈值 / Depth Thresholds
@@ -119,7 +119,7 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   emergencyCooldown: 4 * 60 * 60 * 1000, // 4小时 / 4 hours
 
   // 自动恢复启用 / Enable auto recovery
-  enableAutoRecovery: true, // 设置 enableAutoRecovery 字段
+  enableAutoRecovery: true, // 启用自动Recovery
 
   // 恢复检测间隔 (毫秒) / Recovery detection interval (ms)
   recoveryCheckInterval: 60 * 1000, // 1分钟 / 1 minute
@@ -132,14 +132,14 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 启用自动紧急平仓 / Enable auto emergency close
-  enableAutoEmergencyClose: true, // 设置 enableAutoEmergencyClose 字段
+  enableAutoEmergencyClose: true, // 启用自动紧急平仓
 
   // 紧急平仓在熔断级别 / Emergency close at circuit breaker level
-  emergencyCloseLevel: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 设置 emergencyCloseLevel 字段
+  emergencyCloseLevel: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 紧急平仓在熔断级别
 
   // 部分平仓比例 (一级/二级熔断) / Partial close ratio (level 1/2 circuit breaker)
-  partialCloseRatioLevel1: 0.25, // 25%
-  partialCloseRatioLevel2: 0.50, // 50%
+  partialCloseRatioLevel1: 0.25, // 部分平仓比例 (一级/二级熔断)
+  partialCloseRatioLevel2: 0.50, // partial收盘比例Level2
 
   // ============================================
   // 监控配置 / Monitoring Configuration
@@ -152,13 +152,13 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   checkInterval: 1000, // 1秒 / 1 second
 
   // 价格历史保留数量 / Price history retention count
-  priceHistoryLength: 1000, // 设置 priceHistoryLength 字段
+  priceHistoryLength: 1000, // 价格历史保留数量
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[BlackSwanProtector]', // 设置 logPrefix 字段
+  logPrefix: '[BlackSwanProtector]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -184,12 +184,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
     // 当前熔断状态 / Current circuit breaker state
     this.circuitBreakerState = { // 设置 circuitBreakerState
-      level: CIRCUIT_BREAKER_LEVEL.NORMAL, // 设置 level 字段
-      triggeredAt: null, // 设置 triggeredAt 字段
-      reason: null, // 设置 reason 字段
-      eventType: null, // 设置 eventType 字段
-      affectedSymbols: [], // 设置 affectedSymbols 字段
-      cooldownUntil: null, // 设置 cooldownUntil 字段
+      level: CIRCUIT_BREAKER_LEVEL.NORMAL, // 级别
+      triggeredAt: null, // triggeredAt
+      reason: null, // reason
+      eventType: null, // 事件类型
+      affectedSymbols: [], // affected交易对列表
+      cooldownUntil: null, // 冷却Until
     }; // 结束代码块
 
     // 价格历史 / Price history
@@ -360,12 +360,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
   _updateBaselinePrices(symbol, price, now) { // 调用 _updateBaselinePrices
     if (!this.baselinePrices.has(symbol)) { // 条件判断 !this.baselinePrices.has(symbol)
       this.baselinePrices.set(symbol, { // 访问 baselinePrices
-        price1m: price, // 设置 price1m 字段
-        price5m: price, // 设置 price5m 字段
-        price15m: price, // 设置 price15m 字段
-        timestamp1m: now, // 设置 timestamp1m 字段
-        timestamp5m: now, // 设置 timestamp5m 字段
-        timestamp15m: now, // 设置 timestamp15m 字段
+        price1m: price, // price1m
+        price5m: price, // price5m
+        price15m: price, // price15m
+        timestamp1m: now, // timestamp1m
+        timestamp5m: now, // timestamp5m
+        timestamp15m: now, // timestamp15m
       }); // 结束代码块
       return; // 返回结果
     } // 结束代码块
@@ -515,46 +515,46 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
     // 检查各级别阈值 / Check thresholds for each level
     if (absChange15m >= this.config.priceChange15mEmergency) { // 条件判断 absChange15m >= this.config.priceChange15mEme...
       return { // 返回结果
-        type: eventType, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.EMERGENCY, // 设置 level 字段
-        message: `15分钟内价格变动 ${(change15m * 100).toFixed(2)}% 触发紧急状态`, // 设置 message 字段
-        details: { change1m, change5m, change15m, currentPrice, baseline }, // 设置 details 字段
+        type: eventType, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.EMERGENCY, // 级别
+        message: `15分钟内价格变动 ${(change15m * 100).toFixed(2)}% 触发紧急状态`, // 消息
+        details: { change1m, change5m, change15m, currentPrice, baseline }, // details
       }; // 结束代码块
     } // 结束代码块
 
     if (absChange5m >= this.config.priceChange5mCircuitBreaker) { // 条件判断 absChange5m >= this.config.priceChange5mCircu...
       return { // 返回结果
-        type: eventType, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 设置 level 字段
-        message: `5分钟内价格变动 ${(change5m * 100).toFixed(2)}% 触发三级熔断`, // 设置 message 字段
-        details: { change1m, change5m, change15m, currentPrice, baseline }, // 设置 details 字段
+        type: eventType, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 级别
+        message: `5分钟内价格变动 ${(change5m * 100).toFixed(2)}% 触发三级熔断`, // 消息
+        details: { change1m, change5m, change15m, currentPrice, baseline }, // details
       }; // 结束代码块
     } // 结束代码块
 
     if (absChange5m >= this.config.priceChange5mWarning) { // 条件判断 absChange5m >= this.config.priceChange5mWarning
       return { // 返回结果
-        type: eventType, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 设置 level 字段
-        message: `5分钟内价格变动 ${(change5m * 100).toFixed(2)}% 触发二级警告`, // 设置 message 字段
-        details: { change1m, change5m, change15m, currentPrice, baseline }, // 设置 details 字段
+        type: eventType, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 级别
+        message: `5分钟内价格变动 ${(change5m * 100).toFixed(2)}% 触发二级警告`, // 消息
+        details: { change1m, change5m, change15m, currentPrice, baseline }, // details
       }; // 结束代码块
     } // 结束代码块
 
     if (absChange1m >= this.config.priceChange1mCircuitBreaker) { // 条件判断 absChange1m >= this.config.priceChange1mCircu...
       return { // 返回结果
-        type: eventType, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 设置 level 字段
-        message: `1分钟内价格变动 ${(change1m * 100).toFixed(2)}% 触发二级警告`, // 设置 message 字段
-        details: { change1m, change5m, change15m, currentPrice, baseline }, // 设置 details 字段
+        type: eventType, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 级别
+        message: `1分钟内价格变动 ${(change1m * 100).toFixed(2)}% 触发二级警告`, // 消息
+        details: { change1m, change5m, change15m, currentPrice, baseline }, // details
       }; // 结束代码块
     } // 结束代码块
 
     if (absChange1m >= this.config.priceChange1mWarning) { // 条件判断 absChange1m >= this.config.priceChange1mWarning
       return { // 返回结果
-        type: eventType, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 设置 level 字段
-        message: `1分钟内价格变动 ${(change1m * 100).toFixed(2)}% 触发一级警告`, // 设置 message 字段
-        details: { change1m, change5m, change15m, currentPrice, baseline }, // 设置 details 字段
+        type: eventType, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 级别
+        message: `1分钟内价格变动 ${(change1m * 100).toFixed(2)}% 触发一级警告`, // 消息
+        details: { change1m, change5m, change15m, currentPrice, baseline }, // details
       }; // 结束代码块
     } // 结束代码块
 
@@ -602,12 +602,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
       } // 结束代码块
 
       return { // 返回结果
-        type: BLACK_SWAN_TYPE.VOLATILITY_SPIKE, // 设置 type 字段
+        type: BLACK_SWAN_TYPE.VOLATILITY_SPIKE, // 类型
         level, // 执行语句
-        message: `波动率突变: ${spikeRatio.toFixed(1)}倍 (年化 ${(annualizedVol * 100).toFixed(0)}%)`, // 设置 message 字段
-        details: { // 设置 details 字段
+        message: `波动率突变: ${spikeRatio.toFixed(1)}倍 (年化 ${(annualizedVol * 100).toFixed(0)}%)`, // 消息
+        details: { // details
           recentVolatility, // 执行语句
-          historicalVolatility: historicalVol.volatility, // 设置 historicalVolatility 字段
+          historicalVolatility: historicalVol.volatility, // historical波动率
           spikeRatio, // 执行语句
           annualizedVol, // 执行语句
         }, // 结束代码块
@@ -669,10 +669,10 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
     // 检查绝对点差 / Check absolute spread
     if (currentSpread >= this.config.maxSpreadPercent) { // 条件判断 currentSpread >= this.config.maxSpreadPercent
       return { // 返回结果
-        type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 设置 level 字段
-        message: `点差过大: ${(currentSpread * 100).toFixed(3)}% >= ${(this.config.maxSpreadPercent * 100).toFixed(2)}%`, // 设置 message 字段
-        details: { currentSpread, bestBid, bestAsk }, // 设置 details 字段
+        type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_2, // 级别
+        message: `点差过大: ${(currentSpread * 100).toFixed(3)}% >= ${(this.config.maxSpreadPercent * 100).toFixed(2)}%`, // 消息
+        details: { currentSpread, bestBid, bestAsk }, // details
       }; // 结束代码块
     } // 结束代码块
 
@@ -683,12 +683,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
       if (spreadRatio >= this.config.spreadCircuitBreakerMultiplier) { // 条件判断 spreadRatio >= this.config.spreadCircuitBreak...
         return { // 返回结果
-          type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 设置 type 字段
-          level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 设置 level 字段
-          message: `点差扩大 ${spreadRatio.toFixed(1)}倍 触发熔断`, // 设置 message 字段
-          details: { // 设置 details 字段
+          type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 类型
+          level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 级别
+          message: `点差扩大 ${spreadRatio.toFixed(1)}倍 触发熔断`, // 消息
+          details: { // details
             currentSpread, // 执行语句
-            baselineSpread: baselineSpread.spread, // 设置 baselineSpread 字段
+            baselineSpread: baselineSpread.spread, // 基线价差
             spreadRatio, // 执行语句
           }, // 结束代码块
         }; // 结束代码块
@@ -696,12 +696,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
       if (spreadRatio >= this.config.spreadWarningMultiplier) { // 条件判断 spreadRatio >= this.config.spreadWarningMulti...
         return { // 返回结果
-          type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 设置 type 字段
-          level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 设置 level 字段
-          message: `点差扩大 ${spreadRatio.toFixed(1)}倍 警告`, // 设置 message 字段
-          details: { // 设置 details 字段
+          type: BLACK_SWAN_TYPE.SPREAD_BLOWOUT, // 类型
+          level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 级别
+          message: `点差扩大 ${spreadRatio.toFixed(1)}倍 警告`, // 消息
+          details: { // details
             currentSpread, // 执行语句
-            baselineSpread: baselineSpread.spread, // 设置 baselineSpread 字段
+            baselineSpread: baselineSpread.spread, // 基线价差
             spreadRatio, // 执行语句
           }, // 结束代码块
         }; // 结束代码块
@@ -737,14 +737,14 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
     if (maxReduction >= this.config.depthDisappearanceCircuitBreaker) { // 条件判断 maxReduction >= this.config.depthDisappearanc...
       return { // 返回结果
-        type: BLACK_SWAN_TYPE.LIQUIDITY_CRISIS, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 设置 level 字段
-        message: `流动性危机: 深度减少 ${(maxReduction * 100).toFixed(1)}%`, // 设置 message 字段
-        details: { // 设置 details 字段
+        type: BLACK_SWAN_TYPE.LIQUIDITY_CRISIS, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_3, // 级别
+        message: `流动性危机: 深度减少 ${(maxReduction * 100).toFixed(1)}%`, // 消息
+        details: { // details
           bidDepth, // 执行语句
           askDepth, // 执行语句
-          baselineBidDepth: baselineDepth.bidDepth, // 设置 baselineBidDepth 字段
-          baselineAskDepth: baselineDepth.askDepth, // 设置 baselineAskDepth 字段
+          baselineBidDepth: baselineDepth.bidDepth, // 基线BidDepth
+          baselineAskDepth: baselineDepth.askDepth, // 基线AskDepth
           bidReduction, // 执行语句
           askReduction, // 执行语句
         }, // 结束代码块
@@ -753,14 +753,14 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
     if (maxReduction >= this.config.depthDisappearanceWarning) { // 条件判断 maxReduction >= this.config.depthDisappearanc...
       return { // 返回结果
-        type: BLACK_SWAN_TYPE.LIQUIDITY_CRISIS, // 设置 type 字段
-        level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 设置 level 字段
-        message: `流动性警告: 深度减少 ${(maxReduction * 100).toFixed(1)}%`, // 设置 message 字段
-        details: { // 设置 details 字段
+        type: BLACK_SWAN_TYPE.LIQUIDITY_CRISIS, // 类型
+        level: CIRCUIT_BREAKER_LEVEL.LEVEL_1, // 级别
+        message: `流动性警告: 深度减少 ${(maxReduction * 100).toFixed(1)}%`, // 消息
+        details: { // details
           bidDepth, // 执行语句
           askDepth, // 执行语句
-          baselineBidDepth: baselineDepth.bidDepth, // 设置 baselineBidDepth 字段
-          baselineAskDepth: baselineDepth.askDepth, // 设置 baselineAskDepth 字段
+          baselineBidDepth: baselineDepth.bidDepth, // 基线BidDepth
+          baselineAskDepth: baselineDepth.askDepth, // 基线AskDepth
           bidReduction, // 执行语句
           askReduction, // 执行语句
         }, // 结束代码块
@@ -831,20 +831,20 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
       case CIRCUIT_BREAKER_LEVEL.LEVEL_1: // 分支 CIRCUIT_BREAKER_LEVEL.LEVEL_1
         cooldown = this.config.level1Cooldown; // 赋值 cooldown
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         cooldown = 0; // 赋值 cooldown
     } // 结束代码块
 
     // 更新熔断状态 / Update circuit breaker state
     const previousLevel = this.circuitBreakerState.level; // 定义常量 previousLevel
     this.circuitBreakerState = { // 设置 circuitBreakerState
-      level: anomaly.level, // 设置 level 字段
-      triggeredAt: now, // 设置 triggeredAt 字段
-      reason: anomaly.message, // 设置 reason 字段
-      eventType: anomaly.type, // 设置 eventType 字段
-      affectedSymbols: [symbol], // 设置 affectedSymbols 字段
-      cooldownUntil: now + cooldown, // 设置 cooldownUntil 字段
-      details: anomaly.details, // 设置 details 字段
+      level: anomaly.level, // 级别
+      triggeredAt: now, // triggeredAt
+      reason: anomaly.message, // reason
+      eventType: anomaly.type, // 事件类型
+      affectedSymbols: [symbol], // affected交易对列表
+      cooldownUntil: now + cooldown, // 冷却Until
+      details: anomaly.details, // details
     }; // 结束代码块
 
     // 重置市场稳定计时 / Reset market stability timer
@@ -855,19 +855,19 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
     // 发出事件 / Emit event
     this.emit('circuitBreakerTriggered', { // 调用 emit
       previousLevel, // 执行语句
-      currentLevel: anomaly.level, // 设置 currentLevel 字段
+      currentLevel: anomaly.level, // current级别
       symbol, // 执行语句
       anomaly, // 执行语句
-      timestamp: now, // 设置 timestamp 字段
+      timestamp: now, // 时间戳
     }); // 结束代码块
 
     // 通知组合风控管理器 / Notify portfolio risk manager
     if (this.portfolioRiskManager) { // 条件判断 this.portfolioRiskManager
       this.portfolioRiskManager.emit('blackSwanEvent', { // 访问 portfolioRiskManager
-        level: anomaly.level, // 设置 level 字段
-        type: anomaly.type, // 设置 type 字段
+        level: anomaly.level, // 级别
+        type: anomaly.type, // 类型
         symbol, // 执行语句
-        message: anomaly.message, // 设置 message 字段
+        message: anomaly.message, // 消息
       }); // 结束代码块
     } // 结束代码块
 
@@ -916,7 +916,7 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
         await this._partialClose(this.config.partialCloseRatioLevel1); // 等待异步结果
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         break; // 跳出循环或分支
     } // 结束代码块
 
@@ -1055,12 +1055,12 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
 
     // 重置熔断状态 / Reset circuit breaker state
     this.circuitBreakerState = { // 设置 circuitBreakerState
-      level: CIRCUIT_BREAKER_LEVEL.NORMAL, // 设置 level 字段
-      triggeredAt: null, // 设置 triggeredAt 字段
-      reason: null, // 设置 reason 字段
-      eventType: null, // 设置 eventType 字段
-      affectedSymbols: [], // 设置 affectedSymbols 字段
-      cooldownUntil: null, // 设置 cooldownUntil 字段
+      level: CIRCUIT_BREAKER_LEVEL.NORMAL, // 级别
+      triggeredAt: null, // triggeredAt
+      reason: null, // reason
+      eventType: null, // 事件类型
+      affectedSymbols: [], // affected交易对列表
+      cooldownUntil: null, // 冷却Until
     }; // 结束代码块
 
     this.stabilityStartTime = null; // 设置 stabilityStartTime
@@ -1075,7 +1075,7 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
     // 发出事件 / Emit event
     this.emit('recovered', { // 调用 emit
       previousLevel, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -1099,7 +1099,7 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
         this.emit('priceUpdateTimeout', { // 调用 emit
           symbol, // 执行语句
           lastUpdate, // 执行语句
-          timeout: this.config.priceUpdateTimeout, // 设置 timeout 字段
+          timeout: this.config.priceUpdateTimeout, // 超时
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1121,7 +1121,7 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
     this.eventHistory.push({ // 访问 eventHistory
       symbol, // 执行语句
       ...anomaly, // 展开对象或数组
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 限制历史长度 / Limit history length
@@ -1142,15 +1142,15 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      circuitBreakerState: { ...this.circuitBreakerState }, // 设置 circuitBreakerState 字段
-      stabilityStartTime: this.stabilityStartTime, // 设置 stabilityStartTime 字段
-      recentEvents: this.eventHistory.slice(-20), // 设置 recentEvents 字段
-      config: { // 设置 config 字段
-        priceChange1mWarning: this.config.priceChange1mWarning, // 设置 priceChange1mWarning 字段
-        priceChange5mCircuitBreaker: this.config.priceChange5mCircuitBreaker, // 设置 priceChange5mCircuitBreaker 字段
-        volatilitySpikeMultiplier: this.config.volatilitySpikeMultiplier, // 设置 volatilitySpikeMultiplier 字段
-        enableAutoEmergencyClose: this.config.enableAutoEmergencyClose, // 设置 enableAutoEmergencyClose 字段
+      running: this.running, // running
+      circuitBreakerState: { ...this.circuitBreakerState }, // circuitBreakerState
+      stabilityStartTime: this.stabilityStartTime, // stability启动时间
+      recentEvents: this.eventHistory.slice(-20), // recentEvents
+      config: { // 配置
+        priceChange1mWarning: this.config.priceChange1mWarning, // 价格Change1m警告
+        priceChange5mCircuitBreaker: this.config.priceChange5mCircuitBreaker, // 价格Change5mCircuitBreaker
+        volatilitySpikeMultiplier: this.config.volatilitySpikeMultiplier, // 波动率尖峰倍数
+        enableAutoEmergencyClose: this.config.enableAutoEmergencyClose, // 启用自动Emergency收盘
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1164,10 +1164,10 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
    */
   async manualTrigger(level, reason = '手动触发') { // 执行语句
     await this._triggerCircuitBreaker('MANUAL', { // 等待异步结果
-      type: BLACK_SWAN_TYPE.EXCHANGE_ANOMALY, // 设置 type 字段
+      type: BLACK_SWAN_TYPE.EXCHANGE_ANOMALY, // 类型
       level, // 执行语句
-      message: reason, // 设置 message 字段
-      details: { manual: true }, // 设置 details 字段
+      message: reason, // 消息
+      details: { manual: true }, // details
     }); // 结束代码块
   } // 结束代码块
 
@@ -1199,7 +1199,7 @@ export class BlackSwanProtector extends EventEmitter { // 导出类 BlackSwanPro
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

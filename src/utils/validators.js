@@ -20,29 +20,29 @@ import { z } from 'zod'; // 导入模块 zod
  */
 export const ZodSchemas = { // 导出常量 ZodSchemas
   // 数字类型
-  positiveNumber: z.number().positive(), // 设置 positiveNumber 字段
-  nonNegativeNumber: z.number().nonnegative(), // 设置 nonNegativeNumber 字段
-  percentage: z.number().min(0).max(1), // 设置 percentage 字段
-  percentage100: z.number().min(0).max(100), // 设置 percentage100 字段
+  positiveNumber: z.number().positive(), // positiveNumber数字类型
+  nonNegativeNumber: z.number().nonnegative(), // nonNegativeNumber
+  percentage: z.number().min(0).max(1), // 百分比
+  percentage100: z.number().min(0).max(100), // percentage100
 
   // 交易对 Schema
-  symbol: z.string().min(1).regex(/^[A-Z0-9]+\/[A-Z0-9]+$/i, { // 设置 symbol 字段
-    message: 'Symbol must be in format BASE/QUOTE (e.g., BTC/USDT)', // 设置 message 字段
+  symbol: z.string().min(1).regex(/^[A-Z0-9]+\/[A-Z0-9]+$/i, { // 交易对 Schema
+    message: 'Symbol must be in format BASE/QUOTE (e.g., BTC/USDT)', // 消息
   }), // 结束代码块
 
   // 交易所名称 / Exchange name
   // 支持: binance, okx, bybit, gate, deribit, bitget
   // Supported: binance, okx, bybit, gate, deribit, bitget
-  exchangeName: z.enum(['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget']), // 设置 exchangeName 字段
+  exchangeName: z.enum(['binance', 'okx', 'bybit', 'gate', 'deribit', 'bitget']), // Supported: binance, okx, bybit, gate, deribit, bitget
 
   // 订单方向
-  orderSide: z.enum(['buy', 'sell']), // 设置 orderSide 字段
+  orderSide: z.enum(['buy', 'sell']), // 订单方向
 
   // 订单类型
-  orderType: z.enum(['market', 'limit', 'stop_limit', 'stop_market']), // 设置 orderType 字段
+  orderType: z.enum(['market', 'limit', 'stop_limit', 'stop_market']), // 订单类型
 
   // 时间周期
-  timeframe: z.enum([ // 设置 timeframe 字段
+  timeframe: z.enum([ // 时间周期
     '1m', '3m', '5m', '15m', '30m', // 执行语句
     '1h', '2h', '4h', '6h', '12h', // 执行语句
     '1d', '1w', '1M', // 执行语句
@@ -53,17 +53,17 @@ export const ZodSchemas = { // 导出常量 ZodSchemas
  * 订单配置 Schema
  */
 export const OrderConfigSchema = z.object({ // 导出常量 OrderConfigSchema
-  symbol: ZodSchemas.symbol, // 设置 symbol 字段
-  side: ZodSchemas.orderSide, // 设置 side 字段
-  type: ZodSchemas.orderType.optional().default('limit'), // 设置 type 字段
-  amount: ZodSchemas.positiveNumber, // 设置 amount 字段
-  price: ZodSchemas.positiveNumber.optional(), // 设置 price 字段
-  stopPrice: ZodSchemas.positiveNumber.optional(), // 设置 stopPrice 字段
-  reduceOnly: z.boolean().optional().default(false), // 设置 reduceOnly 字段
-  postOnly: z.boolean().optional().default(false), // 设置 postOnly 字段
-  timeInForce: z.enum(['GTC', 'IOC', 'FOK']).optional().default('GTC'), // 设置 timeInForce 字段
-  leverage: z.number().min(1).max(125).optional(), // 设置 leverage 字段
-  clientOrderId: z.string().optional(), // 设置 clientOrderId 字段
+  symbol: ZodSchemas.symbol, // 交易对
+  side: ZodSchemas.orderSide, // 方向
+  type: ZodSchemas.orderType.optional().default('limit'), // 类型
+  amount: ZodSchemas.positiveNumber, // 数量
+  price: ZodSchemas.positiveNumber.optional(), // 价格
+  stopPrice: ZodSchemas.positiveNumber.optional(), // 停止价格
+  reduceOnly: z.boolean().optional().default(false), // 减仓仅
+  postOnly: z.boolean().optional().default(false), // 挂单仅
+  timeInForce: z.enum(['GTC', 'IOC', 'FOK']).optional().default('GTC'), // 时间在Force
+  leverage: z.number().min(1).max(125).optional(), // 杠杆
+  clientOrderId: z.string().optional(), // client订单ID
 }).refine( // 执行语句
   (data) => data.type === 'market' || data.price !== undefined, // 定义箭头函数
   { message: 'Price is required for limit orders' } // 执行语句
@@ -76,133 +76,133 @@ export const OrderConfigSchema = z.object({ // 导出常量 OrderConfigSchema
  * 策略配置 Schemas
  */
 export const StrategySchemas = { // 导出常量 StrategySchemas
-  sma: z.object({ // 设置 sma 字段
-    shortPeriod: z.number().int().min(1).max(500).default(10), // 设置 shortPeriod 字段
-    longPeriod: z.number().int().min(1).max(500).default(20), // 设置 longPeriod 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    tradeAmount: ZodSchemas.positiveNumber.optional(), // 设置 tradeAmount 字段
-    tradePercent: ZodSchemas.percentage.optional(), // 设置 tradePercent 字段
+  sma: z.object({ // SMA
+    shortPeriod: z.number().int().min(1).max(500).default(10), // short周期
+    longPeriod: z.number().int().min(1).max(500).default(20), // long周期
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    tradeAmount: ZodSchemas.positiveNumber.optional(), // 交易数量
+    tradePercent: ZodSchemas.percentage.optional(), // 交易百分比
   }).refine( // 执行语句
     (data) => data.shortPeriod < data.longPeriod, // 定义箭头函数
     { message: 'Short period must be less than long period' } // 执行语句
   ), // 结束调用或参数
 
-  rsi: z.object({ // 设置 rsi 字段
-    period: z.number().int().min(2).max(100).default(14), // 设置 period 字段
-    overbought: z.number().min(50).max(100).default(70), // 设置 overbought 字段
-    oversold: z.number().min(0).max(50).default(30), // 设置 oversold 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    tradeAmount: ZodSchemas.positiveNumber.optional(), // 设置 tradeAmount 字段
-    tradePercent: ZodSchemas.percentage.optional(), // 设置 tradePercent 字段
+  rsi: z.object({ // RSI
+    period: z.number().int().min(2).max(100).default(14), // 周期
+    overbought: z.number().min(50).max(100).default(70), // overbought
+    oversold: z.number().min(0).max(50).default(30), // oversold
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    tradeAmount: ZodSchemas.positiveNumber.optional(), // 交易数量
+    tradePercent: ZodSchemas.percentage.optional(), // 交易百分比
   }).refine( // 执行语句
     (data) => data.oversold < data.overbought, // 定义箭头函数
     { message: 'Oversold level must be less than overbought level' } // 执行语句
   ), // 结束调用或参数
 
-  macd: z.object({ // 设置 macd 字段
-    fastPeriod: z.number().int().min(1).max(100).default(12), // 设置 fastPeriod 字段
-    slowPeriod: z.number().int().min(1).max(100).default(26), // 设置 slowPeriod 字段
-    signalPeriod: z.number().int().min(1).max(100).default(9), // 设置 signalPeriod 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    tradeAmount: ZodSchemas.positiveNumber.optional(), // 设置 tradeAmount 字段
-    tradePercent: ZodSchemas.percentage.optional(), // 设置 tradePercent 字段
+  macd: z.object({ // MACD
+    fastPeriod: z.number().int().min(1).max(100).default(12), // fast周期
+    slowPeriod: z.number().int().min(1).max(100).default(26), // slow周期
+    signalPeriod: z.number().int().min(1).max(100).default(9), // 信号周期
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    tradeAmount: ZodSchemas.positiveNumber.optional(), // 交易数量
+    tradePercent: ZodSchemas.percentage.optional(), // 交易百分比
   }).refine( // 执行语句
     (data) => data.fastPeriod < data.slowPeriod, // 定义箭头函数
     { message: 'Fast period must be less than slow period' } // 执行语句
   ), // 结束调用或参数
 
-  bollinger: z.object({ // 设置 bollinger 字段
-    period: z.number().int().min(2).max(200).default(20), // 设置 period 字段
-    stdDev: z.number().min(0.1).max(5).default(2), // 设置 stdDev 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    tradeAmount: ZodSchemas.positiveNumber.optional(), // 设置 tradeAmount 字段
-    tradePercent: ZodSchemas.percentage.optional(), // 设置 tradePercent 字段
+  bollinger: z.object({ // 布林带
+    period: z.number().int().min(2).max(200).default(20), // 周期
+    stdDev: z.number().min(0.1).max(5).default(2), // 标准差
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    tradeAmount: ZodSchemas.positiveNumber.optional(), // 交易数量
+    tradePercent: ZodSchemas.percentage.optional(), // 交易百分比
   }), // 结束代码块
 
-  grid: z.object({ // 设置 grid 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    upperPrice: ZodSchemas.positiveNumber, // 设置 upperPrice 字段
-    lowerPrice: ZodSchemas.positiveNumber, // 设置 lowerPrice 字段
-    gridCount: z.number().int().min(2).max(500).default(10), // 设置 gridCount 字段
-    totalAmount: ZodSchemas.positiveNumber, // 设置 totalAmount 字段
-    side: z.enum(['long', 'short', 'neutral']).default('neutral'), // 设置 side 字段
+  grid: z.object({ // 网格
+    symbol: ZodSchemas.symbol, // 交易对
+    upperPrice: ZodSchemas.positiveNumber, // 上限价
+    lowerPrice: ZodSchemas.positiveNumber, // 下限价
+    gridCount: z.number().int().min(2).max(500).default(10), // 网格数量
+    totalAmount: ZodSchemas.positiveNumber, // 总数量
+    side: z.enum(['long', 'short', 'neutral']).default('neutral'), // 方向
   }).refine( // 执行语句
     (data) => data.lowerPrice < data.upperPrice, // 定义箭头函数
     { message: 'Lower price must be less than upper price' } // 执行语句
   ), // 结束调用或参数
 
   // 波动率策略 / Volatility strategies
-  atrBreakout: z.object({ // 设置 atrBreakout 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    atrPeriod: z.number().int().min(1).max(100).default(14), // 设置 atrPeriod 字段
-    atrMultiplier: z.number().min(0.1).max(10).default(2.0), // 设置 atrMultiplier 字段
-    baselinePeriod: z.number().int().min(1).max(200).default(20), // 设置 baselinePeriod 字段
-    useTrailingStop: z.boolean().default(true), // 设置 useTrailingStop 字段
-    stopLossMultiplier: z.number().min(0.1).max(10).default(1.5), // 设置 stopLossMultiplier 字段
-    positionPercent: z.number().min(1).max(100).default(95), // 设置 positionPercent 字段
+  atrBreakout: z.object({ // ATR突破
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    atrPeriod: z.number().int().min(1).max(100).default(14), // ATR周期
+    atrMultiplier: z.number().min(0.1).max(10).default(2.0), // ATR倍数
+    baselinePeriod: z.number().int().min(1).max(200).default(20), // 基线周期
+    useTrailingStop: z.boolean().default(true), // 是否使用跟踪止损
+    stopLossMultiplier: z.number().min(0.1).max(10).default(1.5), // 止损倍数
+    positionPercent: z.number().min(1).max(100).default(95), // 持仓百分比
   }), // 结束代码块
 
-  bollingerWidth: z.object({ // 设置 bollingerWidth 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    bbPeriod: z.number().int().min(2).max(200).default(20), // 设置 bbPeriod 字段
-    bbStdDev: z.number().min(0.1).max(5).default(2.0), // 设置 bbStdDev 字段
-    kcPeriod: z.number().int().min(2).max(200).default(20), // 设置 kcPeriod 字段
-    kcMultiplier: z.number().min(0.1).max(5).default(1.5), // 设置 kcMultiplier 字段
-    squeezeThreshold: z.number().min(1).max(100).default(20), // 设置 squeezeThreshold 字段
-    useMomentumConfirm: z.boolean().default(true), // 设置 useMomentumConfirm 字段
-    positionPercent: z.number().min(1).max(100).default(95), // 设置 positionPercent 字段
+  bollingerWidth: z.object({ // 布林带宽度
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    bbPeriod: z.number().int().min(2).max(200).default(20), // 布林带周期
+    bbStdDev: z.number().min(0.1).max(5).default(2.0), // 布林带标准差
+    kcPeriod: z.number().int().min(2).max(200).default(20), // 肯特纳通道周期
+    kcMultiplier: z.number().min(0.1).max(5).default(1.5), // 肯特纳通道倍数
+    squeezeThreshold: z.number().min(1).max(100).default(20), // 挤压阈值
+    useMomentumConfirm: z.boolean().default(true), // 是否使用动量确认
+    positionPercent: z.number().min(1).max(100).default(95), // 持仓百分比
   }), // 结束代码块
 
-  volatilityRegime: z.object({ // 设置 volatilityRegime 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
-    atrPeriod: z.number().int().min(1).max(100).default(14), // 设置 atrPeriod 字段
-    volatilityLookback: z.number().int().min(10).max(500).default(100), // 设置 volatilityLookback 字段
-    lowVolThreshold: z.number().min(1).max(50).default(25), // 设置 lowVolThreshold 字段
-    highVolThreshold: z.number().min(50).max(99).default(75), // 设置 highVolThreshold 字段
-    extremeVolThreshold: z.number().min(80).max(100).default(95), // 设置 extremeVolThreshold 字段
-    adxThreshold: z.number().min(10).max(50).default(25), // 设置 adxThreshold 字段
-    disableInExtreme: z.boolean().default(true), // 设置 disableInExtreme 字段
-    positionPercent: z.number().min(1).max(100).default(95), // 设置 positionPercent 字段
+  volatilityRegime: z.object({ // 波动率状态
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
+    atrPeriod: z.number().int().min(1).max(100).default(14), // ATR周期
+    volatilityLookback: z.number().int().min(10).max(500).default(100), // 波动率回溯
+    lowVolThreshold: z.number().min(1).max(50).default(25), // 最低波动率阈值
+    highVolThreshold: z.number().min(50).max(99).default(75), // 最高波动率阈值
+    extremeVolThreshold: z.number().min(80).max(100).default(95), // 极端波动率阈值
+    adxThreshold: z.number().min(10).max(50).default(25), // ADX阈值
+    disableInExtreme: z.boolean().default(true), // 极端时禁用
+    positionPercent: z.number().min(1).max(100).default(95), // 持仓百分比
   }), // 结束代码块
 
   // 订单流策略 / Order flow strategy
-  orderFlow: z.object({ // 设置 orderFlow 字段
-    symbol: ZodSchemas.symbol, // 设置 symbol 字段
-    timeframe: ZodSchemas.timeframe.default('1h'), // 设置 timeframe 字段
+  orderFlow: z.object({ // 订单流
+    symbol: ZodSchemas.symbol, // 交易对
+    timeframe: ZodSchemas.timeframe.default('1h'), // 周期
     // 成交量突增参数 / Volume spike parameters
-    volumeMAPeriod: z.number().int().min(5).max(100).default(20), // 设置 volumeMAPeriod 字段
-    volumeSpikeMultiplier: z.number().min(1.1).max(10).default(2.0), // 设置 volumeSpikeMultiplier 字段
+    volumeMAPeriod: z.number().int().min(5).max(100).default(20), // 成交量均线周期
+    volumeSpikeMultiplier: z.number().min(1.1).max(10).default(2.0), // 成交量尖峰倍数
     // VWAP 参数 / VWAP parameters
-    vwapPeriod: z.number().int().min(5).max(100).default(20), // 设置 vwapPeriod 字段
-    vwapDeviationThreshold: z.number().min(0.1).max(10).default(1.0), // 设置 vwapDeviationThreshold 字段
+    vwapPeriod: z.number().int().min(5).max(100).default(20), // VWAP周期
+    vwapDeviationThreshold: z.number().min(0.1).max(10).default(1.0), // VWAP偏离阈值
     // 大单参数 / Large order parameters
-    largeOrderMultiplier: z.number().min(1.5).max(20).default(3.0), // 设置 largeOrderMultiplier 字段
-    largeOrderRatioThreshold: z.number().min(0.5).max(0.95).default(0.6), // 设置 largeOrderRatioThreshold 字段
+    largeOrderMultiplier: z.number().min(1.5).max(20).default(3.0), // 大额订单倍数
+    largeOrderRatioThreshold: z.number().min(0.5).max(0.95).default(0.6), // 大额订单比例阈值
     // Taker 参数 / Taker parameters
-    takerWindow: z.number().int().min(3).max(50).default(10), // 设置 takerWindow 字段
-    takerBuyThreshold: z.number().min(0.5).max(0.9).default(0.6), // 设置 takerBuyThreshold 字段
-    takerSellThreshold: z.number().min(0.1).max(0.5).default(0.4), // 设置 takerSellThreshold 字段
+    takerWindow: z.number().int().min(3).max(50).default(10), // Taker 参数
+    takerBuyThreshold: z.number().min(0.5).max(0.9).default(0.6), // 主动成交Buy阈值
+    takerSellThreshold: z.number().min(0.1).max(0.5).default(0.4), // 主动成交Sell阈值
     // 信号参数 / Signal parameters
-    minSignalsForEntry: z.number().int().min(1).max(4).default(2), // 设置 minSignalsForEntry 字段
+    minSignalsForEntry: z.number().int().min(1).max(4).default(2), // 最小信号用于入场
     // 启用开关 / Enable flags
-    useVolumeSpike: z.boolean().default(true), // 设置 useVolumeSpike 字段
-    useVWAPDeviation: z.boolean().default(true), // 设置 useVWAPDeviation 字段
-    useLargeOrderRatio: z.boolean().default(true), // 设置 useLargeOrderRatio 字段
-    useTakerBuyRatio: z.boolean().default(true), // 设置 useTakerBuyRatio 字段
+    useVolumeSpike: z.boolean().default(true), // 是否使用成交量尖峰
+    useVWAPDeviation: z.boolean().default(true), // 是否使用VWAP偏离
+    useLargeOrderRatio: z.boolean().default(true), // 是否使用大额订单比例
+    useTakerBuyRatio: z.boolean().default(true), // 是否使用主动成交Buy比例
     // 风控参数 / Risk parameters
-    stopLossPercent: z.number().min(0.1).max(10).default(1.5), // 设置 stopLossPercent 字段
-    takeProfitPercent: z.number().min(0.5).max(20).default(3.0), // 设置 takeProfitPercent 字段
-    useTrailingStop: z.boolean().default(true), // 设置 useTrailingStop 字段
-    trailingStopPercent: z.number().min(0.1).max(10).default(1.0), // 设置 trailingStopPercent 字段
+    stopLossPercent: z.number().min(0.1).max(10).default(1.5), // 止损百分比
+    takeProfitPercent: z.number().min(0.5).max(20).default(3.0), // 止盈百分比
+    useTrailingStop: z.boolean().default(true), // 是否使用跟踪止损
+    trailingStopPercent: z.number().min(0.1).max(10).default(1.0), // 跟踪止损百分比
     // 仓位参数 / Position parameters
-    positionPercent: z.number().min(1).max(100).default(95), // 设置 positionPercent 字段
+    positionPercent: z.number().min(1).max(100).default(95), // 持仓百分比
   }).refine( // 执行语句
     (data) => data.takerSellThreshold < data.takerBuyThreshold, // 定义箭头函数
     { message: 'Taker sell threshold must be less than taker buy threshold' } // 执行语句
@@ -212,9 +212,9 @@ export const StrategySchemas = { // 导出常量 StrategySchemas
   // 统计套利策略 / Statistical Arbitrage Strategy
   // ============================================
 
-  statisticalArbitrage: z.object({ // 设置 statisticalArbitrage 字段
+  statisticalArbitrage: z.object({ // 统计套利
     // 策略类型 / Strategy type
-    arbType: z.enum([ // 设置 arbType 字段
+    arbType: z.enum([ // arb类型策略类型
       'pairs_trading', // 执行语句
       'cointegration', // 执行语句
       'cross_exchange', // 执行语句
@@ -223,58 +223,58 @@ export const StrategySchemas = { // 导出常量 StrategySchemas
     ]).default('pairs_trading'), // 执行语句
 
     // 配对配置 / Pairs configuration
-    candidatePairs: z.array(z.object({ // 设置 candidatePairs 字段
-      assetA: z.string().min(1), // 设置 assetA 字段
-      assetB: z.string().min(1), // 设置 assetB 字段
+    candidatePairs: z.array(z.object({ // 候选Pairs
+      assetA: z.string().min(1), // 资产A
+      assetB: z.string().min(1), // 资产B
     })).min(1), // 执行语句
 
     // 最大同时持有配对数 / Max active pairs
-    maxActivePairs: z.number().int().min(1).max(50).default(5), // 设置 maxActivePairs 字段
+    maxActivePairs: z.number().int().min(1).max(50).default(5), // 最大同时持有配对数
 
     // 回看周期 / Lookback period
-    lookbackPeriod: z.number().int().min(10).max(500).default(60), // 设置 lookbackPeriod 字段
+    lookbackPeriod: z.number().int().min(10).max(500).default(60), // 回看周期
 
     // 协整检验周期 / Cointegration test period
-    cointegrationTestPeriod: z.number().int().min(30).max(1000).default(100), // 设置 cointegrationTestPeriod 字段
+    cointegrationTestPeriod: z.number().int().min(30).max(1000).default(100), // 协整检验周期
 
     // 协整检验参数 / Cointegration test parameters
-    adfSignificanceLevel: z.number().min(0.001).max(0.1).default(0.05), // 设置 adfSignificanceLevel 字段
-    minCorrelation: z.number().min(0).max(1).default(0.7), // 设置 minCorrelation 字段
-    minHalfLife: z.number().min(0.1).max(30).default(1), // 设置 minHalfLife 字段
-    maxHalfLife: z.number().min(1).max(365).default(30), // 设置 maxHalfLife 字段
+    adfSignificanceLevel: z.number().min(0.001).max(0.1).default(0.05), // ADF显著性级别
+    minCorrelation: z.number().min(0).max(1).default(0.7), // 最小Correlation
+    minHalfLife: z.number().min(0.1).max(30).default(1), // 最小半衰期
+    maxHalfLife: z.number().min(1).max(365).default(30), // 最大半衰期
 
     // Z-Score 信号参数 / Z-Score signal parameters
-    entryZScore: z.number().min(0.5).max(5).default(2.0), // 设置 entryZScore 字段
-    exitZScore: z.number().min(0).max(3).default(0.5), // 设置 exitZScore 字段
-    stopLossZScore: z.number().min(2).max(10).default(4.0), // 设置 stopLossZScore 字段
+    entryZScore: z.number().min(0.5).max(5).default(2.0), // Z-Score 信号参数
+    exitZScore: z.number().min(0).max(3).default(0.5), // 出场Z分数
+    stopLossZScore: z.number().min(2).max(10).default(4.0), // 止损Z分数
 
     // 最大持仓时间 (毫秒) / Max holding period (ms)
-    maxHoldingPeriod: z.number().int().min(60000).default(7 * 24 * 60 * 60 * 1000), // 设置 maxHoldingPeriod 字段
+    maxHoldingPeriod: z.number().int().min(60000).default(7 * 24 * 60 * 60 * 1000), // 最大持仓时间 (毫秒)
 
     // 跨交易所套利参数 / Cross-exchange arbitrage parameters
-    spreadEntryThreshold: z.number().min(0.0001).max(0.1).default(0.003), // 设置 spreadEntryThreshold 字段
-    spreadExitThreshold: z.number().min(0).max(0.05).default(0.001), // 设置 spreadExitThreshold 字段
-    tradingCost: z.number().min(0).max(0.01).default(0.001), // 设置 tradingCost 字段
-    slippageEstimate: z.number().min(0).max(0.01).default(0.0005), // 设置 slippageEstimate 字段
+    spreadEntryThreshold: z.number().min(0.0001).max(0.1).default(0.003), // 跨交易所套利参数
+    spreadExitThreshold: z.number().min(0).max(0.05).default(0.001), // 价差出场阈值
+    tradingCost: z.number().min(0).max(0.01).default(0.001), // 交易Cost
+    slippageEstimate: z.number().min(0).max(0.01).default(0.0005), // 滑点Estimate
 
     // 永续-现货基差参数 / Perpetual-spot basis parameters
-    basisEntryThreshold: z.number().min(0.01).max(1).default(0.15), // 设置 basisEntryThreshold 字段
-    basisExitThreshold: z.number().min(0).max(0.5).default(0.05), // 设置 basisExitThreshold 字段
-    fundingRateThreshold: z.number().min(0).max(0.01).default(0.001), // 设置 fundingRateThreshold 字段
+    basisEntryThreshold: z.number().min(0.01).max(1).default(0.15), // 永续-现货基差参数
+    basisExitThreshold: z.number().min(0).max(0.5).default(0.05), // 基差出场阈值
+    fundingRateThreshold: z.number().min(0).max(0.01).default(0.001), // 资金费率频率阈值
 
     // 仓位管理 / Position management
-    maxPositionPerPair: z.number().min(0.01).max(0.5).default(0.1), // 设置 maxPositionPerPair 字段
-    maxTotalPosition: z.number().min(0.1).max(1).default(0.5), // 设置 maxTotalPosition 字段
-    symmetricPosition: z.boolean().default(true), // 设置 symmetricPosition 字段
+    maxPositionPerPair: z.number().min(0.01).max(0.5).default(0.1), // 最大持仓每个交易对
+    maxTotalPosition: z.number().min(0.1).max(1).default(0.5), // 最大总持仓
+    symmetricPosition: z.boolean().default(true), // 对称持仓
 
     // 风险控制 / Risk control
-    maxLossPerPair: z.number().min(0.001).max(0.1).default(0.02), // 设置 maxLossPerPair 字段
-    maxDrawdown: z.number().min(0.01).max(0.5).default(0.1), // 设置 maxDrawdown 字段
-    consecutiveLossLimit: z.number().int().min(1).max(20).default(3), // 设置 consecutiveLossLimit 字段
-    coolingPeriod: z.number().int().min(0).default(24 * 60 * 60 * 1000), // 设置 coolingPeriod 字段
+    maxLossPerPair: z.number().min(0.001).max(0.1).default(0.02), // 最大亏损每个交易对
+    maxDrawdown: z.number().min(0.01).max(0.5).default(0.1), // 最大回撤
+    consecutiveLossLimit: z.number().int().min(1).max(20).default(3), // consecutive亏损限制
+    coolingPeriod: z.number().int().min(0).default(24 * 60 * 60 * 1000), // 冷却周期
 
     // 详细日志 / Verbose logging
-    verbose: z.boolean().default(false), // 设置 verbose 字段
+    verbose: z.boolean().default(false), // 详细日志
   }).refine( // 执行语句
     (data) => data.exitZScore < data.entryZScore, // 定义箭头函数
     { message: 'Exit Z-Score must be less than entry Z-Score' } // 执行语句
@@ -297,42 +297,42 @@ export const StrategySchemas = { // 导出常量 StrategySchemas
  * 风控配置 Schema
  */
 export const RiskConfigSchema = z.object({ // 导出常量 RiskConfigSchema
-  maxPositions: z.number().int().min(1).max(100).default(10), // 设置 maxPositions 字段
-  maxPositionSize: ZodSchemas.percentage.default(0.1), // 设置 maxPositionSize 字段
-  maxLeverage: z.number().min(1).max(125).default(10), // 设置 maxLeverage 字段
-  maxDailyLoss: ZodSchemas.percentage.default(0.05), // 设置 maxDailyLoss 字段
-  maxDrawdown: ZodSchemas.percentage.default(0.2), // 设置 maxDrawdown 字段
-  maxConsecutiveLosses: z.number().int().min(1).max(50).default(5), // 设置 maxConsecutiveLosses 字段
-  defaultStopLoss: ZodSchemas.percentage.default(0.02), // 设置 defaultStopLoss 字段
-  defaultTakeProfit: ZodSchemas.percentage.optional(), // 设置 defaultTakeProfit 字段
-  enableTrailingStop: z.boolean().default(false), // 设置 enableTrailingStop 字段
-  trailingStopDistance: ZodSchemas.percentage.optional(), // 设置 trailingStopDistance 字段
-  riskPerTrade: ZodSchemas.percentage.default(0.01), // 设置 riskPerTrade 字段
-  cooldownPeriod: z.number().int().min(0).default(3600000), // 设置 cooldownPeriod 字段
+  maxPositions: z.number().int().min(1).max(100).default(10), // 最大持仓
+  maxPositionSize: ZodSchemas.percentage.default(0.1), // 最大持仓大小
+  maxLeverage: z.number().min(1).max(125).default(10), // 最大杠杆
+  maxDailyLoss: ZodSchemas.percentage.default(0.05), // 最大每日亏损
+  maxDrawdown: ZodSchemas.percentage.default(0.2), // 最大回撤
+  maxConsecutiveLosses: z.number().int().min(1).max(50).default(5), // 最大ConsecutiveLosses
+  defaultStopLoss: ZodSchemas.percentage.default(0.02), // 默认止损
+  defaultTakeProfit: ZodSchemas.percentage.optional(), // 默认止盈
+  enableTrailingStop: z.boolean().default(false), // 启用跟踪止损
+  trailingStopDistance: ZodSchemas.percentage.optional(), // 跟踪止损距离
+  riskPerTrade: ZodSchemas.percentage.default(0.01), // 风险每笔交易
+  cooldownPeriod: z.number().int().min(0).default(3600000), // 冷却周期
 }); // 结束代码块
 
 /**
  * 交易所配置 Schema
  */
 export const ExchangeConfigSchema = z.object({ // 导出常量 ExchangeConfigSchema
-  exchange: ZodSchemas.exchangeName, // 设置 exchange 字段
-  apiKey: z.string().min(1), // 设置 apiKey 字段
-  secret: z.string().min(1), // 设置 secret 字段
-  password: z.string().optional(), // 设置 password 字段
-  testnet: z.boolean().default(false), // 设置 testnet 字段
-  options: z.record(z.unknown()).optional(), // 设置 options 字段
+  exchange: ZodSchemas.exchangeName, // 交易所
+  apiKey: z.string().min(1), // API密钥
+  secret: z.string().min(1), // 密钥
+  password: z.string().optional(), // 密码
+  testnet: z.boolean().default(false), // 测试网
+  options: z.record(z.unknown()).optional(), // options
 }); // 结束代码块
 
 /**
  * K线数据 Schema
  */
 export const CandleSchema = z.object({ // 导出常量 CandleSchema
-  timestamp: z.number().int().positive(), // 设置 timestamp 字段
-  open: ZodSchemas.positiveNumber, // 设置 open 字段
-  high: ZodSchemas.positiveNumber, // 设置 high 字段
-  low: ZodSchemas.positiveNumber, // 设置 low 字段
-  close: ZodSchemas.positiveNumber, // 设置 close 字段
-  volume: ZodSchemas.nonNegativeNumber, // 设置 volume 字段
+  timestamp: z.number().int().positive(), // 时间戳
+  open: ZodSchemas.positiveNumber, // 开盘
+  high: ZodSchemas.positiveNumber, // 最高
+  low: ZodSchemas.positiveNumber, // 最低
+  close: ZodSchemas.positiveNumber, // 收盘
+  volume: ZodSchemas.nonNegativeNumber, // 成交量
 }).refine( // 执行语句
   (data) => data.low <= data.open && data.low <= data.close, // 定义箭头函数
   { message: 'Low must be <= open and close' } // 执行语句
@@ -366,9 +366,9 @@ export function zodValidate(schema, data) { // 导出函数 zodValidate
   }); // 结束代码块
 
   return { // 返回结果
-    success: false, // 设置 success 字段
-    error: errors.join('; '), // 设置 error 字段
-    errors: issues, // 设置 errors 字段
+    success: false, // 成功标记
+    error: errors.join('; '), // 错误
+    errors: issues, // 错误列表
   }; // 结束代码块
 } // 结束代码块
 
@@ -404,10 +404,10 @@ export function createZodMiddleware(schema, source = 'body') { // 导出函数 c
 
     if (!result.success) { // 条件判断 !result.success
       return res.status(400).json({ // 返回结果
-        success: false, // 设置 success 字段
-        code: 'VALIDATION_ERROR', // 设置 code 字段
-        message: result.error, // 设置 message 字段
-        errors: result.errors, // 设置 errors 字段
+        success: false, // 成功标记
+        code: 'VALIDATION_ERROR', // 代码
+        message: result.error, // 消息
+        errors: result.errors, // 错误列表
       }); // 结束代码块
     } // 结束代码块
 
@@ -475,7 +475,7 @@ export function validateOrder(order) { // 导出函数 validateOrder
 
   // 返回验证结果 / Return validation result
   return { // 返回结果
-    valid: errors.length === 0, // 设置 valid 字段
+    valid: errors.length === 0, // 有效
     errors, // 执行语句
   }; // 结束代码块
 } // 结束代码块
@@ -529,7 +529,7 @@ export function validateStrategyConfig(config) { // 导出函数 validateStrateg
 
   // 返回验证结果 / Return validation result
   return { // 返回结果
-    valid: errors.length === 0, // 设置 valid 字段
+    valid: errors.length === 0, // 有效
     errors, // 执行语句
   }; // 结束代码块
 } // 结束代码块
@@ -579,7 +579,7 @@ export function validateRiskConfig(config) { // 导出函数 validateRiskConfig
 
   // 返回验证结果 / Return validation result
   return { // 返回结果
-    valid: errors.length === 0, // 设置 valid 字段
+    valid: errors.length === 0, // 有效
     errors, // 执行语句
   }; // 结束代码块
 } // 结束代码块
@@ -636,7 +636,7 @@ export function validateCandle(candle) { // 导出函数 validateCandle
 
   // 返回验证结果 / Return validation result
   return { // 返回结果
-    valid: errors.length === 0, // 设置 valid 字段
+    valid: errors.length === 0, // 有效
     errors, // 执行语句
   }; // 结束代码块
 } // 结束代码块
@@ -676,7 +676,7 @@ export function validateCandles(candles) { // 导出函数 validateCandles
 
   // 返回验证结果 / Return validation result
   return { // 返回结果
-    valid: errors.length === 0, // 设置 valid 字段
+    valid: errors.length === 0, // 有效
     errors, // 执行语句
     validCandles, // 执行语句
   }; // 结束代码块

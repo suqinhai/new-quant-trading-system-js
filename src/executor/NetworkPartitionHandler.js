@@ -39,7 +39,7 @@ const INCONSISTENCY_TYPE = { // 定义常量 INCONSISTENCY_TYPE
   POSITION_SIZE: 'position_size',       // 仓位大小不一致 / Position size inconsistency
   POSITION_MISSING: 'position_missing', // 仓位丢失 / Position missing
   POSITION_EXTRA: 'position_extra',     // 多余仓位 / Extra position
-  BALANCE_MISMATCH: 'balance_mismatch', // 余额不匹配 / Balance mismatch
+  BALANCE_MISMATCH: 'balance_mismatch', // 余额MISMATCH权限
   FILL_MISSING: 'fill_missing',         // 成交丢失 / Fill missing
 }; // 结束代码块
 
@@ -51,8 +51,8 @@ const REPAIR_ACTION = { // 定义常量 REPAIR_ACTION
   SYNC_ORDER: 'sync_order',             // 同步订单 / Sync order
   CANCEL_ORDER: 'cancel_order',         // 取消订单 / Cancel order
   SYNC_POSITION: 'sync_position',       // 同步仓位 / Sync position
-  CLOSE_POSITION: 'close_position',     // 平仓 / Close position
-  SYNC_BALANCE: 'sync_balance',         // 同步余额 / Sync balance
+  CLOSE_POSITION: 'close_position',     // 平仓持仓权限
+  SYNC_BALANCE: 'sync_balance',         // SYNC余额权限
   FETCH_FILLS: 'fetch_fills',           // 获取成交 / Fetch fills
   NO_ACTION: 'no_action',               // 无动作 / No action
 }; // 结束代码块
@@ -78,65 +78,65 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 同步检查间隔 (毫秒) / Sync check interval (ms)
-  syncCheckInterval: 30000,           // 30秒
+  syncCheckInterval: 30000,           // 同步检查间隔 (毫秒)
 
   // 强制完全同步间隔 (毫秒) / Force full sync interval (ms)
-  forceFullSyncInterval: 300000,      // 5分钟
+  forceFullSyncInterval: 300000,      // 强制完全同步间隔 (毫秒)
 
   // 同步超时时间 (毫秒) / Sync timeout (ms)
-  syncTimeout: 10000,                 // 10秒
+  syncTimeout: 10000,                 // 同步超时时间 (毫秒)
 
   // ============================================
   // 容差配置 / Tolerance Configuration
   // ============================================
 
   // 仓位大小容差 / Position size tolerance
-  positionSizeTolerance: 0.001,       // 0.1%
+  positionSizeTolerance: 0.001,       // 持仓大小Tolerance
 
   // 余额容差 / Balance tolerance
-  balanceTolerance: 0.0001,           // 0.01%
+  balanceTolerance: 0.0001,           // 余额Tolerance
 
   // 价格容差 / Price tolerance
-  priceTolerance: 0.001,              // 0.1%
+  priceTolerance: 0.001,              // 价格Tolerance
 
   // ============================================
   // 网络分区检测配置 / Network Partition Detection Configuration
   // ============================================
 
   // 心跳间隔 (毫秒) / Heartbeat interval (ms)
-  heartbeatInterval: 5000,            // 5秒
+  heartbeatInterval: 5000,            // 心跳间隔 (毫秒)
 
   // 心跳超时 (毫秒) / Heartbeat timeout (ms)
-  heartbeatTimeout: 15000,            // 15秒
+  heartbeatTimeout: 15000,            // 心跳超时 (毫秒)
 
   // 连续心跳失败次数触发分区 / Consecutive heartbeat failures to trigger partition
-  partitionThreshold: 3, // 设置 partitionThreshold 字段
+  partitionThreshold: 3, // 连续心跳失败次数触发分区
 
   // ============================================
   // 修复配置 / Repair Configuration
   // ============================================
 
   // 启用自动修复 / Enable auto repair
-  enableAutoRepair: true, // 设置 enableAutoRepair 字段
+  enableAutoRepair: true, // 启用自动Repair
 
   // 修复前确认 / Confirm before repair
-  confirmBeforeRepair: true, // 设置 confirmBeforeRepair 字段
+  confirmBeforeRepair: true, // 确认之前Repair
 
   // 最大修复尝试次数 / Maximum repair attempts
-  maxRepairAttempts: 3, // 设置 maxRepairAttempts 字段
+  maxRepairAttempts: 3, // 最大修复尝试次数
 
   // ============================================
   // 监控配置 / Monitoring Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[NetworkPartition]', // 设置 logPrefix 字段
+  logPrefix: '[NetworkPartition]', // 日志前缀
 
   // 历史记录保留数量 / History retention count
-  historyLength: 500, // 设置 historyLength 字段
+  historyLength: 500, // 历史记录保留数量
 }; // 结束代码块
 
 // ============================================
@@ -162,19 +162,19 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
 
     // 本地状态 / Local state
     this.localState = { // 设置 localState
-      orders: new Map(),        // { orderId: orderData }
-      positions: new Map(),     // { symbol: positionData }
-      balances: new Map(),      // { currency: balance }
-      fills: new Map(),         // { fillId: fillData }
+      orders: new Map(),        // 订单
+      positions: new Map(),     // 持仓
+      balances: new Map(),      // 余额
+      fills: new Map(),         // fills
     }; // 结束代码块
 
     // 远程状态 (交易所) / Remote state (exchange)
     this.remoteState = { // 设置 remoteState
-      orders: new Map(), // 设置 orders 字段
-      positions: new Map(), // 设置 positions 字段
-      balances: new Map(), // 设置 balances 字段
-      fills: new Map(), // 设置 fills 字段
-      lastSyncTime: null, // 设置 lastSyncTime 字段
+      orders: new Map(), // 订单
+      positions: new Map(), // 持仓
+      balances: new Map(), // 余额
+      fills: new Map(), // fills
+      lastSyncTime: null, // lastSync时间
     }; // 结束代码块
 
     // 同步状态 / Sync status
@@ -191,9 +191,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
 
     // 心跳统计 / Heartbeat statistics
     this.heartbeatStats = { // 设置 heartbeatStats
-      consecutiveFailures: 0, // 设置 consecutiveFailures 字段
-      lastSuccessTime: null, // 设置 lastSuccessTime 字段
-      lastFailureTime: null, // 设置 lastFailureTime 字段
+      consecutiveFailures: 0, // consecutiveFailures
+      lastSuccessTime: null, // last成功标记时间
+      lastFailureTime: null, // lastFailure时间
     }; // 结束代码块
 
     // 运行状态 / Running state
@@ -306,7 +306,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
   updateLocalOrder(orderId, orderData) { // 调用 updateLocalOrder
     this.localState.orders.set(orderId, { // 访问 localState
       ...orderData, // 展开对象或数组
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
   } // 结束代码块
 
@@ -330,7 +330,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
   updateLocalPosition(symbol, positionData) { // 调用 updateLocalPosition
     this.localState.positions.set(symbol, { // 访问 localState
       ...positionData, // 展开对象或数组
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
   } // 结束代码块
 
@@ -354,7 +354,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
   updateLocalBalance(currency, balanceData) { // 调用 updateLocalBalance
     this.localState.balances.set(currency, { // 访问 localState
       ...balanceData, // 展开对象或数组
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
   } // 结束代码块
 
@@ -368,7 +368,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
   recordLocalFill(fillId, fillData) { // 调用 recordLocalFill
     this.localState.fills.set(fillId, { // 访问 localState
       ...fillData, // 展开对象或数组
-      recordedAt: Date.now(), // 设置 recordedAt 字段
+      recordedAt: Date.now(), // recordedAt
     }); // 结束代码块
   } // 结束代码块
 
@@ -434,9 +434,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       this.log('完全同步完成 / Full sync completed', 'info'); // 调用 log
 
       this.emit('syncCompleted', { // 调用 emit
-        status: this.syncStatus, // 设置 status 字段
-        inconsistencies: inconsistencies.length, // 设置 inconsistencies 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        status: this.syncStatus, // 状态
+        inconsistencies: inconsistencies.length, // inconsistencies
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
     } catch (error) { // 执行语句
@@ -444,8 +444,8 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       this.syncStatus = SYNC_STATUS.DIVERGED; // 设置 syncStatus
 
       this.emit('syncFailed', { // 调用 emit
-        error: error.message, // 设置 error 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        error: error.message, // 错误
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -472,16 +472,16 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       this.remoteState.orders.clear(); // 访问 remoteState
       for (const order of remoteOrders) { // 循环 const order of remoteOrders
         this.remoteState.orders.set(order.id, { // 访问 remoteState
-          id: order.id, // 设置 id 字段
-          symbol: order.symbol, // 设置 symbol 字段
-          side: order.side, // 设置 side 字段
-          type: order.type, // 设置 type 字段
-          price: order.price, // 设置 price 字段
-          amount: order.amount, // 设置 amount 字段
-          filled: order.filled, // 设置 filled 字段
-          remaining: order.remaining, // 设置 remaining 字段
-          status: order.status, // 设置 status 字段
-          timestamp: order.timestamp, // 设置 timestamp 字段
+          id: order.id, // ID
+          symbol: order.symbol, // 交易对
+          side: order.side, // 方向
+          type: order.type, // 类型
+          price: order.price, // 价格
+          amount: order.amount, // 数量
+          filled: order.filled, // filled
+          remaining: order.remaining, // remaining
+          status: order.status, // 状态
+          timestamp: order.timestamp, // 时间戳
         }); // 结束代码块
       } // 结束代码块
 
@@ -519,14 +519,14 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
         const size = position.contracts || position.size || position.amount || 0; // 定义常量 size
         if (Math.abs(size) > 0) { // 条件判断 Math.abs(size) > 0
           this.remoteState.positions.set(position.symbol, { // 访问 remoteState
-            symbol: position.symbol, // 设置 symbol 字段
-            side: position.side, // 设置 side 字段
-            size: size, // 设置 size 字段
-            entryPrice: position.entryPrice || position.avgPrice, // 设置 entryPrice 字段
-            markPrice: position.markPrice, // 设置 markPrice 字段
-            unrealizedPnl: position.unrealizedPnl || position.unrealizedProfit, // 设置 unrealizedPnl 字段
-            leverage: position.leverage, // 设置 leverage 字段
-            liquidationPrice: position.liquidationPrice, // 设置 liquidationPrice 字段
+            symbol: position.symbol, // 交易对
+            side: position.side, // 方向
+            size: size, // 大小
+            entryPrice: position.entryPrice || position.avgPrice, // 入场价格
+            markPrice: position.markPrice, // mark价格
+            unrealizedPnl: position.unrealizedPnl || position.unrealizedProfit, // 未实现盈亏
+            leverage: position.leverage, // 杠杆
+            liquidationPrice: position.liquidationPrice, // 强平价格
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -561,9 +561,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
           if (amount > 0) { // 条件判断 amount > 0
             this.remoteState.balances.set(currency, { // 访问 remoteState
               currency, // 执行语句
-              total: amount, // 设置 total 字段
-              free: balance.free ? balance.free[currency] || 0 : amount, // 设置 free 字段
-              used: balance.used ? balance.used[currency] || 0 : 0, // 设置 used 字段
+              total: amount, // 总
+              free: balance.free ? balance.free[currency] || 0 : amount, // free
+              used: balance.used ? balance.used[currency] || 0 : 0, // used
             }); // 结束代码块
           } // 结束代码块
         } // 结束代码块
@@ -622,24 +622,24 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
         // 订单在本地存在但远程不存在 / Order exists locally but not remotely
         // 可能已成交或已取消 / May have been filled or cancelled
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.ORDER_MISSING, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.ORDER_MISSING, // 类型
           orderId, // 执行语句
-          localState: localOrder, // 设置 localState 字段
-          remoteState: null, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // 设置 suggestedAction 字段
-          severity: 'high', // 设置 severity 字段
-          message: `本地订单 ${orderId} 在交易所不存在`, // 设置 message 字段
+          localState: localOrder, // localState
+          remoteState: null, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // suggestedAction
+          severity: 'high', // severity
+          message: `本地订单 ${orderId} 在交易所不存在`, // 消息
         }); // 结束代码块
       } else if (this._isOrderStatusDifferent(localOrder, remoteOrder)) { // 执行语句
         // 订单状态不一致 / Order status differs
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.ORDER_STATUS, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.ORDER_STATUS, // 类型
           orderId, // 执行语句
-          localState: localOrder, // 设置 localState 字段
-          remoteState: remoteOrder, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // 设置 suggestedAction 字段
-          severity: 'medium', // 设置 severity 字段
-          message: `订单 ${orderId} 状态不一致: 本地=${localOrder.status}, 远程=${remoteOrder.status}`, // 设置 message 字段
+          localState: localOrder, // localState
+          remoteState: remoteOrder, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // suggestedAction
+          severity: 'medium', // severity
+          message: `订单 ${orderId} 状态不一致: 本地=${localOrder.status}, 远程=${remoteOrder.status}`, // 消息
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -649,13 +649,13 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       if (!this.localState.orders.has(orderId)) { // 条件判断 !this.localState.orders.has(orderId)
         // 订单在远程存在但本地不存在 / Order exists remotely but not locally
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.ORDER_EXTRA, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.ORDER_EXTRA, // 类型
           orderId, // 执行语句
-          localState: null, // 设置 localState 字段
-          remoteState: remoteOrder, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // 设置 suggestedAction 字段
-          severity: 'medium', // 设置 severity 字段
-          message: `远程订单 ${orderId} 在本地不存在`, // 设置 message 字段
+          localState: null, // localState
+          remoteState: remoteOrder, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_ORDER, // suggestedAction
+          severity: 'medium', // severity
+          message: `远程订单 ${orderId} 在本地不存在`, // 消息
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -680,24 +680,24 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       if (!remotePosition) { // 条件判断 !remotePosition
         // 仓位在本地存在但远程不存在 / Position exists locally but not remotely
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.POSITION_MISSING, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.POSITION_MISSING, // 类型
           symbol, // 执行语句
-          localState: localPosition, // 设置 localState 字段
-          remoteState: null, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // 设置 suggestedAction 字段
-          severity: 'critical', // 设置 severity 字段
-          message: `本地仓位 ${symbol} 在交易所不存在`, // 设置 message 字段
+          localState: localPosition, // localState
+          remoteState: null, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // suggestedAction
+          severity: 'critical', // severity
+          message: `本地仓位 ${symbol} 在交易所不存在`, // 消息
         }); // 结束代码块
       } else if (!this._isPositionSizeEqual(localPosition.size, remotePosition.size)) { // 执行语句
         // 仓位大小不一致 / Position size differs
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.POSITION_SIZE, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.POSITION_SIZE, // 类型
           symbol, // 执行语句
-          localState: localPosition, // 设置 localState 字段
-          remoteState: remotePosition, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // 设置 suggestedAction 字段
-          severity: 'critical', // 设置 severity 字段
-          message: `仓位 ${symbol} 大小不一致: 本地=${localPosition.size}, 远程=${remotePosition.size}`, // 设置 message 字段
+          localState: localPosition, // localState
+          remoteState: remotePosition, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // suggestedAction
+          severity: 'critical', // severity
+          message: `仓位 ${symbol} 大小不一致: 本地=${localPosition.size}, 远程=${remotePosition.size}`, // 消息
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -707,13 +707,13 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       if (!this.localState.positions.has(symbol)) { // 条件判断 !this.localState.positions.has(symbol)
         // 仓位在远程存在但本地不存在 / Position exists remotely but not locally
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.POSITION_EXTRA, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.POSITION_EXTRA, // 类型
           symbol, // 执行语句
-          localState: null, // 设置 localState 字段
-          remoteState: remotePosition, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // 设置 suggestedAction 字段
-          severity: 'critical', // 设置 severity 字段
-          message: `远程仓位 ${symbol} 在本地不存在`, // 设置 message 字段
+          localState: null, // localState
+          remoteState: remotePosition, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_POSITION, // suggestedAction
+          severity: 'critical', // severity
+          message: `远程仓位 ${symbol} 在本地不存在`, // 消息
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -737,13 +737,13 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
 
       if (remoteBalance && !this._isBalanceEqual(localBalance.total, remoteBalance.total)) { // 条件判断 remoteBalance && !this._isBalanceEqual(localB...
         inconsistencies.push({ // 调用 inconsistencies.push
-          type: INCONSISTENCY_TYPE.BALANCE_MISMATCH, // 设置 type 字段
+          type: INCONSISTENCY_TYPE.BALANCE_MISMATCH, // 类型
           currency, // 执行语句
-          localState: localBalance, // 设置 localState 字段
-          remoteState: remoteBalance, // 设置 remoteState 字段
-          suggestedAction: REPAIR_ACTION.SYNC_BALANCE, // 设置 suggestedAction 字段
-          severity: 'medium', // 设置 severity 字段
-          message: `余额 ${currency} 不一致: 本地=${localBalance.total}, 远程=${remoteBalance.total}`, // 设置 message 字段
+          localState: localBalance, // localState
+          remoteState: remoteBalance, // remoteState
+          suggestedAction: REPAIR_ACTION.SYNC_BALANCE, // suggestedAction
+          severity: 'medium', // severity
+          message: `余额 ${currency} 不一致: 本地=${localBalance.total}, 远程=${remoteBalance.total}`, // 消息
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -822,7 +822,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
     for (const inconsistency of inconsistencies) { // 循环 const inconsistency of inconsistencies
       this.inconsistencies.push({ // 访问 inconsistencies
         ...inconsistency, // 展开对象或数组
-        detectedAt: Date.now(), // 设置 detectedAt 字段
+        detectedAt: Date.now(), // detectedAt
       }); // 结束代码块
     } // 结束代码块
 
@@ -837,11 +837,11 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
 
     // 发出事件 / Emit event
     this.emit('inconsistenciesDetected', { // 调用 emit
-      total: inconsistencies.length, // 设置 total 字段
-      critical: critical.length, // 设置 critical 字段
-      high: high.length, // 设置 high 字段
+      total: inconsistencies.length, // 总
+      critical: critical.length, // critical
+      high: high.length, // 最高
       inconsistencies, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 记录日志 / Log
@@ -887,9 +887,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
 
     let repairResult = { // 定义变量 repairResult
       inconsistency, // 执行语句
-      action: suggestedAction, // 设置 action 字段
-      success: false, // 设置 success 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      action: suggestedAction, // action
+      success: false, // 成功标记
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     try { // 尝试执行
@@ -946,7 +946,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
           repairResult.success = true; // 赋值 repairResult.success
           break; // 跳出循环或分支
 
-        default: // 默认分支
+        default: // 默认
           repairResult.action = REPAIR_ACTION.NO_ACTION; // 赋值 repairResult.action
           repairResult.success = true; // 赋值 repairResult.success
       } // 结束代码块
@@ -1020,17 +1020,17 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
         if (this.partitionStatus !== PARTITION_STATUS.PARTITIONED) { // 条件判断 this.partitionStatus !== PARTITION_STATUS.PAR...
           this.partitionStatus = PARTITION_STATUS.PARTITIONED; // 设置 partitionStatus
           this.emit('partitioned', { // 调用 emit
-            consecutiveFailures: this.heartbeatStats.consecutiveFailures, // 设置 consecutiveFailures 字段
-            lastError: error.message, // 设置 lastError 字段
-            timestamp: Date.now(), // 设置 timestamp 字段
+            consecutiveFailures: this.heartbeatStats.consecutiveFailures, // consecutiveFailures
+            lastError: error.message, // last错误
+            timestamp: Date.now(), // 时间戳
           }); // 结束代码块
           this.log(`🚨 检测到网络分区: ${error.message}`, 'error'); // 调用 log
         } // 结束代码块
       } else if (this.partitionStatus === PARTITION_STATUS.CONNECTED) { // 执行语句
         this.partitionStatus = PARTITION_STATUS.PARTIAL; // 设置 partitionStatus
         this.emit('partialConnection', { // 调用 emit
-          consecutiveFailures: this.heartbeatStats.consecutiveFailures, // 设置 consecutiveFailures 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          consecutiveFailures: this.heartbeatStats.consecutiveFailures, // consecutiveFailures
+          timestamp: Date.now(), // 时间戳
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1067,16 +1067,16 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      syncStatus: this.syncStatus, // 设置 syncStatus 字段
-      partitionStatus: this.partitionStatus, // 设置 partitionStatus 字段
-      lastSyncTime: this.remoteState.lastSyncTime, // 设置 lastSyncTime 字段
-      localOrderCount: this.localState.orders.size, // 设置 localOrderCount 字段
-      remoteOrderCount: this.remoteState.orders.size, // 设置 remoteOrderCount 字段
-      localPositionCount: this.localState.positions.size, // 设置 localPositionCount 字段
-      remotePositionCount: this.remoteState.positions.size, // 设置 remotePositionCount 字段
-      inconsistencyCount: this.inconsistencies.length, // 设置 inconsistencyCount 字段
-      heartbeatStats: { ...this.heartbeatStats }, // 设置 heartbeatStats 字段
+      running: this.running, // running
+      syncStatus: this.syncStatus, // sync状态
+      partitionStatus: this.partitionStatus, // partition状态
+      lastSyncTime: this.remoteState.lastSyncTime, // lastSync时间
+      localOrderCount: this.localState.orders.size, // local订单数量
+      remoteOrderCount: this.remoteState.orders.size, // remote订单数量
+      localPositionCount: this.localState.positions.size, // local持仓数量
+      remotePositionCount: this.remoteState.positions.size, // remote持仓数量
+      inconsistencyCount: this.inconsistencies.length, // inconsistency数量
+      heartbeatStats: { ...this.heartbeatStats }, // heartbeatStats
     }; // 结束代码块
   } // 结束代码块
 
@@ -1110,9 +1110,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
    */
   getLocalState() { // 调用 getLocalState
     return { // 返回结果
-      orders: Object.fromEntries(this.localState.orders), // 设置 orders 字段
-      positions: Object.fromEntries(this.localState.positions), // 设置 positions 字段
-      balances: Object.fromEntries(this.localState.balances), // 设置 balances 字段
+      orders: Object.fromEntries(this.localState.orders), // 订单
+      positions: Object.fromEntries(this.localState.positions), // 持仓
+      balances: Object.fromEntries(this.localState.balances), // 余额
     }; // 结束代码块
   } // 结束代码块
 
@@ -1124,10 +1124,10 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
    */
   getRemoteState() { // 调用 getRemoteState
     return { // 返回结果
-      orders: Object.fromEntries(this.remoteState.orders), // 设置 orders 字段
-      positions: Object.fromEntries(this.remoteState.positions), // 设置 positions 字段
-      balances: Object.fromEntries(this.remoteState.balances), // 设置 balances 字段
-      lastSyncTime: this.remoteState.lastSyncTime, // 设置 lastSyncTime 字段
+      orders: Object.fromEntries(this.remoteState.orders), // 订单
+      positions: Object.fromEntries(this.remoteState.positions), // 持仓
+      balances: Object.fromEntries(this.remoteState.balances), // 余额
+      lastSyncTime: this.remoteState.lastSyncTime, // lastSync时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -1139,8 +1139,8 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
    */
   compareStates() { // 调用 compareStates
     return { // 返回结果
-      inconsistencies: this._detectInconsistencies(), // 设置 inconsistencies 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      inconsistencies: this._detectInconsistencies(), // inconsistencies
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -1164,7 +1164,7 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

@@ -15,10 +15,10 @@ import { ATR, EMA, SMA, ADX, getLatest } from '../utils/indicators.js'; // 导�
  * 波动率状态枚举
  */
 const VolatilityRegime = { // 定义常量 VolatilityRegime
-  LOW: 'low',           // 低波动
-  NORMAL: 'normal',     // 正常波动
-  HIGH: 'high',         // 高波动
-  EXTREME: 'extreme',   // 极端波动
+  LOW: 'low',           // 最低
+  NORMAL: 'normal',     // NORMAL
+  HIGH: 'high',         // 最高
+  EXTREME: 'extreme',   // 极端
 }; // 结束代码块
 
 /**
@@ -31,7 +31,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy { // 导出类 Volati
    */
   constructor(params = {}) { // 构造函数
     super({ // 调用父类
-      name: 'VolatilityRegimeStrategy', // 设置 name 字段
+      name: 'VolatilityRegimeStrategy', // name
       ...params, // 展开对象或数组
     }); // 结束代码块
 
@@ -236,7 +236,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy { // 导出类 Volati
     // 根据不同 Regime 执行策略 / Execute strategy based on regime
     if (!hasPosition) { // 条件判断 !hasPosition
       this._handleEntry(candle, { // 调用 _handleEntry
-        regime: entryRegime, // 设置 regime 字段
+        regime: entryRegime, // 状态
         volPercentile, // 执行语句
         trendUp, // 执行语句
         strongTrend, // 执行语句
@@ -250,7 +250,7 @@ export class VolatilityRegimeStrategy extends BaseStrategy { // 导出类 Volati
       }); // 结束代码块
     } else { // 执行语句
       this._handleExit(candle, { // 调用 _handleExit
-        regime: this._currentRegime, // 设置 regime 字段
+        regime: this._currentRegime, // 状态
         currentATR, // 执行语句
         maDeadCross, // 执行语句
         diReversal, // 执行语句
@@ -482,9 +482,9 @@ export class VolatilityRegimeStrategy extends BaseStrategy { // 导出类 Volati
    */
   getRegimeStats() { // 调用 getRegimeStats
     return { // 返回结果
-      currentRegime: this._currentRegime, // 设置 currentRegime 字段
-      regimeChanges: this._regimeChanges, // 设置 regimeChanges 字段
-      atrHistoryLength: this._atrHistory.length, // 设置 atrHistoryLength 字段
+      currentRegime: this._currentRegime, // current状态
+      regimeChanges: this._regimeChanges, // 状态变更
+      atrHistoryLength: this._atrHistory.length, // ATR历史Length
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

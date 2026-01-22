@@ -26,7 +26,7 @@ import { toNumber, average, standardDeviation } from './helpers.js'; // 导入�
 export function SMA(values, period) { // 导出函数 SMA
   // 使用技术指标库计算 / Calculate using library
   const result = ti.SMA.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -43,7 +43,7 @@ export function SMA(values, period) { // 导出函数 SMA
 export function EMA(values, period) { // 导出函数 EMA
   // 使用技术指标库计算 / Calculate using library
   const result = ti.EMA.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -60,7 +60,7 @@ export function EMA(values, period) { // 导出函数 EMA
 export function WMA(values, period) { // 导出函数 WMA
   // 使用技术指标库计算 / Calculate using library
   const result = ti.WMA.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -77,8 +77,8 @@ export function WMA(values, period) { // 导出函数 WMA
 export function VWMA(candles, period) { // 导出函数 VWMA
   // 使用技术指标库计算 / Calculate using library
   const result = ti.VWMA.calculate({ // 定义常量 result
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
-    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+    close: candles.map(c => toNumber(c.close)), // 收盘
+    volume: candles.map(c => toNumber(c.volume)), // 成交量
     period, // 执行语句
   }); // 结束代码块
 
@@ -99,7 +99,7 @@ export function VWMA(candles, period) { // 导出函数 VWMA
 export function RSI(values, period = 14) { // 导出函数 RSI
   // 使用技术指标库计算 / Calculate using library
   const result = ti.RSI.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -117,9 +117,9 @@ export function RSI(values, period = 14) { // 导出函数 RSI
 export function Stochastic(candles, period = 14, signalPeriod = 3) { // 导出函数 Stochastic
   // 使用技术指标库计算 / Calculate using library
   const result = ti.Stochastic.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
     period, // 执行语句
     signalPeriod, // 执行语句
   }); // 结束代码块
@@ -137,9 +137,9 @@ export function Stochastic(candles, period = 14, signalPeriod = 3) { // 导出�
 export function WilliamsR(candles, period = 14) { // 导出函数 WilliamsR
   // 使用技术指标库计算 / Calculate using library
   const result = ti.WilliamsR.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
     period, // 执行语句
   }); // 结束代码块
 
@@ -156,9 +156,9 @@ export function WilliamsR(candles, period = 14) { // 导出函数 WilliamsR
 export function CCI(candles, period = 20) { // 导出函数 CCI
   // 使用技术指标库计算 / Calculate using library
   const result = ti.CCI.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
     period, // 执行语句
   }); // 结束代码块
 
@@ -181,12 +181,12 @@ export function CCI(candles, period = 20) { // 导出函数 CCI
 export function MACD(values, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) { // 导出函数 MACD
   // 使用技术指标库计算 / Calculate using library
   const result = ti.MACD.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     fastPeriod, // 执行语句
     slowPeriod, // 执行语句
     signalPeriod, // 执行语句
-    SimpleMAOscillator: false, // 设置 SimpleMAOscillator 字段
-    SimpleMASignal: false, // 设置 SimpleMASignal 字段
+    SimpleMAOscillator: false, // Simple均线Oscillator
+    SimpleMASignal: false, // Simple均线信号
   }); // 结束代码块
 
   return result; // 返回结果
@@ -202,9 +202,9 @@ export function MACD(values, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9)
 export function ADX(candles, period = 14) { // 导出函数 ADX
   // 使用技术指标库计算 / Calculate using library
   const result = ti.ADX.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
     period, // 执行语句
   }); // 结束代码块
 
@@ -222,8 +222,8 @@ export function ADX(candles, period = 14) { // 导出函数 ADX
 export function PSAR(candles, step = 0.02, max = 0.2) { // 导出函数 PSAR
   // 使用技术指标库计算 / Calculate using library
   const result = ti.PSAR.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
     step, // 执行语句
     max, // 执行语句
   }); // 结束代码块
@@ -246,7 +246,7 @@ export function PSAR(candles, step = 0.02, max = 0.2) { // 导出函数 PSAR
 export function BollingerBands(values, period = 20, stdDev = 2) { // 导出函数 BollingerBands
   // 使用技术指标库计算 / Calculate using library
   const result = ti.BollingerBands.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
     stdDev, // 执行语句
   }); // 结束代码块
@@ -264,9 +264,9 @@ export function BollingerBands(values, period = 20, stdDev = 2) { // 导出函�
 export function ATR(candles, period = 14) { // 导出函数 ATR
   // 使用技术指标库计算 / Calculate using library
   const result = ti.ATR.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
     period, // 执行语句
   }); // 结束代码块
 
@@ -282,9 +282,9 @@ export function ATR(candles, period = 14) { // 导出函数 ATR
 export function TrueRange(candles) { // 导出函数 TrueRange
   // 使用技术指标库计算 / Calculate using library
   const result = ti.TrueRange.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
   }); // 结束代码块
 
   return result; // 返回结果
@@ -314,9 +314,9 @@ export function KeltnerChannels(candles, period = 20, multiplier = 2) { // 导�
     const atrIndex = i - (emaValues.length - atrValues.length); // 定义常量 atrIndex
     if (atrIndex >= 0) { // 条件判断 atrIndex >= 0
       result.push({ // 调用 result.push
-        upper: emaValues[i] + multiplier * atrValues[atrIndex], // 设置 upper 字段
-        middle: emaValues[i], // 设置 middle 字段
-        lower: emaValues[i] - multiplier * atrValues[atrIndex], // 设置 lower 字段
+        upper: emaValues[i] + multiplier * atrValues[atrIndex], // 上限
+        middle: emaValues[i], // middle
+        lower: emaValues[i] - multiplier * atrValues[atrIndex], // 下限
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -337,8 +337,8 @@ export function KeltnerChannels(candles, period = 20, multiplier = 2) { // 导�
 export function OBV(candles) { // 导出函数 OBV
   // 使用技术指标库计算 / Calculate using library
   const result = ti.OBV.calculate({ // 定义常量 result
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
-    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+    close: candles.map(c => toNumber(c.close)), // 收盘
+    volume: candles.map(c => toNumber(c.volume)), // 成交量
   }); // 结束代码块
 
   return result; // 返回结果
@@ -354,10 +354,10 @@ export function OBV(candles) { // 导出函数 OBV
 export function MFI(candles, period = 14) { // 导出函数 MFI
   // 使用技术指标库计算 / Calculate using library
   const result = ti.MFI.calculate({ // 定义常量 result
-    high: candles.map(c => toNumber(c.high)), // 设置 high 字段
-    low: candles.map(c => toNumber(c.low)), // 设置 low 字段
-    close: candles.map(c => toNumber(c.close)), // 设置 close 字段
-    volume: candles.map(c => toNumber(c.volume)), // 设置 volume 字段
+    high: candles.map(c => toNumber(c.high)), // 最高
+    low: candles.map(c => toNumber(c.low)), // 最低
+    close: candles.map(c => toNumber(c.close)), // 收盘
+    volume: candles.map(c => toNumber(c.volume)), // 成交量
     period, // 执行语句
   }); // 结束代码块
 
@@ -374,7 +374,7 @@ export function MFI(candles, period = 14) { // 导出函数 MFI
 export function VROC(volumes, period = 14) { // 导出函数 VROC
   // 使用技术指标库计算 / Calculate using library
   const result = ti.ROC.calculate({ // 定义常量 result
-    values: volumes.map(toNumber), // 设置 values 字段
+    values: volumes.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -414,7 +414,7 @@ export function Momentum(values, period = 10) { // 导出函数 Momentum
 export function ROC(values, period = 10) { // 导出函数 ROC
   // 使用技术指标库计算 / Calculate using library
   const result = ti.ROC.calculate({ // 定义常量 result
-    values: values.map(toNumber), // 设置 values 字段
+    values: values.map(toNumber), // values
     period, // 执行语句
   }); // 结束代码块
 
@@ -471,13 +471,13 @@ export function FibonacciRetracement(high, low) { // 导出函数 FibonacciRetra
 
   // 计算回撤水平 / Calculate retracement levels
   return { // 返回结果
-    level0: l,           // 0%
-    level236: l + diff * 0.236,  // 23.6%
-    level382: l + diff * 0.382,  // 38.2%
-    level500: l + diff * 0.5,    // 50%
-    level618: l + diff * 0.618,  // 61.8%
-    level786: l + diff * 0.786,  // 78.6%
-    level1000: h,        // 100%
+    level0: l,           // level0
+    level236: l + diff * 0.236,  // level236
+    level382: l + diff * 0.382,  // level382
+    level500: l + diff * 0.5,    // level500
+    level618: l + diff * 0.618,  // level618
+    level786: l + diff * 0.786,  // level786
+    level1000: h,        // level1000
   }; // 结束代码块
 } // 结束代码块
 

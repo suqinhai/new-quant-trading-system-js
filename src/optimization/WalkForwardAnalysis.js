@@ -17,9 +17,9 @@ import { GridSearch, OptimizationTarget } from './GridSearch.js'; // 导入模�
  * Walk-Forward Type
  */
 export const WalkForwardType = { // 导出常量 WalkForwardType
-  ANCHORED: 'anchored',     // 锚定式：训练窗口从起点开始，不断扩展
-  ROLLING: 'rolling',       // 滚动式：训练窗口固定大小，不断向前滚动
-  EXPANDING: 'expanding',   // 扩展式：训练窗口不断扩展，测试窗口固定
+  ANCHORED: 'anchored',     // ANCHORED
+  ROLLING: 'rolling',       // 滚动
+  EXPANDING: 'expanding',   // EXPANDING
 }; // 结束代码块
 
 /**
@@ -28,34 +28,34 @@ export const WalkForwardType = { // 导出常量 WalkForwardType
  */
 export const DEFAULT_WF_CONFIG = { // 导出常量 DEFAULT_WF_CONFIG
   // Walk-Forward 类型
-  type: WalkForwardType.ROLLING, // 设置 type 字段
+  type: WalkForwardType.ROLLING, // Walk-Forward 类型
 
   // 训练窗口大小（K线数量或百分比）
-  trainingWindow: 0.6,  // 60%
+  trainingWindow: 0.6,  // 训练窗口大小（K线数量或百分比）
 
   // 测试窗口大小
-  testWindow: 0.2,      // 20%
+  testWindow: 0.2,      // test窗口
 
   // 滚动步长（测试窗口数量）
-  stepSize: 1, // 设置 stepSize 字段
+  stepSize: 1, // 滚动步长（测试窗口数量）
 
   // 最小训练样本数
-  minTrainingSamples: 100, // 设置 minTrainingSamples 字段
+  minTrainingSamples: 100, // 最小TrainingSamples
 
   // 优化目标
-  optimizationTarget: OptimizationTarget.SHARPE_RATIO, // 设置 optimizationTarget 字段
+  optimizationTarget: OptimizationTarget.SHARPE_RATIO, // optimizationTarget
 
   // 回测配置
-  backtestConfig: { // 设置 backtestConfig 字段
-    initialCapital: 10000, // 设置 initialCapital 字段
-    commissionRate: 0.001, // 设置 commissionRate 字段
-    slippage: 0.0005, // 设置 slippage 字段
+  backtestConfig: { // backtest配置
+    initialCapital: 10000, // 初始资金
+    commissionRate: 0.001, // 手续费频率
+    slippage: 0.0005, // 滑点
   }, // 结束代码块
 
   // 网格搜索配置
-  gridSearchConfig: { // 设置 gridSearchConfig 字段
-    minTrades: 3, // 设置 minTrades 字段
-    recordAllResults: false, // 设置 recordAllResults 字段
+  gridSearchConfig: { // 网格Search配置
+    minTrades: 3, // 最小成交
+    recordAllResults: false, // recordAllResults
   }, // 结束代码块
 }; // 结束代码块
 
@@ -115,13 +115,13 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
 
     while (testEnd <= totalLength) { // 循环条件 testEnd <= totalLength
       windows.push({ // 调用 windows.push
-        index: windowIndex, // 设置 index 字段
+        index: windowIndex, // index
         trainStart, // 执行语句
         trainEnd, // 执行语句
         testStart, // 执行语句
         testEnd, // 执行语句
-        trainData: data.slice(trainStart, trainEnd), // 设置 trainData 字段
-        testData: data.slice(testStart, testEnd), // 设置 testData 字段
+        trainData: data.slice(trainStart, trainEnd), // train数据
+        testData: data.slice(testStart, testEnd), // test数据
       }); // 结束代码块
 
       windowIndex++; // 执行语句
@@ -194,12 +194,12 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
         // 1. 在训练数据上优化参数
         const gridSearch = new GridSearch({ // 定义常量 gridSearch
           ...this.config.gridSearchConfig, // 展开对象或数组
-          target: this.config.optimizationTarget, // 设置 target 字段
-          backtestConfig: this.config.backtestConfig, // 设置 backtestConfig 字段
+          target: this.config.optimizationTarget, // target
+          backtestConfig: this.config.backtestConfig, // backtest配置
         }); // 结束代码块
 
         const optimizationResult = await gridSearch.run({ // 定义常量 optimizationResult
-          data: window.trainData, // 设置 data 字段
+          data: window.trainData, // 数据
           strategyClass, // 执行语句
           parameterSpace, // 执行语句
           fixedParams, // 执行语句
@@ -222,22 +222,22 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
 
         // 3. 记录结果
         const windowResult = { // 定义常量 windowResult
-          windowIndex: i, // 设置 windowIndex 字段
-          trainPeriod: { // 设置 trainPeriod 字段
-            start: window.trainData[0].timestamp, // 设置 start 字段
-            end: window.trainData[window.trainData.length - 1].timestamp, // 设置 end 字段
-            samples: window.trainData.length, // 设置 samples 字段
+          windowIndex: i, // 窗口Index
+          trainPeriod: { // train周期
+            start: window.trainData[0].timestamp, // 启动
+            end: window.trainData[window.trainData.length - 1].timestamp, // end
+            samples: window.trainData.length, // samples
           }, // 结束代码块
-          testPeriod: { // 设置 testPeriod 字段
-            start: window.testData[0].timestamp, // 设置 start 字段
-            end: window.testData[window.testData.length - 1].timestamp, // 设置 end 字段
-            samples: window.testData.length, // 设置 samples 字段
+          testPeriod: { // test周期
+            start: window.testData[0].timestamp, // 启动
+            end: window.testData[window.testData.length - 1].timestamp, // end
+            samples: window.testData.length, // samples
           }, // 结束代码块
-          optimizedParams: bestParams, // 设置 optimizedParams 字段
-          trainStats: optimizationResult.bestStats, // 设置 trainStats 字段
+          optimizedParams: bestParams, // optimizedParams
+          trainStats: optimizationResult.bestStats, // trainStats
           testStats, // 执行语句
           // 计算训练/测试性能比率
-          performanceRatio: this._calculatePerformanceRatio( // 设置 performanceRatio 字段
+          performanceRatio: this._calculatePerformanceRatio( // 计算训练/测试性能比率
             optimizationResult.bestStats, // 执行语句
             testStats // 执行语句
           ), // 结束调用或参数
@@ -246,9 +246,9 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
         this.results.push(windowResult); // 访问 results
 
         this.emit('windowComplete', { // 调用 emit
-          windowIndex: i, // 设置 windowIndex 字段
-          result: windowResult, // 设置 result 字段
-          progress: ((i + 1) / this.windows.length * 100).toFixed(2), // 设置 progress 字段
+          windowIndex: i, // 窗口Index
+          result: windowResult, // result
+          progress: ((i + 1) / this.windows.length * 100).toFixed(2), // progress
         }); // 结束代码块
 
       } catch (error) { // 执行语句
@@ -267,14 +267,14 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
 
     // 构建最终结果
     const finalResult = { // 定义常量 finalResult
-      type: this.config.type, // 设置 type 字段
-      totalWindows: this.windows.length, // 设置 totalWindows 字段
-      validWindows: this.results.length, // 设置 validWindows 字段
+      type: this.config.type, // 类型
+      totalWindows: this.windows.length, // 总Windows
+      validWindows: this.results.length, // 有效Windows
       duration, // 执行语句
-      windowResults: this.results, // 设置 windowResults 字段
-      aggregatedStats: this.aggregatedStats, // 设置 aggregatedStats 字段
-      robustnessScore: this._calculateRobustnessScore(), // 设置 robustnessScore 字段
-      recommendations: this._generateRecommendations(), // 设置 recommendations 字段
+      windowResults: this.results, // 窗口Results
+      aggregatedStats: this.aggregatedStats, // aggregatedStats
+      robustnessScore: this._calculateRobustnessScore(), // robustness分数
+      recommendations: this._generateRecommendations(), // recommendations
     }; // 结束代码块
 
     this.emit('complete', finalResult); // 调用 emit
@@ -293,13 +293,13 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
     if (!trainStats || !testStats) return null; // 条件判断 !trainStats || !testStats
 
     return { // 返回结果
-      returnRatio: trainStats.totalReturn !== 0 // 设置 returnRatio 字段
+      returnRatio: trainStats.totalReturn !== 0 // return比例
         ? testStats.totalReturn / trainStats.totalReturn // 执行语句
         : 0, // 执行语句
-      sharpeRatio: trainStats.sharpeRatio !== 0 // 设置 sharpeRatio 字段
+      sharpeRatio: trainStats.sharpeRatio !== 0 // sharpe比例
         ? testStats.sharpeRatio / trainStats.sharpeRatio // 执行语句
         : 0, // 执行语句
-      winRateRatio: trainStats.winRate !== 0 // 设置 winRateRatio 字段
+      winRateRatio: trainStats.winRate !== 0 // win频率比例
         ? testStats.winRate / trainStats.winRate // 执行语句
         : 0, // 执行语句
     }; // 结束代码块
@@ -323,57 +323,57 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
 
     return { // 返回结果
       // 测试期收益统计
-      testReturn: { // 设置 testReturn 字段
-        mean: this._mean(testReturns), // 设置 mean 字段
-        std: this._std(testReturns), // 设置 std 字段
-        min: Math.min(...testReturns), // 设置 min 字段
-        max: Math.max(...testReturns), // 设置 max 字段
-        median: this._median(testReturns), // 设置 median 字段
+      testReturn: { // 测试期收益统计
+        mean: this._mean(testReturns), // mean
+        std: this._std(testReturns), // 标准
+        min: Math.min(...testReturns), // 最小
+        max: Math.max(...testReturns), // 最大
+        median: this._median(testReturns), // median
       }, // 结束代码块
 
       // 测试期夏普比率统计
-      testSharpe: { // 设置 testSharpe 字段
-        mean: this._mean(testSharpes), // 设置 mean 字段
-        std: this._std(testSharpes), // 设置 std 字段
-        min: Math.min(...testSharpes), // 设置 min 字段
-        max: Math.max(...testSharpes), // 设置 max 字段
-        median: this._median(testSharpes), // 设置 median 字段
+      testSharpe: { // 测试期夏普比率统计
+        mean: this._mean(testSharpes), // mean
+        std: this._std(testSharpes), // 标准
+        min: Math.min(...testSharpes), // 最小
+        max: Math.max(...testSharpes), // 最大
+        median: this._median(testSharpes), // median
       }, // 结束代码块
 
       // 测试期最大回撤统计
-      testDrawdown: { // 设置 testDrawdown 字段
-        mean: this._mean(testDrawdowns), // 设置 mean 字段
-        std: this._std(testDrawdowns), // 设置 std 字段
-        min: Math.min(...testDrawdowns), // 设置 min 字段
-        max: Math.max(...testDrawdowns), // 设置 max 字段
-        median: this._median(testDrawdowns), // 设置 median 字段
+      testDrawdown: { // 测试期最大回撤统计
+        mean: this._mean(testDrawdowns), // mean
+        std: this._std(testDrawdowns), // 标准
+        min: Math.min(...testDrawdowns), // 最小
+        max: Math.max(...testDrawdowns), // 最大
+        median: this._median(testDrawdowns), // median
       }, // 结束代码块
 
       // 测试期胜率统计
-      testWinRate: { // 设置 testWinRate 字段
-        mean: this._mean(testWinRates), // 设置 mean 字段
-        std: this._std(testWinRates), // 设置 std 字段
-        min: Math.min(...testWinRates), // 设置 min 字段
-        max: Math.max(...testWinRates), // 设置 max 字段
-        median: this._median(testWinRates), // 设置 median 字段
+      testWinRate: { // testWin频率
+        mean: this._mean(testWinRates), // mean
+        std: this._std(testWinRates), // 标准
+        min: Math.min(...testWinRates), // 最小
+        max: Math.max(...testWinRates), // 最大
+        median: this._median(testWinRates), // median
       }, // 结束代码块
 
       // 训练/测试性能比率统计
-      performanceRatio: performanceRatios.length > 0 ? { // 设置 performanceRatio 字段
-        mean: this._mean(performanceRatios), // 设置 mean 字段
-        std: this._std(performanceRatios), // 设置 std 字段
-        min: Math.min(...performanceRatios), // 设置 min 字段
-        max: Math.max(...performanceRatios), // 设置 max 字段
+      performanceRatio: performanceRatios.length > 0 ? { // 训练/测试性能比率统计
+        mean: this._mean(performanceRatios), // mean
+        std: this._std(performanceRatios), // 标准
+        min: Math.min(...performanceRatios), // 最小
+        max: Math.max(...performanceRatios), // 最大
       } : null, // 执行语句
 
       // 盈利窗口比例
-      profitableWindowsRatio: testReturns.filter(r => r > 0).length / testReturns.length, // 设置 profitableWindowsRatio 字段
+      profitableWindowsRatio: testReturns.filter(r => r > 0).length / testReturns.length, // 盈利窗口比例
 
       // 组合收益（假设等权重分配）
-      combinedReturn: testReturns.reduce((a, b) => a + b, 0), // 设置 combinedReturn 字段
+      combinedReturn: testReturns.reduce((a, b) => a + b, 0), // 组合收益（假设等权重分配）
 
       // 年化组合收益（假设窗口按时间顺序）
-      annualizedCombinedReturn: this._calculateAnnualizedReturn(), // 设置 annualizedCombinedReturn 字段
+      annualizedCombinedReturn: this._calculateAnnualizedReturn(), // 年化组合收益（假设窗口按时间顺序）
     }; // 结束代码块
   } // 结束代码块
 
@@ -473,8 +473,8 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
 
     if (!this.aggregatedStats) { // 条件判断 !this.aggregatedStats
       recommendations.push({ // 调用 recommendations.push
-        level: 'error', // 设置 level 字段
-        message: '没有有效的分析结果 / No valid analysis results', // 设置 message 字段
+        level: 'error', // 级别
+        message: '没有有效的分析结果 / No valid analysis results', // 消息
       }); // 结束代码块
       return recommendations; // 返回结果
     } // 结束代码块
@@ -484,40 +484,40 @@ export class WalkForwardAnalysis extends EventEmitter { // 导出类 WalkForward
     // 检查盈利窗口比例
     if (stats.profitableWindowsRatio < 0.5) { // 条件判断 stats.profitableWindowsRatio < 0.5
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: `盈利窗口比例较低 (${(stats.profitableWindowsRatio * 100).toFixed(1)}%)，策略可能不稳定 / Low profitable windows ratio`, // 设置 message 字段
+        level: 'warning', // 级别
+        message: `盈利窗口比例较低 (${(stats.profitableWindowsRatio * 100).toFixed(1)}%)，策略可能不稳定 / Low profitable windows ratio`, // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查性能衰减
     if (stats.performanceRatio && stats.performanceRatio.mean < 0.5) { // 条件判断 stats.performanceRatio && stats.performanceRa...
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: '训练/测试性能比率较低，可能存在过拟合 / Low train/test performance ratio, possible overfitting', // 设置 message 字段
+        level: 'warning', // 级别
+        message: '训练/测试性能比率较低，可能存在过拟合 / Low train/test performance ratio, possible overfitting', // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查回撤
     if (stats.testDrawdown.max > 30) { // 条件判断 stats.testDrawdown.max > 30
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: `最大回撤过高 (${stats.testDrawdown.max.toFixed(1)}%)，建议增加风控 / High max drawdown`, // 设置 message 字段
+        level: 'warning', // 级别
+        message: `最大回撤过高 (${stats.testDrawdown.max.toFixed(1)}%)，建议增加风控 / High max drawdown`, // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查收益波动
     if (stats.testReturn.std > Math.abs(stats.testReturn.mean) * 2) { // 条件判断 stats.testReturn.std > Math.abs(stats.testRet...
       recommendations.push({ // 调用 recommendations.push
-        level: 'info', // 设置 level 字段
-        message: '收益波动较大，建议增加验证窗口数量 / High return volatility', // 设置 message 字段
+        level: 'info', // 级别
+        message: '收益波动较大，建议增加验证窗口数量 / High return volatility', // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 积极建议
     if (stats.profitableWindowsRatio >= 0.7 && stats.testSharpe.mean > 1) { // 条件判断 stats.profitableWindowsRatio >= 0.7 && stats....
       recommendations.push({ // 调用 recommendations.push
-        level: 'success', // 设置 level 字段
-        message: '策略表现稳定，建议进行实盘验证 / Strategy shows stability, recommend live testing', // 设置 message 字段
+        level: 'success', // 级别
+        message: '策略表现稳定，建议进行实盘验证 / Strategy shows stability, recommend live testing', // 消息
       }); // 结束代码块
     } // 结束代码块
 

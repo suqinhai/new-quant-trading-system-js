@@ -60,27 +60,27 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
       secret: this.config.secret,         // API 密钥 / API secret
 
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout, // 设置 timeout 字段
+      timeout: this.config.timeout, // 超时设置 (毫秒)
 
       // 代理设置 / Proxy settings
-      proxy: this.config.proxy, // 设置 proxy 字段
+      proxy: this.config.proxy, // proxy
 
       // 沙盒/测试网模式 / Sandbox/Testnet mode
-      sandbox: this.config.sandbox, // 设置 sandbox 字段
+      sandbox: this.config.sandbox, // 沙盒/测试网模式
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
         // option = 期权 / Options
-        defaultType: this.config.defaultType, // 设置 defaultType 字段
+        defaultType: this.config.defaultType, // option = 期权
 
         // 调整时间戳 / Adjust timestamp
-        adjustForTimeDifference: true, // 设置 adjustForTimeDifference 字段
+        adjustForTimeDifference: true, // adjust用于时间Difference
 
         // 合并额外选项 / Merge additional options
         ...this.config.options, // 展开对象或数组
@@ -204,23 +204,23 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
           try { // 尝试执行
             const ticker = await this.exchange.fetchTicker(option.symbol); // 定义常量 ticker
             return { // 返回结果
-              symbol: option.symbol, // 设置 symbol 字段
-              strike: option.strike, // 设置 strike 字段
-              optionType: option.optionType,  // 'call' or 'put'
-              expiry: option.expiry, // 设置 expiry 字段
-              expiryDatetime: option.expiryDatetime, // 设置 expiryDatetime 字段
-              bid: ticker.bid, // 设置 bid 字段
-              ask: ticker.ask, // 设置 ask 字段
-              last: ticker.last, // 设置 last 字段
-              volume: ticker.baseVolume, // 设置 volume 字段
-              openInterest: ticker.info?.open_interest, // 设置 openInterest 字段
-              impliedVolatility: ticker.info?.mark_iv, // 设置 impliedVolatility 字段
-              delta: ticker.info?.greeks?.delta, // 设置 delta 字段
-              gamma: ticker.info?.greeks?.gamma, // 设置 gamma 字段
-              theta: ticker.info?.greeks?.theta, // 设置 theta 字段
-              vega: ticker.info?.greeks?.vega, // 设置 vega 字段
-              exchange: this.name, // 设置 exchange 字段
-              timestamp: Date.now(), // 设置 timestamp 字段
+              symbol: option.symbol, // 交易对
+              strike: option.strike, // strike
+              optionType: option.optionType,  // option类型
+              expiry: option.expiry, // expiry
+              expiryDatetime: option.expiryDatetime, // expiryDatetime
+              bid: ticker.bid, // bid
+              ask: ticker.ask, // ask
+              last: ticker.last, // last
+              volume: ticker.baseVolume, // 成交量
+              openInterest: ticker.info?.open_interest, // 开盘Interest
+              impliedVolatility: ticker.info?.mark_iv, // implied波动率
+              delta: ticker.info?.greeks?.delta, // delta
+              gamma: ticker.info?.greeks?.gamma, // gamma
+              theta: ticker.info?.greeks?.theta, // theta
+              vega: ticker.info?.greeks?.vega, // vega
+              exchange: this.name, // 交易所
+              timestamp: Date.now(), // 时间戳
             }; // 结束代码块
           } catch (error) { // 执行语句
             // 跳过获取失败的期权 / Skip failed options
@@ -254,15 +254,15 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
         // 尝试通过私有 API 获取指数价格
         // Try to fetch index price via private API
         const response = await this.exchange.publicGetGetIndexPrice({ // 定义常量 response
-          index_name: `${baseAsset.toLowerCase()}_usd`, // 设置 index_name 字段
+          index_name: `${baseAsset.toLowerCase()}_usd`, // indexname
         }); // 结束代码块
 
         return { // 返回结果
-          asset: baseAsset, // 设置 asset 字段
-          indexPrice: parseFloat(response.result?.index_price || 0), // 设置 indexPrice 字段
-          estimatedDeliveryPrice: parseFloat(response.result?.estimated_delivery_price || 0), // 设置 estimatedDeliveryPrice 字段
-          exchange: this.name, // 设置 exchange 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          asset: baseAsset, // 资产
+          indexPrice: parseFloat(response.result?.index_price || 0), // index价格
+          estimatedDeliveryPrice: parseFloat(response.result?.estimated_delivery_price || 0), // estimatedDelivery价格
+          exchange: this.name, // 交易所
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
       } catch (error) { // 执行语句
         // 如果上面方法失败，尝试从永续合约行情获取
@@ -271,11 +271,11 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
         const ticker = await this.exchange.fetchTicker(perpSymbol); // 定义常量 ticker
 
         return { // 返回结果
-          asset: baseAsset, // 设置 asset 字段
-          indexPrice: ticker.info?.index_price ? parseFloat(ticker.info.index_price) : ticker.last, // 设置 indexPrice 字段
-          estimatedDeliveryPrice: null, // 设置 estimatedDeliveryPrice 字段
-          exchange: this.name, // 设置 exchange 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          asset: baseAsset, // 资产
+          indexPrice: ticker.info?.index_price ? parseFloat(ticker.info.index_price) : ticker.last, // index价格
+          estimatedDeliveryPrice: null, // estimatedDelivery价格
+          exchange: this.name, // 交易所
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
       } // 结束代码块
     }, `获取指数价格 / Fetch index price: ${baseAsset}`); // 执行语句
@@ -296,7 +296,7 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
       // 调用 Deribit API 获取账户摘要
       // Call Deribit API to fetch account summary
       const response = await this.exchange.privateGetGetAccountSummary({ // 定义常量 response
-        currency: currency.toUpperCase(), // 设置 currency 字段
+        currency: currency.toUpperCase(), // currency
       }); // 结束代码块
 
       const summary = response.result; // 定义常量 summary
@@ -346,55 +346,55 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
         }) // 结束代码块
         .map(pos => ({ // 定义箭头函数
           // 交易对 / Symbol
-          symbol: pos.symbol, // 设置 symbol 字段
+          symbol: pos.symbol, // 交易对
 
           // 持仓方向 / Position side
-          side: pos.side || (parseFloat(pos.info?.size || 0) > 0 ? 'long' : 'short'), // 设置 side 字段
+          side: pos.side || (parseFloat(pos.info?.size || 0) > 0 ? 'long' : 'short'), // 方向
 
           // 持仓数量 (合约数) / Position size (contracts)
-          contracts: Math.abs(parseFloat(pos.contracts || pos.info?.size || 0)), // 设置 contracts 字段
+          contracts: Math.abs(parseFloat(pos.contracts || pos.info?.size || 0)), // 持仓数量 (合约数)
 
           // 持仓价值 / Notional value
-          notional: parseFloat(pos.notional || 0), // 设置 notional 字段
+          notional: parseFloat(pos.notional || 0), // notional
 
           // 开仓均价 / Entry price
-          entryPrice: parseFloat(pos.entryPrice || pos.info?.average_price || 0), // 设置 entryPrice 字段
+          entryPrice: parseFloat(pos.entryPrice || pos.info?.average_price || 0), // 开仓均价
 
           // 标记价格 / Mark price
-          markPrice: parseFloat(pos.markPrice || pos.info?.mark_price || 0), // 设置 markPrice 字段
+          markPrice: parseFloat(pos.markPrice || pos.info?.mark_price || 0), // mark价格
 
           // 清算价格 / Liquidation price
-          liquidationPrice: parseFloat(pos.liquidationPrice || pos.info?.estimated_liquidation_price || 0), // 设置 liquidationPrice 字段
+          liquidationPrice: parseFloat(pos.liquidationPrice || pos.info?.estimated_liquidation_price || 0), // 强平价格
 
           // 杠杆倍数 / Leverage
-          leverage: parseFloat(pos.leverage || pos.info?.leverage || 1), // 设置 leverage 字段
+          leverage: parseFloat(pos.leverage || pos.info?.leverage || 1), // 杠杆
 
           // 未实现盈亏 / Unrealized PnL
-          unrealizedPnl: parseFloat(pos.unrealizedPnl || pos.info?.total_profit_loss || 0), // 设置 unrealizedPnl 字段
+          unrealizedPnl: parseFloat(pos.unrealizedPnl || pos.info?.total_profit_loss || 0), // 未实现盈亏
 
           // 已实现盈亏 / Realized PnL
-          realizedPnl: parseFloat(pos.info?.realized_profit_loss || 0), // 设置 realizedPnl 字段
+          realizedPnl: parseFloat(pos.info?.realized_profit_loss || 0), // 已实现盈亏
 
           // 保证金模式 (Deribit 默认为 cross) / Margin mode
-          marginMode: 'cross', // 设置 marginMode 字段
+          marginMode: 'cross', // 保证金模式 (Deribit 默认为 cross)
 
           // 保证金 / Collateral
-          collateral: parseFloat(pos.collateral || pos.info?.initial_margin || 0), // 设置 collateral 字段
+          collateral: parseFloat(pos.collateral || pos.info?.initial_margin || 0), // collateral
 
           // Delta (期权/合约) / Delta
-          delta: parseFloat(pos.info?.delta || 0), // 设置 delta 字段
+          delta: parseFloat(pos.info?.delta || 0), // Delta (期权/合约)
 
           // 仓位类型 / Position type (future/option)
-          instrumentType: pos.info?.kind || 'future', // 设置 instrumentType 字段
+          instrumentType: pos.info?.kind || 'future', // instrument类型仓位类型
 
           // 交易所名称 / Exchange name
-          exchange: this.name, // 设置 exchange 字段
+          exchange: this.name, // 交易所
 
           // 时间戳 / Timestamp
-          timestamp: Date.now(), // 设置 timestamp 字段
+          timestamp: Date.now(), // 时间戳
 
           // 原始数据 / Raw data
-          raw: pos, // 设置 raw 字段
+          raw: pos, // raw
         })); // 结束代码块
     }, '获取持仓 / Fetch positions'); // 执行语句
   } // 结束代码块
@@ -450,9 +450,9 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
       // 调用 Deribit API 获取合约列表
       // Call Deribit API to fetch instruments
       const response = await this.exchange.publicGetGetInstruments({ // 定义常量 response
-        currency: currency.toUpperCase(), // 设置 currency 字段
+        currency: currency.toUpperCase(), // currency
         kind, // 执行语句
-        expired: false, // 设置 expired 字段
+        expired: false, // expired
       }); // 结束代码块
 
       // 返回格式化的合约列表 / Return formatted instrument list
@@ -489,15 +489,15 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
       // 调用 Deribit API 获取历史波动率
       // Call Deribit API to fetch historical volatility
       const response = await this.exchange.publicGetGetHistoricalVolatility({ // 定义常量 response
-        currency: currency.toUpperCase(), // 设置 currency 字段
+        currency: currency.toUpperCase(), // currency
       }); // 结束代码块
 
       // 返回格式化的历史波动率 / Return formatted historical volatility
       return { // 返回结果
         currency, // 执行语句
-        volatility: response.result || [], // 设置 volatility 字段
-        exchange: this.name, // 设置 exchange 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        volatility: response.result || [], // 波动率
+        exchange: this.name, // 交易所
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
     }, `获取历史波动率 / Fetch historical volatility: ${currency}`); // 执行语句
   } // 结束代码块
@@ -526,10 +526,10 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
         symbol, // 执行语句
         bids: orderBook.bids,        // 买单 / Bids
         asks: orderBook.asks,        // 卖单 / Asks
-        timestamp: orderBook.timestamp, // 设置 timestamp 字段
-        datetime: orderBook.datetime, // 设置 datetime 字段
-        nonce: orderBook.nonce, // 设置 nonce 字段
-        exchange: this.name, // 设置 exchange 字段
+        timestamp: orderBook.timestamp, // 时间戳
+        datetime: orderBook.datetime, // datetime
+        nonce: orderBook.nonce, // Nonce
+        exchange: this.name, // 交易所
       }; // 结束代码块
     }, `获取订单簿 / Fetch order book: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -555,15 +555,15 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
 
       // 返回交易历史 / Return trade history
       return trades.map(trade => ({ // 返回结果
-        id: trade.id, // 设置 id 字段
-        symbol: trade.symbol, // 设置 symbol 字段
-        side: trade.side, // 设置 side 字段
-        price: trade.price, // 设置 price 字段
-        amount: trade.amount, // 设置 amount 字段
-        cost: trade.cost, // 设置 cost 字段
-        timestamp: trade.timestamp, // 设置 timestamp 字段
-        datetime: trade.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: trade.id, // ID
+        symbol: trade.symbol, // 交易对
+        side: trade.side, // 方向
+        price: trade.price, // 价格
+        amount: trade.amount, // 数量
+        cost: trade.cost, // cost
+        timestamp: trade.timestamp, // 时间戳
+        datetime: trade.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, `获取交易历史 / Fetch recent trades: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -592,17 +592,17 @@ export class DeribitExchange extends BaseExchange { // 导出类 DeribitExchange
 
       // 返回交易历史 / Return trade history
       return trades.map(trade => ({ // 返回结果
-        id: trade.id, // 设置 id 字段
-        orderId: trade.order, // 设置 orderId 字段
-        symbol: trade.symbol, // 设置 symbol 字段
-        side: trade.side, // 设置 side 字段
-        price: trade.price, // 设置 price 字段
-        amount: trade.amount, // 设置 amount 字段
-        cost: trade.cost, // 设置 cost 字段
-        fee: trade.fee, // 设置 fee 字段
-        timestamp: trade.timestamp, // 设置 timestamp 字段
-        datetime: trade.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: trade.id, // ID
+        orderId: trade.order, // 订单ID
+        symbol: trade.symbol, // 交易对
+        side: trade.side, // 方向
+        price: trade.price, // 价格
+        amount: trade.amount, // 数量
+        cost: trade.cost, // cost
+        fee: trade.fee, // 手续费
+        timestamp: trade.timestamp, // 时间戳
+        datetime: trade.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, `获取我的交易历史 / Fetch my trades: ${symbol || 'all'}`); // 执行语句
   } // 结束代码块

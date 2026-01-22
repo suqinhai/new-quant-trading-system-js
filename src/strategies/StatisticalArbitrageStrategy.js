@@ -27,11 +27,11 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * Statistical arbitrage types
  */
 export const STAT_ARB_TYPE = { // 导出常量 STAT_ARB_TYPE
-  COINTEGRATION: 'cointegration',         // 协整交易
-  PAIRS_TRADING: 'pairs_trading',          // 配对交易
-  CROSS_EXCHANGE: 'cross_exchange',        // 跨交易所套利
-  PERPETUAL_SPOT: 'perpetual_spot',        // 永续-现货基差
-  TRIANGULAR: 'triangular',                // 三角套利
+  COINTEGRATION: 'cointegration',         // 协整
+  PAIRS_TRADING: 'pairs_trading',          // PAIRS交易权限
+  CROSS_EXCHANGE: 'cross_exchange',        // CROSS交易所
+  PERPETUAL_SPOT: 'perpetual_spot',        // PERPETUALSPOT
+  TRIANGULAR: 'triangular',                // TRIANGULAR
 }; // 结束代码块
 
 /**
@@ -40,9 +40,9 @@ export const STAT_ARB_TYPE = { // 导出常量 STAT_ARB_TYPE
  */
 export const PAIR_STATUS = { // 导出常量 PAIR_STATUS
   ACTIVE: 'active',           // 活跃
-  SUSPENDED: 'suspended',     // 暂停
-  BROKEN: 'broken',           // 关系破裂
-  PENDING: 'pending',         // 待验证
+  SUSPENDED: 'suspended',     // SUSPENDED
+  BROKEN: 'broken',           // BROKEN
+  PENDING: 'pending',         // 待处理
 }; // 结束代码块
 
 /**
@@ -50,10 +50,10 @@ export const PAIR_STATUS = { // 导出常量 PAIR_STATUS
  * Signal types
  */
 export const SIGNAL_TYPE = { // 导出常量 SIGNAL_TYPE
-  OPEN_LONG_SPREAD: 'open_long_spread',   // 开多价差 (做多A，做空B)
-  OPEN_SHORT_SPREAD: 'open_short_spread', // 开空价差 (做空A，做多B)
-  CLOSE_SPREAD: 'close_spread',           // 平仓价差
-  NO_SIGNAL: 'no_signal',                 // 无信号
+  OPEN_LONG_SPREAD: 'open_long_spread',   // 开盘LONG价差权限
+  OPEN_SHORT_SPREAD: 'open_short_spread', // 开盘SHORT价差权限
+  CLOSE_SPREAD: 'close_spread',           // 平仓价差权限
+  NO_SIGNAL: 'no_signal',                 // NO信号
 }; // 结束代码块
 
 /**
@@ -64,7 +64,7 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
   // 策略类型配置 / Strategy Type Configuration
   // ============================================
-  arbType: STAT_ARB_TYPE.PAIRS_TRADING, // 设置 arbType 字段
+  arbType: STAT_ARB_TYPE.PAIRS_TRADING, // arb类型
 
   // ============================================
   // 配对配置 / Pairs Configuration
@@ -72,114 +72,114 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
 
   // 候选配对列表 (可动态发现或手动指定)
   // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
-  candidatePairs: [ // 设置 candidatePairs 字段
+  candidatePairs: [ // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
     { assetA: 'BTC/USDT', assetB: 'ETH/USDT' }, // 执行语句
     { assetA: 'ETH/USDT', assetB: 'BNB/USDT' }, // 执行语句
     { assetA: 'SOL/USDT', assetB: 'AVAX/USDT' }, // 执行语句
   ], // 结束数组或索引
 
   // 最大同时持有配对数
-  maxActivePairs: 5, // 设置 maxActivePairs 字段
+  maxActivePairs: 5, // 最大同时持有配对数
 
   // 回看周期 (用于计算统计量)
-  lookbackPeriod: 60, // 设置 lookbackPeriod 字段
+  lookbackPeriod: 60, // 回看周期 (用于计算统计量)
 
   // 协整检验周期
-  cointegrationTestPeriod: 100, // 设置 cointegrationTestPeriod 字段
+  cointegrationTestPeriod: 100, // 协整检验周期
 
   // ============================================
   // 协整检验配置 / Cointegration Test Configuration
   // ============================================
 
   // ADF检验显著性水平 (1%, 5%, 10%)
-  adfSignificanceLevel: 0.05, // 设置 adfSignificanceLevel 字段
+  adfSignificanceLevel: 0.05, // ADF检验显著性水平 (1%, 5%, 10%)
 
   // 最小相关性阈值 (用于初筛)
-  minCorrelation: 0.7, // 设置 minCorrelation 字段
+  minCorrelation: 0.7, // 最小相关性阈值 (用于初筛)
 
   // 半衰期限制 (天)
-  minHalfLife: 1, // 设置 minHalfLife 字段
-  maxHalfLife: 30, // 设置 maxHalfLife 字段
+  minHalfLife: 1, // 半衰期限制 (天)
+  maxHalfLife: 30, // 最大半衰期
 
   // ============================================
   // 信号配置 / Signal Configuration
   // ============================================
 
   // Z-Score开仓阈值
-  entryZScore: 2.0, // 设置 entryZScore 字段
+  entryZScore: 2.0, // Z-Score开仓阈值
 
   // Z-Score平仓阈值
-  exitZScore: 0.5, // 设置 exitZScore 字段
+  exitZScore: 0.5, // Z-Score平仓阈值
 
   // Z-Score止损阈值
-  stopLossZScore: 4.0, // 设置 stopLossZScore 字段
+  stopLossZScore: 4.0, // Z-Score止损阈值
 
   // 最大持仓时间 (毫秒) - 防止长期持仓
-  maxHoldingPeriod: 7 * 24 * 60 * 60 * 1000, // 7天
+  maxHoldingPeriod: 7 * 24 * 60 * 60 * 1000, // 最大持仓时间 (毫秒) - 防止长期持仓
 
   // ============================================
   // 跨交易所套利配置 / Cross-Exchange Arbitrage Configuration
   // ============================================
 
   // 价差开仓阈值 (百分比)
-  spreadEntryThreshold: 0.003, // 0.3%
+  spreadEntryThreshold: 0.003, // 价差开仓阈值 (百分比)
 
   // 价差平仓阈值 (百分比)
-  spreadExitThreshold: 0.001, // 0.1%
+  spreadExitThreshold: 0.001, // 价差平仓阈值 (百分比)
 
   // 考虑的交易成本 (单边)
-  tradingCost: 0.001, // 0.1%
+  tradingCost: 0.001, // 考虑的交易成本 (单边)
 
   // 滑点估计
-  slippageEstimate: 0.0005, // 0.05%
+  slippageEstimate: 0.0005, // 滑点Estimate
 
   // ============================================
   // 永续-现货基差配置 / Perpetual-Spot Basis Configuration
   // ============================================
 
   // 基差入场阈值 (年化)
-  basisEntryThreshold: 0.15, // 15% 年化
+  basisEntryThreshold: 0.15, // 基差入场阈值 (年化)
 
   // 基差出场阈值 (年化)
-  basisExitThreshold: 0.05, // 5% 年化
+  basisExitThreshold: 0.05, // 基差出场阈值 (年化)
 
   // 资金费率阈值 (8小时)
-  fundingRateThreshold: 0.001, // 0.1%
+  fundingRateThreshold: 0.001, // 资金费率阈值 (8小时)
 
   // ============================================
   // 仓位管理 / Position Management
   // ============================================
 
   // 单个配对最大仓位
-  maxPositionPerPair: 0.1, // 10% of capital
+  maxPositionPerPair: 0.1, // 单个配对最大仓位
 
   // 总最大仓位
-  maxTotalPosition: 0.5, // 50% of capital
+  maxTotalPosition: 0.5, // 最大总持仓
 
   // 仓位对称 (做多和做空等量)
-  symmetricPosition: true, // 设置 symmetricPosition 字段
+  symmetricPosition: true, // 仓位对称 (做多和做空等量)
 
   // ============================================
   // 风险控制 / Risk Control
   // ============================================
 
   // 单配对最大亏损
-  maxLossPerPair: 0.02, // 2%
+  maxLossPerPair: 0.02, // 最大亏损每个交易对
 
   // 总最大回撤
-  maxDrawdown: 0.10, // 10%
+  maxDrawdown: 0.10, // 最大回撤
 
   // 连续亏损次数触发冷却
-  consecutiveLossLimit: 3, // 设置 consecutiveLossLimit 字段
+  consecutiveLossLimit: 3, // 连续亏损次数触发冷却
 
   // 冷却时间
-  coolingPeriod: 24 * 60 * 60 * 1000, // 24小时
+  coolingPeriod: 24 * 60 * 60 * 1000, // 冷却周期
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[StatArb]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[StatArb]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -430,10 +430,10 @@ class StatisticalCalculator { // 定义类 StatisticalCalculator
 
     return { // 返回结果
       isStationary, // 执行语句
-      testStat: tStat, // 设置 testStat 字段
+      testStat: tStat, // testStat
       criticalValue, // 执行语句
       pValue, // 执行语句
-      beta: regression.beta, // 设置 beta 字段
+      beta: regression.beta, // beta
     }; // 结束代码块
   } // 结束代码块
 
@@ -570,33 +570,33 @@ class PairManager extends EventEmitter { // 定义类 PairManager(继承EventEmi
     } // 结束代码块
 
     const pair = { // 定义常量 pair
-      id: pairId, // 设置 id 字段
+      id: pairId, // ID
       assetA, // 执行语句
       assetB, // 执行语句
-      status: PAIR_STATUS.PENDING, // 设置 status 字段
-      stats: { // 设置 stats 字段
-        correlation: 0, // 设置 correlation 字段
-        cointegration: null, // 设置 cointegration 字段
-        halfLife: null, // 设置 halfLife 字段
-        hurstExponent: null, // 设置 hurstExponent 字段
-        beta: 1, // 设置 beta 字段
-        alpha: 0, // 设置 alpha 字段
-        spreadMean: 0, // 设置 spreadMean 字段
-        spreadStd: 0, // 设置 spreadStd 字段
+      status: PAIR_STATUS.PENDING, // 状态
+      stats: { // stats
+        correlation: 0, // correlation
+        cointegration: null, // 协整
+        halfLife: null, // 半衰期
+        hurstExponent: null, // hurstExponent
+        beta: 1, // beta
+        alpha: 0, // alpha
+        spreadMean: 0, // 价差Mean
+        spreadStd: 0, // 价差标准
         ...stats, // 展开对象或数组
       }, // 结束代码块
-      position: null, // 设置 position 字段
-      openTime: null, // 设置 openTime 字段
-      lastSignal: null, // 设置 lastSignal 字段
-      performance: { // 设置 performance 字段
-        totalTrades: 0, // 设置 totalTrades 字段
-        winCount: 0, // 设置 winCount 字段
-        lossCount: 0, // 设置 lossCount 字段
-        totalPnl: 0, // 设置 totalPnl 字段
-        maxDrawdown: 0, // 设置 maxDrawdown 字段
+      position: null, // 持仓
+      openTime: null, // 开盘时间
+      lastSignal: null, // last信号
+      performance: { // performance
+        totalTrades: 0, // 总成交
+        winCount: 0, // win数量
+        lossCount: 0, // 亏损数量
+        totalPnl: 0, // 总盈亏
+        maxDrawdown: 0, // 最大回撤
       }, // 结束代码块
-      lastUpdate: Date.now(), // 设置 lastUpdate 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
+      lastUpdate: Date.now(), // last更新
+      createdAt: Date.now(), // createdAt
     }; // 结束代码块
 
     this.pairs.set(pairId, pair); // 访问 pairs
@@ -860,15 +860,15 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
 
     // 统计数据
     this.stats = { // 设置 stats
-      totalSignals: 0, // 设置 totalSignals 字段
-      totalTrades: 0, // 设置 totalTrades 字段
-      totalPnl: 0, // 设置 totalPnl 字段
-      winCount: 0, // 设置 winCount 字段
-      lossCount: 0, // 设置 lossCount 字段
-      currentDrawdown: 0, // 设置 currentDrawdown 字段
-      maxDrawdown: 0, // 设置 maxDrawdown 字段
-      consecutiveLosses: 0, // 设置 consecutiveLosses 字段
-      lastTradeTime: null, // 设置 lastTradeTime 字段
+      totalSignals: 0, // 总信号
+      totalTrades: 0, // 总成交
+      totalPnl: 0, // 总盈亏
+      winCount: 0, // win数量
+      lossCount: 0, // 亏损数量
+      currentDrawdown: 0, // current回撤
+      maxDrawdown: 0, // 最大回撤
+      consecutiveLosses: 0, // consecutiveLosses
+      lastTradeTime: null, // last交易时间
     }; // 结束代码块
 
     // 冷却状态
@@ -1050,7 +1050,7 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
         cointegration, // 执行语句
         halfLife, // 执行语句
         hurstExponent, // 执行语句
-        lastAnalysisTime: Date.now(), // 设置 lastAnalysisTime 字段
+        lastAnalysisTime: Date.now(), // lastAnalysis时间
       }); // 结束代码块
 
       // 如果通过协整检验，激活配对
@@ -1111,7 +1111,7 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
       case STAT_ARB_TYPE.PERPETUAL_SPOT: // 分支 STAT_ARB_TYPE.PERPETUAL_SPOT
         return this._generatePerpetualSpotSignal(pair, priceA, priceB); // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return { type: SIGNAL_TYPE.NO_SIGNAL }; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -1140,18 +1140,18 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
     if (zScore >= this.config.entryZScore) { // 条件判断 zScore >= this.config.entryZScore
       // 价差过高，做空价差 (做空A，做多B)
       return { // 返回结果
-        type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 设置 type 字段
+        type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 类型
         zScore, // 执行语句
-        spread: currentSpread, // 设置 spread 字段
-        reason: `Z-Score=${zScore.toFixed(2)} >= ${this.config.entryZScore}`, // 设置 reason 字段
+        spread: currentSpread, // 价差
+        reason: `Z-Score=${zScore.toFixed(2)} >= ${this.config.entryZScore}`, // reason
       }; // 结束代码块
     } else if (zScore <= -this.config.entryZScore) { // 执行语句
       // 价差过低，做多价差 (做多A，做空B)
       return { // 返回结果
-        type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 设置 type 字段
+        type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 类型
         zScore, // 执行语句
-        spread: currentSpread, // 设置 spread 字段
-        reason: `Z-Score=${zScore.toFixed(2)} <= -${this.config.entryZScore}`, // 设置 reason 字段
+        spread: currentSpread, // 价差
+        reason: `Z-Score=${zScore.toFixed(2)} <= -${this.config.entryZScore}`, // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -1175,18 +1175,18 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
       if (spread > 0) { // 条件判断 spread > 0
         // A价格高于B，做空A做多B
         return { // 返回结果
-          type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 设置 type 字段
+          type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 类型
           spread, // 执行语句
           netSpread, // 执行语句
-          reason: `跨交易所价差=${(spread * 100).toFixed(3)}%`, // 设置 reason 字段
+          reason: `跨交易所价差=${(spread * 100).toFixed(3)}%`, // reason
         }; // 结束代码块
       } else { // 执行语句
         // B价格高于A，做多A做空B
         return { // 返回结果
-          type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 设置 type 字段
+          type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 类型
           spread, // 执行语句
           netSpread, // 执行语句
-          reason: `跨交易所价差=${(spread * 100).toFixed(3)}%`, // 设置 reason 字段
+          reason: `跨交易所价差=${(spread * 100).toFixed(3)}%`, // reason
         }; // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -1210,18 +1210,18 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
     if (annualizedBasis > this.config.basisEntryThreshold) { // 条件判断 annualizedBasis > this.config.basisEntryThres...
       // 正基差过大，做空永续做多现货
       return { // 返回结果
-        type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 设置 type 字段
+        type: SIGNAL_TYPE.OPEN_SHORT_SPREAD, // 类型
         basis, // 执行语句
         annualizedBasis, // 执行语句
-        reason: `年化基差=${(annualizedBasis * 100).toFixed(2)}%`, // 设置 reason 字段
+        reason: `年化基差=${(annualizedBasis * 100).toFixed(2)}%`, // reason
       }; // 结束代码块
     } else if (annualizedBasis < -this.config.basisEntryThreshold) { // 执行语句
       // 负基差过大，做多永续做空现货
       return { // 返回结果
-        type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 设置 type 字段
+        type: SIGNAL_TYPE.OPEN_LONG_SPREAD, // 类型
         basis, // 执行语句
         annualizedBasis, // 执行语句
-        reason: `年化基差=${(annualizedBasis * 100).toFixed(2)}%`, // 设置 reason 字段
+        reason: `年化基差=${(annualizedBasis * 100).toFixed(2)}%`, // reason
       }; // 结束代码块
     } // 结束代码块
 
@@ -1260,23 +1260,23 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
 
     // 设置仓位
     const position = { // 定义常量 position
-      type: signal.type, // 设置 type 字段
-      assetA: { // 设置 assetA 字段
-        symbol: pair.assetA, // 设置 symbol 字段
-        side: signal.type === SIGNAL_TYPE.OPEN_LONG_SPREAD ? 'long' : 'short', // 设置 side 字段
-        amount: amountA, // 设置 amount 字段
-        entryPrice: priceA, // 设置 entryPrice 字段
+      type: signal.type, // 类型
+      assetA: { // 资产A
+        symbol: pair.assetA, // 交易对
+        side: signal.type === SIGNAL_TYPE.OPEN_LONG_SPREAD ? 'long' : 'short', // 方向
+        amount: amountA, // 数量
+        entryPrice: priceA, // 入场价格
       }, // 结束代码块
-      assetB: { // 设置 assetB 字段
-        symbol: pair.assetB, // 设置 symbol 字段
-        side: signal.type === SIGNAL_TYPE.OPEN_LONG_SPREAD ? 'short' : 'long', // 设置 side 字段
-        amount: amountB, // 设置 amount 字段
-        entryPrice: priceB, // 设置 entryPrice 字段
+      assetB: { // 资产B
+        symbol: pair.assetB, // 交易对
+        side: signal.type === SIGNAL_TYPE.OPEN_LONG_SPREAD ? 'short' : 'long', // 方向
+        amount: amountB, // 数量
+        entryPrice: priceB, // 入场价格
       }, // 结束代码块
-      entryZScore: signal.zScore, // 设置 entryZScore 字段
-      entrySpread: signal.spread || pair.stats.currentSpread, // 设置 entrySpread 字段
-      entryTime: Date.now(), // 设置 entryTime 字段
-      value: totalValue, // 设置 value 字段
+      entryZScore: signal.zScore, // 入场Z分数
+      entrySpread: signal.spread || pair.stats.currentSpread, // 入场价差
+      entryTime: Date.now(), // 入场时间
+      value: totalValue, // value
     }; // 结束代码块
 
     // 执行交易
@@ -1506,8 +1506,8 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
 
     // 可以用于增强信号判断
     this.setState(`fundingRate:${symbol}`, { // 调用 setState
-      rate: fundingRate, // 设置 rate 字段
-      timestamp: data.timestamp || Date.now(), // 设置 timestamp 字段
+      rate: fundingRate, // 频率
+      timestamp: data.timestamp || Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -1552,18 +1552,18 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
     const pairsWithPositions = this.pairManager.getPairsWithPositions(); // 定义常量 pairsWithPositions
 
     return { // 返回结果
-      name: this.name, // 设置 name 字段
-      arbType: this.config.arbType, // 设置 arbType 字段
-      running: this.running, // 设置 running 字段
-      cooling: Date.now() < this.coolingUntil, // 设置 cooling 字段
-      coolingUntil: this.coolingUntil, // 设置 coolingUntil 字段
-      pairs: { // 设置 pairs 字段
-        total: this.pairManager.pairs.size, // 设置 total 字段
-        active: activePairs.length, // 设置 active 字段
-        withPositions: pairsWithPositions.length, // 设置 withPositions 字段
+      name: this.name, // name
+      arbType: this.config.arbType, // arb类型
+      running: this.running, // running
+      cooling: Date.now() < this.coolingUntil, // 冷却
+      coolingUntil: this.coolingUntil, // 冷却Until
+      pairs: { // pairs
+        total: this.pairManager.pairs.size, // 总
+        active: activePairs.length, // 活跃
+        withPositions: pairsWithPositions.length, // with持仓
       }, // 结束代码块
-      stats: this.stats, // 设置 stats 字段
-      winRate: this.stats.totalTrades > 0 // 设置 winRate 字段
+      stats: this.stats, // stats
+      winRate: this.stats.totalTrades > 0 // win频率
         ? this.stats.winCount / (this.stats.winCount + this.stats.lossCount) // 执行语句
         : 0, // 执行语句
     }; // 结束代码块
@@ -1578,8 +1578,8 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
 
     return { // 返回结果
       ...pair, // 展开对象或数组
-      currentPriceA: this.priceStore.getLatestPrice(pair.assetA), // 设置 currentPriceA 字段
-      currentPriceB: this.priceStore.getLatestPrice(pair.assetB), // 设置 currentPriceB 字段
+      currentPriceA: this.priceStore.getLatestPrice(pair.assetA), // current价格A
+      currentPriceB: this.priceStore.getLatestPrice(pair.assetB), // current价格B
     }; // 结束代码块
   } // 结束代码块
 
@@ -1588,15 +1588,15 @@ export class StatisticalArbitrageStrategy extends BaseStrategy { // 导出类 St
    */
   getAllPairsSummary() { // 调用 getAllPairsSummary
     return this.pairManager.getAllPairs().map(pair => ({ // 返回结果
-      id: pair.id, // 设置 id 字段
-      assetA: pair.assetA, // 设置 assetA 字段
-      assetB: pair.assetB, // 设置 assetB 字段
-      status: pair.status, // 设置 status 字段
-      correlation: pair.stats.correlation?.toFixed(3), // 设置 correlation 字段
-      halfLife: pair.stats.halfLife?.toFixed(1), // 设置 halfLife 字段
-      currentZScore: pair.stats.currentZScore?.toFixed(2), // 设置 currentZScore 字段
-      hasPosition: !!pair.position, // 设置 hasPosition 字段
-      performance: pair.performance, // 设置 performance 字段
+      id: pair.id, // ID
+      assetA: pair.assetA, // 资产A
+      assetB: pair.assetB, // 资产B
+      status: pair.status, // 状态
+      correlation: pair.stats.correlation?.toFixed(3), // correlation
+      halfLife: pair.stats.halfLife?.toFixed(1), // 半衰期
+      currentZScore: pair.stats.currentZScore?.toFixed(2), // currentZ分数
+      hasPosition: !!pair.position, // 是否有持仓
+      performance: pair.performance, // performance
     })); // 结束代码块
   } // 结束代码块
 

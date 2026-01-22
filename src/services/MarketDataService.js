@@ -60,19 +60,19 @@ function getConfiguredExchanges() { // 定义函数 getConfiguredExchanges
  */
 const REDIS_KEYS = { // 定义常量 REDIS_KEYS
   // 行情数据频道前缀 / Market data channel prefix
-  TICKER: 'market:ticker', // 设置 TICKER 字段
-  DEPTH: 'market:depth', // 设置 DEPTH 字段
-  TRADE: 'market:trade', // 设置 TRADE 字段
-  FUNDING: 'market:funding', // 设置 FUNDING 字段
-  KLINE: 'market:kline', // 设置 KLINE 字段
-  UNIFIED_CHANNEL: 'market_data', // 设置 UNIFIED_CHANNEL 字段
+  TICKER: 'market:ticker', // TICKER权限
+  DEPTH: 'market:depth', // DEPTH权限
+  TRADE: 'market:trade', // 交易权限
+  FUNDING: 'market:funding', // 资金费率权限
+  KLINE: 'market:kline', // KLINE权限
+  UNIFIED_CHANNEL: 'market_data', // UNIFIEDCHANNEL
 
   // 服务状态键 / Service status key
-  SERVICE_STATUS: 'market:service:status', // 设置 SERVICE_STATUS 字段
-  SERVICE_HEARTBEAT: 'market:service:heartbeat', // 设置 SERVICE_HEARTBEAT 字段
+  SERVICE_STATUS: 'market:service:status', // SERVICE状态权限
+  SERVICE_HEARTBEAT: 'market:service:heartbeat', // SERVICEHEARTBEAT权限
 
   // 订阅列表 / Subscription list
-  SUBSCRIPTIONS: 'market:subscriptions', // 设置 SUBSCRIPTIONS 字段
+  SUBSCRIPTIONS: 'market:subscriptions', // SUBSCRIPTIONS权限
 }; // 结束代码块
 
 /**
@@ -81,33 +81,33 @@ const REDIS_KEYS = { // 定义常量 REDIS_KEYS
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 配置 / Redis configuration
-  redis: { // 设置 redis 字段
-    host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-    password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-    db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  redis: { // Redis 配置
+    host: process.env.REDIS_HOST || 'localhost', // 主机
+    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+    password: process.env.REDIS_PASSWORD || null, // 密码
+    db: parseInt(process.env.REDIS_DB || '0', 10), // db
   }, // 结束代码块
 
   // 交易所列表 (优先环境变量，否则动态获取已配置的交易所)
   // Exchange list (prefer env var, otherwise dynamically get configured exchanges)
-  exchanges: process.env.MARKET_DATA_EXCHANGES // 读取环境变量 MARKET_DATA_EXCHANGES
+  exchanges: process.env.MARKET_DATA_EXCHANGES // Exchange list (prefer env var, otherwise dynamically get configured exchanges)
     ? process.env.MARKET_DATA_EXCHANGES.split(',') // 读取环境变量 MARKET_DATA_EXCHANGES
     : getConfiguredExchanges(), // 执行语句
 
   // 交易类型 (swap = 永续合约) / Trading type (swap = perpetual)
-  tradingType: process.env.TRADING_TYPE || 'swap', // 读取环境变量 TRADING_TYPE
+  tradingType: process.env.TRADING_TYPE || 'swap', // 交易类型 (swap = 永续合约)
 
   // Cache configuration
-  cache: SYSTEM_CONFIG.marketData?.cache || {}, // 设置 cache 字段
+  cache: SYSTEM_CONFIG.marketData?.cache || {}, // Cache configuration
 
   // 心跳间隔 (毫秒) / Heartbeat interval (ms)
-  heartbeatInterval: 5000, // 设置 heartbeatInterval 字段
+  heartbeatInterval: 5000, // 心跳间隔 (毫秒)
 
   // 是否订阅所有交易对 / Whether to subscribe to all symbols
-  subscribeAll: process.env.SUBSCRIBE_ALL !== 'false', // 读取环境变量 SUBSCRIBE_ALL
+  subscribeAll: process.env.SUBSCRIBE_ALL !== 'false', // 是否订阅所有交易对
 
   // 指定订阅的交易对 (逗号分隔) / Specified symbols to subscribe (comma separated)
-  symbols: process.env.MARKET_DATA_SYMBOLS ? process.env.MARKET_DATA_SYMBOLS.split(',') : [], // 读取环境变量 MARKET_DATA_SYMBOLS
+  symbols: process.env.MARKET_DATA_SYMBOLS ? process.env.MARKET_DATA_SYMBOLS.split(',') : [], // 指定订阅的交易对 (逗号分隔)
 }; // 结束代码块
 
 /**
@@ -132,13 +132,13 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
 
     // 合并配置 / Merge configuration
     this.config = { // 设置 config
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
-      exchanges: config.exchanges || DEFAULT_CONFIG.exchanges, // 设置 exchanges 字段
-      tradingType: config.tradingType || DEFAULT_CONFIG.tradingType, // 设置 tradingType 字段
-      cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // 设置 cache 字段
-      heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // 设置 heartbeatInterval 字段
-      subscribeAll: config.subscribeAll ?? DEFAULT_CONFIG.subscribeAll, // 设置 subscribeAll 字段
-      symbols: config.symbols || DEFAULT_CONFIG.symbols, // 设置 symbols 字段
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // redis
+      exchanges: config.exchanges || DEFAULT_CONFIG.exchanges, // 交易所
+      tradingType: config.tradingType || DEFAULT_CONFIG.tradingType, // 交易类型
+      cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // cache
+      heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // heartbeat间隔
+      subscribeAll: config.subscribeAll ?? DEFAULT_CONFIG.subscribeAll, // subscribeAll
+      symbols: config.symbols || DEFAULT_CONFIG.symbols, // 交易对列表
     }; // 结束代码块
 
     // 行情引擎实例 / Market data engine instance
@@ -161,13 +161,13 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      startTime: null, // 设置 startTime 字段
-      tickersPublished: 0, // 设置 tickersPublished 字段
-      depthsPublished: 0, // 设置 depthsPublished 字段
-      tradesPublished: 0, // 设置 tradesPublished 字段
-      fundingsPublished: 0, // 设置 fundingsPublished 字段
-      klinesPublished: 0, // 设置 klinesPublished 字段
-      errors: 0, // 设置 errors 字段
+      startTime: null, // 启动时间
+      tickersPublished: 0, // tickersPublished
+      depthsPublished: 0, // depthsPublished
+      tradesPublished: 0, // 成交Published
+      fundingsPublished: 0, // fundingsPublished
+      klinesPublished: 0, // klinesPublished
+      errors: 0, // 错误列表
     }; // 结束代码块
 
     // 日志前缀 / Log prefix
@@ -188,10 +188,10 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
 
     console.log(`${this.logPrefix} 正在启动共享行情服务... / Starting shared market data service...`); // 控制台输出
     console.log(`${this.logPrefix} 配置 / Config:`, { // 控制台输出
-      exchanges: this.config.exchanges, // 设置 exchanges 字段
-      tradingType: this.config.tradingType, // 设置 tradingType 字段
-      subscribeAll: this.config.subscribeAll, // 设置 subscribeAll 字段
-      symbolsCount: this.config.symbols.length, // 设置 symbolsCount 字段
+      exchanges: this.config.exchanges, // 交易所
+      tradingType: this.config.tradingType, // 交易类型
+      subscribeAll: this.config.subscribeAll, // subscribeAll
+      symbolsCount: this.config.symbols.length, // 交易对列表数量
     }); // 结束代码块
 
     try { // 尝试执行
@@ -292,14 +292,14 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
     const engineStats = this.marketDataEngine?.getStats() || {}; // 定义常量 engineStats
 
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      uptime: this.stats.startTime ? Date.now() - this.stats.startTime : 0, // 设置 uptime 字段
-      exchanges: this.config.exchanges, // 设置 exchanges 字段
-      stats: { // 设置 stats 字段
+      running: this.running, // running
+      uptime: this.stats.startTime ? Date.now() - this.stats.startTime : 0, // uptime
+      exchanges: this.config.exchanges, // 交易所
+      stats: { // stats
         ...this.stats, // 展开对象或数组
         ...engineStats, // 展开对象或数组
       }, // 结束代码块
-      connections: this.marketDataEngine?.getConnectionStatus() || {}, // 设置 connections 字段
+      connections: this.marketDataEngine?.getConnectionStatus() || {}, // connections
     }; // 结束代码块
   } // 结束代码块
 
@@ -317,11 +317,11 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
     console.log(`${this.logPrefix} 正在连接 Redis... / Connecting to Redis...`); // 控制台输出
 
     const redisConfig = { // 定义常量 redisConfig
-      host: this.config.redis.host, // 设置 host 字段
-      port: this.config.redis.port, // 设置 port 字段
-      password: this.config.redis.password, // 设置 password 字段
-      db: this.config.redis.db, // 设置 db 字段
-      retryStrategy: (times) => Math.min(times * 100, 3000), // 设置 retryStrategy 字段
+      host: this.config.redis.host, // 主机
+      port: this.config.redis.port, // 端口
+      password: this.config.redis.password, // 密码
+      db: this.config.redis.db, // db
+      retryStrategy: (times) => Math.min(times * 100, 3000), // 重试策略
     }; // 结束代码块
 
     // 主连接 (用于状态存储) / Main connection (for status storage)
@@ -363,19 +363,19 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
 
     this.marketDataEngine = new MarketDataEngine({ // 设置 marketDataEngine
       // 启用 WebSocket / Enable WebSocket
-      enableWebSocket: true, // 设置 enableWebSocket 字段
+      enableWebSocket: true, // 启用 WebSocket
 
       // 禁用内部 Redis (我们自己处理发布) / Disable internal Redis (we handle publishing ourselves)
-      enableRedis: false, // 设置 enableRedis 字段
+      enableRedis: false, // 禁用内部 Redis (我们自己处理发布)
 
       // 交易所列表 / Exchange list
-      exchanges: this.config.exchanges, // 设置 exchanges 字段
+      exchanges: this.config.exchanges, // 交易所列表
 
       // 交易类型 / Trading type
-      tradingType: this.config.tradingType, // 设置 tradingType 字段
+      tradingType: this.config.tradingType, // 交易类型
 
       // Cache configuration
-      cache: this.config.cache, // 设置 cache 字段
+      cache: this.config.cache, // Cache configuration
     }); // 结束代码块
 
     console.log(`${this.logPrefix} 行情引擎初始化完成 / Market data engine initialized`); // 控制台输出
@@ -453,16 +453,16 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
       // 添加时间戳 / Add timestamp
       const message = JSON.stringify({ // 定义常量 message
         ...data, // 展开对象或数组
-        publishedAt: Date.now(), // 设置 publishedAt 字段
+        publishedAt: Date.now(), // publishedAt
       }); // 结束代码块
 
       // 发布到 Redis / Publish to Redis
       await this.redisPub.publish(channel, message); // 等待异步结果
 
       const unifiedMessage = JSON.stringify({ // 定义常量 unifiedMessage
-        type: dataType === 'funding' ? 'fundingRate' : dataType, // 设置 type 字段
+        type: dataType === 'funding' ? 'fundingRate' : dataType, // 类型
         data, // 执行语句
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
       await this.redisPub.publish(REDIS_KEYS.UNIFIED_CHANNEL, unifiedMessage); // 等待异步结果
 
@@ -508,7 +508,7 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
         try { // 尝试执行
           // 获取交易所支持的交易对 / Get exchange supported symbols
           const exchangeInstance = ExchangeFactory.getInstance(exchange, { // 定义常量 exchangeInstance
-            defaultType: this.config.tradingType, // 设置 defaultType 字段
+            defaultType: this.config.tradingType, // 默认类型
           }); // 结束代码块
 
           // 连接交易所获取市场信息 / Connect exchange to get market info
@@ -550,10 +550,10 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
         await this.redis.set( // 等待异步结果
           REDIS_KEYS.SERVICE_HEARTBEAT, // 执行语句
           JSON.stringify({ // 调用 JSON.stringify
-            timestamp: Date.now(), // 设置 timestamp 字段
-            status: 'alive', // 设置 status 字段
-            uptime: status.uptime, // 设置 uptime 字段
-            stats: status.stats, // 设置 stats 字段
+            timestamp: Date.now(), // 时间戳
+            status: 'alive', // 状态
+            uptime: status.uptime, // uptime
+            stats: status.stats, // stats
           }), // 结束代码块
           'EX', // 执行语句
           30 // 30s expiry / 30 seconds expiry
@@ -616,9 +616,9 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
         REDIS_KEYS.SERVICE_STATUS, // 执行语句
         JSON.stringify({ // 调用 JSON.stringify
           status, // 执行语句
-          timestamp: Date.now(), // 设置 timestamp 字段
-          exchanges: this.config.exchanges, // 设置 exchanges 字段
-          pid: process.pid, // 设置 pid 字段
+          timestamp: Date.now(), // 时间戳
+          exchanges: this.config.exchanges, // 交易所
+          pid: process.pid, // pid
         }), // 结束代码块
         'EX', // 执行语句
         60 // 60秒过期 / 60 seconds expiry

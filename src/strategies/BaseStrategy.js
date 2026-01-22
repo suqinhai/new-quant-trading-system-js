@@ -42,16 +42,16 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
     // 策略状态 / Strategy state
     this.state = { // 设置 state
       // 是否已初始化 / Whether initialized
-      initialized: false, // 设置 initialized 字段
+      initialized: false, // initialized
 
       // 当前信号 / Current signal
-      signal: null, // 设置 signal 字段
+      signal: null, // 信号
 
       // 上一个信号 / Previous signal
-      lastSignal: null, // 设置 lastSignal 字段
+      lastSignal: null, // last信号
 
       // 自定义状态数据 / Custom state data
-      data: {}, // 设置 data 字段
+      data: {}, // 数据
     }; // 结束代码块
 
     // 指标缓存 / Indicator cache
@@ -102,13 +102,13 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
     // CCXT 格式: [timestamp, open, high, low, close, volume]
     for (const ohlcv of candles) { // 循环 const ohlcv of candles
       const candle = { // 定义常量 candle
-        symbol: symbol, // 设置 symbol 字段
-        timestamp: ohlcv[0], // 设置 timestamp 字段
-        open: ohlcv[1], // 设置 open 字段
-        high: ohlcv[2], // 设置 high 字段
-        low: ohlcv[3], // 设置 low 字段
-        close: ohlcv[4], // 设置 close 字段
-        volume: ohlcv[5], // 设置 volume 字段
+        symbol: symbol, // 交易对
+        timestamp: ohlcv[0], // 时间戳
+        open: ohlcv[1], // 开盘
+        high: ohlcv[2], // 最高
+        low: ohlcv[3], // 最低
+        close: ohlcv[4], // 收盘
+        volume: ohlcv[5], // 成交量
       }; // 结束代码块
       this._candleHistory.push(candle); // 访问 _candleHistory
     } // 结束代码块
@@ -139,13 +139,13 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
 
       // 构建 candle 对象 / Build candle object
       const candle = { // 定义常量 candle
-        symbol: data.symbol, // 设置 symbol 字段
-        timestamp: data.timestamp || Date.now(), // 设置 timestamp 字段
-        open: data.open, // 设置 open 字段
-        high: data.high, // 设置 high 字段
-        low: data.low, // 设置 low 字段
-        close: data.close, // 设置 close 字段
-        volume: data.volume, // 设置 volume 字段
+        symbol: data.symbol, // 交易对
+        timestamp: data.timestamp || Date.now(), // 时间戳
+        open: data.open, // 开盘
+        high: data.high, // 最高
+        low: data.low, // 最低
+        close: data.close, // 收盘
+        volume: data.volume, // 成交量
       }; // 结束代码块
 
       // 获取历史数据 (如果有) / Get history data (if available)
@@ -260,10 +260,10 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
   setBuySignal(reason = '') { // 调用 setBuySignal
     this.state.lastSignal = this.state.signal; // 访问 state
     this.state.signal = { // 访问 state
-      type: 'buy', // 设置 type 字段
-      side: 'buy', // 设置 side 字段
+      type: 'buy', // 类型
+      side: 'buy', // 方向
       reason, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
     if (process.env.LOG_LEVEL === 'debug') { // 条件判断 process.env.LOG_LEVEL === 'debug'
       const symbol = this.params?.symbol || this.symbol || this.params?.symbols?.[0] || 'n/a'; // 定义常量 symbol
@@ -287,10 +287,10 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
   setSellSignal(reason = '') { // 调用 setSellSignal
     this.state.lastSignal = this.state.signal; // 访问 state
     this.state.signal = { // 访问 state
-      type: 'sell', // 设置 type 字段
-      side: 'sell', // 设置 side 字段
+      type: 'sell', // 类型
+      side: 'sell', // 方向
       reason, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
     if (process.env.LOG_LEVEL === 'debug') { // 条件判断 process.env.LOG_LEVEL === 'debug'
       const symbol = this.params?.symbol || this.symbol || this.params?.symbols?.[0] || 'n/a'; // 定义常量 symbol
@@ -532,7 +532,7 @@ export class BaseStrategy extends EventEmitter { // 导出类 BaseStrategy
           console.log(`${prefix} DEBUG:`, message); // 控制台输出
         } // 结束代码块
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         console.log(`${prefix} INFO:`, message); // 控制台输出
     } // 结束代码块
   } // 结束代码块

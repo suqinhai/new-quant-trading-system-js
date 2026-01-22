@@ -45,35 +45,35 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 账户权益 / Account equity
-  ACCOUNT_EQUITY: { // 设置 ACCOUNT_EQUITY 字段
-    name: 'trading_account_equity', // 设置 name 字段
-    help: '账户权益 (USDT) / Account equity in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  ACCOUNT_EQUITY: { // 账户EQUITY
+    name: 'trading_account_equity', // name
+    help: '账户权益 (USDT) / Account equity in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // 可用余额 / Available balance
-  ACCOUNT_AVAILABLE: { // 设置 ACCOUNT_AVAILABLE 字段
-    name: 'trading_account_available', // 设置 name 字段
-    help: '可用余额 (USDT) / Available balance in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  ACCOUNT_AVAILABLE: { // 账户AVAILABLE
+    name: 'trading_account_available', // name
+    help: '可用余额 (USDT) / Available balance in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // 已用保证金 / Used margin
-  ACCOUNT_USED_MARGIN: { // 设置 ACCOUNT_USED_MARGIN 字段
-    name: 'trading_account_used_margin', // 设置 name 字段
-    help: '已用保证金 (USDT) / Used margin in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  ACCOUNT_USED_MARGIN: { // 账户USED保证金
+    name: 'trading_account_used_margin', // name
+    help: '已用保证金 (USDT) / Used margin in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // 保证金率 / Margin rate
-  MARGIN_RATE: { // 设置 MARGIN_RATE 字段
-    name: 'trading_margin_rate', // 设置 name 字段
-    help: '保证金率 / Margin rate ratio', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  MARGIN_RATE: { // 保证金频率
+    name: 'trading_margin_rate', // name
+    help: '保证金率 / Margin rate ratio', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // ============================================
@@ -81,35 +81,35 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 已实现盈亏 / Realized PnL
-  REALIZED_PNL: { // 设置 REALIZED_PNL 字段
-    name: 'trading_realized_pnl', // 设置 name 字段
-    help: '已实现盈亏 (USDT) / Realized PnL in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange', 'symbol'], // 设置 labels 字段
+  REALIZED_PNL: { // 已实现盈亏
+    name: 'trading_realized_pnl', // name
+    help: '已实现盈亏 (USDT) / Realized PnL in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange', 'symbol'], // labels
   }, // 结束代码块
 
   // 未实现盈亏 / Unrealized PnL
-  UNREALIZED_PNL: { // 设置 UNREALIZED_PNL 字段
-    name: 'trading_unrealized_pnl', // 设置 name 字段
-    help: '未实现盈亏 (USDT) / Unrealized PnL in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange', 'symbol'], // 设置 labels 字段
+  UNREALIZED_PNL: { // 未实现盈亏
+    name: 'trading_unrealized_pnl', // name
+    help: '未实现盈亏 (USDT) / Unrealized PnL in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange', 'symbol'], // labels
   }, // 结束代码块
 
   // 每日盈亏 / Daily PnL
-  DAILY_PNL: { // 设置 DAILY_PNL 字段
-    name: 'trading_daily_pnl', // 设置 name 字段
-    help: '每日盈亏 (USDT) / Daily PnL in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: [], // 设置 labels 字段
+  DAILY_PNL: { // 每日盈亏
+    name: 'trading_daily_pnl', // name
+    help: '每日盈亏 (USDT) / Daily PnL in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: [], // labels
   }, // 结束代码块
 
   // 每日回撤 / Daily drawdown
-  DAILY_DRAWDOWN: { // 设置 DAILY_DRAWDOWN 字段
-    name: 'trading_daily_drawdown', // 设置 name 字段
-    help: '每日回撤比例 / Daily drawdown ratio', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: [], // 设置 labels 字段
+  DAILY_DRAWDOWN: { // 每日回撤
+    name: 'trading_daily_drawdown', // name
+    help: '每日回撤比例 / Daily drawdown ratio', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: [], // labels
   }, // 结束代码块
 
   // ============================================
@@ -117,27 +117,27 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 持仓数量 / Position count
-  POSITION_COUNT: { // 设置 POSITION_COUNT 字段
-    name: 'trading_position_count', // 设置 name 字段
-    help: '持仓数量 / Number of positions', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange', 'side'], // 设置 labels 字段
+  POSITION_COUNT: { // 持仓数量
+    name: 'trading_position_count', // name
+    help: '持仓数量 / Number of positions', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange', 'side'], // labels
   }, // 结束代码块
 
   // 持仓价值 / Position value
-  POSITION_VALUE: { // 设置 POSITION_VALUE 字段
-    name: 'trading_position_value', // 设置 name 字段
-    help: '持仓价值 (USDT) / Position value in USDT', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange', 'symbol', 'side'], // 设置 labels 字段
+  POSITION_VALUE: { // 持仓VALUE
+    name: 'trading_position_value', // name
+    help: '持仓价值 (USDT) / Position value in USDT', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange', 'symbol', 'side'], // labels
   }, // 结束代码块
 
   // 持仓杠杆 / Position leverage
-  POSITION_LEVERAGE: { // 设置 POSITION_LEVERAGE 字段
-    name: 'trading_position_leverage', // 设置 name 字段
-    help: '持仓杠杆倍数 / Position leverage', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange', 'symbol'], // 设置 labels 字段
+  POSITION_LEVERAGE: { // 持仓杠杆
+    name: 'trading_position_leverage', // name
+    help: '持仓杠杆倍数 / Position leverage', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange', 'symbol'], // labels
   }, // 结束代码块
 
   // ============================================
@@ -145,27 +145,27 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 交易总数 / Total trades
-  TRADES_TOTAL: { // 设置 TRADES_TOTAL 字段
-    name: 'trading_trades_total', // 设置 name 字段
-    help: '交易总数 / Total number of trades', // 设置 help 字段
-    type: METRIC_TYPE.COUNTER, // 设置 type 字段
-    labels: ['exchange', 'symbol', 'side'], // 设置 labels 字段
+  TRADES_TOTAL: { // 成交总
+    name: 'trading_trades_total', // name
+    help: '交易总数 / Total number of trades', // help
+    type: METRIC_TYPE.COUNTER, // 类型
+    labels: ['exchange', 'symbol', 'side'], // labels
   }, // 结束代码块
 
   // 交易量 / Trade volume
-  TRADE_VOLUME: { // 设置 TRADE_VOLUME 字段
-    name: 'trading_trade_volume', // 设置 name 字段
-    help: '交易量 (USDT) / Trade volume in USDT', // 设置 help 字段
-    type: METRIC_TYPE.COUNTER, // 设置 type 字段
-    labels: ['exchange', 'symbol'], // 设置 labels 字段
+  TRADE_VOLUME: { // 交易成交量
+    name: 'trading_trade_volume', // name
+    help: '交易量 (USDT) / Trade volume in USDT', // help
+    type: METRIC_TYPE.COUNTER, // 类型
+    labels: ['exchange', 'symbol'], // labels
   }, // 结束代码块
 
   // 手续费 / Fees
-  TRADE_FEES: { // 设置 TRADE_FEES 字段
-    name: 'trading_trade_fees', // 设置 name 字段
-    help: '手续费总额 (USDT) / Total fees in USDT', // 设置 help 字段
-    type: METRIC_TYPE.COUNTER, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  TRADE_FEES: { // 交易FEES
+    name: 'trading_trade_fees', // name
+    help: '手续费总额 (USDT) / Total fees in USDT', // help
+    type: METRIC_TYPE.COUNTER, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // ============================================
@@ -173,19 +173,19 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 订单总数 / Total orders
-  ORDERS_TOTAL: { // 设置 ORDERS_TOTAL 字段
-    name: 'trading_orders_total', // 设置 name 字段
-    help: '订单总数 / Total number of orders', // 设置 help 字段
-    type: METRIC_TYPE.COUNTER, // 设置 type 字段
-    labels: ['exchange', 'status'], // 设置 labels 字段
+  ORDERS_TOTAL: { // 订单总
+    name: 'trading_orders_total', // name
+    help: '订单总数 / Total number of orders', // help
+    type: METRIC_TYPE.COUNTER, // 类型
+    labels: ['exchange', 'status'], // labels
   }, // 结束代码块
 
   // 活跃订单数 / Active orders
-  ORDERS_ACTIVE: { // 设置 ORDERS_ACTIVE 字段
-    name: 'trading_orders_active', // 设置 name 字段
-    help: '活跃订单数 / Number of active orders', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  ORDERS_ACTIVE: { // 订单活跃
+    name: 'trading_orders_active', // name
+    help: '活跃订单数 / Number of active orders', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 
   // ============================================
@@ -193,19 +193,19 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 风险级别 / Risk level
-  RISK_LEVEL: { // 设置 RISK_LEVEL 字段
-    name: 'trading_risk_level', // 设置 name 字段
-    help: '风险级别 (0=normal, 1=warning, 2=danger, 3=critical, 4=emergency)', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: [], // 设置 labels 字段
+  RISK_LEVEL: { // 风险级别
+    name: 'trading_risk_level', // name
+    help: '风险级别 (0=normal, 1=warning, 2=danger, 3=critical, 4=emergency)', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: [], // labels
   }, // 结束代码块
 
   // 警报计数 / Alert count
-  ALERTS_TOTAL: { // 设置 ALERTS_TOTAL 字段
-    name: 'trading_alerts_total', // 设置 name 字段
-    help: '警报总数 / Total number of alerts', // 设置 help 字段
-    type: METRIC_TYPE.COUNTER, // 设置 type 字段
-    labels: ['level', 'category'], // 设置 labels 字段
+  ALERTS_TOTAL: { // 告警总
+    name: 'trading_alerts_total', // name
+    help: '警报总数 / Total number of alerts', // help
+    type: METRIC_TYPE.COUNTER, // 类型
+    labels: ['level', 'category'], // labels
   }, // 结束代码块
 
   // ============================================
@@ -213,19 +213,19 @@ const PREDEFINED_METRICS = { // 定义常量 PREDEFINED_METRICS
   // ============================================
 
   // 系统运行时间 / System uptime
-  SYSTEM_UPTIME: { // 设置 SYSTEM_UPTIME 字段
-    name: 'trading_system_uptime_seconds', // 设置 name 字段
-    help: '系统运行时间 (秒) / System uptime in seconds', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: [], // 设置 labels 字段
+  SYSTEM_UPTIME: { // 系统UPTIME
+    name: 'trading_system_uptime_seconds', // name
+    help: '系统运行时间 (秒) / System uptime in seconds', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: [], // labels
   }, // 结束代码块
 
   // 连接状态 / Connection status
-  CONNECTION_STATUS: { // 设置 CONNECTION_STATUS 字段
-    name: 'trading_connection_status', // 设置 name 字段
-    help: '连接状态 (1=connected, 0=disconnected)', // 设置 help 字段
-    type: METRIC_TYPE.GAUGE, // 设置 type 字段
-    labels: ['exchange'], // 设置 labels 字段
+  CONNECTION_STATUS: { // CONNECTION状态连接状态
+    name: 'trading_connection_status', // name
+    help: '连接状态 (1=connected, 0=disconnected)', // help
+    type: METRIC_TYPE.GAUGE, // 类型
+    labels: ['exchange'], // labels
   }, // 结束代码块
 }; // 结束代码块
 
@@ -239,32 +239,32 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用 HTTP 端点 / Enable HTTP endpoint
-  httpEnabled: true, // 设置 httpEnabled 字段
+  httpEnabled: true, // 是否启用 HTTP 端点
 
   // HTTP 端口 / HTTP port
-  httpPort: 9090, // 设置 httpPort 字段
+  httpPort: 9090, // http端口
 
   // HTTP 主机 / HTTP host
-  httpHost: '0.0.0.0', // 设置 httpHost 字段
+  httpHost: '0.0.0.0', // http主机
 
   // 指标路径 / Metrics path
-  metricsPath: '/metrics', // 设置 metricsPath 字段
+  metricsPath: '/metrics', // 指标路径
 
   // ============================================
   // 指标配置 / Metrics Configuration
   // ============================================
 
   // 指标前缀 / Metrics prefix
-  metricsPrefix: '', // 设置 metricsPrefix 字段
+  metricsPrefix: '', // 指标前缀
 
   // 默认标签 / Default labels
-  defaultLabels: { // 设置 defaultLabels 字段
+  defaultLabels: { // 默认Labels
     app: 'quant-trading-system',  // 应用名称 / Application name
     env: 'production',             // 环境 / Environment
   }, // 结束代码块
 
   // 是否包含时间戳 / Include timestamp
-  includeTimestamp: true, // 设置 includeTimestamp 字段
+  includeTimestamp: true, // include时间戳
 
   // ============================================
   // 数据收集配置 / Data Collection Configuration
@@ -274,17 +274,17 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   collectInterval: 5000,  // 5秒 / 5 seconds
 
   // 是否自动收集 / Auto collect
-  autoCollect: true, // 设置 autoCollect 字段
+  autoCollect: true, // 自动Collect
 
   // ============================================
   // Loki 配置 / Loki Configuration
   // ============================================
 
   // 是否启用 Loki 推送 / Enable Loki push
-  lokiEnabled: false, // 设置 lokiEnabled 字段
+  lokiEnabled: false, // 是否启用 Loki 推送
 
   // Loki 推送 URL / Loki push URL
-  lokiUrl: 'http://localhost:3100/loki/api/v1/push', // 设置 lokiUrl 字段
+  lokiUrl: 'http://localhost:3100/loki/api/v1/push', // Loki 推送 URL
 
   // Loki 推送间隔 (毫秒) / Loki push interval (ms)
   lokiPushInterval: 10000,  // 10秒 / 10 seconds
@@ -294,10 +294,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[Metrics]', // 设置 logPrefix 字段
+  logPrefix: '[Metrics]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -379,9 +379,9 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
     for (const [, metric] of Object.entries(PREDEFINED_METRICS)) { // 循环 const [, metric] of Object.entries(PREDEFINED...
       // 注册指标 / Register metric
       this.registerMetric(metric.name, { // 调用 registerMetric
-        type: metric.type, // 设置 type 字段
-        help: metric.help, // 设置 help 字段
-        labels: metric.labels, // 设置 labels 字段
+        type: metric.type, // 类型
+        help: metric.help, // help
+        labels: metric.labels, // labels
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -571,9 +571,9 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
       // 使用 exclusive: false 允许多个进程监听同一端口 (用于集群模式)
       // Using exclusive: false allows multiple processes to listen on the same port (for cluster mode)
       this.server.listen({ // 访问 server
-        port: this.config.httpPort, // 设置 port 字段
-        host: this.config.httpHost, // 设置 host 字段
-        exclusive: false, // 设置 exclusive 字段
+        port: this.config.httpPort, // 端口
+        host: this.config.httpHost, // 主机
+        exclusive: false, // exclusive
       }); // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -597,8 +597,8 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
 
       // 设置响应头 / Set response headers
       res.writeHead(200, { // 调用 res.writeHead
-        'Content-Type': 'text/plain; charset=utf-8', // 设置 Content-Type 字段
-        'Cache-Control': 'no-cache', // 设置 Cache-Control 字段
+        'Content-Type': 'text/plain; charset=utf-8', // Content类型
+        'Cache-Control': 'no-cache', // Cache控制
       }); // 结束代码块
 
       // 发送响应 / Send response
@@ -641,7 +641,7 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
     // 创建指标对象 / Create metric object
     this.metrics.set(fullName, { // 访问 metrics
       // 指标名称 / Metric name
-      name: fullName, // 设置 name 字段
+      name: fullName, // name
 
       // 指标类型 / Metric type
       type, // 执行语句
@@ -655,7 +655,7 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
       // 值存储 / Values storage
       // 格式: Map<labelKey, { value, timestamp }>
       // Format: Map<labelKey, { value, timestamp }>
-      values: new Map(), // 设置 values 字段
+      values: new Map(), // Format: Map<labelKey, { value, timestamp }>
     }); // 结束代码块
   } // 结束代码块
 
@@ -687,7 +687,7 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
     metric.values.set(labelKey, { // 调用 metric.values.set
       value, // 执行语句
       labels, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -721,9 +721,9 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
 
     // 设置新值 / Set new value
     metric.values.set(labelKey, { // 调用 metric.values.set
-      value: currentValue + increment, // 设置 value 字段
+      value: currentValue + increment, // value
       labels, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -885,21 +885,21 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
         const posValue = Math.abs(pos.notional || (pos.contracts || 0) * (pos.markPrice || 0)); // 定义常量 posValue
         this.setMetric(PREDEFINED_METRICS.POSITION_VALUE.name, posValue, { // 调用 setMetric
           exchange, // 执行语句
-          symbol: pos.symbol, // 设置 symbol 字段
+          symbol: pos.symbol, // 交易对
           side, // 执行语句
         }); // 结束代码块
 
         // 设置未实现盈亏 / Set unrealized PnL
         this.setMetric(PREDEFINED_METRICS.UNREALIZED_PNL.name, pos.unrealizedPnl || 0, { // 调用 setMetric
           exchange, // 执行语句
-          symbol: pos.symbol, // 设置 symbol 字段
+          symbol: pos.symbol, // 交易对
         }); // 结束代码块
 
         // 设置杠杆 / Set leverage
         if (pos.leverage) { // 条件判断 pos.leverage
           this.setMetric(PREDEFINED_METRICS.POSITION_LEVERAGE.name, pos.leverage, { // 调用 setMetric
             exchange, // 执行语句
-            symbol: pos.symbol, // 设置 symbol 字段
+            symbol: pos.symbol, // 交易对
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -932,11 +932,11 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
 
       // 风险级别映射 / Risk level mapping
       const levelMap = { // 定义常量 levelMap
-        'normal': 0, // 设置 normal 字段
-        'warning': 1, // 设置 warning 字段
-        'danger': 2, // 设置 danger 字段
-        'critical': 3, // 设置 critical 字段
-        'emergency': 4, // 设置 emergency 字段
+        'normal': 0, // normal
+        'warning': 1, // 警告
+        'danger': 2, // danger
+        'critical': 3, // critical
+        'emergency': 4, // emergency
       }; // 结束代码块
 
       // 设置风险级别 / Set risk level
@@ -1064,8 +1064,8 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
   exportJson() { // 调用 exportJson
     // 结果对象 / Result object
     const result = { // 定义常量 result
-      timestamp: Date.now(), // 设置 timestamp 字段
-      metrics: {}, // 设置 metrics 字段
+      timestamp: Date.now(), // 时间戳
+      metrics: {}, // 指标
     }; // 结束代码块
 
     // 遍历所有指标 / Iterate all metrics
@@ -1074,16 +1074,16 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
       const values = []; // 定义常量 values
       for (const [, valueInfo] of metric.values) { // 循环 const [, valueInfo] of metric.values
         values.push({ // 调用 values.push
-          value: valueInfo.value, // 设置 value 字段
-          labels: valueInfo.labels, // 设置 labels 字段
-          timestamp: valueInfo.timestamp, // 设置 timestamp 字段
+          value: valueInfo.value, // value
+          labels: valueInfo.labels, // labels
+          timestamp: valueInfo.timestamp, // 时间戳
         }); // 结束代码块
       } // 结束代码块
 
       // 添加到结果 / Add to result
       result.metrics[name] = { // 执行语句
-        type: metric.type, // 设置 type 字段
-        help: metric.help, // 设置 help 字段
+        type: metric.type, // 类型
+        help: metric.help, // help
         values, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -1112,13 +1112,13 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
     // 添加到缓冲 / Add to buffer
     this.lokiBuffer.push({ // 访问 lokiBuffer
       // 时间戳 (纳秒) / Timestamp (nanoseconds)
-      timestamp: Date.now() * 1000000, // 设置 timestamp 字段
+      timestamp: Date.now() * 1000000, // 时间戳 (纳秒)
 
       // 日志消息 / Log message
       message, // 执行语句
 
       // 标签 / Labels
-      labels: { ...this.config.defaultLabels, ...labels }, // 设置 labels 字段
+      labels: { ...this.config.defaultLabels, ...labels }, // labels
     }); // 结束代码块
   } // 结束代码块
 
@@ -1147,8 +1147,8 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
       // 获取或创建流 / Get or create stream
       if (!streams.has(labelKey)) { // 条件判断 !streams.has(labelKey)
         streams.set(labelKey, { // 调用 streams.set
-          stream: log.labels, // 设置 stream 字段
-          values: [], // 设置 values 字段
+          stream: log.labels, // stream
+          values: [], // values
         }); // 结束代码块
       } // 结束代码块
 
@@ -1161,17 +1161,17 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
 
     // 构建 Loki 请求体 / Build Loki request body
     const body = { // 定义常量 body
-      streams: Array.from(streams.values()), // 设置 streams 字段
+      streams: Array.from(streams.values()), // streams
     }; // 结束代码块
 
     try { // 尝试执行
       // 发送请求 / Send request
       const response = await fetch(this.config.lokiUrl, { // 定义常量 response
-        method: 'POST', // 设置 method 字段
-        headers: { // 设置 headers 字段
-          'Content-Type': 'application/json', // 设置 Content-Type 字段
+        method: 'POST', // method
+        headers: { // headers
+          'Content-Type': 'application/json', // Content类型
         }, // 结束代码块
-        body: JSON.stringify(body), // 设置 body 字段
+        body: JSON.stringify(body), // body
       }); // 结束代码块
 
       // 检查响应 / Check response
@@ -1234,16 +1234,16 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
       ...this.stats, // 展开对象或数组
 
       // 指标数量 / Metrics count
-      metricsCount: this.metrics.size, // 设置 metricsCount 字段
+      metricsCount: this.metrics.size, // 指标数量
 
       // 运行时间 / Uptime
-      uptime: Date.now() - this.startTime, // 设置 uptime 字段
+      uptime: Date.now() - this.startTime, // uptime
 
       // 是否运行中 / Whether running
-      running: this.running, // 设置 running 字段
+      running: this.running, // running
 
       // Loki 缓冲大小 / Loki buffer size
-      lokiBufferSize: this.lokiBuffer.length, // 设置 lokiBufferSize 字段
+      lokiBufferSize: this.lokiBuffer.length, // Loki 缓冲大小
     }; // 结束代码块
   } // 结束代码块
 
@@ -1267,7 +1267,7 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         if (this.config.verbose) { // 条件判断 this.config.verbose
           console.log(fullMessage); // 控制台输出
         } // 结束代码块

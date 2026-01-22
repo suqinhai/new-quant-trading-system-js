@@ -373,8 +373,8 @@ export function formatCurrency(value, currency = '$', decimals = 2) { // 导出�
 
   // 格式化数字 / Format number
   const formatted = absValue.toLocaleString('en-US', { // 定义常量 formatted
-    minimumFractionDigits: decimals, // 设置 minimumFractionDigits 字段
-    maximumFractionDigits: decimals, // 设置 maximumFractionDigits 字段
+    minimumFractionDigits: decimals, // minimumFractionDigits
+    maximumFractionDigits: decimals, // maximumFractionDigits
   }); // 结束代码块
 
   return `${sign}${currency}${formatted}`; // 返回结果

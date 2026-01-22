@@ -14,10 +14,10 @@ import { EventEmitter } from 'events'; // 导入模块 events
  * 指标类型
  */
 const MetricType = { // 定义常量 MetricType
-  COUNTER: 'counter', // 设置 COUNTER 字段
-  GAUGE: 'gauge', // 设置 GAUGE 字段
-  HISTOGRAM: 'histogram', // 设置 HISTOGRAM 字段
-  SUMMARY: 'summary', // 设置 SUMMARY 字段
+  COUNTER: 'counter', // 计数器
+  GAUGE: 'gauge', // 仪表
+  HISTOGRAM: 'histogram', // 直方图
+  SUMMARY: 'summary', // SUMMARY
 }; // 结束代码块
 
 /**
@@ -30,17 +30,17 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
 
     this.config = { // 设置 config
       // 指标前缀
-      prefix: config.prefix || 'trading', // 设置 prefix 字段
+      prefix: config.prefix || 'trading', // 前缀
       // 默认标签
-      defaultLabels: config.defaultLabels || {}, // 设置 defaultLabels 字段
+      defaultLabels: config.defaultLabels || {}, // 默认Labels
       // 直方图桶边界
-      histogramBuckets: config.histogramBuckets || [ // 设置 histogramBuckets 字段
+      histogramBuckets: config.histogramBuckets || [ // 直方图Buckets
         0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, // 执行语句
       ], // 结束数组或索引
       // 摘要分位数
-      summaryQuantiles: config.summaryQuantiles || [0.5, 0.9, 0.95, 0.99], // 设置 summaryQuantiles 字段
+      summaryQuantiles: config.summaryQuantiles || [0.5, 0.9, 0.95, 0.99], // summaryQuantiles
       // 最大标签值数量
-      maxLabelValues: config.maxLabelValues || 100, // 设置 maxLabelValues 字段
+      maxLabelValues: config.maxLabelValues || 100, // 最大标签值数量
     }; // 结束代码块
 
     // 注册的指标
@@ -133,11 +133,11 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     } // 结束代码块
 
     const metric = { // 定义常量 metric
-      type: MetricType.COUNTER, // 设置 type 字段
-      name: fullName, // 设置 name 字段
+      type: MetricType.COUNTER, // 类型
+      name: fullName, // name
       help, // 执行语句
       labelNames, // 执行语句
-      values: new Map(), // 设置 values 字段
+      values: new Map(), // values
     }; // 结束代码块
 
     this.metrics.set(fullName, metric); // 访问 metrics
@@ -158,11 +158,11 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     } // 结束代码块
 
     const metric = { // 定义常量 metric
-      type: MetricType.GAUGE, // 设置 type 字段
-      name: fullName, // 设置 name 字段
+      type: MetricType.GAUGE, // 类型
+      name: fullName, // name
       help, // 执行语句
       labelNames, // 执行语句
-      values: new Map(), // 设置 values 字段
+      values: new Map(), // values
     }; // 结束代码块
 
     this.metrics.set(fullName, metric); // 访问 metrics
@@ -184,12 +184,12 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     } // 结束代码块
 
     const metric = { // 定义常量 metric
-      type: MetricType.HISTOGRAM, // 设置 type 字段
-      name: fullName, // 设置 name 字段
+      type: MetricType.HISTOGRAM, // 类型
+      name: fullName, // name
       help, // 执行语句
       labelNames, // 执行语句
-      buckets: buckets || this.config.histogramBuckets, // 设置 buckets 字段
-      values: new Map(), // 设置 values 字段
+      buckets: buckets || this.config.histogramBuckets, // buckets
+      values: new Map(), // values
     }; // 结束代码块
 
     this.metrics.set(fullName, metric); // 访问 metrics
@@ -211,12 +211,12 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     } // 结束代码块
 
     const metric = { // 定义常量 metric
-      type: MetricType.SUMMARY, // 设置 type 字段
-      name: fullName, // 设置 name 字段
+      type: MetricType.SUMMARY, // 类型
+      name: fullName, // name
       help, // 执行语句
       labelNames, // 执行语句
-      quantiles: quantiles || this.config.summaryQuantiles, // 设置 quantiles 字段
-      values: new Map(), // 设置 values 字段
+      quantiles: quantiles || this.config.summaryQuantiles, // quantiles
+      values: new Map(), // values
     }; // 结束代码块
 
     this.metrics.set(fullName, metric); // 访问 metrics
@@ -271,8 +271,8 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
 
     metric.values.set(key, { // 调用 metric.values.set
       value, // 执行语句
-      labels: mergedLabels, // 设置 labels 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      labels: mergedLabels, // labels
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     this.emit('metric', { name: fullName, type: 'set', value, labels: mergedLabels }); // 调用 emit
@@ -298,11 +298,11 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     let current = metric.values.get(key); // 定义变量 current
     if (!current) { // 条件判断 !current
       current = { // 赋值 current
-        labels: mergedLabels, // 设置 labels 字段
-        count: 0, // 设置 count 字段
-        sum: 0, // 设置 sum 字段
-        values: [], // 设置 values 字段
-        buckets: metric.type === MetricType.HISTOGRAM ? // 设置 buckets 字段
+        labels: mergedLabels, // labels
+        count: 0, // 数量
+        sum: 0, // sum
+        values: [], // values
+        buckets: metric.type === MetricType.HISTOGRAM ? // buckets
           metric.buckets.reduce((acc, b) => ({ ...acc, [b]: 0 }), { '+Inf': 0 }) : // 调用 metric.buckets.reduce
           null, // 执行语句
       }; // 结束代码块
@@ -360,11 +360,11 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
    */
   recordOrder(order) { // 调用 recordOrder
     this.inc('orders_total', 1, { // 调用 inc
-      exchange: order.exchange, // 设置 exchange 字段
-      symbol: order.symbol, // 设置 symbol 字段
-      side: order.side, // 设置 side 字段
-      type: order.type, // 设置 type 字段
-      status: order.status, // 设置 status 字段
+      exchange: order.exchange, // 交易所
+      symbol: order.symbol, // 交易对
+      side: order.side, // 方向
+      type: order.type, // 类型
+      status: order.status, // 状态
     }); // 结束代码块
   } // 结束代码块
 
@@ -389,32 +389,32 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
    */
   recordTrade(trade) { // 调用 recordTrade
     this.inc('trades_total', 1, { // 调用 inc
-      exchange: trade.exchange, // 设置 exchange 字段
-      symbol: trade.symbol, // 设置 symbol 字段
-      side: trade.side, // 设置 side 字段
+      exchange: trade.exchange, // 交易所
+      symbol: trade.symbol, // 交易对
+      side: trade.side, // 方向
     }); // 结束代码块
 
     this.inc('trade_volume_total', trade.amount, { // 调用 inc
-      exchange: trade.exchange, // 设置 exchange 字段
-      symbol: trade.symbol, // 设置 symbol 字段
+      exchange: trade.exchange, // 交易所
+      symbol: trade.symbol, // 交易对
     }); // 结束代码块
 
     this.observe('trade_size', trade.amount, { // 调用 observe
-      exchange: trade.exchange, // 设置 exchange 字段
-      symbol: trade.symbol, // 设置 symbol 字段
+      exchange: trade.exchange, // 交易所
+      symbol: trade.symbol, // 交易对
     }); // 结束代码块
 
     if (trade.fee) { // 条件判断 trade.fee
       this.inc('fees_total', trade.fee, { // 调用 inc
-        exchange: trade.exchange, // 设置 exchange 字段
-        currency: trade.feeCurrency || 'USD', // 设置 currency 字段
+        exchange: trade.exchange, // 交易所
+        currency: trade.feeCurrency || 'USD', // currency
       }); // 结束代码块
     } // 结束代码块
 
     if (trade.realizedPnl) { // 条件判断 trade.realizedPnl
       this.inc('realized_pnl_total', trade.realizedPnl, { // 调用 inc
-        exchange: trade.exchange, // 设置 exchange 字段
-        strategy: trade.strategy || 'unknown', // 设置 strategy 字段
+        exchange: trade.exchange, // 交易所
+        strategy: trade.strategy || 'unknown', // 策略
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -425,20 +425,20 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
    */
   updatePosition(position) { // 调用 updatePosition
     this.set('positions_open', position.amount, { // 调用 set
-      exchange: position.exchange, // 设置 exchange 字段
-      symbol: position.symbol, // 设置 symbol 字段
-      side: position.side, // 设置 side 字段
+      exchange: position.exchange, // 交易所
+      symbol: position.symbol, // 交易对
+      side: position.side, // 方向
     }); // 结束代码块
 
     this.set('position_value', position.value || position.amount * position.currentPrice, { // 调用 set
-      exchange: position.exchange, // 设置 exchange 字段
-      symbol: position.symbol, // 设置 symbol 字段
+      exchange: position.exchange, // 交易所
+      symbol: position.symbol, // 交易对
     }); // 结束代码块
 
     if (position.unrealizedPnl !== undefined) { // 条件判断 position.unrealizedPnl !== undefined
       this.set('unrealized_pnl', position.unrealizedPnl, { // 调用 set
-        exchange: position.exchange, // 设置 exchange 字段
-        symbol: position.symbol, // 设置 symbol 字段
+        exchange: position.exchange, // 交易所
+        symbol: position.symbol, // 交易对
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -449,8 +449,8 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
    */
   recordSignal(signal) { // 调用 recordSignal
     this.inc('signals_total', 1, { // 调用 inc
-      strategy: signal.strategy, // 设置 strategy 字段
-      type: signal.type, // 设置 type 字段
+      strategy: signal.strategy, // 策略
+      type: signal.type, // 类型
     }); // 结束代码块
   } // 结束代码块
 
@@ -462,7 +462,7 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
   recordExchangeError(exchange, errorType) { // 调用 recordExchangeError
     this.inc('exchange_errors_total', 1, { // 调用 inc
       exchange, // 执行语句
-      error_type: errorType, // 设置 error_type 字段
+      error_type: errorType, // 错误类型
     }); // 结束代码块
   } // 结束代码块
 
@@ -509,9 +509,9 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
 
     // 直方图/摘要返回统计信息
     return { // 返回结果
-      count: data.count, // 设置 count 字段
-      sum: data.sum, // 设置 sum 字段
-      mean: data.count > 0 ? data.sum / data.count : 0, // 设置 mean 字段
+      count: data.count, // 数量
+      sum: data.sum, // sum
+      mean: data.count > 0 ? data.sum / data.count : 0, // mean
     }; // 结束代码块
   } // 结束代码块
 
@@ -523,25 +523,25 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
 
     for (const [name, metric] of this.metrics) { // 循环 const [name, metric] of this.metrics
       result[name] = { // 执行语句
-        type: metric.type, // 设置 type 字段
-        help: metric.help, // 设置 help 字段
-        values: [], // 设置 values 字段
+        type: metric.type, // 类型
+        help: metric.help, // help
+        values: [], // values
       }; // 结束代码块
 
       for (const [, data] of metric.values) { // 循环 const [, data] of metric.values
         if (metric.type === MetricType.COUNTER || metric.type === MetricType.GAUGE) { // 条件判断 metric.type === MetricType.COUNTER || metric....
           result[name].values.push({ // 执行语句
-            labels: data.labels, // 设置 labels 字段
-            value: data.value, // 设置 value 字段
-            timestamp: data.timestamp, // 设置 timestamp 字段
+            labels: data.labels, // labels
+            value: data.value, // value
+            timestamp: data.timestamp, // 时间戳
           }); // 结束代码块
         } else { // 执行语句
           result[name].values.push({ // 执行语句
-            labels: data.labels, // 设置 labels 字段
-            count: data.count, // 设置 count 字段
-            sum: data.sum, // 设置 sum 字段
-            mean: data.count > 0 ? data.sum / data.count : 0, // 设置 mean 字段
-            timestamp: data.timestamp, // 设置 timestamp 字段
+            labels: data.labels, // labels
+            count: data.count, // 数量
+            sum: data.sum, // sum
+            mean: data.count > 0 ? data.sum / data.count : 0, // mean
+            timestamp: data.timestamp, // 时间戳
           }); // 结束代码块
         } // 结束代码块
       } // 结束代码块
@@ -574,16 +574,16 @@ class MetricsCollector extends EventEmitter { // 定义类 MetricsCollector(继�
     const count = sorted.length; // 定义常量 count
 
     return { // 返回结果
-      count: data.count, // 设置 count 字段
-      sum: data.sum, // 设置 sum 字段
-      mean: data.sum / data.count, // 设置 mean 字段
-      min: sorted[0], // 设置 min 字段
-      max: sorted[count - 1], // 设置 max 字段
-      p50: sorted[Math.floor(count * 0.5)], // 设置 p50 字段
-      p90: sorted[Math.floor(count * 0.9)], // 设置 p90 字段
-      p95: sorted[Math.floor(count * 0.95)], // 设置 p95 字段
-      p99: sorted[Math.floor(count * 0.99)], // 设置 p99 字段
-      buckets: { ...data.buckets }, // 设置 buckets 字段
+      count: data.count, // 数量
+      sum: data.sum, // sum
+      mean: data.sum / data.count, // mean
+      min: sorted[0], // 最小
+      max: sorted[count - 1], // 最大
+      p50: sorted[Math.floor(count * 0.5)], // p50
+      p90: sorted[Math.floor(count * 0.9)], // p90
+      p95: sorted[Math.floor(count * 0.95)], // p95
+      p99: sorted[Math.floor(count * 0.99)], // p99
+      buckets: { ...data.buckets }, // buckets
     }; // 结束代码块
   } // 结束代码块
 

@@ -39,7 +39,7 @@ export const PERIOD_TYPE = { // 导出常量 PERIOD_TYPE
   LOW_LIQUIDITY: 'low_liq',         // 低流动性时段 / Low liquidity period
   NEWS_EVENT: 'news',               // 新闻事件 / News event
   MARKET_OPEN: 'market_open',       // 开盘时段 / Market open
-  MARKET_CLOSE: 'market_close',     // 收盘时段 / Market close
+  MARKET_CLOSE: 'market_close',     // 市场平仓权限
   MAINTENANCE: 'maintenance',       // 维护时段 / Maintenance period
   FUNDING_RATE: 'funding',          // 资金费率结算 / Funding rate settlement
 }; // 结束代码块
@@ -50,20 +50,20 @@ export const PERIOD_TYPE = { // 导出常量 PERIOD_TYPE
  */
 export const KNOWN_HIGH_RISK_PERIODS = { // 导出常量 KNOWN_HIGH_RISK_PERIODS
   // 加密货币资金费率结算时间（每8小时）/ Crypto funding rate settlement times
-  FUNDING_RATE_TIMES: [0, 8, 16],  // 00:00, 08:00, 16:00 UTC
+  FUNDING_RATE_TIMES: [0, 8, 16],  // 加密货币资金费率结算时间（每8小时）/ Crypto funding rate settlement times
 
   // 资金费率前后的高风险窗口（分钟）/ High risk window around funding rate (minutes)
-  FUNDING_RISK_WINDOW: 15, // 设置 FUNDING_RISK_WINDOW 字段
+  FUNDING_RISK_WINDOW: 15, // 资金费率前后的高风险窗口（分钟）/ High risk window around funding rate (minutes)
 
   // 传统市场开盘时间（会影响加密市场）/ Traditional market open times
-  MARKET_OPENS: { // 设置 MARKET_OPENS 字段
-    US: { hour: 13, minute: 30 },   // 纽约 09:30 EST = 13:30 UTC (冬令时 14:30)
-    EU: { hour: 7, minute: 0 },     // 欧洲 08:00 CET = 07:00 UTC
-    ASIA: { hour: 0, minute: 0 },   // 亚洲 09:00 JST = 00:00 UTC
+  MARKET_OPENS: { // 传统市场开盘时间（会影响加密市场）/ Traditional market open times
+    US: { hour: 13, minute: 30 },   // US
+    EU: { hour: 7, minute: 0 },     // EU
+    ASIA: { hour: 0, minute: 0 },   // ASIA
   }, // 结束代码块
 
   // 开盘前后的高风险窗口（分钟）/ High risk window around market open (minutes)
-  MARKET_OPEN_WINDOW: 30, // 设置 MARKET_OPEN_WINDOW 字段
+  MARKET_OPEN_WINDOW: 30, // 开盘前后的高风险窗口（分钟）/ High risk window around market open (minutes)
 }; // 结束代码块
 
 /**
@@ -72,35 +72,35 @@ export const KNOWN_HIGH_RISK_PERIODS = { // 导出常量 KNOWN_HIGH_RISK_PERIODS
  */
 export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   // 滑点阈值定义 / Slippage threshold definitions
-  slippageThresholds: { // 设置 slippageThresholds 字段
-    veryLow: 0.0005,    // 0.05%
-    low: 0.001,         // 0.1%
-    medium: 0.002,      // 0.2%
-    high: 0.005,        // 0.5%
-    veryHigh: 0.01,     // 1%
-    extreme: 0.02,      // 2%
+  slippageThresholds: { // 滑点阈值定义
+    veryLow: 0.0005,    // very最低
+    low: 0.001,         // 最低
+    medium: 0.002,      // medium
+    high: 0.005,        // 最高
+    veryHigh: 0.01,     // very最高
+    extreme: 0.02,      // 极端
   }, // 结束代码块
 
   // 历史数据保留时间（小时）/ Historical data retention (hours)
   historyRetentionHours: 168,  // 7 天 / 7 days
 
   // 统计窗口大小 / Statistics window size
-  statisticsWindow: 100, // 设置 statisticsWindow 字段
+  statisticsWindow: 100, // statistics窗口
 
   // 时间分析粒度（分钟）/ Time analysis granularity (minutes)
-  timeGranularity: 15, // 设置 timeGranularity 字段
+  timeGranularity: 15, // 时间分析粒度（分钟）/ Time analysis granularity (minutes)
 
   // 高风险时段执行延迟（毫秒）/ High risk period execution delay (ms)
-  highRiskDelay: 30000, // 设置 highRiskDelay 字段
+  highRiskDelay: 30000, // 高风险时段执行延迟（毫秒）/ High risk period execution delay (ms)
 
   // 是否启用自动延迟 / Enable auto delay
-  enableAutoDelay: true, // 设置 enableAutoDelay 字段
+  enableAutoDelay: true, // 是否启用自动延迟
 
   // 警告回调间隔（毫秒）/ Warning callback interval (ms)
-  warningInterval: 5000, // 设置 warningInterval 字段
+  warningInterval: 5000, // 警告回调间隔（毫秒）/ Warning callback interval (ms)
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 }; // 结束代码块
 
 // ============================================
@@ -144,11 +144,11 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
 
     // 全局统计 / Global statistics
     this.globalStats = { // 设置 globalStats
-      totalRecords: 0, // 设置 totalRecords 字段
-      avgSlippage: 0, // 设置 avgSlippage 字段
-      maxSlippage: 0, // 设置 maxSlippage 字段
-      highRiskPeriodsDetected: 0, // 设置 highRiskPeriodsDetected 字段
-      delayedExecutions: 0, // 设置 delayedExecutions 字段
+      totalRecords: 0, // 总Records
+      avgSlippage: 0, // avg滑点
+      maxSlippage: 0, // 最大滑点
+      highRiskPeriodsDetected: 0, // 最高风险PeriodsDetected
+      delayedExecutions: 0, // delayedExecutions
     }; // 结束代码块
   } // 结束代码块
 
@@ -180,8 +180,8 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     // 创建记录 / Create record
     const record = { // 定义常量 record
       timestamp, // 执行语句
-      slippage: Math.abs(slippage), // 设置 slippage 字段
-      isUnfavorable: slippage > 0, // 设置 isUnfavorable 字段
+      slippage: Math.abs(slippage), // 滑点
+      isUnfavorable: slippage > 0, // 是否Unfavorable
       side, // 执行语句
       size, // 执行语句
       expectedPrice, // 执行语句
@@ -189,9 +189,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       spread, // 执行语句
       volatility, // 执行语句
       orderType, // 执行语句
-      hour: new Date(timestamp).getUTCHours(), // 设置 hour 字段
-      minute: new Date(timestamp).getUTCMinutes(), // 设置 minute 字段
-      dayOfWeek: new Date(timestamp).getUTCDay(), // 设置 dayOfWeek 字段
+      hour: new Date(timestamp).getUTCHours(), // 小时
+      minute: new Date(timestamp).getUTCMinutes(), // 分钟
+      dayOfWeek: new Date(timestamp).getUTCDay(), // 天Of周
     }; // 结束代码块
 
     // 添加到历史记录 / Add to history
@@ -254,9 +254,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       riskScore += this._slippageToScore(avgSlippage) * 0.3; // 执行语句
       if (avgSlippage > this.config.slippageThresholds.high) { // 条件判断 avgSlippage > this.config.slippageThresholds....
         riskFactors.push({ // 调用 riskFactors.push
-          factor: 'historical_period', // 设置 factor 字段
+          factor: 'historical_period', // factor
           avgSlippage, // 执行语句
-          weight: 0.3, // 设置 weight 字段
+          weight: 0.3, // weight
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -268,9 +268,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       riskScore += this._slippageToScore(recentAvg) * 0.4; // 执行语句
       if (recentAvg > this.config.slippageThresholds.medium) { // 条件判断 recentAvg > this.config.slippageThresholds.me...
         riskFactors.push({ // 调用 riskFactors.push
-          factor: 'recent_slippage', // 设置 factor 字段
-          avgSlippage: recentAvg, // 设置 avgSlippage 字段
-          weight: 0.4, // 设置 weight 字段
+          factor: 'recent_slippage', // factor
+          avgSlippage: recentAvg, // avg滑点
+          weight: 0.4, // weight
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -279,9 +279,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     if (knownRisks.length > 0) { // 条件判断 knownRisks.length > 0
       riskScore += 30 * 0.3;  // 已知风险时段加分 / Add score for known risk periods
       riskFactors.push(...knownRisks.map(risk => ({ // 调用 riskFactors.push
-        factor: risk.type, // 设置 factor 字段
-        detail: risk.detail, // 设置 detail 字段
-        weight: 0.3, // 设置 weight 字段
+        factor: risk.type, // factor
+        detail: risk.detail, // detail
+        weight: 0.3, // weight
       }))); // 结束代码块
     } // 结束代码块
 
@@ -291,15 +291,15 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     // 返回评估结果 / Return assessment result
     return { // 返回结果
       symbol, // 执行语句
-      timestamp: now.getTime(), // 设置 timestamp 字段
+      timestamp: now.getTime(), // 时间戳
       riskLevel, // 执行语句
       riskScore, // 执行语句
       riskFactors, // 执行语句
-      historicalAvg: periodData?.avgSlippage || null, // 设置 historicalAvg 字段
-      recentAvg: realtimeData?.recentSlippages?.length > 0 // 设置 recentAvg 字段
+      historicalAvg: periodData?.avgSlippage || null, // historicalAvg
+      recentAvg: realtimeData?.recentSlippages?.length > 0 // recentAvg
         ? realtimeData.recentSlippages.reduce((a, b) => a + b, 0) / realtimeData.recentSlippages.length // 定义箭头函数
         : null, // 执行语句
-      recommendation: this._generateRecommendation(riskLevel, riskFactors), // 设置 recommendation 字段
+      recommendation: this._generateRecommendation(riskLevel, riskFactors), // recommendation
       knownRisks, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -318,7 +318,7 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     // 如果不启用自动延迟 / If auto delay not enabled
     if (!this.config.enableAutoDelay) { // 条件判断 !this.config.enableAutoDelay
       return { // 返回结果
-        shouldDelay: false, // 设置 shouldDelay 字段
+        shouldDelay: false, // 是否需要延迟
         risk, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -351,7 +351,7 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
         } // 结束代码块
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         shouldDelay = false; // 赋值 shouldDelay
     } // 结束代码块
 
@@ -427,12 +427,12 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
         : 50;  // 无数据时默认中等风险 / Default medium risk if no data
 
       candidates.push({ // 调用 candidates.push
-        time: new Date(scanTime), // 设置 time 字段
+        time: new Date(scanTime), // 时间
         hour, // 执行语句
         minute, // 执行语句
         score, // 执行语句
-        avgSlippage: periodData?.avgSlippage || null, // 设置 avgSlippage 字段
-        sampleCount: periodData?.count || 0, // 设置 sampleCount 字段
+        avgSlippage: periodData?.avgSlippage || null, // avg滑点
+        sampleCount: periodData?.count || 0, // 采样数量
         knownRisks, // 执行语句
       }); // 结束代码块
 
@@ -448,19 +448,19 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
 
     return { // 返回结果
       symbol, // 执行语句
-      optimalTime: optimal?.time || now, // 设置 optimalTime 字段
-      optimalScore: optimal?.score || 50, // 设置 optimalScore 字段
-      optimalAvgSlippage: optimal?.avgSlippage, // 设置 optimalAvgSlippage 字段
-      sampleCount: optimal?.sampleCount || 0, // 设置 sampleCount 字段
-      alternatives: alternatives.map(c => ({ // 设置 alternatives 字段
-        time: c.time, // 设置 time 字段
-        score: c.score, // 设置 score 字段
-        avgSlippage: c.avgSlippage, // 设置 avgSlippage 字段
+      optimalTime: optimal?.time || now, // optimal时间
+      optimalScore: optimal?.score || 50, // optimal分数
+      optimalAvgSlippage: optimal?.avgSlippage, // optimalAvg滑点
+      sampleCount: optimal?.sampleCount || 0, // 采样数量
+      alternatives: alternatives.map(c => ({ // alternatives
+        time: c.time, // 时间
+        score: c.score, // 分数
+        avgSlippage: c.avgSlippage, // avg滑点
       })), // 结束代码块
-      analysis: { // 设置 analysis 字段
-        scannedPeriods: candidates.length, // 设置 scannedPeriods 字段
+      analysis: { // analysis
+        scannedPeriods: candidates.length, // scannedPeriods
         withinHours, // 执行语句
-        avoidedKnownRisks: avoidKnownRisks, // 设置 avoidedKnownRisks 字段
+        avoidedKnownRisks: avoidKnownRisks, // avoidedKnownRisks
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -478,8 +478,8 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     if (!symbolStats) { // 条件判断 !symbolStats
       return { // 返回结果
         symbol, // 执行语句
-        hasData: false, // 设置 hasData 字段
-        message: '没有足够的历史数据 / Insufficient historical data', // 设置 message 字段
+        hasData: false, // 是否有数据
+        message: '没有足够的历史数据 / Insufficient historical data', // 消息
       }; // 结束代码块
     } // 结束代码块
 
@@ -496,10 +496,10 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
         hourData.push({ // 调用 hourData.push
           hour, // 执行语句
           minute, // 执行语句
-          avgSlippage: data?.avgSlippage || null, // 设置 avgSlippage 字段
-          maxSlippage: data?.maxSlippage || null, // 设置 maxSlippage 字段
-          count: data?.count || 0, // 设置 count 字段
-          riskLevel: data // 设置 riskLevel 字段
+          avgSlippage: data?.avgSlippage || null, // avg滑点
+          maxSlippage: data?.maxSlippage || null, // 最大滑点
+          count: data?.count || 0, // 数量
+          riskLevel: data // 风险级别
             ? this._scoreToRiskLevel(this._slippageToScore(data.avgSlippage)) // 执行语句
             : null, // 执行语句
         }); // 结束代码块
@@ -516,9 +516,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
             slot.riskLevel === SLIPPAGE_RISK.EXTREME) { // 赋值 slot.riskLevel
           highRiskPeriods.push({ // 调用 highRiskPeriods.push
             hour, // 执行语句
-            minute: slot.minute, // 设置 minute 字段
-            avgSlippage: slot.avgSlippage, // 设置 avgSlippage 字段
-            riskLevel: slot.riskLevel, // 设置 riskLevel 字段
+            minute: slot.minute, // 分钟
+            avgSlippage: slot.avgSlippage, // avg滑点
+            riskLevel: slot.riskLevel, // 风险级别
           }); // 结束代码块
         } // 结束代码块
       }); // 结束代码块
@@ -526,14 +526,14 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
 
     return { // 返回结果
       symbol, // 执行语句
-      hasData: true, // 设置 hasData 字段
+      hasData: true, // 是否有数据
       heatmap, // 执行语句
       highRiskPeriods, // 执行语句
-      summary: { // 设置 summary 字段
-        totalSlots: 96,  // 24 * 4
-        slotsWithData: heatmap.flat().filter(s => s.count > 0).length, // 设置 slotsWithData 字段
-        highRiskSlots: highRiskPeriods.length, // 设置 highRiskSlots 字段
-        avgSlippage: this._calculateOverallAvg(symbolStats), // 设置 avgSlippage 字段
+      summary: { // summary
+        totalSlots: 96,  // 总Slots
+        slotsWithData: heatmap.flat().filter(s => s.count > 0).length, // slotsWith数据
+        highRiskSlots: highRiskPeriods.length, // 最高风险Slots
+        avgSlippage: this._calculateOverallAvg(symbolStats), // avg滑点
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -560,11 +560,11 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
 
     if (!symbolStats.has(periodKey)) { // 条件判断 !symbolStats.has(periodKey)
       symbolStats.set(periodKey, { // 调用 symbolStats.set
-        avgSlippage: 0, // 设置 avgSlippage 字段
-        maxSlippage: 0, // 设置 maxSlippage 字段
-        minSlippage: Infinity, // 设置 minSlippage 字段
-        count: 0, // 设置 count 字段
-        totalSlippage: 0, // 设置 totalSlippage 字段
+        avgSlippage: 0, // avg滑点
+        maxSlippage: 0, // 最大滑点
+        minSlippage: Infinity, // 最小滑点
+        count: 0, // 数量
+        totalSlippage: 0, // 总滑点
       }); // 结束代码块
     } // 结束代码块
 
@@ -587,9 +587,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
   _updateRealtimeMonitor(symbol, record) { // 调用 _updateRealtimeMonitor
     if (!this.realtimeMonitor.has(symbol)) { // 条件判断 !this.realtimeMonitor.has(symbol)
       this.realtimeMonitor.set(symbol, { // 访问 realtimeMonitor
-        recentSlippages: [], // 设置 recentSlippages 字段
-        trend: 'stable', // 设置 trend 字段
-        lastUpdate: Date.now(), // 设置 lastUpdate 字段
+        recentSlippages: [], // recentSlippages
+        trend: 'stable', // trend
+        lastUpdate: Date.now(), // last更新
       }); // 结束代码块
     } // 结束代码块
 
@@ -656,9 +656,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       if (minuteDiff <= KNOWN_HIGH_RISK_PERIODS.FUNDING_RISK_WINDOW || // 条件判断 minuteDiff <= KNOWN_HIGH_RISK_PERIODS.FUNDING...
           (1440 - minuteDiff) <= KNOWN_HIGH_RISK_PERIODS.FUNDING_RISK_WINDOW) { // 执行语句
         risks.push({ // 调用 risks.push
-          type: PERIOD_TYPE.FUNDING_RATE, // 设置 type 字段
-          detail: `资金费率结算 ${fundingHour}:00 UTC / Funding rate settlement`, // 设置 detail 字段
-          severity: 'high', // 设置 severity 字段
+          type: PERIOD_TYPE.FUNDING_RATE, // 类型
+          detail: `资金费率结算 ${fundingHour}:00 UTC / Funding rate settlement`, // detail
+          severity: 'high', // severity
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -671,9 +671,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
 
       if (minuteDiff <= KNOWN_HIGH_RISK_PERIODS.MARKET_OPEN_WINDOW) { // 条件判断 minuteDiff <= KNOWN_HIGH_RISK_PERIODS.MARKET_...
         risks.push({ // 调用 risks.push
-          type: PERIOD_TYPE.MARKET_OPEN, // 设置 type 字段
-          detail: `${market} 市场开盘 / ${market} market open`, // 设置 detail 字段
-          severity: 'medium', // 设置 severity 字段
+          type: PERIOD_TYPE.MARKET_OPEN, // 类型
+          detail: `${market} 市场开盘 / ${market} market open`, // detail
+          severity: 'medium', // severity
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -760,7 +760,7 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       case SLIPPAGE_RISK.VERY_LOW: // 分支 SLIPPAGE_RISK.VERY_LOW
         return '良好的执行时机 / Good execution timing'; // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return '请根据具体情况决定 / Decide based on specific conditions'; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -822,9 +822,9 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     this.emit('slippageWarning', { // 调用 emit
       symbol, // 执行语句
       riskLevel, // 执行语句
-      slippage: record.slippage, // 设置 slippage 字段
-      timestamp: record.timestamp, // 设置 timestamp 字段
-      recommendation: this._generateRecommendation(riskLevel, []), // 设置 recommendation 字段
+      slippage: record.slippage, // 滑点
+      timestamp: record.timestamp, // 时间戳
+      recommendation: this._generateRecommendation(riskLevel, []), // recommendation
     }); // 结束代码块
 
     // 记录日志 / Log
@@ -883,8 +883,8 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.globalStats, // 展开对象或数组
-      symbolsTracked: this.slippageHistory.size, // 设置 symbolsTracked 字段
-      periodsCovered: Array.from(this.periodStats.values()) // 设置 periodsCovered 字段
+      symbolsTracked: this.slippageHistory.size, // 交易对列表Tracked
+      periodsCovered: Array.from(this.periodStats.values()) // periodsCovered
         .reduce((sum, stats) => sum + stats.size, 0), // 定义箭头函数
     }; // 结束代码块
   } // 结束代码块
@@ -910,11 +910,11 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
     this.activeWarnings.clear(); // 访问 activeWarnings
 
     this.globalStats = { // 设置 globalStats
-      totalRecords: 0, // 设置 totalRecords 字段
-      avgSlippage: 0, // 设置 avgSlippage 字段
-      maxSlippage: 0, // 设置 maxSlippage 字段
-      highRiskPeriodsDetected: 0, // 设置 highRiskPeriodsDetected 字段
-      delayedExecutions: 0, // 设置 delayedExecutions 字段
+      totalRecords: 0, // 总Records
+      avgSlippage: 0, // avg滑点
+      maxSlippage: 0, // 最大滑点
+      highRiskPeriodsDetected: 0, // 最高风险PeriodsDetected
+      delayedExecutions: 0, // delayedExecutions
     }; // 结束代码块
   } // 结束代码块
 
@@ -940,7 +940,7 @@ export class SlippageAnalyzer extends EventEmitter { // 导出类 SlippageAnalyz
       case 'warn': // 分支 'warn'
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
     } // 结束代码块
   } // 结束代码块

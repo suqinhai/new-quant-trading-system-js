@@ -37,9 +37,9 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * Funding rate settlement frequency
  */
 export const FUNDING_FREQUENCY = { // 导出常量 FUNDING_FREQUENCY
-  HOURLY: 'hourly',       // 每小时 (1倍)
-  EIGHT_HOURLY: '8h',     // 每8小时 (标准)
-  FOUR_HOURLY: '4h',      // 每4小时 (2倍)
+  HOURLY: 'hourly',       // HOURLY
+  EIGHT_HOURLY: '8h',     // EIGHTHOURLY
+  FOUR_HOURLY: '4h',      // FOURHOURLY
 }; // 结束代码块
 
 /**
@@ -47,10 +47,10 @@ export const FUNDING_FREQUENCY = { // 导出常量 FUNDING_FREQUENCY
  * Extreme value detection method
  */
 export const EXTREME_DETECTION = { // 导出常量 EXTREME_DETECTION
-  PERCENTILE: 'percentile',       // 百分位数
+  PERCENTILE: 'percentile',       // PERCENTILE
   Z_SCORE: 'z_score',             // Z分数
-  ABSOLUTE: 'absolute',           // 绝对值
-  HISTORICAL: 'historical',       // 历史对比
+  ABSOLUTE: 'absolute',           // ABSOLUTE
+  HISTORICAL: 'historical',       // HISTORICAL
 }; // 结束代码块
 
 /**
@@ -62,10 +62,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 基础配置 / Basic Configuration
   // ============================================
 
-  name: 'FundingRateExtremeStrategy', // 设置 name 字段
+  name: 'FundingRateExtremeStrategy', // name
 
   // 监控的永续合约交易对 / Perpetual swap symbols to monitor
-  symbols: [ // 设置 symbols 字段
+  symbols: [ // 监控的永续合约交易对
     'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', // 执行语句
     'XRP/USDT', 'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', // 执行语句
     'DOT/USDT', 'MATIC/USDT', 'LINK/USDT', 'UNI/USDT', // 执行语句
@@ -74,75 +74,75 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   ], // 结束数组或索引
 
   // 资金费率结算频率 / Funding settlement frequency
-  fundingFrequency: FUNDING_FREQUENCY.EIGHT_HOURLY, // 设置 fundingFrequency 字段
+  fundingFrequency: FUNDING_FREQUENCY.EIGHT_HOURLY, // 资金费率结算频率
 
   // ============================================
   // 极值检测配置 / Extreme Detection Configuration
   // ============================================
 
   // 极值检测方法 / Extreme detection method
-  extremeDetection: EXTREME_DETECTION.PERCENTILE, // 设置 extremeDetection 字段
+  extremeDetection: EXTREME_DETECTION.PERCENTILE, // 极端Detection
 
   // 高费率阈值 (百分位) / High rate threshold (percentile)
-  highRatePercentile: 90, // 设置 highRatePercentile 字段
+  highRatePercentile: 90, // 高费率阈值 (百分位)
 
   // 低费率阈值 (百分位) / Low rate threshold (percentile)
-  lowRatePercentile: 10, // 设置 lowRatePercentile 字段
+  lowRatePercentile: 10, // 低费率阈值 (百分位)
 
   // 绝对值阈值 (年化) / Absolute threshold (annualized)
-  absoluteHighThreshold: 0.50,   // 50% 年化
-  absoluteLowThreshold: -0.20,   // -20% 年化
+  absoluteHighThreshold: 0.50,   // 绝对值阈值 (年化)
+  absoluteLowThreshold: -0.20,   // absolute最低阈值
 
   // Z分数阈值 / Z-score threshold
-  zScoreThreshold: 2.0, // 设置 zScoreThreshold 字段
+  zScoreThreshold: 2.0, // Z分数阈值
 
   // 历史回看周期 (天) / Historical lookback (days)
-  historicalLookback: 30, // 设置 historicalLookback 字段
+  historicalLookback: 30, // 历史回看周期 (天)
 
   // ============================================
   // 排名配置 / Ranking Configuration
   // ============================================
 
   // 选取高费率 Top N 做空 / Select top N high rates for short
-  topN: 3, // 设置 topN 字段
+  topN: 3, // 选取高费率 Top N 做空
 
   // 选取低费率 Bottom N 做多 / Select bottom N low rates for long
-  bottomN: 3, // 设置 bottomN 字段
+  bottomN: 3, // 选取低费率 Bottom N 做多
 
   // 最小年化费率利差 / Minimum annualized rate spread
-  minAnnualizedSpread: 0.20,  // 20%
+  minAnnualizedSpread: 0.20,  // 最小年化费率利差
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 仓位类型 / Position type
-  positionType: POSITION_TYPE.LONG_SHORT, // 设置 positionType 字段
+  positionType: POSITION_TYPE.LONG_SHORT, // 持仓类型仓位类型
 
   // 单个资产最大仓位 / Max position per asset
-  maxPositionPerAsset: 0.10, // 设置 maxPositionPerAsset 字段
+  maxPositionPerAsset: 0.10, // 单个资产最大仓位
 
   // 单边总仓位 / Total position per side
-  maxPositionPerSide: 0.40, // 设置 maxPositionPerSide 字段
+  maxPositionPerSide: 0.40, // 最大持仓每方向
 
   // 杠杆倍数 / Leverage
-  leverage: 3, // 设置 leverage 字段
+  leverage: 3, // 杠杆
 
   // 市场中性 (多空等量) / Market neutral
-  marketNeutral: true, // 设置 marketNeutral 字段
+  marketNeutral: true, // 市场中性 (多空等量)
 
   // ============================================
   // 持仓配置 / Holding Configuration
   // ============================================
 
   // 目标持仓周期 (小时) / Target holding period (hours)
-  targetHoldingHours: 8, // 设置 targetHoldingHours 字段
+  targetHoldingHours: 8, // 目标持仓周期 (小时)
 
   // 最大持仓周期 (小时) / Max holding period (hours)
-  maxHoldingHours: 72, // 设置 maxHoldingHours 字段
+  maxHoldingHours: 72, // 最大持仓周期 (小时)
 
   // 最小持仓周期 (小时) / Min holding period (hours)
-  minHoldingHours: 4, // 设置 minHoldingHours 字段
+  minHoldingHours: 4, // 最小持仓周期 (小时)
 
   // ============================================
   // 再平衡配置 / Rebalancing Configuration
@@ -152,43 +152,43 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   rebalancePeriod: 1 * 60 * 60 * 1000, // 每小时 / Every hour
 
   // 费率刷新间隔 (毫秒) / Rate refresh interval (ms)
-  rateRefreshInterval: 60 * 1000,  // 每分钟
+  rateRefreshInterval: 60 * 1000,  // 费率刷新间隔 (毫秒)
 
   // ============================================
   // 平仓条件 / Close Conditions
   // ============================================
 
   // 费率回归阈值 (相对于入场时) / Rate reversion threshold
-  rateReversionThreshold: 0.50,  // 费率回归50%时平仓
+  rateReversionThreshold: 0.50,  // 费率回归阈值 (相对于入场时)
 
   // 费率反转阈值 / Rate reversal threshold
-  rateReversalThreshold: -0.10,  // 费率反向超过-10%时平仓
+  rateReversalThreshold: -0.10,  // 费率反转阈值
 
   // 价格止损 / Price stop loss
-  priceStopLoss: 0.05, // 设置 priceStopLoss 字段
+  priceStopLoss: 0.05, // 价格止损
 
   // 综合止损 (价格损失 - 费率收益) / Combined stop loss
-  combinedStopLoss: 0.03, // 设置 combinedStopLoss 字段
+  combinedStopLoss: 0.03, // 综合止损 (价格损失 - 费率收益)
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
   // 最大单日费率损失 / Max daily funding loss
-  maxDailyFundingLoss: 0.005,  // 0.5%
+  maxDailyFundingLoss: 0.005,  // 最大单日费率损失
 
   // 最大净敞口 / Max net exposure
-  maxNetExposure: 0.10, // 设置 maxNetExposure 字段
+  maxNetExposure: 0.10, // 最大NetExposure
 
   // 最大相关性 / Max correlation between positions
-  maxCorrelation: 0.8, // 设置 maxCorrelation 字段
+  maxCorrelation: 0.8, // 最大Correlation
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[FundingExtreme]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[FundingExtreme]', // 日志前缀
 }; // 结束代码块
 
 /**
@@ -243,13 +243,13 @@ export class FundingRateDataManager extends EventEmitter { // 导出类 FundingR
   updateRate(symbol, rateData) { // 调用 updateRate
     // 保存当前费率 / Save current rate
     this.currentRates.set(symbol, { // 访问 currentRates
-      rate: rateData.fundingRate || 0, // 设置 rate 字段
-      predictedRate: rateData.fundingRatePredicted || rateData.fundingRate || 0, // 设置 predictedRate 字段
-      nextFundingTime: rateData.fundingTimestamp || 0, // 设置 nextFundingTime 字段
-      markPrice: rateData.markPrice || 0, // 设置 markPrice 字段
-      indexPrice: rateData.indexPrice || 0, // 设置 indexPrice 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
-      exchange: rateData.exchange || 'unknown', // 设置 exchange 字段
+      rate: rateData.fundingRate || 0, // 频率
+      predictedRate: rateData.fundingRatePredicted || rateData.fundingRate || 0, // predicted频率
+      nextFundingTime: rateData.fundingTimestamp || 0, // next资金费率时间
+      markPrice: rateData.markPrice || 0, // mark价格
+      indexPrice: rateData.indexPrice || 0, // index价格
+      timestamp: Date.now(), // 时间戳
+      exchange: rateData.exchange || 'unknown', // 交易所
     }); // 结束代码块
 
     // 记录到历史 / Record to history
@@ -259,8 +259,8 @@ export class FundingRateDataManager extends EventEmitter { // 导出类 FundingR
 
     const history = this.rateHistory.get(symbol); // 定义常量 history
     history.push({ // 调用 history.push
-      rate: rateData.fundingRate || 0, // 设置 rate 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      rate: rateData.fundingRate || 0, // 频率
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近7天的数据 / Keep last 7 days of data
@@ -308,8 +308,8 @@ export class FundingRateDataManager extends EventEmitter { // 导出类 FundingR
       max, // 执行语句
       p10, // 执行语句
       p90, // 执行语句
-      count: rates.length, // 设置 count 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      count: rates.length, // 数量
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -456,9 +456,9 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
 
     // 统计 / Statistics
     this.fundingStats = { // 设置 fundingStats
-      totalFundingIncome: 0, // 设置 totalFundingIncome 字段
-      fundingPayments: 0, // 设置 fundingPayments 字段
-      settlementsCount: 0, // 设置 settlementsCount 字段
+      totalFundingIncome: 0, // 总资金费率Income
+      fundingPayments: 0, // 资金费率Payments
+      settlementsCount: 0, // settlements数量
     }; // 结束代码块
 
     // 设置费率更新监听 / Set up rate update listener
@@ -576,13 +576,13 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
 
       ranking.push({ // 调用 ranking.push
         symbol, // 执行语句
-        value: rate.rate, // 设置 value 字段
+        value: rate.rate, // value
         annualizedRate, // 执行语句
         extremeScore, // 执行语句
-        zScore: this.fundingManager.calculateZScore(symbol), // 设置 zScore 字段
-        percentile: this.fundingManager.getPercentileRank(symbol), // 设置 percentile 字段
-        predictedRate: rate.predictedRate, // 设置 predictedRate 字段
-        nextFundingTime: rate.nextFundingTime, // 设置 nextFundingTime 字段
+        zScore: this.fundingManager.calculateZScore(symbol), // Z分数
+        percentile: this.fundingManager.getPercentileRank(symbol), // percentile
+        predictedRate: rate.predictedRate, // predicted频率
+        nextFundingTime: rate.nextFundingTime, // next资金费率时间
         stats, // 执行语句
       }); // 结束代码块
     } // 结束代码块
@@ -636,7 +636,7 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
       } // 结束代码块
 
       case EXTREME_DETECTION.HISTORICAL: // 分支 EXTREME_DETECTION.HISTORICAL
-      default: { // 默认分支
+      default: { // 默认
         if (!stats) return 0; // 条件判断 !stats
         const range = stats.max - stats.min; // 定义常量 range
         if (range === 0) return 0; // 条件判断 range === 0
@@ -665,7 +665,7 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
         return item.annualizedRate >= this.config.absoluteHighThreshold; // 返回结果
 
       case EXTREME_DETECTION.HISTORICAL: // 分支 EXTREME_DETECTION.HISTORICAL
-      default: // 默认分支
+      default: // 默认
         return item.extremeScore >= 0.8; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -690,7 +690,7 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
         return item.annualizedRate <= this.config.absoluteLowThreshold; // 返回结果
 
       case EXTREME_DETECTION.HISTORICAL: // 分支 EXTREME_DETECTION.HISTORICAL
-      default: // 默认分支
+      default: // 默认
         return item.extremeScore <= -0.8; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -781,7 +781,7 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
       return { // 返回结果
         ...asset, // 展开对象或数组
         side, // 执行语句
-        weight: Math.max(weight, 0.02), // 设置 weight 字段
+        weight: Math.max(weight, 0.02), // weight
       }; // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -810,8 +810,8 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
     const shortScale = targetWeight / shortWeight; // 定义常量 shortScale
 
     return { // 返回结果
-      longAssets: longAssets.map(a => ({ ...a, weight: a.weight * longScale })), // 设置 longAssets 字段
-      shortAssets: shortAssets.map(a => ({ ...a, weight: a.weight * shortScale })), // 设置 shortAssets 字段
+      longAssets: longAssets.map(a => ({ ...a, weight: a.weight * longScale })), // longAssets
+      shortAssets: shortAssets.map(a => ({ ...a, weight: a.weight * shortScale })), // shortAssets
     }; // 结束代码块
   } // 结束代码块
 
@@ -989,16 +989,16 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
 
     return { // 返回结果
       ...baseStatus, // 展开对象或数组
-      extremeDetection: this.config.extremeDetection, // 设置 extremeDetection 字段
-      fundingStats: this.fundingStats, // 设置 fundingStats 字段
-      currentSpread: avgHighRate - avgLowRate, // 设置 currentSpread 字段
+      extremeDetection: this.config.extremeDetection, // 极端Detection
+      fundingStats: this.fundingStats, // 资金费率Stats
+      currentSpread: avgHighRate - avgLowRate, // current价差
       avgHighRate, // 执行语句
       avgLowRate, // 执行语句
-      positionsWithFunding: Array.from(this.cumulativeFundingIncome.entries()).map(([symbol, income]) => ({ // 设置 positionsWithFunding 字段
+      positionsWithFunding: Array.from(this.cumulativeFundingIncome.entries()).map(([symbol, income]) => ({ // 持仓With资金费率
         symbol, // 执行语句
-        fundingIncome: income, // 设置 fundingIncome 字段
-        entryRate: this.entryRates.get(symbol)?.rate, // 设置 entryRate 字段
-        currentRate: this.fundingManager.getCurrentRate(symbol)?.rate, // 设置 currentRate 字段
+        fundingIncome: income, // 资金费率Income
+        entryRate: this.entryRates.get(symbol)?.rate, // 入场频率
+        currentRate: this.fundingManager.getCurrentRate(symbol)?.rate, // current频率
       })), // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1013,17 +1013,17 @@ export class FundingRateExtremeStrategy extends CrossSectionalStrategy { // 导�
     const ranking = this.getCurrentRanking(); // 定义常量 ranking
 
     return ranking.map(item => ({ // 返回结果
-      symbol: item.symbol, // 设置 symbol 字段
-      rank: item.rank, // 设置 rank 字段
-      currentRate: item.value, // 设置 currentRate 字段
-      annualizedRate: item.annualizedRate, // 设置 annualizedRate 字段
-      extremeScore: item.extremeScore, // 设置 extremeScore 字段
-      zScore: item.zScore, // 设置 zScore 字段
-      percentile: item.percentile, // 设置 percentile 字段
-      predictedRate: item.predictedRate, // 设置 predictedRate 字段
-      isHighExtreme: this._isHighExtreme(item), // 设置 isHighExtreme 字段
-      isLowExtreme: this._isLowExtreme(item), // 设置 isLowExtreme 字段
-      recommendedAction: this._isHighExtreme(item) ? 'short' : (this._isLowExtreme(item) ? 'long' : 'none'), // 设置 recommendedAction 字段
+      symbol: item.symbol, // 交易对
+      rank: item.rank, // rank
+      currentRate: item.value, // current频率
+      annualizedRate: item.annualizedRate, // annualized频率
+      extremeScore: item.extremeScore, // 极端分数
+      zScore: item.zScore, // Z分数
+      percentile: item.percentile, // percentile
+      predictedRate: item.predictedRate, // predicted频率
+      isHighExtreme: this._isHighExtreme(item), // 是否最高极端
+      isLowExtreme: this._isLowExtreme(item), // 是否最低极端
+      recommendedAction: this._isHighExtreme(item) ? 'short' : (this._isLowExtreme(item) ? 'long' : 'none'), // recommendedAction
     })); // 结束代码块
   } // 结束代码块
 } // 结束代码块

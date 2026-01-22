@@ -58,9 +58,9 @@ const ALERT_CATEGORY = { // 定义常量 ALERT_CATEGORY
 const ALERT_ACTION = { // 定义常量 ALERT_ACTION
   NOTIFY_ONLY: 'notify',          // 仅通知 / Notify only
   LOG_ONLY: 'log',                // 仅日志 / Log only
-  PAUSE_TRADING: 'pause',         // 暂停交易 / Pause trading
+  PAUSE_TRADING: 'pause',         // 暂停交易权限
   REDUCE_POSITION: 'reduce',      // 减仓 / Reduce position
-  EMERGENCY_CLOSE: 'emergency',   // 紧急平仓 / Emergency close
+  EMERGENCY_CLOSE: 'emergency',   // EMERGENCY平仓权限
 }; // 结束代码块
 
 /**
@@ -76,7 +76,7 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   defaultCooldown: 300000,  // 5分钟 / 5 minutes
 
   // 各级别冷却时间 / Cooldown by level
-  cooldownByLevel: { // 设置 cooldownByLevel 字段
+  cooldownByLevel: { // 冷却By级别
     [ALERT_LEVEL.INFO]: 600000,        // 10分钟 / 10 minutes
     [ALERT_LEVEL.WARNING]: 300000,     // 5分钟 / 5 minutes
     [ALERT_LEVEL.DANGER]: 120000,      // 2分钟 / 2 minutes
@@ -89,10 +89,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用警报升级 / Enable alert escalation
-  escalationEnabled: true, // 设置 escalationEnabled 字段
+  escalationEnabled: true, // 是否启用警报升级
 
   // 升级触发次数 / Escalation trigger count
-  escalationTriggerCount: 3, // 设置 escalationTriggerCount 字段
+  escalationTriggerCount: 3, // 升级触发次数
 
   // 升级时间窗口 (毫秒) / Escalation time window (ms)
   escalationWindow: 600000,  // 10分钟 / 10 minutes
@@ -102,46 +102,46 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 启用 Telegram 通知 / Enable Telegram notifications
-  telegramEnabled: true, // 设置 telegramEnabled 字段
+  telegramEnabled: true, // 启用 Telegram 通知
 
   // 启用日志记录 / Enable logging
-  loggingEnabled: true, // 设置 loggingEnabled 字段
+  loggingEnabled: true, // logging启用
 
   // 启用事件发射 / Enable event emission
-  eventsEnabled: true, // 设置 eventsEnabled 字段
+  eventsEnabled: true, // events启用
 
   // 启用邮件通知 / Enable email notifications
-  emailEnabled: false, // 设置 emailEnabled 字段
+  emailEnabled: false, // 邮箱启用
 
   // ============================================
   // 邮件配置 / Email Configuration
   // ============================================
 
   // SMTP 主机 / SMTP host
-  smtpHost: process.env.SMTP_HOST || '', // 读取环境变量 SMTP_HOST
+  smtpHost: process.env.SMTP_HOST || '', // smtp主机
 
   // SMTP 端口 / SMTP port
-  smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587, // 读取环境变量 SMTP_PORT
+  smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587, // smtp端口
 
   // SMTP 用户 / SMTP user
-  smtpUser: process.env.SMTP_USER || '', // 读取环境变量 SMTP_USER
+  smtpUser: process.env.SMTP_USER || '', // smtp用户
 
   // SMTP 密码 / SMTP password
-  smtpPass: process.env.SMTP_PASS || '', // 读取环境变量 SMTP_PASS
+  smtpPass: process.env.SMTP_PASS || '', // smtpPass
 
   // 告警接收邮箱 / Alert recipient email
-  alertEmailTo: process.env.ALERT_EMAIL_TO || '', // 读取环境变量 ALERT_EMAIL_TO
+  alertEmailTo: process.env.ALERT_EMAIL_TO || '', // 告警邮箱To
 
   // 邮件发送级别 (只有 >= 此级别才发邮件) / Email level threshold
   // 可选: warning, danger, critical, emergency
-  emailLevelThreshold: 'danger', // 设置 emailLevelThreshold 字段
+  emailLevelThreshold: 'danger', // 可选: warning, danger, critical, emergency
 
   // ============================================
   // 历史记录配置 / History Configuration
   // ============================================
 
   // 最大历史记录数 / Max history records
-  maxHistorySize: 1000, // 设置 maxHistorySize 字段
+  maxHistorySize: 1000, // 最大历史大小
 
   // 历史记录保留时间 (毫秒) / History retention time (ms)
   historyRetention: 86400000,  // 24小时 / 24 hours
@@ -151,21 +151,21 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 回撤阈值 / Drawdown thresholds
-  drawdownThresholds: { // 设置 drawdownThresholds 字段
+  drawdownThresholds: { // 回撤阈值
     warning: 0.05,    // 5% 警告 / 5% warning
     danger: 0.08,     // 8% 危险 / 8% danger
     critical: 0.10,   // 10% 严重 / 10% critical
   }, // 结束代码块
 
   // 保证金率阈值 / Margin rate thresholds
-  marginRateThresholds: { // 设置 marginRateThresholds 字段
+  marginRateThresholds: { // 保证金率阈值
     warning: 0.50,    // 50% 警告 / 50% warning
     danger: 0.40,     // 40% 危险 / 40% danger
     critical: 0.35,   // 35% 严重 / 35% critical
   }, // 结束代码块
 
   // 仓位集中度阈值 / Position concentration thresholds
-  concentrationThresholds: { // 设置 concentrationThresholds 字段
+  concentrationThresholds: { // 仓位集中度阈值
     warning: 0.10,    // 10% 警告 / 10% warning
     danger: 0.15,     // 15% 危险 / 15% danger
   }, // 结束代码块
@@ -175,10 +175,10 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[AlertMgr]', // 设置 logPrefix 字段
+  logPrefix: '[AlertMgr]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -320,24 +320,24 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     // 订阅紧急平仓事件 / Subscribe to emergency close event
     riskManager.on('emergencyClose', (data) => { // 注册事件监听
       this.triggerAlert({ // 调用 triggerAlert
-        category: ALERT_CATEGORY.RISK, // 设置 category 字段
-        level: ALERT_LEVEL.EMERGENCY, // 设置 level 字段
-        title: '紧急平仓 / Emergency Close', // 设置 title 字段
-        message: data.reason, // 设置 message 字段
+        category: ALERT_CATEGORY.RISK, // category
+        level: ALERT_LEVEL.EMERGENCY, // 级别
+        title: '紧急平仓 / Emergency Close', // title
+        message: data.reason, // 消息
         data, // 执行语句
-        action: ALERT_ACTION.EMERGENCY_CLOSE, // 设置 action 字段
+        action: ALERT_ACTION.EMERGENCY_CLOSE, // action
       }); // 结束代码块
     }); // 结束代码块
 
     // 订阅交易暂停事件 / Subscribe to trading paused event
     riskManager.on('tradingPaused', (data) => { // 注册事件监听
       this.triggerAlert({ // 调用 triggerAlert
-        category: ALERT_CATEGORY.RISK, // 设置 category 字段
-        level: ALERT_LEVEL.DANGER, // 设置 level 字段
-        title: '交易暂停 / Trading Paused', // 设置 title 字段
-        message: data.reason, // 设置 message 字段
+        category: ALERT_CATEGORY.RISK, // category
+        level: ALERT_LEVEL.DANGER, // 级别
+        title: '交易暂停 / Trading Paused', // title
+        message: data.reason, // 消息
         data, // 执行语句
-        action: ALERT_ACTION.PAUSE_TRADING, // 设置 action 字段
+        action: ALERT_ACTION.PAUSE_TRADING, // action
       }); // 结束代码块
     }); // 结束代码块
 
@@ -432,10 +432,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     // 创建警报对象 / Create alert object
     const alert = { // 定义常量 alert
       // 警报 ID / Alert ID
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // 设置 id 字段
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // ID
 
       // 警报键 / Alert key
-      key: alertKey, // 设置 key 字段
+      key: alertKey, // 密钥
 
       // 类别 / Category
       category, // 执行语句
@@ -462,10 +462,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
       exchange, // 执行语句
 
       // 时间戳 / Timestamp
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
 
       // 是否已升级 / Whether escalated
-      escalated: false, // 设置 escalated 字段
+      escalated: false, // escalated
     }; // 结束代码块
 
     // 检查升级 / Check escalation
@@ -537,13 +537,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
         this._handleLiquidationAlert(data); // 调用 _handleLiquidationAlert
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         // 通用风控警报 / Generic risk alert
         this.triggerAlert({ // 调用 triggerAlert
-          category: ALERT_CATEGORY.RISK, // 设置 category 字段
-          level: ALERT_LEVEL.WARNING, // 设置 level 字段
-          title: '风控警报 / Risk Alert', // 设置 title 字段
-          message: data.message || '风控指标异常', // 设置 message 字段
+          category: ALERT_CATEGORY.RISK, // category
+          level: ALERT_LEVEL.WARNING, // 级别
+          title: '风控警报 / Risk Alert', // title
+          message: data.message || '风控指标异常', // 消息
           data, // 执行语句
         }); // 结束代码块
     } // 结束代码块
@@ -568,11 +568,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.RISK, // 设置 category 字段
+      category: ALERT_CATEGORY.RISK, // category
       level, // 执行语句
-      title: `风控触发: ${data.type}`, // 设置 title 字段
-      message: data.reason, // 设置 message 字段
-      data: data.details, // 设置 data 字段
+      title: `风控触发: ${data.type}`, // title
+      message: data.reason, // 消息
+      data: data.details, // 数据
     }); // 结束代码块
   } // 结束代码块
 
@@ -597,12 +597,12 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.MARGIN, // 设置 category 字段
+      category: ALERT_CATEGORY.MARGIN, // category
       level, // 执行语句
-      title: '保证金率警报 / Margin Rate Alert', // 设置 title 字段
-      message: `保证金率: ${(marginRate * 100).toFixed(2)}%`, // 设置 message 字段
-      data: data.details, // 设置 data 字段
-      action: level === ALERT_LEVEL.CRITICAL ? ALERT_ACTION.EMERGENCY_CLOSE : ALERT_ACTION.NOTIFY_ONLY, // 设置 action 字段
+      title: '保证金率警报 / Margin Rate Alert', // title
+      message: `保证金率: ${(marginRate * 100).toFixed(2)}%`, // 消息
+      data: data.details, // 数据
+      action: level === ALERT_LEVEL.CRITICAL ? ALERT_ACTION.EMERGENCY_CLOSE : ALERT_ACTION.NOTIFY_ONLY, // action
     }); // 结束代码块
 
     // 发送 Telegram 通知 / Send Telegram notification
@@ -640,11 +640,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.DRAWDOWN, // 设置 category 字段
+      category: ALERT_CATEGORY.DRAWDOWN, // category
       level, // 执行语句
-      title: '回撤警报 / Drawdown Alert', // 设置 title 字段
-      message: `当日回撤: ${(drawdown * 100).toFixed(2)}%`, // 设置 message 字段
-      data: data.details, // 设置 data 字段
+      title: '回撤警报 / Drawdown Alert', // title
+      message: `当日回撤: ${(drawdown * 100).toFixed(2)}%`, // 消息
+      data: data.details, // 数据
       action, // 执行语句
     }); // 结束代码块
 
@@ -679,12 +679,12 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
       // 触发警报 / Trigger alert
       this.triggerAlert({ // 调用 triggerAlert
-        category: ALERT_CATEGORY.POSITION, // 设置 category 字段
+        category: ALERT_CATEGORY.POSITION, // category
         level, // 执行语句
-        title: '仓位集中度警报 / Position Concentration Alert', // 设置 title 字段
-        message: `${item.symbol} 占比: ${(item.ratio * 100).toFixed(2)}%`, // 设置 message 字段
-        data: item, // 设置 data 字段
-        symbol: item.symbol, // 设置 symbol 字段
+        title: '仓位集中度警报 / Position Concentration Alert', // title
+        message: `${item.symbol} 占比: ${(item.ratio * 100).toFixed(2)}%`, // 消息
+        data: item, // 数据
+        symbol: item.symbol, // 交易对
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -704,13 +704,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     for (const pos of nearLiquidation) { // 循环 const pos of nearLiquidation
       // 触发警报 / Trigger alert
       this.triggerAlert({ // 调用 triggerAlert
-        category: ALERT_CATEGORY.POSITION, // 设置 category 字段
-        level: ALERT_LEVEL.CRITICAL, // 设置 level 字段
-        title: '强平风险警报 / Liquidation Risk Alert', // 设置 title 字段
-        message: `${pos.symbol} 距离强平: ${(pos.distance * 100).toFixed(2)}%`, // 设置 message 字段
-        data: pos, // 设置 data 字段
-        symbol: pos.symbol, // 设置 symbol 字段
-        action: ALERT_ACTION.REDUCE_POSITION, // 设置 action 字段
+        category: ALERT_CATEGORY.POSITION, // category
+        level: ALERT_LEVEL.CRITICAL, // 级别
+        title: '强平风险警报 / Liquidation Risk Alert', // title
+        message: `${pos.symbol} 距离强平: ${(pos.distance * 100).toFixed(2)}%`, // 消息
+        data: pos, // 数据
+        symbol: pos.symbol, // 交易对
+        action: ALERT_ACTION.REDUCE_POSITION, // action
       }); // 结束代码块
 
       // 发送 Telegram 通知 / Send Telegram notification
@@ -739,11 +739,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   triggerDisconnectAlert(exchange, reason = '') { // 调用 triggerDisconnectAlert
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.CONNECTION, // 设置 category 字段
-      level: ALERT_LEVEL.DANGER, // 设置 level 字段
-      title: '连接断开 / Connection Lost', // 设置 title 字段
-      message: `${exchange} 连接已断开${reason ? `: ${reason}` : ''}`, // 设置 message 字段
-      data: { exchange, reason }, // 设置 data 字段
+      category: ALERT_CATEGORY.CONNECTION, // category
+      level: ALERT_LEVEL.DANGER, // 级别
+      title: '连接断开 / Connection Lost', // title
+      message: `${exchange} 连接已断开${reason ? `: ${reason}` : ''}`, // 消息
+      data: { exchange, reason }, // 数据
       exchange, // 执行语句
     }); // 结束代码块
 
@@ -762,11 +762,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   triggerReconnectNotification(exchange) { // 调用 triggerReconnectNotification
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.CONNECTION, // 设置 category 字段
-      level: ALERT_LEVEL.INFO, // 设置 level 字段
-      title: '连接恢复 / Connection Restored', // 设置 title 字段
-      message: `${exchange} 连接已恢复`, // 设置 message 字段
-      data: { exchange }, // 设置 data 字段
+      category: ALERT_CATEGORY.CONNECTION, // category
+      level: ALERT_LEVEL.INFO, // 级别
+      title: '连接恢复 / Connection Restored', // title
+      message: `${exchange} 连接已恢复`, // 消息
+      data: { exchange }, // 数据
       exchange, // 执行语句
     }); // 结束代码块
   } // 结束代码块
@@ -785,13 +785,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   triggerOrderFailedAlert(orderInfo, error) { // 调用 triggerOrderFailedAlert
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.EXECUTION, // 设置 category 字段
-      level: ALERT_LEVEL.WARNING, // 设置 level 字段
-      title: '订单执行失败 / Order Execution Failed', // 设置 title 字段
-      message: `${orderInfo.symbol} ${orderInfo.side} 失败: ${error.message}`, // 设置 message 字段
-      data: { orderInfo, error: error.message }, // 设置 data 字段
-      symbol: orderInfo.symbol, // 设置 symbol 字段
-      exchange: orderInfo.exchangeId, // 设置 exchange 字段
+      category: ALERT_CATEGORY.EXECUTION, // category
+      level: ALERT_LEVEL.WARNING, // 级别
+      title: '订单执行失败 / Order Execution Failed', // title
+      message: `${orderInfo.symbol} ${orderInfo.side} 失败: ${error.message}`, // 消息
+      data: { orderInfo, error: error.message }, // 数据
+      symbol: orderInfo.symbol, // 交易对
+      exchange: orderInfo.exchangeId, // 交易所
     }); // 结束代码块
   } // 结束代码块
 
@@ -804,11 +804,11 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   triggerEmergencyCloseCompletedAlert(result) { // 调用 triggerEmergencyCloseCompletedAlert
     // 触发警报 / Trigger alert
     this.triggerAlert({ // 调用 triggerAlert
-      category: ALERT_CATEGORY.RISK, // 设置 category 字段
-      level: ALERT_LEVEL.CRITICAL, // 设置 level 字段
-      title: '紧急平仓完成 / Emergency Close Completed', // 设置 title 字段
-      message: `已平仓 ${result.closedCount || 0} 个仓位`, // 设置 message 字段
-      data: result, // 设置 data 字段
+      category: ALERT_CATEGORY.RISK, // category
+      level: ALERT_LEVEL.CRITICAL, // 级别
+      title: '紧急平仓完成 / Emergency Close Completed', // title
+      message: `已平仓 ${result.closedCount || 0} 个仓位`, // 消息
+      data: result, // 数据
     }); // 结束代码块
   } // 结束代码块
 
@@ -973,10 +973,10 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     // 发送日志通知 / Send log notification
     if (this.config.loggingEnabled && this.notifiers.pnlLogger) { // 条件判断 this.config.loggingEnabled && this.notifiers....
       this.notifiers.pnlLogger.logRiskEvent(alert.category, { // 访问 notifiers
-        level: alert.level, // 设置 level 字段
-        title: alert.title, // 设置 title 字段
-        message: alert.message, // 设置 message 字段
-        data: alert.data, // 设置 data 字段
+        level: alert.level, // 级别
+        title: alert.title, // title
+        message: alert.message, // 消息
+        data: alert.data, // 数据
       }); // 结束代码块
     } // 结束代码块
 
@@ -1044,12 +1044,12 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
     try { // 尝试执行
       // 创建邮件发送器 / Create email transporter
       this.emailTransporter = nodemailer.createTransport({ // 设置 emailTransporter
-        host: this.config.smtpHost, // 设置 host 字段
-        port: this.config.smtpPort, // 设置 port 字段
-        secure: this.config.smtpPort === 465, // 设置 secure 字段
-        auth: { // 设置 auth 字段
-          user: this.config.smtpUser, // 设置 user 字段
-          pass: this.config.smtpPass, // 设置 pass 字段
+        host: this.config.smtpHost, // 主机
+        port: this.config.smtpPort, // 端口
+        secure: this.config.smtpPort === 465, // secure
+        auth: { // auth
+          user: this.config.smtpUser, // 用户
+          pass: this.config.smtpPass, // pass
         }, // 结束代码块
       }); // 结束代码块
 
@@ -1079,8 +1079,8 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
 
       // 发送邮件 / Send email
       await this.emailTransporter.sendMail({ // 等待异步结果
-        from: this.config.smtpUser, // 设置 from 字段
-        to: this.config.alertEmailTo, // 设置 to 字段
+        from: this.config.smtpUser, // from
+        to: this.config.alertEmailTo, // to
         subject, // 执行语句
         html, // 执行语句
       }); // 结束代码块
@@ -1171,13 +1171,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   _addToHistory(alert) { // 调用 _addToHistory
     // 添加到历史 / Add to history
     this.history.push({ // 访问 history
-      id: alert.id, // 设置 id 字段
-      category: alert.category, // 设置 category 字段
-      level: alert.level, // 设置 level 字段
-      title: alert.title, // 设置 title 字段
-      message: alert.message, // 设置 message 字段
-      timestamp: alert.timestamp, // 设置 timestamp 字段
-      escalated: alert.escalated, // 设置 escalated 字段
+      id: alert.id, // ID
+      category: alert.category, // category
+      level: alert.level, // 级别
+      title: alert.title, // title
+      message: alert.message, // 消息
+      timestamp: alert.timestamp, // 时间戳
+      escalated: alert.escalated, // escalated
     }); // 结束代码块
 
     // 限制历史大小 / Limit history size
@@ -1309,13 +1309,13 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
       ...this.stats, // 展开对象或数组
 
       // 活跃警报数 / Active alerts count
-      activeAlertsCount: this.activeAlerts.size, // 设置 activeAlertsCount 字段
+      activeAlertsCount: this.activeAlerts.size, // 活跃告警数量
 
       // 历史记录数 / History count
-      historyCount: this.history.length, // 设置 historyCount 字段
+      historyCount: this.history.length, // 历史数量
 
       // 是否运行中 / Whether running
-      running: this.running, // 设置 running 字段
+      running: this.running, // running
     }; // 结束代码块
   } // 结束代码块
 
@@ -1363,7 +1363,7 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         if (this.config.verbose) { // 条件判断 this.config.verbose
           console.log(fullMessage); // 控制台输出
         } // 结束代码块

@@ -19,57 +19,57 @@ const DEFAULT_POOL_CONFIG = { // 定义常量 DEFAULT_POOL_CONFIG
   // Redis 连接 URL
   url: process.env.REDIS_URL || 'redis://localhost:6379', // 读取环境变量 REDIS_URL
   // 数据库索引
-  database: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  database: parseInt(process.env.REDIS_DB || '0', 10), // database
   // 键前缀
-  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 读取环境变量 REDIS_PREFIX
+  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 密钥前缀
 
   // ============================================
   // 连接池配置 / Pool Configuration
   // ============================================
 
   // 最小连接数 / Minimum connections
-  minConnections: parseInt(process.env.REDIS_POOL_MIN || '2', 10), // 读取环境变量 REDIS_POOL_MIN
+  minConnections: parseInt(process.env.REDIS_POOL_MIN || '2', 10), // 最小Connections
   // 最大连接数 / Maximum connections
-  maxConnections: parseInt(process.env.REDIS_POOL_MAX || '10', 10), // 读取环境变量 REDIS_POOL_MAX
+  maxConnections: parseInt(process.env.REDIS_POOL_MAX || '10', 10), // 最大Connections
   // 空闲连接超时 (ms) / Idle connection timeout
-  idleTimeout: parseInt(process.env.REDIS_POOL_IDLE_TIMEOUT || '30000', 10), // 读取环境变量 REDIS_POOL_IDLE_TIMEOUT
+  idleTimeout: parseInt(process.env.REDIS_POOL_IDLE_TIMEOUT || '30000', 10), // 空闲连接超时 (ms)
   // 获取连接超时 (ms) / Acquire connection timeout
-  acquireTimeout: parseInt(process.env.REDIS_POOL_ACQUIRE_TIMEOUT || '5000', 10), // 读取环境变量 REDIS_POOL_ACQUIRE_TIMEOUT
+  acquireTimeout: parseInt(process.env.REDIS_POOL_ACQUIRE_TIMEOUT || '5000', 10), // 获取连接超时 (ms)
   // 连接最大使用次数 (0=无限) / Max uses per connection
-  maxUsesPerConnection: parseInt(process.env.REDIS_POOL_MAX_USES || '0', 10), // 读取环境变量 REDIS_POOL_MAX_USES
+  maxUsesPerConnection: parseInt(process.env.REDIS_POOL_MAX_USES || '0', 10), // 连接最大使用次数 (0=无限)
 
   // ============================================
   // Socket 配置 / Socket Configuration
   // ============================================
 
   // 连接超时 (ms) / Connection timeout
-  connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT || '10000', 10), // 读取环境变量 REDIS_CONNECT_TIMEOUT
+  connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT || '10000', 10), // 连接超时 (ms)
   // 命令超时 (ms) / Command timeout
-  commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT || '5000', 10), // 读取环境变量 REDIS_COMMAND_TIMEOUT
+  commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT || '5000', 10), // 命令超时 (ms)
   // Keep-alive 间隔 (ms) / Keep-alive interval
-  keepAlive: parseInt(process.env.REDIS_KEEP_ALIVE || '30000', 10), // 读取环境变量 REDIS_KEEP_ALIVE
+  keepAlive: parseInt(process.env.REDIS_KEEP_ALIVE || '30000', 10), // Keep-alive 间隔 (ms)
   // TCP No Delay
-  noDelay: true, // 设置 noDelay 字段
+  noDelay: true, // TCP No Delay
 
   // ============================================
   // 重连配置 / Reconnection Configuration
   // ============================================
 
   // 最大重连次数 / Max reconnection attempts
-  maxReconnectAttempts: parseInt(process.env.REDIS_MAX_RECONNECT || '10', 10), // 读取环境变量 REDIS_MAX_RECONNECT
+  maxReconnectAttempts: parseInt(process.env.REDIS_MAX_RECONNECT || '10', 10), // 最大重连次数
   // 重连基础延迟 (ms) / Base reconnection delay
-  reconnectBaseDelay: 100, // 设置 reconnectBaseDelay 字段
+  reconnectBaseDelay: 100, // 重连基础延迟 (ms)
   // 重连最大延迟 (ms) / Max reconnection delay
-  reconnectMaxDelay: 3000, // 设置 reconnectMaxDelay 字段
+  reconnectMaxDelay: 3000, // 重连最大延迟 (ms)
 
   // ============================================
   // 健康检查配置 / Health Check Configuration
   // ============================================
 
   // 健康检查间隔 (ms) / Health check interval
-  healthCheckInterval: parseInt(process.env.REDIS_HEALTH_CHECK_INTERVAL || '30000', 10), // 读取环境变量 REDIS_HEALTH_CHECK_INTERVAL
+  healthCheckInterval: parseInt(process.env.REDIS_HEALTH_CHECK_INTERVAL || '30000', 10), // 健康检查间隔 (ms)
   // 是否启用健康检查 / Enable health check
-  enableHealthCheck: true, // 设置 enableHealthCheck 字段
+  enableHealthCheck: true, // 是否启用健康检查
 }; // 结束代码块
 
 /**
@@ -77,11 +77,11 @@ const DEFAULT_POOL_CONFIG = { // 定义常量 DEFAULT_POOL_CONFIG
  * Connection state enum
  */
 const CONNECTION_STATE = { // 定义常量 CONNECTION_STATE
-  IDLE: 'idle', // 设置 IDLE 字段
-  IN_USE: 'in_use', // 设置 IN_USE 字段
-  CONNECTING: 'connecting', // 设置 CONNECTING 字段
-  ERROR: 'error', // 设置 ERROR 字段
-  CLOSED: 'closed', // 设置 CLOSED 字段
+  IDLE: 'idle', // IDLE
+  IN_USE: 'in_use', // 在USE
+  CONNECTING: 'connecting', // CONNECTING
+  ERROR: 'error', // 错误
+  CLOSED: 'closed', // CLOSED权限
 }; // 结束代码块
 
 /**
@@ -169,16 +169,16 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalCreated: 0, // 设置 totalCreated 字段
-      totalDestroyed: 0, // 设置 totalDestroyed 字段
-      currentSize: 0, // 设置 currentSize 字段
-      idleCount: 0, // 设置 idleCount 字段
-      inUseCount: 0, // 设置 inUseCount 字段
-      waitingCount: 0, // 设置 waitingCount 字段
-      acquireCount: 0, // 设置 acquireCount 字段
-      releaseCount: 0, // 设置 releaseCount 字段
-      timeoutCount: 0, // 设置 timeoutCount 字段
-      errorCount: 0, // 设置 errorCount 字段
+      totalCreated: 0, // 总Created
+      totalDestroyed: 0, // 总Destroyed
+      currentSize: 0, // current大小
+      idleCount: 0, // idle数量
+      inUseCount: 0, // 在Use数量
+      waitingCount: 0, // waiting数量
+      acquireCount: 0, // acquire数量
+      releaseCount: 0, // release数量
+      timeoutCount: 0, // 超时数量
+      errorCount: 0, // 错误数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -222,13 +222,13 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
     } // 结束代码块
 
     const client = createClient({ // 定义常量 client
-      url: this.config.url, // 设置 url 字段
-      database: this.config.database, // 设置 database 字段
-      socket: { // 设置 socket 字段
-        connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
-        keepAlive: this.config.keepAlive, // 设置 keepAlive 字段
-        noDelay: this.config.noDelay, // 设置 noDelay 字段
-        reconnectStrategy: (retries) => { // 设置 reconnectStrategy 字段
+      url: this.config.url, // URL
+      database: this.config.database, // database
+      socket: { // socket
+        connectTimeout: this.config.connectTimeout, // connect超时
+        keepAlive: this.config.keepAlive, // keepAlive
+        noDelay: this.config.noDelay, // no延迟
+        reconnectStrategy: (retries) => { // reconnect策略
           if (retries > this.config.maxReconnectAttempts) { // 条件判断 retries > this.config.maxReconnectAttempts
             return new Error('Max reconnection attempts reached'); // 返回结果
           } // 结束代码块
@@ -238,7 +238,7 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
           ); // 结束调用或参数
         }, // 结束代码块
       }, // 结束代码块
-      commandsQueueMaxLength: 1000, // 设置 commandsQueueMaxLength 字段
+      commandsQueueMaxLength: 1000, // commands队列最大Length
     }); // 结束代码块
 
     // 设置事件处理 / Set up event handlers
@@ -333,13 +333,13 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
       }, this.config.acquireTimeout); // 执行语句
 
       this.waitingQueue.push({ // 访问 waitingQueue
-        resolve: (conn) => { // 设置 resolve 字段
+        resolve: (conn) => { // resolve
           clearTimeout(timeout); // 调用 clearTimeout
           resolve(conn); // 调用 resolve
         }, // 结束代码块
         reject, // 执行语句
         timeout, // 执行语句
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
       this._updateStats(); // 调用 _updateStats
@@ -449,8 +449,8 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
     } // 结束代码块
 
     this.emit('healthCheck', { // 调用 emit
-      poolSize: this.pool.length, // 设置 poolSize 字段
-      unhealthyRemoved: unhealthyConnections.length, // 设置 unhealthyRemoved 字段
+      poolSize: this.pool.length, // pool大小
+      unhealthyRemoved: unhealthyConnections.length, // unhealthyRemoved
     }); // 结束代码块
   } // 结束代码块
 
@@ -474,11 +474,11 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
     this._updateStats(); // 调用 _updateStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      config: { // 设置 config 字段
-        minConnections: this.config.minConnections, // 设置 minConnections 字段
-        maxConnections: this.config.maxConnections, // 设置 maxConnections 字段
-        idleTimeout: this.config.idleTimeout, // 设置 idleTimeout 字段
-        acquireTimeout: this.config.acquireTimeout, // 设置 acquireTimeout 字段
+      config: { // 配置
+        minConnections: this.config.minConnections, // 最小Connections
+        maxConnections: this.config.maxConnections, // 最大Connections
+        idleTimeout: this.config.idleTimeout, // idle超时
+        acquireTimeout: this.config.acquireTimeout, // acquire超时
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -489,14 +489,14 @@ class RedisConnectionPool extends EventEmitter { // 定义类 RedisConnectionPoo
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      isInitialized: this.isInitialized, // 设置 isInitialized 字段
-      isShuttingDown: this.isShuttingDown, // 设置 isShuttingDown 字段
-      connections: this.pool.map(c => ({ // 设置 connections 字段
-        id: c.id, // 设置 id 字段
-        state: c.state, // 设置 state 字段
-        useCount: c.useCount, // 设置 useCount 字段
-        age: Date.now() - c.createdAt, // 设置 age 字段
-        idleTime: c.state === CONNECTION_STATE.IDLE ? Date.now() - c.lastUsedAt : 0, // 设置 idleTime 字段
+      isInitialized: this.isInitialized, // 是否Initialized
+      isShuttingDown: this.isShuttingDown, // 是否ShuttingDown
+      connections: this.pool.map(c => ({ // connections
+        id: c.id, // ID
+        state: c.state, // state
+        useCount: c.useCount, // 是否使用数量
+        age: Date.now() - c.createdAt, // age
+        idleTime: c.state === CONNECTION_STATE.IDLE ? Date.now() - c.lastUsedAt : 0, // idle时间
       })), // 结束代码块
     }; // 结束代码块
   } // 结束代码块

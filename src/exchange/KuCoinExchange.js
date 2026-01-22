@@ -45,21 +45,21 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
     // 构建配置对象 / Build configuration object
     const exchangeConfig = { // 定义常量 exchangeConfig
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout, // 设置 timeout 字段
+      timeout: this.config.timeout, // 超时设置 (毫秒)
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
         // spot = 现货 / Spot trading
         // swap = 永续合约 / Perpetual swap
         // future = 交割合约 / Delivery futures
-        defaultType: this.config.defaultType, // 设置 defaultType 字段
+        defaultType: this.config.defaultType, // future = 交割合约
 
         // 调整时间戳 (解决服务器时间差问题) / Adjust timestamp
-        adjustForTimeDifference: true, // 设置 adjustForTimeDifference 字段
+        adjustForTimeDifference: true, // 调整时间戳 (解决服务器时间差问题)
 
         // 合并额外选项 / Merge additional options
         ...this.config.options, // 展开对象或数组
@@ -271,12 +271,12 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
       const ticker = await this.exchange.fetchMarkPrice(symbol); // 定义常量 ticker
 
       return { // 返回结果
-        symbol: ticker.symbol, // 设置 symbol 字段
-        markPrice: ticker.markPrice, // 设置 markPrice 字段
-        indexPrice: ticker.indexPrice || null, // 设置 indexPrice 字段
-        timestamp: ticker.timestamp, // 设置 timestamp 字段
-        datetime: ticker.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        symbol: ticker.symbol, // 交易对
+        markPrice: ticker.markPrice, // mark价格
+        indexPrice: ticker.indexPrice || null, // index价格
+        timestamp: ticker.timestamp, // 时间戳
+        datetime: ticker.datetime, // datetime
+        exchange: this.name, // 交易所
       }; // 结束代码块
     }, `获取标记价格 / Fetch mark price: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -303,17 +303,17 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
 
       // 返回交易历史 / Return trade history
       return trades.map(trade => ({ // 返回结果
-        id: trade.id, // 设置 id 字段
-        orderId: trade.order, // 设置 orderId 字段
-        symbol: trade.symbol, // 设置 symbol 字段
-        side: trade.side, // 设置 side 字段
-        price: trade.price, // 设置 price 字段
-        amount: trade.amount, // 设置 amount 字段
-        cost: trade.cost, // 设置 cost 字段
-        fee: trade.fee, // 设置 fee 字段
-        timestamp: trade.timestamp, // 设置 timestamp 字段
-        datetime: trade.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: trade.id, // ID
+        orderId: trade.order, // 订单ID
+        symbol: trade.symbol, // 交易对
+        side: trade.side, // 方向
+        price: trade.price, // 价格
+        amount: trade.amount, // 数量
+        cost: trade.cost, // cost
+        fee: trade.fee, // 手续费
+        timestamp: trade.timestamp, // 时间戳
+        datetime: trade.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, `获取交易历史 / Fetch my trades: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -335,17 +335,17 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
       const withdrawals = await this.exchange.fetchWithdrawals(code, since, limit); // 定义常量 withdrawals
 
       return withdrawals.map(w => ({ // 返回结果
-        id: w.id, // 设置 id 字段
-        txid: w.txid, // 设置 txid 字段
-        currency: w.currency, // 设置 currency 字段
-        amount: w.amount, // 设置 amount 字段
-        fee: w.fee, // 设置 fee 字段
-        status: w.status, // 设置 status 字段
-        address: w.address, // 设置 address 字段
-        tag: w.tag, // 设置 tag 字段
-        timestamp: w.timestamp, // 设置 timestamp 字段
-        datetime: w.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: w.id, // ID
+        txid: w.txid, // txid
+        currency: w.currency, // currency
+        amount: w.amount, // 数量
+        fee: w.fee, // 手续费
+        status: w.status, // 状态
+        address: w.address, // address
+        tag: w.tag, // tag
+        timestamp: w.timestamp, // 时间戳
+        datetime: w.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, '获取提现历史 / Fetch withdrawal history'); // 执行语句
   } // 结束代码块
@@ -367,16 +367,16 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
       const deposits = await this.exchange.fetchDeposits(code, since, limit); // 定义常量 deposits
 
       return deposits.map(d => ({ // 返回结果
-        id: d.id, // 设置 id 字段
-        txid: d.txid, // 设置 txid 字段
-        currency: d.currency, // 设置 currency 字段
-        amount: d.amount, // 设置 amount 字段
-        status: d.status, // 设置 status 字段
-        address: d.address, // 设置 address 字段
-        tag: d.tag, // 设置 tag 字段
-        timestamp: d.timestamp, // 设置 timestamp 字段
-        datetime: d.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: d.id, // ID
+        txid: d.txid, // txid
+        currency: d.currency, // currency
+        amount: d.amount, // 数量
+        status: d.status, // 状态
+        address: d.address, // address
+        tag: d.tag, // tag
+        timestamp: d.timestamp, // 时间戳
+        datetime: d.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, '获取充值历史 / Fetch deposit history'); // 执行语句
   } // 结束代码块
@@ -420,15 +420,15 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
       const fundingRate = await this.exchange.fetchFundingRate(symbol); // 定义常量 fundingRate
 
       return { // 返回结果
-        symbol: fundingRate.symbol, // 设置 symbol 字段
-        fundingRate: fundingRate.fundingRate, // 设置 fundingRate 字段
-        fundingTimestamp: fundingRate.fundingTimestamp, // 设置 fundingTimestamp 字段
-        fundingDatetime: fundingRate.fundingDatetime, // 设置 fundingDatetime 字段
-        nextFundingRate: fundingRate.nextFundingRate || null, // 设置 nextFundingRate 字段
-        nextFundingTimestamp: fundingRate.nextFundingTimestamp || null, // 设置 nextFundingTimestamp 字段
-        timestamp: fundingRate.timestamp, // 设置 timestamp 字段
-        datetime: fundingRate.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        symbol: fundingRate.symbol, // 交易对
+        fundingRate: fundingRate.fundingRate, // 资金费率频率
+        fundingTimestamp: fundingRate.fundingTimestamp, // 资金费率时间戳
+        fundingDatetime: fundingRate.fundingDatetime, // 资金费率Datetime
+        nextFundingRate: fundingRate.nextFundingRate || null, // next资金费率频率
+        nextFundingTimestamp: fundingRate.nextFundingTimestamp || null, // next资金费率时间戳
+        timestamp: fundingRate.timestamp, // 时间戳
+        datetime: fundingRate.datetime, // datetime
+        exchange: this.name, // 交易所
       }; // 结束代码块
     }, `获取资金费率 / Fetch funding rate: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -480,12 +480,12 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
 
       return { // 返回结果
         symbol, // 执行语句
-        bids: orderBook.bids, // 设置 bids 字段
-        asks: orderBook.asks, // 设置 asks 字段
-        timestamp: orderBook.timestamp, // 设置 timestamp 字段
-        datetime: orderBook.datetime, // 设置 datetime 字段
-        nonce: orderBook.nonce, // 设置 nonce 字段
-        exchange: this.name, // 设置 exchange 字段
+        bids: orderBook.bids, // bids
+        asks: orderBook.asks, // asks
+        timestamp: orderBook.timestamp, // 时间戳
+        datetime: orderBook.datetime, // datetime
+        nonce: orderBook.nonce, // Nonce
+        exchange: this.name, // 交易所
       }; // 结束代码块
     }, `获取订单簿 / Fetch order book: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -509,15 +509,15 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
       const trades = await this.exchange.fetchTrades(symbol, undefined, limit); // 定义常量 trades
 
       return trades.map(trade => ({ // 返回结果
-        id: trade.id, // 设置 id 字段
-        symbol: trade.symbol, // 设置 symbol 字段
-        side: trade.side, // 设置 side 字段
-        price: trade.price, // 设置 price 字段
-        amount: trade.amount, // 设置 amount 字段
-        cost: trade.cost, // 设置 cost 字段
-        timestamp: trade.timestamp, // 设置 timestamp 字段
-        datetime: trade.datetime, // 设置 datetime 字段
-        exchange: this.name, // 设置 exchange 字段
+        id: trade.id, // ID
+        symbol: trade.symbol, // 交易对
+        side: trade.side, // 方向
+        price: trade.price, // 价格
+        amount: trade.amount, // 数量
+        cost: trade.cost, // cost
+        timestamp: trade.timestamp, // 时间戳
+        datetime: trade.datetime, // datetime
+        exchange: this.name, // 交易所
       })); // 结束代码块
     }, `获取最近成交 / Fetch trades: ${symbol}`); // 执行语句
   } // 结束代码块
@@ -573,8 +573,8 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
 
       return { // 返回结果
         accounts, // 执行语句
-        exchange: this.name, // 设置 exchange 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        exchange: this.name, // 交易所
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
     }, '获取账户信息 / Fetch account info'); // 执行语句
   } // 结束代码块
@@ -607,7 +607,7 @@ export class KuCoinExchange extends BaseExchange { // 导出类 KuCoinExchange
 
       return { // 返回结果
         ...result, // 展开对象或数组
-        exchange: this.name, // 设置 exchange 字段
+        exchange: this.name, // 交易所
       }; // 结束代码块
     }, `资金划转 / Transfer: ${amount} ${code} from ${fromAccount} to ${toAccount}`); // 执行语句
   } // 结束代码块

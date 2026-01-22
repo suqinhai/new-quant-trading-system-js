@@ -31,12 +31,12 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * Cross-sectional strategy types
  */
 export const CROSS_SECTIONAL_TYPES = { // 导出常量 CROSS_SECTIONAL_TYPES
-  MOMENTUM_RANK: 'momentum_rank',           // 动量排名
-  ROTATION: 'rotation',                      // 轮动策略
-  FUNDING_RATE_EXTREME: 'funding_extreme',   // 资金费率极值
-  CROSS_EXCHANGE_SPREAD: 'cross_exchange',   // 跨交易所价差
-  RELATIVE_STRENGTH: 'relative_strength',    // 相对强弱
-  MEAN_REVERSION: 'mean_reversion',          // 均值回归
+  MOMENTUM_RANK: 'momentum_rank',           // 动量RANK
+  ROTATION: 'rotation',                      // ROTATION
+  FUNDING_RATE_EXTREME: 'funding_extreme',   // 资金费率频率极端
+  CROSS_EXCHANGE_SPREAD: 'cross_exchange',   // CROSS交易所价差权限
+  RELATIVE_STRENGTH: 'relative_strength',    // RELATIVESTRENGTH
+  MEAN_REVERSION: 'mean_reversion',          // MEANREVERSION
 }; // 结束代码块
 
 /**
@@ -44,8 +44,8 @@ export const CROSS_SECTIONAL_TYPES = { // 导出常量 CROSS_SECTIONAL_TYPES
  * Ranking direction
  */
 export const RANK_DIRECTION = { // 导出常量 RANK_DIRECTION
-  ASCENDING: 'ascending',   // 升序 (从小到大)
-  DESCENDING: 'descending', // 降序 (从大到小)
+  ASCENDING: 'ascending',   // ASCENDING
+  DESCENDING: 'descending', // DESCENDING
 }; // 结束代码块
 
 /**
@@ -53,10 +53,10 @@ export const RANK_DIRECTION = { // 导出常量 RANK_DIRECTION
  * Position type
  */
 export const POSITION_TYPE = { // 导出常量 POSITION_TYPE
-  LONG_ONLY: 'long_only',           // 只做多
-  SHORT_ONLY: 'short_only',         // 只做空
-  LONG_SHORT: 'long_short',         // 多空对冲
-  MARKET_NEUTRAL: 'market_neutral', // 市场中性
+  LONG_ONLY: 'long_only',           // LONG仅
+  SHORT_ONLY: 'short_only',         // SHORT仅
+  LONG_SHORT: 'long_short',         // LONGSHORT
+  MARKET_NEUTRAL: 'market_neutral', // 市场NEUTRAL
 }; // 结束代码块
 
 /**
@@ -70,13 +70,13 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
 
   // 监控的交易对列表 / Symbols to monitor
   // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
-  symbols: [ // 设置 symbols 字段
+  symbols: [ // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
     'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT', // 执行语句
     'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT', // 执行语句
   ], // 结束数组或索引
 
   // 回看周期 (K线数量) / Lookback period (number of candles)
-  lookbackPeriod: 20, // 设置 lookbackPeriod 字段
+  lookbackPeriod: 20, // 回看周期 (K线数量)
 
   // 再平衡周期 (毫秒) / Rebalance period (ms)
   rebalancePeriod: 1 * 60 * 60 * 1000, // 默认每小时 / Default every hour
@@ -86,74 +86,74 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // ============================================
 
   // 选取 Top N 个做多 / Select top N for long
-  topN: 3, // 设置 topN 字段
+  topN: 3, // 选取 Top N 个做多
 
   // 选取 Bottom N 个做空 / Select bottom N for short
-  bottomN: 3, // 设置 bottomN 字段
+  bottomN: 3, // 选取 Bottom N 个做空
 
   // 排名指标 / Ranking metric
-  rankingMetric: 'returns', // returns, sharpe, momentum, volatility
+  rankingMetric: 'returns', // ranking指标
 
   // 排名方向 / Ranking direction
-  rankDirection: RANK_DIRECTION.DESCENDING, // 设置 rankDirection 字段
+  rankDirection: RANK_DIRECTION.DESCENDING, // rankDirection
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 仓位类型 / Position type
-  positionType: POSITION_TYPE.LONG_SHORT, // 设置 positionType 字段
+  positionType: POSITION_TYPE.LONG_SHORT, // 持仓类型仓位类型
 
   // 单个资产最大仓位比例 / Max position per asset
-  maxPositionPerAsset: 0.15, // 设置 maxPositionPerAsset 字段
+  maxPositionPerAsset: 0.15, // 单个资产最大仓位比例
 
   // 单边总仓位比例 / Total position per side
-  maxPositionPerSide: 0.5, // 设置 maxPositionPerSide 字段
+  maxPositionPerSide: 0.5, // 单边总仓位比例
 
   // 最小仓位比例 / Minimum position size
-  minPositionSize: 0.01, // 设置 minPositionSize 字段
+  minPositionSize: 0.01, // 最小仓位比例
 
   // 是否等权重 / Equal weight
-  equalWeight: true, // 设置 equalWeight 字段
+  equalWeight: true, // equalWeight
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
   // 止损比例 / Stop loss ratio
-  stopLoss: 0.05, // 设置 stopLoss 字段
+  stopLoss: 0.05, // 止损比例
 
   // 止盈比例 / Take profit ratio
-  takeProfit: 0.15, // 设置 takeProfit 字段
+  takeProfit: 0.15, // 止盈比例
 
   // 最大回撤 / Max drawdown
-  maxDrawdown: 0.10, // 设置 maxDrawdown 字段
+  maxDrawdown: 0.10, // 最大回撤
 
   // 最大相关性 / Max correlation (避免持有高度相关资产)
-  maxCorrelation: 0.8, // 设置 maxCorrelation 字段
+  maxCorrelation: 0.8, // 最大Correlation
 
   // ============================================
   // 过滤器配置 / Filter Configuration
   // ============================================
 
   // 最小日均成交量 (USDT) / Minimum daily volume
-  minDailyVolume: 10000000, // 设置 minDailyVolume 字段
+  minDailyVolume: 10000000, // 最小日均成交量 (USDT)
 
   // 最小价格 / Minimum price
-  minPrice: 0.0001, // 设置 minPrice 字段
+  minPrice: 0.0001, // 最小价格
 
   // 排除的交易对 / Excluded symbols
-  excludedSymbols: [], // 设置 excludedSymbols 字段
+  excludedSymbols: [], // excluded交易对列表
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[CrossSectional]', // 设置 logPrefix 字段
+  logPrefix: '[CrossSectional]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -202,9 +202,9 @@ export class AssetDataManager extends EventEmitter { // 导出类 AssetDataManag
     // 获取或初始化资产数据 / Get or initialize asset data
     if (!this.assetData.has(symbol)) { // 条件判断 !this.assetData.has(symbol)
       this.assetData.set(symbol, { // 访问 assetData
-        history: [], // 设置 history 字段
-        metrics: {}, // 设置 metrics 字段
-        lastUpdate: 0, // 设置 lastUpdate 字段
+        history: [], // 历史
+        metrics: {}, // 指标
+        lastUpdate: 0, // last更新
       }); // 结束代码块
     } // 结束代码块
 
@@ -212,12 +212,12 @@ export class AssetDataManager extends EventEmitter { // 导出类 AssetDataManag
 
     // 添加K线到历史 / Add candle to history
     data.history.push({ // 调用 data.history.push
-      timestamp: candle.timestamp, // 设置 timestamp 字段
-      open: candle.open, // 设置 open 字段
-      high: candle.high, // 设置 high 字段
-      low: candle.low, // 设置 low 字段
-      close: candle.close, // 设置 close 字段
-      volume: candle.volume, // 设置 volume 字段
+      timestamp: candle.timestamp, // 时间戳
+      open: candle.open, // 开盘
+      high: candle.high, // 最高
+      low: candle.low, // 最低
+      close: candle.close, // 收盘
+      volume: candle.volume, // 成交量
     }); // 结束代码块
 
     // 保留最近的历史数据 / Keep recent history only
@@ -306,7 +306,7 @@ export class AssetDataManager extends EventEmitter { // 导出类 AssetDataManag
 
     // 保存指标 / Save metrics
     data.metrics = { // 赋值 data.metrics
-      returns: cumulativeReturn, // 设置 returns 字段
+      returns: cumulativeReturn, // returns
       avgReturn, // 执行语句
       volatility, // 执行语句
       sharpe, // 执行语句
@@ -314,8 +314,8 @@ export class AssetDataManager extends EventEmitter { // 导出类 AssetDataManag
       avgVolume, // 执行语句
       latestPrice, // 执行语句
       rsi, // 执行语句
-      returnsList: returns, // 设置 returnsList 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      returnsList: returns, // returnsList
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -365,8 +365,8 @@ export class AssetDataManager extends EventEmitter { // 导出类 AssetDataManag
       if (data.metrics && data.metrics[metric] !== undefined) { // 条件判断 data.metrics && data.metrics[metric] !== unde...
         ranking.push({ // 调用 ranking.push
           symbol, // 执行语句
-          value: data.metrics[metric], // 设置 value 字段
-          metrics: data.metrics, // 设置 metrics 字段
+          value: data.metrics[metric], // value
+          metrics: data.metrics, // 指标
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -639,10 +639,10 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
       this.targetPositions.set(symbol, { // 访问 targetPositions
         symbol, // 执行语句
-        side: 'long', // 设置 side 字段
-        weight: Math.max(weight, this.config.minPositionSize), // 设置 weight 字段
-        metrics: asset.metrics || {}, // 设置 metrics 字段
-        rank: asset.rank || 0, // 设置 rank 字段
+        side: 'long', // 方向
+        weight: Math.max(weight, this.config.minPositionSize), // weight
+        metrics: asset.metrics || {}, // 指标
+        rank: asset.rank || 0, // rank
       }); // 结束代码块
     } // 结束代码块
 
@@ -656,18 +656,18 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
 
       this.targetPositions.set(symbol, { // 访问 targetPositions
         symbol, // 执行语句
-        side: 'short', // 设置 side 字段
-        weight: Math.max(weight, this.config.minPositionSize), // 设置 weight 字段
-        metrics: asset.metrics || {}, // 设置 metrics 字段
-        rank: asset.rank || 0, // 设置 rank 字段
+        side: 'short', // 方向
+        weight: Math.max(weight, this.config.minPositionSize), // weight
+        metrics: asset.metrics || {}, // 指标
+        rank: asset.rank || 0, // rank
       }); // 结束代码块
     } // 结束代码块
 
     // 发出目标更新事件 / Emit target updated event
     this.emit('targetUpdated', { // 调用 emit
-      long: longAssets.map(a => typeof a === 'string' ? a : a.symbol), // 设置 long 字段
-      short: shortAssets.map(a => typeof a === 'string' ? a : a.symbol), // 设置 short 字段
-      targets: this.targetPositions, // 设置 targets 字段
+      long: longAssets.map(a => typeof a === 'string' ? a : a.symbol), // long
+      short: shortAssets.map(a => typeof a === 'string' ? a : a.symbol), // short
+      targets: this.targetPositions, // targets
     }); // 结束代码块
   } // 结束代码块
 
@@ -689,8 +689,8 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
       if (!this.targetPositions.has(symbol)) { // 条件判断 !this.targetPositions.has(symbol)
         adjustments.toClose.push({ // 调用 adjustments.toClose.push
           symbol, // 执行语句
-          currentPosition: position, // 设置 currentPosition 字段
-          reason: 'not_in_target', // 设置 reason 字段
+          currentPosition: position, // current持仓
+          reason: 'not_in_target', // reason
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -704,27 +704,27 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
         adjustments.toOpen.push({ // 调用 adjustments.toOpen.push
           symbol, // 执行语句
           target, // 执行语句
-          reason: 'new_position', // 设置 reason 字段
+          reason: 'new_position', // reason
         }); // 结束代码块
       } else if (current.side !== target.side) { // 执行语句
         // 方向变化，需要平仓再开仓 / Direction changed, close and reopen
         adjustments.toClose.push({ // 调用 adjustments.toClose.push
           symbol, // 执行语句
-          currentPosition: current, // 设置 currentPosition 字段
-          reason: 'direction_changed', // 设置 reason 字段
+          currentPosition: current, // current持仓
+          reason: 'direction_changed', // reason
         }); // 结束代码块
         adjustments.toOpen.push({ // 调用 adjustments.toOpen.push
           symbol, // 执行语句
           target, // 执行语句
-          reason: 'direction_changed', // 设置 reason 字段
+          reason: 'direction_changed', // reason
         }); // 结束代码块
       } else if (Math.abs(current.weight - target.weight) > 0.01) { // 执行语句
         // 权重变化超过1%，需要调整 / Weight changed more than 1%
         adjustments.toAdjust.push({ // 调用 adjustments.toAdjust.push
           symbol, // 执行语句
-          currentPosition: current, // 设置 currentPosition 字段
+          currentPosition: current, // current持仓
           target, // 执行语句
-          weightChange: target.weight - current.weight, // 设置 weightChange 字段
+          weightChange: target.weight - current.weight, // weight修改
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -756,7 +756,7 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
   recordPositionChange(change) { // 调用 recordPositionChange
     this.positionHistory.push({ // 访问 positionHistory
       ...change, // 展开对象或数组
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近1000条记录 / Keep last 1000 records
@@ -809,12 +809,12 @@ export class PortfolioManager extends EventEmitter { // 导出类 PortfolioManag
     return { // 返回结果
       longCount, // 执行语句
       shortCount, // 执行语句
-      totalCount: longCount + shortCount, // 设置 totalCount 字段
+      totalCount: longCount + shortCount, // 总数量
       longWeight, // 执行语句
       shortWeight, // 执行语句
-      netExposure: longWeight - shortWeight, // 设置 netExposure 字段
-      grossExposure: longWeight + shortWeight, // 设置 grossExposure 字段
-      lastRebalanceTime: this.lastRebalanceTime, // 设置 lastRebalanceTime 字段
+      netExposure: longWeight - shortWeight, // netExposure
+      grossExposure: longWeight + shortWeight, // grossExposure
+      lastRebalanceTime: this.lastRebalanceTime, // lastRebalance时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -870,11 +870,11 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
 
     // 统计数据 / Statistics
     this.stats = { // 设置 stats
-      totalRebalances: 0, // 设置 totalRebalances 字段
-      totalTrades: 0, // 设置 totalTrades 字段
-      winCount: 0, // 设置 winCount 字段
-      lossCount: 0, // 设置 lossCount 字段
-      totalPnl: 0, // 设置 totalPnl 字段
+      totalRebalances: 0, // 总Rebalances
+      totalTrades: 0, // 总成交
+      winCount: 0, // win数量
+      lossCount: 0, // 亏损数量
+      totalPnl: 0, // 总盈亏
     }; // 结束代码块
 
     // 设置事件监听 / Set up event listeners
@@ -1058,10 +1058,10 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
     // 发出再平衡事件 / Emit rebalance event
     this.emit('rebalanced', { // 调用 emit
       ranking, // 执行语句
-      longAssets: filteredLong, // 设置 longAssets 字段
-      shortAssets: filteredShort, // 设置 shortAssets 字段
+      longAssets: filteredLong, // longAssets
+      shortAssets: filteredShort, // shortAssets
       adjustments, // 执行语句
-      summary: this.portfolioManager.getSummary(), // 设置 summary 字段
+      summary: this.portfolioManager.getSummary(), // summary
     }); // 结束代码块
   } // 结束代码块
 
@@ -1227,10 +1227,10 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
 
     // 记录变化 / Record change
     this.portfolioManager.recordPositionChange({ // 访问 portfolioManager
-      type: 'open', // 设置 type 字段
+      type: 'open', // 类型
       symbol, // 执行语句
-      side: target.side, // 设置 side 字段
-      weight: target.weight, // 设置 weight 字段
+      side: target.side, // 方向
+      weight: target.weight, // weight
       amount, // 执行语句
       price, // 执行语句
     }); // 结束代码块
@@ -1257,9 +1257,9 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
 
     // 记录变化 / Record change
     this.portfolioManager.recordPositionChange({ // 访问 portfolioManager
-      type: 'close', // 设置 type 字段
+      type: 'close', // 类型
       symbol, // 执行语句
-      side: position?.side, // 设置 side 字段
+      side: position?.side, // 方向
       reason, // 执行语句
     }); // 结束代码块
 
@@ -1310,10 +1310,10 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
 
     // 记录变化 / Record change
     this.portfolioManager.recordPositionChange({ // 访问 portfolioManager
-      type: 'adjust', // 设置 type 字段
+      type: 'adjust', // 类型
       symbol, // 执行语句
-      side: target.side, // 设置 side 字段
-      weight: target.weight, // 设置 weight 字段
+      side: target.side, // 方向
+      weight: target.weight, // weight
       weightChange, // 执行语句
       amount, // 执行语句
       price, // 执行语句
@@ -1362,18 +1362,18 @@ export class CrossSectionalStrategy extends BaseStrategy { // 导出类 CrossSec
     const validAssets = this.assetManager.getAssetsWithEnoughData(); // 定义常量 validAssets
 
     return { // 返回结果
-      name: this.name, // 设置 name 字段
-      type: this.strategyType, // 设置 type 字段
-      running: this.running, // 设置 running 字段
-      symbols: this.config.symbols, // 设置 symbols 字段
-      validAssets: validAssets.length, // 设置 validAssets 字段
-      portfolio: portfolioSummary, // 设置 portfolio 字段
-      stats: this.stats, // 设置 stats 字段
-      config: { // 设置 config 字段
-        topN: this.config.topN, // 设置 topN 字段
-        bottomN: this.config.bottomN, // 设置 bottomN 字段
-        positionType: this.config.positionType, // 设置 positionType 字段
-        rankingMetric: this.config.rankingMetric, // 设置 rankingMetric 字段
+      name: this.name, // name
+      type: this.strategyType, // 类型
+      running: this.running, // running
+      symbols: this.config.symbols, // 交易对列表
+      validAssets: validAssets.length, // 有效Assets
+      portfolio: portfolioSummary, // portfolio
+      stats: this.stats, // stats
+      config: { // 配置
+        topN: this.config.topN, // topN
+        bottomN: this.config.bottomN, // bottomN
+        positionType: this.config.positionType, // 持仓类型
+        rankingMetric: this.config.rankingMetric, // ranking指标
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块

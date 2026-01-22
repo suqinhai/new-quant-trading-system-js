@@ -16,9 +16,9 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
  * Money Flow Calculation Methods
  */
 export const MONEY_FLOW_METHOD = { // 导出常量 MONEY_FLOW_METHOD
-  MFI: 'mfi',                    // Money Flow Index
-  OBV_SLOPE: 'obv_slope',        // OBV 斜率
-  CMF: 'cmf',                    // Chaikin Money Flow
+  MFI: 'mfi',                    // MFI
+  OBV_SLOPE: 'obv_slope',        // OBVSLOPE
+  CMF: 'cmf',                    // CMF
   VOLUME_RATIO: 'vol_ratio',     // 上涨/下跌成交量比
   ACCUMULATION: 'accumulation',  // 累积/派发指标
 }; // 结束代码块
@@ -38,15 +38,15 @@ export class MoneyFlowFactor extends BaseFactor { // 导出类 MoneyFlowFactor
     const method = config.method || MONEY_FLOW_METHOD.MFI; // 定义常量 method
 
     super({ // 调用父类
-      name: config.name || `MoneyFlow_${method}_${period}`, // 设置 name 字段
-      category: FACTOR_CATEGORY.MONEY_FLOW, // 设置 category 字段
-      direction: FACTOR_DIRECTION.POSITIVE, // 高资金流入 → 预期正收益
-      frequency: FACTOR_FREQUENCY.DAILY, // 设置 frequency 字段
-      description: `资金流向因子 (${method}, ${period}周期)`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `MoneyFlow_${method}_${period}`, // name
+      category: FACTOR_CATEGORY.MONEY_FLOW, // category
+      direction: FACTOR_DIRECTION.POSITIVE, // direction
+      frequency: FACTOR_FREQUENCY.DAILY, // frequency
+      description: `资金流向因子 (${method}, ${period}周期)`, // description
+      params: { // params
         period, // 执行语句
         method, // 执行语句
-        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 设置 minDataPoints 字段
+        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -90,7 +90,7 @@ export class MoneyFlowFactor extends BaseFactor { // 导出类 MoneyFlowFactor
         value = this._calculateAccumulation(candles); // 赋值 value
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         value = this._calculateMFI(candles); // 赋值 value
     } // 结束代码块
 
@@ -297,30 +297,30 @@ export class MoneyFlowFactor extends BaseFactor { // 导出类 MoneyFlowFactor
 
 // MFI 14周期
 export const MFI14 = new MoneyFlowFactor({ // 导出常量 MFI14
-  name: 'MFI_14', // 设置 name 字段
-  period: 14, // 设置 period 字段
-  method: MONEY_FLOW_METHOD.MFI, // 设置 method 字段
+  name: 'MFI_14', // name
+  period: 14, // 周期
+  method: MONEY_FLOW_METHOD.MFI, // method
 }); // 结束代码块
 
 // OBV 斜率
 export const OBVSlope20 = new MoneyFlowFactor({ // 导出常量 OBVSlope20
-  name: 'OBV_Slope_20', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: MONEY_FLOW_METHOD.OBV_SLOPE, // 设置 method 字段
+  name: 'OBV_Slope_20', // name
+  period: 20, // 周期
+  method: MONEY_FLOW_METHOD.OBV_SLOPE, // method
 }); // 结束代码块
 
 // CMF 20周期
 export const CMF20 = new MoneyFlowFactor({ // 导出常量 CMF20
-  name: 'CMF_20', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: MONEY_FLOW_METHOD.CMF, // 设置 method 字段
+  name: 'CMF_20', // name
+  period: 20, // 周期
+  method: MONEY_FLOW_METHOD.CMF, // method
 }); // 结束代码块
 
 // 成交量比率
 export const VolumeRatio14 = new MoneyFlowFactor({ // 导出常量 VolumeRatio14
-  name: 'Vol_Ratio_14', // 设置 name 字段
-  period: 14, // 设置 period 字段
-  method: MONEY_FLOW_METHOD.VOLUME_RATIO, // 设置 method 字段
+  name: 'Vol_Ratio_14', // name
+  period: 14, // 周期
+  method: MONEY_FLOW_METHOD.VOLUME_RATIO, // method
 }); // 结束代码块
 
 /**

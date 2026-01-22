@@ -17,10 +17,10 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
  */
 export const TURNOVER_METHOD = { // 导出常量 TURNOVER_METHOD
   VOLUME_MA_RATIO: 'vol_ma_ratio',      // 成交量/MA比值
-  VOLUME_RANK: 'vol_rank',              // 成交量百分位排名
-  VOLUME_CHANGE: 'vol_change',          // 成交量变化率
-  RELATIVE_VOLUME: 'rel_vol',           // 相对成交量 (vs 历史平均)
-  ABNORMAL_VOLUME: 'abnormal',          // 异常成交量检测
+  VOLUME_RANK: 'vol_rank',              // 成交量RANK
+  VOLUME_CHANGE: 'vol_change',          // 成交量修改
+  RELATIVE_VOLUME: 'rel_vol',           // RELATIVE成交量
+  ABNORMAL_VOLUME: 'abnormal',          // ABNORMAL成交量
 }; // 结束代码块
 
 /**
@@ -40,17 +40,17 @@ export class TurnoverFactor extends BaseFactor { // 导出类 TurnoverFactor
     const method = config.method || TURNOVER_METHOD.RELATIVE_VOLUME; // 定义常量 method
 
     super({ // 调用父类
-      name: config.name || `Turnover_${method}_${period}`, // 设置 name 字段
-      category: FACTOR_CATEGORY.VOLUME, // 设置 category 字段
-      direction: FACTOR_DIRECTION.POSITIVE, // 高换手 → 高关注度
-      frequency: FACTOR_FREQUENCY.DAILY, // 设置 frequency 字段
-      description: `换手率因子 (${method}, ${period}周期)`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `Turnover_${method}_${period}`, // name
+      category: FACTOR_CATEGORY.VOLUME, // category
+      direction: FACTOR_DIRECTION.POSITIVE, // direction
+      frequency: FACTOR_FREQUENCY.DAILY, // frequency
+      description: `换手率因子 (${method}, ${period}周期)`, // description
+      params: { // params
         period, // 执行语句
         method, // 执行语句
-        lookbackPeriod: config.lookbackPeriod || 60, // 设置 lookbackPeriod 字段
-        abnormalThreshold: config.abnormalThreshold || 2.0, // 设置 abnormalThreshold 字段
-        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 设置 minDataPoints 字段
+        lookbackPeriod: config.lookbackPeriod || 60, // 回溯周期
+        abnormalThreshold: config.abnormalThreshold || 2.0, // abnormal阈值
+        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -94,7 +94,7 @@ export class TurnoverFactor extends BaseFactor { // 导出类 TurnoverFactor
         value = this._calculateAbnormalVolume(candles); // 赋值 value
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         value = this._calculateRelativeVolume(candles); // 赋值 value
     } // 结束代码块
 
@@ -215,32 +215,32 @@ export class TurnoverFactor extends BaseFactor { // 导出类 TurnoverFactor
 
 // 成交量/MA比值 (20周期)
 export const VolumeMAR20 = new TurnoverFactor({ // 导出常量 VolumeMAR20
-  name: 'Vol_MA_Ratio_20', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: TURNOVER_METHOD.VOLUME_MA_RATIO, // 设置 method 字段
+  name: 'Vol_MA_Ratio_20', // name
+  period: 20, // 周期
+  method: TURNOVER_METHOD.VOLUME_MA_RATIO, // method
 }); // 结束代码块
 
 // 成交量排名
 export const VolumeRank60 = new TurnoverFactor({ // 导出常量 VolumeRank60
-  name: 'Vol_Rank_60', // 设置 name 字段
-  lookbackPeriod: 60, // 设置 lookbackPeriod 字段
-  method: TURNOVER_METHOD.VOLUME_RANK, // 设置 method 字段
+  name: 'Vol_Rank_60', // name
+  lookbackPeriod: 60, // 回溯周期
+  method: TURNOVER_METHOD.VOLUME_RANK, // method
 }); // 结束代码块
 
 // 相对成交量
 export const RelativeVolume = new TurnoverFactor({ // 导出常量 RelativeVolume
-  name: 'Relative_Volume', // 设置 name 字段
-  period: 5, // 设置 period 字段
-  lookbackPeriod: 60, // 设置 lookbackPeriod 字段
-  method: TURNOVER_METHOD.RELATIVE_VOLUME, // 设置 method 字段
+  name: 'Relative_Volume', // name
+  period: 5, // 周期
+  lookbackPeriod: 60, // 回溯周期
+  method: TURNOVER_METHOD.RELATIVE_VOLUME, // method
 }); // 结束代码块
 
 // 异常成交量
 export const AbnormalVolume = new TurnoverFactor({ // 导出常量 AbnormalVolume
-  name: 'Abnormal_Volume', // 设置 name 字段
-  lookbackPeriod: 60, // 设置 lookbackPeriod 字段
-  method: TURNOVER_METHOD.ABNORMAL_VOLUME, // 设置 method 字段
-  abnormalThreshold: 2.0, // 设置 abnormalThreshold 字段
+  name: 'Abnormal_Volume', // name
+  lookbackPeriod: 60, // 回溯周期
+  method: TURNOVER_METHOD.ABNORMAL_VOLUME, // method
+  abnormalThreshold: 2.0, // abnormal阈值
 }); // 结束代码块
 
 /**

@@ -24,17 +24,17 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
 
     this.config = { // 设置 config
       // Redis 连接配置 / Redis connection config
-      redis: { // 设置 redis 字段
+      redis: { // Redis 连接配置
         url: config.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379', // 读取环境变量 REDIS_URL
-        database: config.redisDb || parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
-        keyPrefix: config.keyPrefix || process.env.REDIS_PREFIX || 'quant:', // 读取环境变量 REDIS_PREFIX
+        database: config.redisDb || parseInt(process.env.REDIS_DB || '0', 10), // database
+        keyPrefix: config.keyPrefix || process.env.REDIS_PREFIX || 'quant:', // 密钥前缀
         ...config.redis, // 展开对象或数组
       }, // 结束代码块
       // 交易和 K线数据过期时间 (天) / Trade and candle TTL (days)
-      tradeTTL: config.tradeTTL || 365, // 设置 tradeTTL 字段
-      candleTTL: config.candleTTL || 30, // 设置 candleTTL 字段
+      tradeTTL: config.tradeTTL || 365, // 交易和 K线数据过期时间 (天)
+      candleTTL: config.candleTTL || 30, // candleTTL
       // 审计日志过期时间 (天) / Audit log TTL (days)
-      auditTTL: config.auditTTL || 90, // 设置 auditTTL 字段
+      auditTTL: config.auditTTL || 90, // 审计日志过期时间 (天)
     }; // 结束代码块
 
     // Redis 客户端 / Redis client
@@ -188,20 +188,20 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
     // 序列化交易数据 / Serialize trade data
     const data = { // 定义常量 data
       tradeId, // 执行语句
-      orderId: trade.orderId || '', // 设置 orderId 字段
-      symbol: trade.symbol || '', // 设置 symbol 字段
-      side: trade.side || '', // 设置 side 字段
-      type: trade.type || 'market', // 设置 type 字段
-      amount: String(trade.amount || 0), // 设置 amount 字段
-      price: String(trade.price || 0), // 设置 price 字段
-      cost: String(trade.cost || trade.amount * trade.price || 0), // 设置 cost 字段
-      fee: String(trade.fee || 0), // 设置 fee 字段
-      feeCurrency: trade.feeCurrency || '', // 设置 feeCurrency 字段
-      realizedPnl: String(trade.realizedPnl || 0), // 设置 realizedPnl 字段
-      exchange: trade.exchange || '', // 设置 exchange 字段
-      strategy: trade.strategy || '', // 设置 strategy 字段
-      timestamp: String(timestamp), // 设置 timestamp 字段
-      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 设置 metadata 字段
+      orderId: trade.orderId || '', // 订单ID
+      symbol: trade.symbol || '', // 交易对
+      side: trade.side || '', // 方向
+      type: trade.type || 'market', // 类型
+      amount: String(trade.amount || 0), // 数量
+      price: String(trade.price || 0), // 价格
+      cost: String(trade.cost || trade.amount * trade.price || 0), // cost
+      fee: String(trade.fee || 0), // 手续费
+      feeCurrency: trade.feeCurrency || '', // 手续费Currency
+      realizedPnl: String(trade.realizedPnl || 0), // 已实现盈亏
+      exchange: trade.exchange || '', // 交易所
+      strategy: trade.strategy || '', // 策略
+      timestamp: String(timestamp), // 时间戳
+      metadata: trade.metadata ? JSON.stringify(trade.metadata) : '', // 元数据
     }; // 结束代码块
 
     await this.redis.transaction(async (multi) => { // 等待异步结果
@@ -215,15 +215,15 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
 
       // 添加时间索引 / Add time index
       multi.zAdd(this.redis.key(KEY_PREFIX.TRADE_INDEX, 'time'), { // 调用 multi.zAdd
-        score: timestamp, // 设置 score 字段
-        value: tradeId, // 设置 value 字段
+        score: timestamp, // 分数
+        value: tradeId, // value
       }); // 结束代码块
 
       // 添加交易对索引 / Add symbol index
       if (trade.symbol) { // 条件判断 trade.symbol
         multi.zAdd(this.redis.key(KEY_PREFIX.TRADE_INDEX, 'symbol', trade.symbol), { // 调用 multi.zAdd
-          score: timestamp, // 设置 score 字段
-          value: tradeId, // 设置 value 字段
+          score: timestamp, // 分数
+          value: tradeId, // value
         }); // 结束代码块
       } // 结束代码块
     }); // 结束代码块
@@ -309,21 +309,21 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
    */
   _deserializeTrade(data) { // 调用 _deserializeTrade
     return { // 返回结果
-      tradeId: data.tradeId, // 设置 tradeId 字段
-      orderId: data.orderId || null, // 设置 orderId 字段
-      symbol: data.symbol, // 设置 symbol 字段
-      side: data.side, // 设置 side 字段
-      type: data.type, // 设置 type 字段
-      amount: parseFloat(data.amount), // 设置 amount 字段
-      price: parseFloat(data.price), // 设置 price 字段
-      cost: parseFloat(data.cost), // 设置 cost 字段
-      fee: parseFloat(data.fee), // 设置 fee 字段
-      feeCurrency: data.feeCurrency || null, // 设置 feeCurrency 字段
-      realizedPnl: parseFloat(data.realizedPnl) || null, // 设置 realizedPnl 字段
-      exchange: data.exchange, // 设置 exchange 字段
-      strategy: data.strategy || null, // 设置 strategy 字段
-      timestamp: parseInt(data.timestamp, 10), // 设置 timestamp 字段
-      metadata: data.metadata ? JSON.parse(data.metadata) : null, // 设置 metadata 字段
+      tradeId: data.tradeId, // 交易ID
+      orderId: data.orderId || null, // 订单ID
+      symbol: data.symbol, // 交易对
+      side: data.side, // 方向
+      type: data.type, // 类型
+      amount: parseFloat(data.amount), // 数量
+      price: parseFloat(data.price), // 价格
+      cost: parseFloat(data.cost), // cost
+      fee: parseFloat(data.fee), // 手续费
+      feeCurrency: data.feeCurrency || null, // 手续费Currency
+      realizedPnl: parseFloat(data.realizedPnl) || null, // 已实现盈亏
+      exchange: data.exchange, // 交易所
+      strategy: data.strategy || null, // 策略
+      timestamp: parseInt(data.timestamp, 10), // 时间戳
+      metadata: data.metadata ? JSON.parse(data.metadata) : null, // 元数据
     }; // 结束代码块
   } // 结束代码块
 
@@ -407,13 +407,13 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
 
     const data = { // 定义常量 data
       logId, // 执行语句
-      eventType: log.eventType || '', // 设置 eventType 字段
-      level: log.level || 'info', // 设置 level 字段
-      timestamp: String(timestamp), // 设置 timestamp 字段
-      data: log.data ? JSON.stringify(log.data) : '', // 设置 data 字段
-      metadata: log.metadata ? JSON.stringify(log.metadata) : '', // 设置 metadata 字段
-      prevHash: log.prevHash || '', // 设置 prevHash 字段
-      hash: log.hash || '', // 设置 hash 字段
+      eventType: log.eventType || '', // 事件类型
+      level: log.level || 'info', // 级别
+      timestamp: String(timestamp), // 时间戳
+      data: log.data ? JSON.stringify(log.data) : '', // 数据
+      metadata: log.metadata ? JSON.stringify(log.metadata) : '', // 元数据
+      prevHash: log.prevHash || '', // prevHash
+      hash: log.hash || '', // hash
     }; // 结束代码块
 
     await this.redis.transaction(async (multi) => { // 等待异步结果
@@ -426,15 +426,15 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
 
       // 添加时间索引 / Add time index
       multi.zAdd(this.redis.key(KEY_PREFIX.AUDIT, 'idx', 'time'), { // 调用 multi.zAdd
-        score: timestamp, // 设置 score 字段
-        value: logId, // 设置 value 字段
+        score: timestamp, // 分数
+        value: logId, // value
       }); // 结束代码块
 
       // 添加事件类型索引 / Add event type index
       if (log.eventType) { // 条件判断 log.eventType
         multi.zAdd(this.redis.key(KEY_PREFIX.AUDIT, 'idx', 'event', log.eventType), { // 调用 multi.zAdd
-          score: timestamp, // 设置 score 字段
-          value: logId, // 设置 value 字段
+          score: timestamp, // 分数
+          value: logId, // value
         }); // 结束代码块
       } // 结束代码块
     }); // 结束代码块
@@ -472,14 +472,14 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
       const data = await this.redis.hGetAll(this.redis.key(KEY_PREFIX.AUDIT, logId)); // 定义常量 data
       if (data && Object.keys(data).length > 0) { // 条件判断 data && Object.keys(data).length > 0
         logs.push({ // 调用 logs.push
-          logId: data.logId, // 设置 logId 字段
-          eventType: data.eventType, // 设置 eventType 字段
-          level: data.level, // 设置 level 字段
-          timestamp: parseInt(data.timestamp, 10), // 设置 timestamp 字段
-          data: data.data ? JSON.parse(data.data) : null, // 设置 data 字段
-          metadata: data.metadata ? JSON.parse(data.metadata) : null, // 设置 metadata 字段
-          prevHash: data.prevHash || null, // 设置 prevHash 字段
-          hash: data.hash || null, // 设置 hash 字段
+          logId: data.logId, // 日志ID
+          eventType: data.eventType, // 事件类型
+          level: data.level, // 级别
+          timestamp: parseInt(data.timestamp, 10), // 时间戳
+          data: data.data ? JSON.parse(data.data) : null, // 数据
+          metadata: data.metadata ? JSON.parse(data.metadata) : null, // 元数据
+          prevHash: data.prevHash || null, // prevHash
+          hash: data.hash || null, // hash
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -505,13 +505,13 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
     ); // 结束调用或参数
 
     const data = { // 定义常量 data
-      exchange: snapshot.exchange, // 设置 exchange 字段
-      currency: snapshot.currency, // 设置 currency 字段
-      total: String(snapshot.total), // 设置 total 字段
-      free: String(snapshot.free), // 设置 free 字段
-      used: String(snapshot.used), // 设置 used 字段
-      timestamp: String(timestamp), // 设置 timestamp 字段
-      metadata: snapshot.metadata ? JSON.stringify(snapshot.metadata) : '', // 设置 metadata 字段
+      exchange: snapshot.exchange, // 交易所
+      currency: snapshot.currency, // currency
+      total: String(snapshot.total), // 总
+      free: String(snapshot.free), // free
+      used: String(snapshot.used), // used
+      timestamp: String(timestamp), // 时间戳
+      metadata: snapshot.metadata ? JSON.stringify(snapshot.metadata) : '', // 元数据
     }; // 结束代码块
 
     await this.redis.transaction(async (multi) => { // 等待异步结果
@@ -519,8 +519,8 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
 
       // 添加时间索引 / Add time index
       multi.zAdd(this.redis.key(KEY_PREFIX.BALANCE, 'idx', 'time'), { // 调用 multi.zAdd
-        score: timestamp, // 设置 score 字段
-        value: key, // 设置 value 字段
+        score: timestamp, // 分数
+        value: key, // value
       }); // 结束代码块
     }); // 结束代码块
 
@@ -556,15 +556,15 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
     ); // 结束调用或参数
 
     await this.redis.hSet(key, { // 等待异步结果
-      symbol: candle.symbol, // 设置 symbol 字段
-      timeframe: candle.timeframe, // 设置 timeframe 字段
-      timestamp: String(candle.timestamp), // 设置 timestamp 字段
-      open: String(candle.open), // 设置 open 字段
-      high: String(candle.high), // 设置 high 字段
-      low: String(candle.low), // 设置 low 字段
-      close: String(candle.close), // 设置 close 字段
-      volume: String(candle.volume), // 设置 volume 字段
-      exchange: candle.exchange, // 设置 exchange 字段
+      symbol: candle.symbol, // 交易对
+      timeframe: candle.timeframe, // 周期
+      timestamp: String(candle.timestamp), // 时间戳
+      open: String(candle.open), // 开盘
+      high: String(candle.high), // 最高
+      low: String(candle.low), // 最低
+      close: String(candle.close), // 收盘
+      volume: String(candle.volume), // 成交量
+      exchange: candle.exchange, // 交易所
     }); // 结束代码块
 
     // 设置过期时间 / Set TTL
@@ -611,15 +611,15 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
       const data = await this.redis.hGetAll(key); // 定义常量 data
       if (data && Object.keys(data).length > 0) { // 条件判断 data && Object.keys(data).length > 0
         candles.push({ // 调用 candles.push
-          symbol: data.symbol, // 设置 symbol 字段
-          timeframe: data.timeframe, // 设置 timeframe 字段
-          timestamp: parseInt(data.timestamp, 10), // 设置 timestamp 字段
-          open: parseFloat(data.open), // 设置 open 字段
-          high: parseFloat(data.high), // 设置 high 字段
-          low: parseFloat(data.low), // 设置 low 字段
-          close: parseFloat(data.close), // 设置 close 字段
-          volume: parseFloat(data.volume), // 设置 volume 字段
-          exchange: data.exchange, // 设置 exchange 字段
+          symbol: data.symbol, // 交易对
+          timeframe: data.timeframe, // 周期
+          timestamp: parseInt(data.timestamp, 10), // 时间戳
+          open: parseFloat(data.open), // 开盘
+          high: parseFloat(data.high), // 最高
+          low: parseFloat(data.low), // 最低
+          close: parseFloat(data.close), // 收盘
+          volume: parseFloat(data.volume), // 成交量
+          exchange: data.exchange, // 交易所
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -646,15 +646,15 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
     const auditCount = await this.redis.zCard(this.redis.key(KEY_PREFIX.AUDIT, 'idx', 'time')); // 定义常量 auditCount
 
     return { // 返回结果
-      orders: orderStats.total, // 设置 orders 字段
-      openOrders: orderStats.byStatus?.open || 0, // 设置 openOrders 字段
-      positions: positionStats.total, // 设置 positions 字段
-      openPositions: positionStats.open, // 设置 openPositions 字段
-      trades: tradeCount, // 设置 trades 字段
-      strategies: strategyStats.total, // 设置 strategies 字段
-      runningStrategies: strategyStats.running, // 设置 runningStrategies 字段
-      configs: configStats.configCount, // 设置 configs 字段
-      auditLogs: auditCount, // 设置 auditLogs 字段
+      orders: orderStats.total, // 订单
+      openOrders: orderStats.byStatus?.open || 0, // 开盘订单
+      positions: positionStats.total, // 持仓
+      openPositions: positionStats.open, // 开盘持仓
+      trades: tradeCount, // 成交
+      strategies: strategyStats.total, // 策略
+      runningStrategies: strategyStats.running, // running策略
+      configs: configStats.configCount, // configs
+      auditLogs: auditCount, // 审计Logs
     }; // 结束代码块
   } // 结束代码块
 
@@ -697,10 +697,10 @@ class RedisDatabaseManager extends EventEmitter { // 定义类 RedisDatabaseMana
    */
   async cleanup(options = {}) { // 执行语句
     const results = { // 定义常量 results
-      orders: 0, // 设置 orders 字段
-      positions: 0, // 设置 positions 字段
-      trades: 0, // 设置 trades 字段
-      auditLogs: 0, // 设置 auditLogs 字段
+      orders: 0, // 订单
+      positions: 0, // 持仓
+      trades: 0, // 成交
+      auditLogs: 0, // 审计Logs
     }; // 结束代码块
 
     // 清理旧订单 / Clean up old orders

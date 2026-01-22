@@ -230,9 +230,9 @@ export function generateMasterPassword(length = 32) { // 导出函数 generateMa
  */
 export function validatePasswordStrength(password) { // 导出函数 validatePasswordStrength
   const result = { // 定义常量 result
-    valid: true, // 设置 valid 字段
-    score: 0, // 设置 score 字段
-    messages: [], // 设置 messages 字段
+    valid: true, // 有效
+    score: 0, // 分数
+    messages: [], // messages
   }; // 结束代码块
 
   // 长度检查 / Length check

@@ -17,51 +17,51 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 const DEFAULT_SENTINEL_CONFIG = { // 定义常量 DEFAULT_SENTINEL_CONFIG
   // Sentinel 节点列表 / Sentinel nodes
-  sentinels: [ // 设置 sentinels 字段
+  sentinels: [ // Sentinel 节点列表
     { host: process.env.REDIS_SENTINEL_HOST_1 || 'localhost', port: parseInt(process.env.REDIS_SENTINEL_PORT_1 || '26379', 10) }, // 读取环境变量 REDIS_SENTINEL_HOST_1
     { host: process.env.REDIS_SENTINEL_HOST_2 || 'localhost', port: parseInt(process.env.REDIS_SENTINEL_PORT_2 || '26380', 10) }, // 读取环境变量 REDIS_SENTINEL_HOST_2
     { host: process.env.REDIS_SENTINEL_HOST_3 || 'localhost', port: parseInt(process.env.REDIS_SENTINEL_PORT_3 || '26381', 10) }, // 读取环境变量 REDIS_SENTINEL_HOST_3
   ], // 结束数组或索引
 
   // Master 名称 / Master name
-  masterName: process.env.REDIS_SENTINEL_MASTER || 'mymaster', // 读取环境变量 REDIS_SENTINEL_MASTER
+  masterName: process.env.REDIS_SENTINEL_MASTER || 'mymaster', // Master 名称
 
   // 数据库索引 / Database index
-  database: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  database: parseInt(process.env.REDIS_DB || '0', 10), // database
 
   // 键前缀 / Key prefix
-  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 读取环境变量 REDIS_PREFIX
+  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 密钥前缀
 
   // 密码 (可选) / Password (optional)
-  password: process.env.REDIS_PASSWORD || undefined, // 读取环境变量 REDIS_PASSWORD
+  password: process.env.REDIS_PASSWORD || undefined, // 密码 (可选)
 
   // Sentinel 密码 (可选) / Sentinel password (optional)
-  sentinelPassword: process.env.REDIS_SENTINEL_PASSWORD || undefined, // 读取环境变量 REDIS_SENTINEL_PASSWORD
+  sentinelPassword: process.env.REDIS_SENTINEL_PASSWORD || undefined, // Sentinel 密码 (可选)
 
   // 连接超时 (ms) / Connection timeout
-  connectTimeout: 10000, // 设置 connectTimeout 字段
+  connectTimeout: 10000, // 连接超时 (ms)
 
   // 命令超时 (ms) / Command timeout
-  commandTimeout: 5000, // 设置 commandTimeout 字段
+  commandTimeout: 5000, // 命令超时 (ms)
 
   // 最大重试次数 / Max retry attempts
-  maxRetries: 3, // 设置 maxRetries 字段
+  maxRetries: 3, // 最大重试次数
 
   // 重试延迟 (ms) / Retry delay
-  retryDelay: 1000, // 设置 retryDelay 字段
+  retryDelay: 1000, // 重试延迟 (ms)
 
   // 是否启用只读副本 / Enable read replicas
-  enableReadReplicas: false, // 设置 enableReadReplicas 字段
+  enableReadReplicas: false, // 是否启用只读副本
 
   // 读取偏好 / Read preference
   // 'master' | 'replica' | 'preferReplica'
-  readPreference: 'master', // 设置 readPreference 字段
+  readPreference: 'master', // 'master' | 'replica' | 'preferReplica'
 
   // 故障转移超时 (ms) / Failover timeout
-  failoverTimeout: 60000, // 设置 failoverTimeout 字段
+  failoverTimeout: 60000, // 故障转移超时 (ms)
 
   // 健康检查间隔 (ms) / Health check interval
-  healthCheckInterval: 10000, // 设置 healthCheckInterval 字段
+  healthCheckInterval: 10000, // 健康检查间隔 (ms)
 }; // 结束代码块
 
 /**
@@ -69,11 +69,11 @@ const DEFAULT_SENTINEL_CONFIG = { // 定义常量 DEFAULT_SENTINEL_CONFIG
  * Sentinel state
  */
 const SENTINEL_STATE = { // 定义常量 SENTINEL_STATE
-  DISCONNECTED: 'disconnected', // 设置 DISCONNECTED 字段
-  CONNECTING: 'connecting', // 设置 CONNECTING 字段
-  CONNECTED: 'connected', // 设置 CONNECTED 字段
-  FAILOVER: 'failover', // 设置 FAILOVER 字段
-  ERROR: 'error', // 设置 ERROR 字段
+  DISCONNECTED: 'disconnected', // DISCONNECTED
+  CONNECTING: 'connecting', // CONNECTING
+  CONNECTED: 'connected', // CONNECTED
+  FAILOVER: 'failover', // FAILOVER
+  ERROR: 'error', // 错误
 }; // 结束代码块
 
 /**
@@ -96,11 +96,11 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      failoverCount: 0, // 设置 failoverCount 字段
-      lastFailoverTime: null, // 设置 lastFailoverTime 字段
-      masterSwitchCount: 0, // 设置 masterSwitchCount 字段
-      healthCheckCount: 0, // 设置 healthCheckCount 字段
-      errorCount: 0, // 设置 errorCount 字段
+      failoverCount: 0, // failover数量
+      lastFailoverTime: null, // lastFailover时间
+      masterSwitchCount: 0, // masterSwitch数量
+      healthCheckCount: 0, // healthCheck数量
+      errorCount: 0, // 错误数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -138,8 +138,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
       this.isInitialized = true; // 设置 isInitialized
 
       this.emit('initialized', { // 调用 emit
-        master: this.currentMaster, // 设置 master 字段
-        replicas: this.currentReplicas, // 设置 replicas 字段
+        master: this.currentMaster, // master
+        replicas: this.currentReplicas, // replicas
       }); // 结束代码块
 
     } catch (error) { // 执行语句
@@ -160,10 +160,10 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
     for (const sentinel of this.config.sentinels) { // 循环 const sentinel of this.config.sentinels
       try { // 尝试执行
         const client = createClient({ // 定义常量 client
-          url: `redis://${sentinel.host}:${sentinel.port}`, // 设置 url 字段
-          password: this.config.sentinelPassword, // 设置 password 字段
-          socket: { // 设置 socket 字段
-            connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
+          url: `redis://${sentinel.host}:${sentinel.port}`, // URL
+          password: this.config.sentinelPassword, // 密码
+          socket: { // socket
+            connectTimeout: this.config.connectTimeout, // connect超时
           }, // 结束代码块
         }); // 结束代码块
 
@@ -209,8 +209,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
     } // 结束代码块
 
     this.currentMaster = { // 设置 currentMaster
-      host: masterInfo[0], // 设置 host 字段
-      port: parseInt(masterInfo[1], 10), // 设置 port 字段
+      host: masterInfo[0], // 主机
+      port: parseInt(masterInfo[1], 10), // 端口
     }; // 结束代码块
 
     this.emit('masterDiscovered', this.currentMaster); // 调用 emit
@@ -236,10 +236,10 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
 
     this.masterClient = createClient({ // 设置 masterClient
       url, // 执行语句
-      database: this.config.database, // 设置 database 字段
-      socket: { // 设置 socket 字段
-        connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
-        reconnectStrategy: false, // 禁用自动重连，由 Sentinel 处理
+      database: this.config.database, // database
+      socket: { // socket
+        connectTimeout: this.config.connectTimeout, // connect超时
+        reconnectStrategy: false, // reconnect策略
       }, // 结束代码块
     }); // 结束代码块
 
@@ -298,9 +298,9 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
 
           const client = createClient({ // 定义常量 client
             url, // 执行语句
-            database: this.config.database, // 设置 database 字段
-            socket: { // 设置 socket 字段
-              connectTimeout: this.config.connectTimeout, // 设置 connectTimeout 字段
+            database: this.config.database, // database
+            socket: { // socket
+              connectTimeout: this.config.connectTimeout, // connect超时
             }, // 结束代码块
           }); // 结束代码块
 
@@ -346,8 +346,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
     // 创建订阅客户端 / Create subscription client
     const sentinel = this.config.sentinels[0]; // 定义常量 sentinel
     const subClient = createClient({ // 定义常量 subClient
-      url: `redis://${sentinel.host}:${sentinel.port}`, // 设置 url 字段
-      password: this.config.sentinelPassword, // 设置 password 字段
+      url: `redis://${sentinel.host}:${sentinel.port}`, // URL
+      password: this.config.sentinelPassword, // 密码
     }); // 结束代码块
 
     await subClient.connect(); // 等待异步结果
@@ -405,8 +405,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
     const parts = message.split(' '); // 定义常量 parts
     if (parts.length >= 5 && parts[0] === this.config.masterName) { // 条件判断 parts.length >= 5 && parts[0] === this.config...
       const newMaster = { // 定义常量 newMaster
-        host: parts[3], // 设置 host 字段
-        port: parseInt(parts[4], 10), // 设置 port 字段
+        host: parts[3], // 主机
+        port: parseInt(parts[4], 10), // 端口
       }; // 结束代码块
 
       this.state = SENTINEL_STATE.FAILOVER; // 设置 state
@@ -415,7 +415,7 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
       this.stats.lastFailoverTime = new Date().toISOString(); // 访问 stats
 
       this.emit('masterSwitch', { // 调用 emit
-        oldMaster: this.currentMaster, // 设置 oldMaster 字段
+        oldMaster: this.currentMaster, // oldMaster
         newMaster, // 执行语句
       }); // 结束代码块
 
@@ -511,8 +511,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
       } // 结束代码块
 
       this.emit('healthCheck', { // 调用 emit
-        master: this.currentMaster, // 设置 master 字段
-        replicaCount: this.replicaClients.length, // 设置 replicaCount 字段
+        master: this.currentMaster, // master
+        replicaCount: this.replicaClients.length, // replica数量
       }); // 结束代码块
 
     } catch (error) { // 执行语句
@@ -562,7 +562,7 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
         return this.masterClient; // 返回结果
 
       case 'master': // 分支 'master'
-      default: // 默认分支
+      default: // 默认
         return this.masterClient; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -581,11 +581,11 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      state: this.state, // 设置 state 字段
-      isInitialized: this.isInitialized, // 设置 isInitialized 字段
-      master: this.currentMaster, // 设置 master 字段
-      replicas: this.currentReplicas, // 设置 replicas 字段
-      stats: this.stats, // 设置 stats 字段
+      state: this.state, // state
+      isInitialized: this.isInitialized, // 是否Initialized
+      master: this.currentMaster, // master
+      replicas: this.currentReplicas, // replicas
+      stats: this.stats, // stats
     }; // 结束代码块
   } // 结束代码块
 
@@ -611,8 +611,8 @@ class RedisSentinel extends EventEmitter { // 定义类 RedisSentinel(继承Even
     ]); // 结束数组或索引
 
     return { // 返回结果
-      master: this._parseReplicaInfo(masterInfo), // 设置 master 字段
-      sentinels: sentinelInfo.map(s => this._parseReplicaInfo(s)), // 设置 sentinels 字段
+      master: this._parseReplicaInfo(masterInfo), // master
+      sentinels: sentinelInfo.map(s => this._parseReplicaInfo(s)), // sentinels
     }; // 结束代码块
   } // 结束代码块
 

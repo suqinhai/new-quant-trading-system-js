@@ -16,12 +16,12 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
  * Large Order Calculation Methods
  */
 export const LARGE_ORDER_METHOD = { // 导出常量 LARGE_ORDER_METHOD
-  VOLUME_RATIO: 'vol_ratio',            // 大单成交量占比
-  COUNT_RATIO: 'count_ratio',           // 大单数量占比
-  NET_LARGE_FLOW: 'net_flow',           // 大单净流入
-  BUY_SELL_RATIO: 'buy_sell',           // 大单买卖比
-  WHALE_ACTIVITY: 'whale',              // 鲸鱼活动指数
-  IMBALANCE: 'imbalance',               // 大单买卖不平衡度
+  VOLUME_RATIO: 'vol_ratio',            // 成交量比例
+  COUNT_RATIO: 'count_ratio',           // 数量比例
+  NET_LARGE_FLOW: 'net_flow',           // NET大额流
+  BUY_SELL_RATIO: 'buy_sell',           // BUYSELL比例
+  WHALE_ACTIVITY: 'whale',              // WHALEACTIVITY
+  IMBALANCE: 'imbalance',               // IMBALANCE权限
 }; // 结束代码块
 
 /**
@@ -40,17 +40,17 @@ export class LargeOrderFactor extends BaseFactor { // 导出类 LargeOrderFactor
     const method = config.method || LARGE_ORDER_METHOD.VOLUME_RATIO; // 定义常量 method
 
     super({ // 调用父类
-      name: config.name || `LargeOrder_${method}`, // 设置 name 字段
-      category: FACTOR_CATEGORY.VOLUME, // 设置 category 字段
-      direction: FACTOR_DIRECTION.POSITIVE, // 大单净买入 → 看涨
-      frequency: FACTOR_FREQUENCY.HOURLY, // 设置 frequency 字段
-      description: `大单成交占比因子 (${method})`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `LargeOrder_${method}`, // name
+      category: FACTOR_CATEGORY.VOLUME, // category
+      direction: FACTOR_DIRECTION.POSITIVE, // direction
+      frequency: FACTOR_FREQUENCY.HOURLY, // frequency
+      description: `大单成交占比因子 (${method})`, // description
+      params: { // params
         method, // 执行语句
-        period: config.period || 24,         // 24小时
-        largeOrderThreshold: config.largeOrderThreshold || 5.0,  // 5倍平均为大单
-        whaleThreshold: config.whaleThreshold || 20.0,          // 20倍平均为鲸鱼单
-        minDataPoints: config.minDataPoints || 50, // 设置 minDataPoints 字段
+        period: config.period || 24,         // 周期
+        largeOrderThreshold: config.largeOrderThreshold || 5.0,  // 大额订单阈值
+        whaleThreshold: config.whaleThreshold || 20.0,          // whale阈值
+        minDataPoints: config.minDataPoints || 50, // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -102,7 +102,7 @@ export class LargeOrderFactor extends BaseFactor { // 导出类 LargeOrderFactor
         value = this._calculateImbalance(trades, avgTradeValue); // 赋值 value
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         value = this._calculateVolumeRatio(trades, avgTradeValue); // 赋值 value
     } // 结束代码块
 
@@ -291,38 +291,38 @@ export class LargeOrderFactor extends BaseFactor { // 导出类 LargeOrderFactor
 
 // 大单成交量占比
 export const LargeOrderVolumeRatio = new LargeOrderFactor({ // 导出常量 LargeOrderVolumeRatio
-  name: 'LargeOrder_Vol_Ratio', // 设置 name 字段
-  method: LARGE_ORDER_METHOD.VOLUME_RATIO, // 设置 method 字段
-  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+  name: 'LargeOrder_Vol_Ratio', // name
+  method: LARGE_ORDER_METHOD.VOLUME_RATIO, // method
+  largeOrderThreshold: 5.0, // 大额订单阈值
 }); // 结束代码块
 
 // 大单净流入
 export const LargeOrderNetFlow = new LargeOrderFactor({ // 导出常量 LargeOrderNetFlow
-  name: 'LargeOrder_Net_Flow', // 设置 name 字段
-  method: LARGE_ORDER_METHOD.NET_LARGE_FLOW, // 设置 method 字段
-  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+  name: 'LargeOrder_Net_Flow', // name
+  method: LARGE_ORDER_METHOD.NET_LARGE_FLOW, // method
+  largeOrderThreshold: 5.0, // 大额订单阈值
 }); // 结束代码块
 
 // 大单买卖比
 export const LargeOrderBuySell = new LargeOrderFactor({ // 导出常量 LargeOrderBuySell
-  name: 'LargeOrder_Buy_Sell', // 设置 name 字段
-  method: LARGE_ORDER_METHOD.BUY_SELL_RATIO, // 设置 method 字段
-  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+  name: 'LargeOrder_Buy_Sell', // name
+  method: LARGE_ORDER_METHOD.BUY_SELL_RATIO, // method
+  largeOrderThreshold: 5.0, // 大额订单阈值
 }); // 结束代码块
 
 // 鲸鱼活动指数
 export const WhaleActivity = new LargeOrderFactor({ // 导出常量 WhaleActivity
-  name: 'Whale_Activity', // 设置 name 字段
-  method: LARGE_ORDER_METHOD.WHALE_ACTIVITY, // 设置 method 字段
-  largeOrderThreshold: 10.0, // 设置 largeOrderThreshold 字段
-  whaleThreshold: 50.0, // 设置 whaleThreshold 字段
+  name: 'Whale_Activity', // name
+  method: LARGE_ORDER_METHOD.WHALE_ACTIVITY, // method
+  largeOrderThreshold: 10.0, // 大额订单阈值
+  whaleThreshold: 50.0, // whale阈值
 }); // 结束代码块
 
 // 大单不平衡度
 export const LargeOrderImbalance = new LargeOrderFactor({ // 导出常量 LargeOrderImbalance
-  name: 'LargeOrder_Imbalance', // 设置 name 字段
-  method: LARGE_ORDER_METHOD.IMBALANCE, // 设置 method 字段
-  largeOrderThreshold: 5.0, // 设置 largeOrderThreshold 字段
+  name: 'LargeOrder_Imbalance', // name
+  method: LARGE_ORDER_METHOD.IMBALANCE, // method
+  largeOrderThreshold: 5.0, // 大额订单阈值
 }); // 结束代码块
 
 /**

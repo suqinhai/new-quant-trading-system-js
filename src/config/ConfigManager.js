@@ -17,10 +17,10 @@ import { z } from 'zod'; // 导入模块 zod
  * 配置源类型
  */
 const ConfigSource = { // 定义常量 ConfigSource
-  DEFAULT: 'default', // 设置 DEFAULT 字段
-  FILE: 'file', // 设置 FILE 字段
-  ENV: 'env', // 设置 ENV 字段
-  RUNTIME: 'runtime', // 设置 RUNTIME 字段
+  DEFAULT: 'default', // 默认
+  FILE: 'file', // 文件
+  ENV: 'env', // ENV
+  RUNTIME: 'runtime', // 运行时
 }; // 结束代码块
 
 /**
@@ -33,15 +33,15 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
 
     this.options = { // 设置 options
       // 配置文件路径
-      configPath: options.configPath || './config', // 设置 configPath 字段
+      configPath: options.configPath || './config', // 配置路径
       // 环境变量前缀
-      envPrefix: options.envPrefix || 'QUANT_', // 设置 envPrefix 字段
+      envPrefix: options.envPrefix || 'QUANT_', // env前缀
       // 是否监听文件变化
-      watchFiles: options.watchFiles ?? false, // 设置 watchFiles 字段
+      watchFiles: options.watchFiles ?? false, // 是否监听文件变化
       // 是否冻结配置
-      freeze: options.freeze ?? false, // 设置 freeze 字段
+      freeze: options.freeze ?? false, // freeze
       // 是否允许运行时修改
-      allowRuntimeChanges: options.allowRuntimeChanges ?? true, // 设置 allowRuntimeChanges 字段
+      allowRuntimeChanges: options.allowRuntimeChanges ?? true, // 是否允许运行时修改
     }; // 结束代码块
 
     // 配置存储
@@ -67,77 +67,77 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
   _registerDefaultSchemas() { // 调用 _registerDefaultSchemas
     // 交易所配置 Schema
     this.registerSchema('exchange', z.object({ // 调用 registerSchema
-      default: z.string().default('binance'), // 默认分支
-      binance: z.object({ // 设置 binance 字段
-        apiKey: z.string().optional(), // 设置 apiKey 字段
-        secret: z.string().optional(), // 设置 secret 字段
-        sandbox: z.boolean().default(false), // 设置 sandbox 字段
-        timeout: z.number().positive().default(30000), // 设置 timeout 字段
-        rateLimit: z.boolean().default(true), // 设置 rateLimit 字段
+      default: z.string().default('binance'), // 默认
+      binance: z.object({ // BINANCE交易所配置
+        apiKey: z.string().optional(), // API密钥
+        secret: z.string().optional(), // 密钥
+        sandbox: z.boolean().default(false), // 沙盒
+        timeout: z.number().positive().default(30000), // 超时
+        rateLimit: z.boolean().default(true), // 频率限制
       }).optional(), // 执行语句
-      okx: z.object({ // 设置 okx 字段
-        apiKey: z.string().optional(), // 设置 apiKey 字段
-        secret: z.string().optional(), // 设置 secret 字段
-        passphrase: z.string().optional(), // 设置 passphrase 字段
-        sandbox: z.boolean().default(false), // 设置 sandbox 字段
+      okx: z.object({ // OKX交易所配置
+        apiKey: z.string().optional(), // API密钥
+        secret: z.string().optional(), // 密钥
+        passphrase: z.string().optional(), // 口令
+        sandbox: z.boolean().default(false), // 沙盒
       }).optional(), // 执行语句
     })); // 结束代码块
 
     // 风控配置 Schema
     this.registerSchema('risk', z.object({ // 调用 registerSchema
-      enabled: z.boolean().default(true), // 设置 enabled 字段
-      maxPositionRatio: z.number().min(0).max(1).default(0.3), // 设置 maxPositionRatio 字段
-      maxRiskPerTrade: z.number().min(0).max(1).default(0.02), // 设置 maxRiskPerTrade 字段
-      maxDailyLoss: z.number().positive().default(1000), // 设置 maxDailyLoss 字段
-      maxDrawdown: z.number().min(0).max(1).default(0.2), // 设置 maxDrawdown 字段
-      maxPositions: z.number().int().positive().default(5), // 设置 maxPositions 字段
-      maxLeverage: z.number().positive().default(3), // 设置 maxLeverage 字段
-      cooldownPeriod: z.number().nonnegative().default(300000), // 设置 cooldownPeriod 字段
+      enabled: z.boolean().default(true), // 启用
+      maxPositionRatio: z.number().min(0).max(1).default(0.3), // 最大持仓比例
+      maxRiskPerTrade: z.number().min(0).max(1).default(0.02), // 最大风险每笔交易
+      maxDailyLoss: z.number().positive().default(1000), // 最大每日亏损
+      maxDrawdown: z.number().min(0).max(1).default(0.2), // 最大回撤
+      maxPositions: z.number().int().positive().default(5), // 最大持仓
+      maxLeverage: z.number().positive().default(3), // 最大杠杆
+      cooldownPeriod: z.number().nonnegative().default(300000), // 冷却周期
     })); // 结束代码块
 
     // 策略配置 Schema
     this.registerSchema('strategy', z.object({ // 调用 registerSchema
-      enabled: z.boolean().default(true), // 设置 enabled 字段
-      defaultTimeframe: z.string().default('1h'), // 设置 defaultTimeframe 字段
-      capitalRatio: z.number().min(0).max(1).default(0.1), // 设置 capitalRatio 字段
+      enabled: z.boolean().default(true), // 启用
+      defaultTimeframe: z.string().default('1h'), // 默认周期
+      capitalRatio: z.number().min(0).max(1).default(0.1), // 资金比例
     })); // 结束代码块
 
     // 日志配置 Schema
     this.registerSchema('logging', z.object({ // 调用 registerSchema
-      level: z.enum(['debug', 'info', 'warn', 'error']).default('info'), // 设置 level 字段
-      format: z.enum(['json', 'text']).default('json'), // 设置 format 字段
-      destination: z.enum(['console', 'file', 'both']).default('both'), // 设置 destination 字段
-      maxFiles: z.number().positive().default(10), // 设置 maxFiles 字段
-      maxFileSize: z.number().positive().default(10485760), // 设置 maxFileSize 字段
+      level: z.enum(['debug', 'info', 'warn', 'error']).default('info'), // 级别
+      format: z.enum(['json', 'text']).default('json'), // 格式
+      destination: z.enum(['console', 'file', 'both']).default('both'), // 输出位置
+      maxFiles: z.number().positive().default(10), // 最大文件
+      maxFileSize: z.number().positive().default(10485760), // 最大文件大小
     })); // 结束代码块
 
     // 数据库配置 Schema
     this.registerSchema('database', z.object({ // 调用 registerSchema
-      redis: z.object({ // 设置 redis 字段
-        enabled: z.boolean().default(false), // 设置 enabled 字段
-        host: z.string().optional(), // 设置 host 字段
-        port: z.number().optional(), // 设置 port 字段
-        password: z.string().optional(), // 设置 password 字段
-        db: z.number().optional(), // 设置 db 字段
-        url: z.string().optional(), // 设置 url 字段
+      redis: z.object({ // redis
+        enabled: z.boolean().default(false), // 启用
+        host: z.string().optional(), // 主机
+        port: z.number().optional(), // 端口
+        password: z.string().optional(), // 密码
+        db: z.number().optional(), // db
+        url: z.string().optional(), // URL
       }).optional(), // 执行语句
     })); // 结束代码块
 
     // 备份配置 Schema
     this.registerSchema('backup', z.object({ // 调用 registerSchema
-      enabled: z.boolean().default(true), // 设置 enabled 字段
-      dir: z.string().default('./backups'), // 设置 dir 字段
-      retentionDays: z.number().positive().default(30), // 设置 retentionDays 字段
-      compress: z.boolean().default(true), // 设置 compress 字段
-      encrypt: z.boolean().default(false), // 设置 encrypt 字段
+      enabled: z.boolean().default(true), // 启用
+      dir: z.string().default('./backups'), // dir
+      retentionDays: z.number().positive().default(30), // retention天
+      compress: z.boolean().default(true), // compress
+      encrypt: z.boolean().default(false), // encrypt
     })); // 结束代码块
 
     // 健康检查配置 Schema
     this.registerSchema('health', z.object({ // 调用 registerSchema
-      enabled: z.boolean().default(true), // 设置 enabled 字段
-      port: z.number().int().positive().default(8080), // 设置 port 字段
-      path: z.string().default('/health'), // 设置 path 字段
-      interval: z.number().positive().default(30000), // 设置 interval 字段
+      enabled: z.boolean().default(true), // 启用
+      port: z.number().int().positive().default(8080), // 端口
+      path: z.string().default('/health'), // 路径
+      interval: z.number().positive().default(30000), // 间隔
     })); // 结束代码块
   } // 结束代码块
 
@@ -232,8 +232,8 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
           Object.assign(config, this._deepMerge(config, parsed)); // 调用 Object.assign
 
           this.metadata.set(filePath, { // 访问 metadata
-            source: ConfigSource.FILE, // 设置 source 字段
-            loadedAt: Date.now(), // 设置 loadedAt 字段
+            source: ConfigSource.FILE, // 来源
+            loadedAt: Date.now(), // 加载At
           }); // 结束代码块
         } catch (error) { // 执行语句
           console.error(`[ConfigManager] Failed to load ${file}:`, error.message); // 控制台输出
@@ -310,7 +310,7 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
         if (!result.success) { // 条件判断 !result.success
           errors.push({ // 调用 errors.push
             section, // 执行语句
-            errors: result.error.errors, // 设置 errors 字段
+            errors: result.error.errors, // 错误列表
           }); // 结束代码块
         } else { // 执行语句
           // 使用验证后的值（包含默认值）
@@ -385,8 +385,8 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
     await this.load(); // 等待异步结果
 
     this.emit('reloaded', { // 调用 emit
-      old: oldConfig, // 设置 old 字段
-      new: this.config, // 设置 new 字段
+      old: oldConfig, // old
+      new: this.config, // new
     }); // 结束代码块
   } // 结束代码块
 
@@ -552,11 +552,11 @@ class ConfigManager extends EventEmitter { // 定义类 ConfigManager(继承Even
    */
   getSummary() { // 调用 getSummary
     return { // 返回结果
-      sections: Object.keys(this.config), // 设置 sections 字段
-      schemas: Array.from(this.schemas.keys()), // 设置 schemas 字段
-      watchingFiles: this.options.watchFiles, // 设置 watchingFiles 字段
-      frozen: this.options.freeze, // 设置 frozen 字段
-      allowRuntimeChanges: this.options.allowRuntimeChanges, // 设置 allowRuntimeChanges 字段
+      sections: Object.keys(this.config), // 配置分段
+      schemas: Array.from(this.schemas.keys()), // 配置结构
+      watchingFiles: this.options.watchFiles, // 监听文件
+      frozen: this.options.freeze, // 冻结
+      allowRuntimeChanges: this.options.allowRuntimeChanges, // 允许运行时变更
     }; // 结束代码块
   } // 结束代码块
 

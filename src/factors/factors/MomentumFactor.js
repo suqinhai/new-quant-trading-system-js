@@ -18,8 +18,8 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
 export const MOMENTUM_TYPE = { // 导出常量 MOMENTUM_TYPE
   SIMPLE: 'simple',           // 简单收益率: (P1 - P0) / P0
   LOG: 'log',                 // 对数收益率: ln(P1 / P0)
-  RISK_ADJUSTED: 'risk_adj',  // 风险调整收益 (Sharpe-like)
-  ACCELERATION: 'accel',      // 动量加速度 (动量变化率)
+  RISK_ADJUSTED: 'risk_adj',  // 风险ADJUSTED
+  ACCELERATION: 'accel',      // ACCELERATION
 }; // 结束代码块
 
 /**
@@ -38,16 +38,16 @@ export class MomentumFactor extends BaseFactor { // 导出类 MomentumFactor
     const type = config.type || MOMENTUM_TYPE.SIMPLE; // 定义常量 type
 
     super({ // 调用父类
-      name: config.name || `Momentum_${period}d`, // 设置 name 字段
-      category: FACTOR_CATEGORY.MOMENTUM, // 设置 category 字段
-      direction: FACTOR_DIRECTION.POSITIVE, // 高动量 → 预期正收益
-      frequency: FACTOR_FREQUENCY.DAILY, // 设置 frequency 字段
-      description: `${period}天动量因子 (${type})`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `Momentum_${period}d`, // name
+      category: FACTOR_CATEGORY.MOMENTUM, // category
+      direction: FACTOR_DIRECTION.POSITIVE, // direction
+      frequency: FACTOR_FREQUENCY.DAILY, // frequency
+      description: `${period}天动量因子 (${type})`, // description
+      params: { // params
         period, // 执行语句
         type, // 执行语句
-        useVolatility: config.useVolatility || false, // 设置 useVolatility 字段
-        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 设置 minDataPoints 字段
+        useVolatility: config.useVolatility || false, // 是否使用波动率
+        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -95,7 +95,7 @@ export class MomentumFactor extends BaseFactor { // 导出类 MomentumFactor
         momentum = this._calculateAcceleration(closes); // 赋值 momentum
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         momentum = this._calculateSimple(closes); // 赋值 momentum
     } // 结束代码块
 
@@ -225,42 +225,42 @@ export class MomentumFactor extends BaseFactor { // 导出类 MomentumFactor
 
 // 1天动量
 export const Momentum1D = new MomentumFactor({ // 导出常量 Momentum1D
-  name: 'Momentum_1d', // 设置 name 字段
-  period: 1, // 设置 period 字段
-  type: MOMENTUM_TYPE.SIMPLE, // 设置 type 字段
-  minDataPoints: 2, // 设置 minDataPoints 字段
+  name: 'Momentum_1d', // name
+  period: 1, // 周期
+  type: MOMENTUM_TYPE.SIMPLE, // 类型
+  minDataPoints: 2, // 最小数据Points
 }); // 结束代码块
 
 // 7天动量
 export const Momentum7D = new MomentumFactor({ // 导出常量 Momentum7D
-  name: 'Momentum_7d', // 设置 name 字段
-  period: 7, // 设置 period 字段
-  type: MOMENTUM_TYPE.SIMPLE, // 设置 type 字段
-  minDataPoints: 5, // 设置 minDataPoints 字段
+  name: 'Momentum_7d', // name
+  period: 7, // 周期
+  type: MOMENTUM_TYPE.SIMPLE, // 类型
+  minDataPoints: 5, // 最小数据Points
 }); // 结束代码块
 
 // 30天动量
 export const Momentum30D = new MomentumFactor({ // 导出常量 Momentum30D
-  name: 'Momentum_30d', // 设置 name 字段
-  period: 30, // 设置 period 字段
-  type: MOMENTUM_TYPE.SIMPLE, // 设置 type 字段
-  minDataPoints: 20, // 设置 minDataPoints 字段
+  name: 'Momentum_30d', // name
+  period: 30, // 周期
+  type: MOMENTUM_TYPE.SIMPLE, // 类型
+  minDataPoints: 20, // 最小数据Points
 }); // 结束代码块
 
 // 7天风险调整动量
 export const RiskAdjustedMomentum7D = new MomentumFactor({ // 导出常量 RiskAdjustedMomentum7D
-  name: 'RiskAdj_Momentum_7d', // 设置 name 字段
-  period: 7, // 设置 period 字段
-  type: MOMENTUM_TYPE.RISK_ADJUSTED, // 设置 type 字段
-  minDataPoints: 5, // 设置 minDataPoints 字段
+  name: 'RiskAdj_Momentum_7d', // name
+  period: 7, // 周期
+  type: MOMENTUM_TYPE.RISK_ADJUSTED, // 类型
+  minDataPoints: 5, // 最小数据Points
 }); // 结束代码块
 
 // 14天动量加速度
 export const MomentumAcceleration14D = new MomentumFactor({ // 导出常量 MomentumAcceleration14D
-  name: 'Momentum_Accel_14d', // 设置 name 字段
-  period: 14, // 设置 period 字段
-  type: MOMENTUM_TYPE.ACCELERATION, // 设置 type 字段
-  minDataPoints: 10, // 设置 minDataPoints 字段
+  name: 'Momentum_Accel_14d', // name
+  period: 14, // 周期
+  type: MOMENTUM_TYPE.ACCELERATION, // 类型
+  minDataPoints: 10, // 最小数据Points
 }); // 结束代码块
 
 /**

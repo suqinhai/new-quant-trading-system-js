@@ -39,25 +39,25 @@ const CORRELATION_LEVEL = { // 定义常量 CORRELATION_LEVEL
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 滚动窗口大小 (数据点数量) / Rolling window size (number of data points)
-  rollingWindow: 30, // 设置 rollingWindow 字段
+  rollingWindow: 30, // 滚动窗口大小 (数据点数量)
 
   // 最小数据点数量 / Minimum data points required
-  minDataPoints: 10, // 设置 minDataPoints 字段
+  minDataPoints: 10, // 最小数据点数量
 
   // 低相关性阈值 / Low correlation threshold
-  lowCorrelationThreshold: 0.3, // 设置 lowCorrelationThreshold 字段
+  lowCorrelationThreshold: 0.3, // 低相关性阈值
 
   // 高相关性警告阈值 / High correlation warning threshold
-  highCorrelationWarning: 0.7, // 设置 highCorrelationWarning 字段
+  highCorrelationWarning: 0.7, // 高相关性警告阈值
 
   // 相关性更新间隔 (毫秒) / Correlation update interval (ms)
-  updateInterval: 60000, // 设置 updateInterval 字段
+  updateInterval: 60000, // 相关性更新间隔 (毫秒)
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: false, // 设置 verbose 字段
+  verbose: false, // 是否启用详细日志
 
   // 日志前缀 / Log prefix
-  logPrefix: '[CorrelationAnalyzer]', // 设置 logPrefix 字段
+  logPrefix: '[CorrelationAnalyzer]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -207,7 +207,7 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     // 添加新数据点 / Add new data point
     returns.push({ // 调用 returns.push
       timestamp, // 执行语句
-      return: returnValue, // 返回结果
+      return: returnValue, // return
       equity, // 执行语句
     }); // 结束代码块
 
@@ -248,9 +248,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       if (prevEquity > 0) { // 条件判断 prevEquity > 0
         const returnValue = (currEquity - prevEquity) / prevEquity; // 定义常量 returnValue
         returns.push({ // 调用 returns.push
-          timestamp: equityCurve[i].timestamp, // 设置 timestamp 字段
-          return: returnValue, // 返回结果
-          equity: currEquity, // 设置 equity 字段
+          timestamp: equityCurve[i].timestamp, // 时间戳
+          return: returnValue, // return
+          equity: currEquity, // equity
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -284,8 +284,8 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     // 检查数据 / Check data
     if (!returnsA || !returnsB) { // 条件判断 !returnsA || !returnsB
       return { // 返回结果
-        correlation: null, // 设置 correlation 字段
-        error: '策略数据不存在 / Strategy data not found', // 设置 error 字段
+        correlation: null, // correlation
+        error: '策略数据不存在 / Strategy data not found', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -294,9 +294,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     if (aligned.length < this.config.minDataPoints) { // 条件判断 aligned.length < this.config.minDataPoints
       return { // 返回结果
-        correlation: null, // 设置 correlation 字段
-        dataPoints: aligned.length, // 设置 dataPoints 字段
-        error: `数据点不足 (${aligned.length} < ${this.config.minDataPoints}) / Insufficient data points`, // 设置 error 字段
+        correlation: null, // correlation
+        dataPoints: aligned.length, // 数据Points
+        error: `数据点不足 (${aligned.length} < ${this.config.minDataPoints}) / Insufficient data points`, // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -318,13 +318,13 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       strategyA, // 执行语句
       strategyB, // 执行语句
       correlation, // 执行语句
-      absoluteCorrelation: Math.abs(correlation), // 设置 absoluteCorrelation 字段
+      absoluteCorrelation: Math.abs(correlation), // absoluteCorrelation
       level, // 执行语句
-      dataPoints: aligned.length, // 设置 dataPoints 字段
-      tStatistic: tStat, // 设置 tStatistic 字段
+      dataPoints: aligned.length, // 数据Points
+      tStatistic: tStat, // tStatistic
       pValue, // 执行语句
-      significant: pValue < 0.05, // 设置 significant 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      significant: pValue < 0.05, // significant
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -422,9 +422,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     if (n < 2) { // 条件判断 n < 2
       return { // 返回结果
-        strategies: [], // 设置 strategies 字段
-        matrix: [], // 设置 matrix 字段
-        error: '至少需要2个策略 / At least 2 strategies required', // 设置 error 字段
+        strategies: [], // 策略
+        matrix: [], // matrix
+        error: '至少需要2个策略 / At least 2 strategies required', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -444,7 +444,7 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
         matrix[j][i] = corr; // 执行语句
 
         details.push({ // 调用 details.push
-          pair: [strategies[i], strategies[j]], // 设置 pair 字段
+          pair: [strategies[i], strategies[j]], // 交易对
           ...result, // 展开对象或数组
         }); // 结束代码块
       } // 结束代码块
@@ -455,7 +455,7 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       strategies, // 执行语句
       matrix, // 执行语句
       details, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     return this.correlationMatrix; // 返回结果
@@ -475,9 +475,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     if (n < 2) { // 条件判断 n < 2
       return { // 返回结果
-        strategies: [], // 设置 strategies 字段
-        matrix: [], // 设置 matrix 字段
-        error: '至少需要2个策略 / At least 2 strategies required', // 设置 error 字段
+        strategies: [], // 策略
+        matrix: [], // matrix
+        error: '至少需要2个策略 / At least 2 strategies required', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -487,8 +487,8 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     if (alignedReturns.length < this.config.minDataPoints) { // 条件判断 alignedReturns.length < this.config.minDataPo...
       return { // 返回结果
         strategies, // 执行语句
-        matrix: [], // 设置 matrix 字段
-        error: '数据点不足 / Insufficient data points', // 设置 error 字段
+        matrix: [], // matrix
+        error: '数据点不足 / Insufficient data points', // 错误
       }; // 结束代码块
     } // 结束代码块
 
@@ -526,8 +526,8 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       matrix, // 执行语句
       means, // 执行语句
       stdDevs, // 执行语句
-      dataPoints: m, // 设置 dataPoints 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      dataPoints: m, // 数据Points
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     return this.covarianceMatrix; // 返回结果
@@ -561,11 +561,11 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       .filter(d => d.correlation !== null && Math.abs(d.correlation) < thresholdValue) // 定义箭头函数
       .sort((a, b) => Math.abs(a.correlation) - Math.abs(b.correlation)) // 定义箭头函数
       .map(d => ({ // 定义箭头函数
-        strategies: d.pair, // 设置 strategies 字段
-        correlation: d.correlation, // 设置 correlation 字段
-        absoluteCorrelation: Math.abs(d.correlation), // 设置 absoluteCorrelation 字段
-        level: d.level, // 设置 level 字段
-        recommendation: this._getRecommendation(d.correlation), // 设置 recommendation 字段
+        strategies: d.pair, // 策略
+        correlation: d.correlation, // correlation
+        absoluteCorrelation: Math.abs(d.correlation), // absoluteCorrelation
+        level: d.level, // 级别
+        recommendation: this._getRecommendation(d.correlation), // recommendation
       })); // 结束代码块
 
     return lowCorrelationPairs; // 返回结果
@@ -595,11 +595,11 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       .filter(d => d.correlation !== null && Math.abs(d.correlation) >= thresholdValue) // 定义箭头函数
       .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)) // 定义箭头函数
       .map(d => ({ // 定义箭头函数
-        strategies: d.pair, // 设置 strategies 字段
-        correlation: d.correlation, // 设置 correlation 字段
-        absoluteCorrelation: Math.abs(d.correlation), // 设置 absoluteCorrelation 字段
-        level: d.level, // 设置 level 字段
-        warning: '高相关性可能导致集中风险 / High correlation may cause concentrated risk', // 设置 warning 字段
+        strategies: d.pair, // 策略
+        correlation: d.correlation, // correlation
+        absoluteCorrelation: Math.abs(d.correlation), // absoluteCorrelation
+        level: d.level, // 级别
+        warning: '高相关性可能导致集中风险 / High correlation may cause concentrated risk', // 警告
       })); // 结束代码块
 
     return highCorrelationPairs; // 返回结果
@@ -618,9 +618,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     if (n < targetCount) { // 条件判断 n < targetCount
       return { // 返回结果
-        strategies: strategies, // 设置 strategies 字段
-        averageCorrelation: this._calculateAverageCorrelation(strategies), // 设置 averageCorrelation 字段
-        message: '可用策略数量不足 / Insufficient available strategies', // 设置 message 字段
+        strategies: strategies, // 策略
+        averageCorrelation: this._calculateAverageCorrelation(strategies), // 平均Correlation
+        message: '可用策略数量不足 / Insufficient available strategies', // 消息
       }; // 结束代码块
     } // 结束代码块
 
@@ -664,10 +664,10 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     } // 结束代码块
 
     return { // 返回结果
-      strategies: selected, // 设置 strategies 字段
-      averageCorrelation: this._calculateAverageCorrelation(selected), // 设置 averageCorrelation 字段
-      correlationMatrix: this._getSubMatrix(selected), // 设置 correlationMatrix 字段
-      recommendation: '基于最小相关性的组合 / Combination based on minimum correlation', // 设置 recommendation 字段
+      strategies: selected, // 策略
+      averageCorrelation: this._calculateAverageCorrelation(selected), // 平均Correlation
+      correlationMatrix: this._getSubMatrix(selected), // correlationMatrix
+      recommendation: '基于最小相关性的组合 / Combination based on minimum correlation', // recommendation
     }; // 结束代码块
   } // 结束代码块
 
@@ -711,9 +711,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
       const corr = this._pearsonCorrelation(x, y); // 定义常量 corr
 
       rollingCorr.push({ // 调用 rollingCorr.push
-        timestamp: aligned[i - 1].timestamp, // 设置 timestamp 字段
-        correlation: corr, // 设置 correlation 字段
-        level: this._getCorrelationLevel(Math.abs(corr)), // 设置 level 字段
+        timestamp: aligned[i - 1].timestamp, // 时间戳
+        correlation: corr, // correlation
+        level: this._getCorrelationLevel(Math.abs(corr)), // 级别
       }); // 结束代码块
     } // 结束代码块
 
@@ -752,12 +752,12 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     return { // 返回结果
       detected, // 执行语句
-      recentCorrelation: recentAvg, // 设置 recentCorrelation 字段
-      historicalCorrelation: historicalAvg, // 设置 historicalCorrelation 字段
+      recentCorrelation: recentAvg, // recentCorrelation
+      historicalCorrelation: historicalAvg, // historicalCorrelation
       change, // 执行语句
       threshold, // 执行语句
-      direction: recentAvg > historicalAvg ? 'increasing' : 'decreasing', // 设置 direction 字段
-      timestamp: Date.now(), // 设置 timestamp 字段
+      direction: recentAvg > historicalAvg ? 'increasing' : 'decreasing', // direction
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
   } // 结束代码块
 
@@ -787,9 +787,9 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     const timestamps = commonTimestamps.slice(-maxPoints); // 定义常量 timestamps
 
     return timestamps.map(t => ({ // 返回结果
-      timestamp: t, // 设置 timestamp 字段
-      returnA: mapA.get(t), // 设置 returnA 字段
-      returnB: mapB.get(t), // 设置 returnB 字段
+      timestamp: t, // 时间戳
+      returnA: mapA.get(t), // returnA
+      returnB: mapB.get(t), // returnB
     })); // 结束代码块
   } // 结束代码块
 
@@ -950,8 +950,8 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     const highCorr = this.findHighCorrelationPairs(); // 定义常量 highCorr
     if (highCorr.length > 0) { // 条件判断 highCorr.length > 0
       this.emit('highCorrelationWarning', { // 调用 emit
-        pairs: highCorr, // 设置 pairs 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        pairs: highCorr, // pairs
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
 
       this.log(`发现${highCorr.length}对高相关策略 / Found ${highCorr.length} high correlation pairs`, 'warn'); // 调用 log
@@ -959,8 +959,8 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
 
     this.lastUpdateTime = Date.now(); // 设置 lastUpdateTime
     this.emit('matricesUpdated', { // 调用 emit
-      correlationMatrix: this.correlationMatrix, // 设置 correlationMatrix 字段
-      covarianceMatrix: this.covarianceMatrix, // 设置 covarianceMatrix 字段
+      correlationMatrix: this.correlationMatrix, // correlationMatrix
+      covarianceMatrix: this.covarianceMatrix, // covarianceMatrix
     }); // 结束代码块
   } // 结束代码块
 
@@ -976,19 +976,19 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      strategies: this.strategies, // 设置 strategies 字段
-      strategyCount: this.strategies.length, // 设置 strategyCount 字段
-      dataPointCounts: Object.fromEntries( // 设置 dataPointCounts 字段
+      running: this.running, // running
+      strategies: this.strategies, // 策略
+      strategyCount: this.strategies.length, // 策略数量
+      dataPointCounts: Object.fromEntries( // 数据PointCounts
         this.strategies.map(s => [s, (this.strategyReturns.get(s) || []).length]) // 访问 strategies
       ), // 结束调用或参数
-      hasCorrelationMatrix: !!this.correlationMatrix, // 设置 hasCorrelationMatrix 字段
-      hasCovarianceMatrix: !!this.covarianceMatrix, // 设置 hasCovarianceMatrix 字段
-      lastUpdateTime: this.lastUpdateTime, // 设置 lastUpdateTime 字段
-      config: { // 设置 config 字段
-        rollingWindow: this.config.rollingWindow, // 设置 rollingWindow 字段
-        lowCorrelationThreshold: this.config.lowCorrelationThreshold, // 设置 lowCorrelationThreshold 字段
-        highCorrelationWarning: this.config.highCorrelationWarning, // 设置 highCorrelationWarning 字段
+      hasCorrelationMatrix: !!this.correlationMatrix, // 是否有CorrelationMatrix
+      hasCovarianceMatrix: !!this.covarianceMatrix, // 是否有CovarianceMatrix
+      lastUpdateTime: this.lastUpdateTime, // last更新时间
+      config: { // 配置
+        rollingWindow: this.config.rollingWindow, // 滚动窗口
+        lowCorrelationThreshold: this.config.lowCorrelationThreshold, // 最低Correlation阈值
+        highCorrelationWarning: this.config.highCorrelationWarning, // 最高Correlation警告
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1009,18 +1009,18 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
     const optimal = this.getOptimalCombination(3); // 定义常量 optimal
 
     return { // 返回结果
-      timestamp: Date.now(), // 设置 timestamp 字段
-      strategies: this.strategies, // 设置 strategies 字段
-      correlationMatrix: this.correlationMatrix, // 设置 correlationMatrix 字段
-      covarianceMatrix: this.covarianceMatrix, // 设置 covarianceMatrix 字段
-      lowCorrelationPairs: lowCorr, // 设置 lowCorrelationPairs 字段
-      highCorrelationPairs: highCorr, // 设置 highCorrelationPairs 字段
-      optimalCombination: optimal, // 设置 optimalCombination 字段
-      summary: { // 设置 summary 字段
-        totalStrategies: this.strategies.length, // 设置 totalStrategies 字段
-        lowCorrelationCount: lowCorr.length, // 设置 lowCorrelationCount 字段
-        highCorrelationCount: highCorr.length, // 设置 highCorrelationCount 字段
-        averageCorrelation: this._calculateAverageCorrelation(this.strategies), // 设置 averageCorrelation 字段
+      timestamp: Date.now(), // 时间戳
+      strategies: this.strategies, // 策略
+      correlationMatrix: this.correlationMatrix, // correlationMatrix
+      covarianceMatrix: this.covarianceMatrix, // covarianceMatrix
+      lowCorrelationPairs: lowCorr, // 最低CorrelationPairs
+      highCorrelationPairs: highCorr, // 最高CorrelationPairs
+      optimalCombination: optimal, // optimalCombination
+      summary: { // summary
+        totalStrategies: this.strategies.length, // 总策略
+        lowCorrelationCount: lowCorr.length, // 最低Correlation数量
+        highCorrelationCount: highCorr.length, // 最高Correlation数量
+        averageCorrelation: this._calculateAverageCorrelation(this.strategies), // 平均Correlation
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1045,7 +1045,7 @@ export class CorrelationAnalyzer extends EventEmitter { // 导出类 Correlation
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
         break; // 跳出循环或分支
     } // 结束代码块

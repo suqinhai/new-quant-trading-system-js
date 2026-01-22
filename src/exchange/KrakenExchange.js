@@ -53,24 +53,24 @@ export class KrakenExchange extends BaseExchange { // 导出类 KrakenExchange
       secret: this.config.secret,         // API 密钥 / API secret
 
       // 是否启用速率限制 / Whether to enable rate limiting
-      enableRateLimit: this.config.enableRateLimit, // 设置 enableRateLimit 字段
+      enableRateLimit: this.config.enableRateLimit, // 是否启用速率限制
 
       // 超时设置 (毫秒) / Timeout settings (milliseconds)
-      timeout: this.config.timeout, // 设置 timeout 字段
+      timeout: this.config.timeout, // 超时设置 (毫秒)
 
       // 代理设置 / Proxy settings
-      proxy: this.config.proxy, // 设置 proxy 字段
+      proxy: this.config.proxy, // proxy
 
       // 配置选项 / Configuration options
-      options: { // 设置 options 字段
+      options: { // options
         // 默认交易类型 / Default trading type
         // spot = 现货 / Spot
         // swap = 永续合约 / Perpetual
         // future = 交割合约 / Futures
-        defaultType: this.config.defaultType, // 设置 defaultType 字段
+        defaultType: this.config.defaultType, // future = 交割合约
 
         // 调整时间戳 / Adjust timestamp
-        adjustForTimeDifference: true, // 设置 adjustForTimeDifference 字段
+        adjustForTimeDifference: true, // adjust用于时间Difference
 
         // Kraken 特定设置 / Kraken-specific settings
         // Kraken 使用 nonce 进行请求签名
@@ -235,12 +235,12 @@ export class KrakenExchange extends BaseExchange { // 导出类 KrakenExchange
 
       // 返回格式化的交易量信息 / Return formatted trade volume info
       return { // 返回结果
-        currency: response.result?.currency || 'USD', // 设置 currency 字段
-        volume: parseFloat(response.result?.volume || 0), // 设置 volume 字段
-        fees: response.result?.fees || {}, // 设置 fees 字段
-        feesMaker: response.result?.fees_maker || {}, // 设置 feesMaker 字段
-        exchange: this.name, // 设置 exchange 字段
-        timestamp: Date.now(), // 设置 timestamp 字段
+        currency: response.result?.currency || 'USD', // currency
+        volume: parseFloat(response.result?.volume || 0), // 成交量
+        fees: response.result?.fees || {}, // fees
+        feesMaker: response.result?.fees_maker || {}, // fees挂单
+        exchange: this.name, // 交易所
+        timestamp: Date.now(), // 时间戳
       }; // 结束代码块
     }, '获取交易量等级 / Fetch trading volume tier'); // 执行语句
   } // 结束代码块
@@ -404,49 +404,49 @@ export class KrakenExchange extends BaseExchange { // 导出类 KrakenExchange
         }) // 结束代码块
         .map(pos => ({ // 定义箭头函数
           // 交易对 / Symbol
-          symbol: pos.symbol, // 设置 symbol 字段
+          symbol: pos.symbol, // 交易对
 
           // 持仓方向 / Position side
-          side: pos.side?.toLowerCase() === 'long' ? 'long' : 'short', // 设置 side 字段
+          side: pos.side?.toLowerCase() === 'long' ? 'long' : 'short', // 方向
 
           // 持仓数量 (合约数) / Position size (contracts)
-          contracts: Math.abs(parseFloat(pos.contracts || 0)), // 设置 contracts 字段
+          contracts: Math.abs(parseFloat(pos.contracts || 0)), // 持仓数量 (合约数)
 
           // 持仓价值 / Notional value
-          notional: parseFloat(pos.notional || 0), // 设置 notional 字段
+          notional: parseFloat(pos.notional || 0), // notional
 
           // 开仓均价 / Entry price
-          entryPrice: parseFloat(pos.entryPrice || 0), // 设置 entryPrice 字段
+          entryPrice: parseFloat(pos.entryPrice || 0), // 开仓均价
 
           // 标记价格 / Mark price
-          markPrice: parseFloat(pos.markPrice || 0), // 设置 markPrice 字段
+          markPrice: parseFloat(pos.markPrice || 0), // mark价格
 
           // 清算价格 / Liquidation price
-          liquidationPrice: parseFloat(pos.liquidationPrice || 0), // 设置 liquidationPrice 字段
+          liquidationPrice: parseFloat(pos.liquidationPrice || 0), // 强平价格
 
           // 杠杆倍数 / Leverage
-          leverage: parseFloat(pos.leverage || 1), // 设置 leverage 字段
+          leverage: parseFloat(pos.leverage || 1), // 杠杆
 
           // 未实现盈亏 / Unrealized PnL
-          unrealizedPnl: parseFloat(pos.unrealizedPnl || 0), // 设置 unrealizedPnl 字段
+          unrealizedPnl: parseFloat(pos.unrealizedPnl || 0), // 未实现盈亏
 
           // 已实现盈亏 / Realized PnL
-          realizedPnl: parseFloat(pos.realizedPnl || 0), // 设置 realizedPnl 字段
+          realizedPnl: parseFloat(pos.realizedPnl || 0), // 已实现盈亏
 
           // 保证金模式 (cross/isolated) / Margin mode
-          marginMode: pos.marginMode || 'cross', // 设置 marginMode 字段
+          marginMode: pos.marginMode || 'cross', // 保证金模式 (cross/isolated)
 
           // 保证金 / Collateral
-          collateral: parseFloat(pos.collateral || 0), // 设置 collateral 字段
+          collateral: parseFloat(pos.collateral || 0), // collateral
 
           // 交易所名称 / Exchange name
-          exchange: this.name, // 设置 exchange 字段
+          exchange: this.name, // 交易所
 
           // 时间戳 / Timestamp
-          timestamp: pos.timestamp || Date.now(), // 设置 timestamp 字段
+          timestamp: pos.timestamp || Date.now(), // 时间戳
 
           // 原始数据 / Raw data
-          raw: pos, // 设置 raw 字段
+          raw: pos, // raw
         })); // 结束代码块
     }, '获取持仓 / Fetch positions'); // 执行语句
   } // 结束代码块

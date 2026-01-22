@@ -26,15 +26,15 @@ class MonitorService { // 定义类 MonitorService
   constructor() { // 构造函数
     // 创建系统监控器 / Create system monitor
     this.monitor = new SystemMonitor({ // 设置 monitor
-      collectInterval: 10000, // 设置 collectInterval 字段
-      healthCheckInterval: 30000, // 设置 healthCheckInterval 字段
+      collectInterval: 10000, // collect间隔
+      healthCheckInterval: 30000, // healthCheck间隔
     }); // 结束代码块
 
     // 创建告警管理器 / Create alert manager
     this.alertManager = new AlertManager({ // 设置 alertManager
-      enableEmail: !!process.env.SMTP_HOST, // 读取环境变量 SMTP_HOST
-      enableTelegram: !!process.env.TELEGRAM_BOT_TOKEN, // 读取环境变量 TELEGRAM_BOT_TOKEN
-      enableDingTalk: !!process.env.DINGTALK_WEBHOOK, // 读取环境变量 DINGTALK_WEBHOOK
+      enableEmail: !!process.env.SMTP_HOST, // 启用邮箱
+      enableTelegram: !!process.env.TELEGRAM_BOT_TOKEN, // 启用Telegram
+      enableDingTalk: !!process.env.DINGTALK_WEBHOOK, // 启用DingTalk
     }); // 结束代码块
 
     // 绑定事件 / Bind events

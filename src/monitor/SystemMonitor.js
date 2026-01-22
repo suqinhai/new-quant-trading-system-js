@@ -28,66 +28,66 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 监控配置 / Monitor configuration
     this.config = { // 设置 config
       // 收集间隔 (毫秒) / Collection interval (milliseconds)
-      collectInterval: config.collectInterval || 10000,  // 10 秒
+      collectInterval: config.collectInterval || 10000,  // 收集间隔 (毫秒)
 
       // 健康检查间隔 (毫秒) / Health check interval (milliseconds)
-      healthCheckInterval: config.healthCheckInterval || 30000,  // 30 秒
+      healthCheckInterval: config.healthCheckInterval || 30000,  // 健康检查间隔 (毫秒)
 
       // 是否启用 Prometheus 指标 / Whether to enable Prometheus metrics
-      enablePrometheus: config.enablePrometheus !== false, // 设置 enablePrometheus 字段
+      enablePrometheus: config.enablePrometheus !== false, // 是否启用 Prometheus 指标
 
       // 内存警告阈值 (MB) / Memory warning threshold (MB)
-      memoryWarningThreshold: config.memoryWarningThreshold || 512, // 设置 memoryWarningThreshold 字段
+      memoryWarningThreshold: config.memoryWarningThreshold || 512, // 内存警告阈值 (MB)
 
       // CPU 警告阈值 (%) / CPU warning threshold (%)
-      cpuWarningThreshold: config.cpuWarningThreshold || 80, // 设置 cpuWarningThreshold 字段
+      cpuWarningThreshold: config.cpuWarningThreshold || 80, // CPU 警告阈值 (%)
     }; // 结束代码块
 
     // 监控数据 / Monitor data
     this.metrics = { // 设置 metrics
       // 系统启动时间 / System start time
-      startTime: Date.now(), // 设置 startTime 字段
+      startTime: Date.now(), // 启动时间
 
       // 内存使用 / Memory usage
-      memory: {}, // 设置 memory 字段
+      memory: {}, // 内存
 
       // CPU 使用 / CPU usage
-      cpu: {}, // 设置 cpu 字段
+      cpu: {}, // CPU
 
       // 交易统计 / Trade statistics
-      trades: { // 设置 trades 字段
-        total: 0, // 设置 total 字段
-        successful: 0, // 设置 successful 字段
-        failed: 0, // 设置 failed 字段
+      trades: { // 成交
+        total: 0, // 总
+        successful: 0, // successful
+        failed: 0, // failed
       }, // 结束代码块
 
       // 订单统计 / Order statistics
-      orders: { // 设置 orders 字段
-        total: 0, // 设置 total 字段
-        filled: 0, // 设置 filled 字段
-        cancelled: 0, // 设置 cancelled 字段
-        pending: 0, // 设置 pending 字段
+      orders: { // 订单
+        total: 0, // 总
+        filled: 0, // filled
+        cancelled: 0, // cancelled
+        pending: 0, // 待处理
       }, // 结束代码块
 
       // 盈亏统计 / PnL statistics
-      pnl: { // 设置 pnl 字段
-        total: 0, // 设置 total 字段
-        realized: 0, // 设置 realized 字段
-        unrealized: 0, // 设置 unrealized 字段
+      pnl: { // 盈亏
+        total: 0, // 总
+        realized: 0, // 已实现
+        unrealized: 0, // 未实现
       }, // 结束代码块
 
       // 错误计数 / Error count
-      errors: 0, // 设置 errors 字段
+      errors: 0, // 错误列表
 
       // 最后更新时间 / Last update time
-      lastUpdate: null, // 设置 lastUpdate 字段
+      lastUpdate: null, // last更新
     }; // 结束代码块
 
     // 健康状态 / Health status
     this.health = { // 设置 health
-      status: 'unknown', // 设置 status 字段
-      checks: {}, // 设置 checks 字段
-      lastCheck: null, // 设置 lastCheck 字段
+      status: 'unknown', // 状态
+      checks: {}, // checks
+      lastCheck: null, // lastCheck
     }; // 结束代码块
 
     // 定时器 / Timers
@@ -159,7 +159,7 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 更新 Prometheus 指标 / Update Prometheus metrics
     if (this.promMetrics.tradesTotal) { // 条件判断 this.promMetrics.tradesTotal
       this.promMetrics.tradesTotal.inc({ // 访问 promMetrics
-        status: trade.success ? 'success' : 'failed', // 设置 status 字段
+        status: trade.success ? 'success' : 'failed', // 状态
       }); // 结束代码块
     } // 结束代码块
 
@@ -191,7 +191,7 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 更新 Prometheus 指标 / Update Prometheus metrics
     if (this.promMetrics.ordersTotal) { // 条件判断 this.promMetrics.ordersTotal
       this.promMetrics.ordersTotal.inc({ // 访问 promMetrics
-        status: order.status, // 设置 status 字段
+        status: order.status, // 状态
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -239,8 +239,8 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
   getMetrics() { // 调用 getMetrics
     return { // 返回结果
       ...this.metrics, // 展开对象或数组
-      uptime: Date.now() - this.metrics.startTime, // 设置 uptime 字段
-      health: this.health, // 设置 health 字段
+      uptime: Date.now() - this.metrics.startTime, // uptime
+      health: this.health, // health
     }; // 结束代码块
   } // 结束代码块
 
@@ -264,10 +264,10 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
    */
   registerHealthCheck(name, checkFn) { // 调用 registerHealthCheck
     this.health.checks[name] = { // 访问 health
-      fn: checkFn, // 设置 fn 字段
-      status: 'unknown', // 设置 status 字段
-      lastCheck: null, // 设置 lastCheck 字段
-      error: null, // 设置 error 字段
+      fn: checkFn, // fn
+      status: 'unknown', // 状态
+      lastCheck: null, // lastCheck
+      error: null, // 错误
     }; // 结束代码块
   } // 结束代码块
 
@@ -283,47 +283,47 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
   _initPrometheusMetrics() { // 调用 _initPrometheusMetrics
     // 收集默认指标 / Collect default metrics
     promClient.collectDefaultMetrics({ // 调用 promClient.collectDefaultMetrics
-      prefix: 'quant_trading_', // 设置 prefix 字段
+      prefix: 'quant_trading_', // 前缀
     }); // 结束代码块
 
     // 交易计数器 / Trade counter
     this.promMetrics.tradesTotal = new promClient.Counter({ // 访问 promMetrics
-      name: 'quant_trading_trades_total', // 设置 name 字段
-      help: '交易总数 / Total trades', // 设置 help 字段
-      labelNames: ['status'], // 设置 labelNames 字段
+      name: 'quant_trading_trades_total', // name
+      help: '交易总数 / Total trades', // help
+      labelNames: ['status'], // labelNames
     }); // 结束代码块
 
     // 订单计数器 / Order counter
     this.promMetrics.ordersTotal = new promClient.Counter({ // 访问 promMetrics
-      name: 'quant_trading_orders_total', // 设置 name 字段
-      help: '订单总数 / Total orders', // 设置 help 字段
-      labelNames: ['status'], // 设置 labelNames 字段
+      name: 'quant_trading_orders_total', // name
+      help: '订单总数 / Total orders', // help
+      labelNames: ['status'], // labelNames
     }); // 结束代码块
 
     // 盈亏指标 / PnL gauge
     this.promMetrics.pnlGauge = new promClient.Gauge({ // 访问 promMetrics
-      name: 'quant_trading_pnl', // 设置 name 字段
-      help: '盈亏 / Profit and Loss', // 设置 help 字段
-      labelNames: ['type'], // 设置 labelNames 字段
+      name: 'quant_trading_pnl', // name
+      help: '盈亏 / Profit and Loss', // help
+      labelNames: ['type'], // labelNames
     }); // 结束代码块
 
     // 错误计数器 / Error counter
     this.promMetrics.errorsTotal = new promClient.Counter({ // 访问 promMetrics
-      name: 'quant_trading_errors_total', // 设置 name 字段
-      help: '错误总数 / Total errors', // 设置 help 字段
+      name: 'quant_trading_errors_total', // name
+      help: '错误总数 / Total errors', // help
     }); // 结束代码块
 
     // 内存使用指标 / Memory usage gauge
     this.promMetrics.memoryUsage = new promClient.Gauge({ // 访问 promMetrics
-      name: 'quant_trading_memory_usage_bytes', // 设置 name 字段
-      help: '内存使用 / Memory usage in bytes', // 设置 help 字段
-      labelNames: ['type'], // 设置 labelNames 字段
+      name: 'quant_trading_memory_usage_bytes', // name
+      help: '内存使用 / Memory usage in bytes', // help
+      labelNames: ['type'], // labelNames
     }); // 结束代码块
 
     // 运行时间指标 / Uptime gauge
     this.promMetrics.uptime = new promClient.Gauge({ // 访问 promMetrics
-      name: 'quant_trading_uptime_seconds', // 设置 name 字段
-      help: '运行时间 / Uptime in seconds', // 设置 help 字段
+      name: 'quant_trading_uptime_seconds', // name
+      help: '运行时间 / Uptime in seconds', // help
     }); // 结束代码块
 
     console.log('[Monitor] Prometheus 指标已初始化 / Prometheus metrics initialized'); // 控制台输出
@@ -353,10 +353,10 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 收集内存使用 / Collect memory usage
     const memUsage = process.memoryUsage(); // 定义常量 memUsage
     this.metrics.memory = { // 访问 metrics
-      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),  // MB
-      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),  // MB
-      rss: Math.round(memUsage.rss / 1024 / 1024),  // MB
-      external: Math.round(memUsage.external / 1024 / 1024),  // MB
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),  // heapUsed
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),  // heap总
+      rss: Math.round(memUsage.rss / 1024 / 1024),  // rss
+      external: Math.round(memUsage.external / 1024 / 1024),  // external
     }; // 结束代码块
 
     // 更新 Prometheus 内存指标 / Update Prometheus memory metrics
@@ -377,9 +377,9 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 检查内存警告 / Check memory warning
     if (this.metrics.memory.heapUsed > this.config.memoryWarningThreshold) { // 条件判断 this.metrics.memory.heapUsed > this.config.me...
       this.emit('warning', { // 调用 emit
-        type: 'memory', // 设置 type 字段
-        message: `内存使用过高 / High memory usage: ${this.metrics.memory.heapUsed}MB`, // 设置 message 字段
-        value: this.metrics.memory.heapUsed, // 设置 value 字段
+        type: 'memory', // 类型
+        message: `内存使用过高 / High memory usage: ${this.metrics.memory.heapUsed}MB`, // 消息
+        value: this.metrics.memory.heapUsed, // value
       }); // 结束代码块
     } // 结束代码块
 
@@ -443,9 +443,9 @@ export class SystemMonitor extends EventEmitter { // 导出类 SystemMonitor
     // 如果不健康，发出警告 / If unhealthy, emit warning
     if (!allHealthy) { // 条件判断 !allHealthy
       this.emit('warning', { // 调用 emit
-        type: 'health', // 设置 type 字段
-        message: '系统健康检查失败 / System health check failed', // 设置 message 字段
-        checks: this.health.checks, // 设置 checks 字段
+        type: 'health', // 类型
+        message: '系统健康检查失败 / System health check failed', // 消息
+        checks: this.health.checks, // checks
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块

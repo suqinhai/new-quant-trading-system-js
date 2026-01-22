@@ -48,11 +48,11 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const list = strategies.slice(offset, offset + parseInt(pageSize)); // 定义常量 list
 
       res.json({ // 调用 res.json
-        success: true, // 设置 success 字段
-        data: list, // 设置 data 字段
+        success: true, // 成功标记
+        data: list, // 数据
         total, // 执行语句
-        page: parseInt(page), // 设置 page 字段
-        pageSize: parseInt(pageSize), // 设置 pageSize 字段
+        page: parseInt(page), // page
+        pageSize: parseInt(pageSize), // page大小
       }); // 结束代码块
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
@@ -92,9 +92,9 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -115,28 +115,28 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       // 验证必填字段
       if (!name || !type || !symbol) { // 条件判断 !name || !type || !symbol
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Missing required fields: name, type, symbol', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Missing required fields: name, type, symbol', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       const strategy = { // 定义常量 strategy
-        id: `strategy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 设置 id 字段
+        id: `strategy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // ID
         name, // 执行语句
         type, // 执行语句
         symbol, // 执行语句
-        exchange: exchange || 'binance', // 设置 exchange 字段
-        initialCapital: initialCapital || 10000, // 设置 initialCapital 字段
-        params: params || {}, // 设置 params 字段
-        state: 'stopped', // 设置 state 字段
-        createdAt: Date.now(), // 设置 createdAt 字段
-        updatedAt: Date.now(), // 设置 updatedAt 字段
-        createdBy: req.user?.sub || 'system', // 设置 createdBy 字段
-        totalReturn: 0, // 设置 totalReturn 字段
-        todayReturn: 0, // 设置 todayReturn 字段
-        trades: 0, // 设置 trades 字段
-        winRate: 0, // 设置 winRate 字段
+        exchange: exchange || 'binance', // 交易所
+        initialCapital: initialCapital || 10000, // 初始资金
+        params: params || {}, // params
+        state: 'stopped', // state
+        createdAt: Date.now(), // createdAt
+        updatedAt: Date.now(), // updatedAt
+        createdBy: req.user?.sub || 'system', // createdBy
+        totalReturn: 0, // 总Return
+        todayReturn: 0, // todayReturn
+        trades: 0, // 成交
+        winRate: 0, // win频率
       }; // 结束代码块
 
       if (strategyStore) { // 条件判断 strategyStore
@@ -165,18 +165,18 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 运行中的策略不能修改
       if (strategy.state === 'running') { // 条件判断 strategy.state === 'running'
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Cannot update running strategy. Stop it first.', // 设置 error 字段
-          code: 'STRATEGY_RUNNING' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Cannot update running strategy. Stop it first.', // 错误
+          code: 'STRATEGY_RUNNING' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -185,7 +185,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         ...strategy, // 展开对象或数组
         ...updates, // 展开对象或数组
         id, // 防止修改 ID
-        updatedAt: Date.now(), // 设置 updatedAt 字段
+        updatedAt: Date.now(), // updatedAt
       }; // 结束代码块
 
       if (strategyStore) { // 条件判断 strategyStore
@@ -213,18 +213,18 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 运行中的策略不能删除
       if (strategy.state === 'running') { // 条件判断 strategy.state === 'running'
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Cannot delete running strategy. Stop it first.', // 设置 error 字段
-          code: 'STRATEGY_RUNNING' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Cannot delete running strategy. Stop it first.', // 错误
+          code: 'STRATEGY_RUNNING' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -253,17 +253,17 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       if (strategy.state === 'running') { // 条件判断 strategy.state === 'running'
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy is already running', // 设置 error 字段
-          code: 'ALREADY_RUNNING' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy is already running', // 错误
+          code: 'ALREADY_RUNNING' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -297,17 +297,17 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       if (strategy.state !== 'running') { // 条件判断 strategy.state !== 'running'
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Strategy is not running', // 设置 error 字段
-          code: 'NOT_RUNNING' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Strategy is not running', // 错误
+          code: 'NOT_RUNNING' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -341,13 +341,13 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!stats) { // 条件判断 !stats
         stats = { // 赋值 stats
-          totalReturn: 0, // 设置 totalReturn 字段
-          todayReturn: 0, // 设置 todayReturn 字段
-          trades: 0, // 设置 trades 字段
-          winRate: 0, // 设置 winRate 字段
-          maxDrawdown: 0, // 设置 maxDrawdown 字段
-          sharpeRatio: 0, // 设置 sharpeRatio 字段
-          profitFactor: 0, // 设置 profitFactor 字段
+          totalReturn: 0, // 总Return
+          todayReturn: 0, // todayReturn
+          trades: 0, // 成交
+          winRate: 0, // win频率
+          maxDrawdown: 0, // 最大回撤
+          sharpeRatio: 0, // sharpe比例
+          profitFactor: 0, // 盈利Factor
         }; // 结束代码块
       } // 结束代码块
 
@@ -368,26 +368,26 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       if (!startDate || !endDate) { // 条件判断 !startDate || !endDate
         return res.status(400).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Missing required fields: startDate, endDate', // 设置 error 字段
-          code: 'VALIDATION_ERROR' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Missing required fields: startDate, endDate', // 错误
+          code: 'VALIDATION_ERROR' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 模拟回测结果
       const result = { // 定义常量 result
-        strategyId: id, // 设置 strategyId 字段
+        strategyId: id, // 策略ID
         startDate, // 执行语句
         endDate, // 执行语句
-        initialCapital: initialCapital || 10000, // 设置 initialCapital 字段
-        finalCapital: (initialCapital || 10000) * (1 + Math.random() * 0.5 - 0.1), // 设置 finalCapital 字段
-        totalReturn: Math.random() * 0.5 - 0.1, // 设置 totalReturn 字段
-        maxDrawdown: Math.random() * 0.2, // 设置 maxDrawdown 字段
-        sharpeRatio: Math.random() * 3, // 设置 sharpeRatio 字段
-        trades: Math.floor(Math.random() * 100) + 10, // 设置 trades 字段
-        winRate: Math.random() * 0.3 + 0.4, // 设置 winRate 字段
-        profitFactor: Math.random() * 2 + 0.5, // 设置 profitFactor 字段
-        completedAt: Date.now(), // 设置 completedAt 字段
+        initialCapital: initialCapital || 10000, // 初始资金
+        finalCapital: (initialCapital || 10000) * (1 + Math.random() * 0.5 - 0.1), // final资金
+        totalReturn: Math.random() * 0.5 - 0.1, // 总Return
+        maxDrawdown: Math.random() * 0.2, // 最大回撤
+        sharpeRatio: Math.random() * 3, // sharpe比例
+        trades: Math.floor(Math.random() * 100) + 10, // 成交
+        winRate: Math.random() * 0.3 + 0.4, // win频率
+        profitFactor: Math.random() * 2 + 0.5, // 盈利Factor
+        completedAt: Date.now(), // completedAt
       }; // 结束代码块
 
       res.json({ success: true, data: result }); // 调用 res.json

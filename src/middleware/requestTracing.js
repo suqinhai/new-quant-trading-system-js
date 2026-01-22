@@ -98,7 +98,7 @@ export class RequestContext { // 导出类 RequestContext
   addEvent(name, attributes = {}) { // 调用 addEvent
     this.events.push({ // 访问 events
       name, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       attributes, // 执行语句
     }); // 结束代码块
     return this; // 返回结果
@@ -110,9 +110,9 @@ export class RequestContext { // 导出类 RequestContext
   createSpan(name) { // 调用 createSpan
     const span = new Span({ // 定义常量 span
       name, // 执行语句
-      traceId: this.traceId, // 设置 traceId 字段
-      parentSpanId: this.spanId, // 设置 parentSpanId 字段
-      requestId: this.requestId, // 设置 requestId 字段
+      traceId: this.traceId, // traceID
+      parentSpanId: this.spanId, // parentSpanID
+      requestId: this.requestId, // requestID
     }); // 结束代码块
     this.spans.push(span); // 访问 spans
     return span; // 返回结果
@@ -137,13 +137,13 @@ export class RequestContext { // 导出类 RequestContext
    */
   toLogContext() { // 调用 toLogContext
     return { // 返回结果
-      requestId: this.requestId, // 设置 requestId 字段
-      traceId: this.traceId, // 设置 traceId 字段
-      spanId: this.spanId, // 设置 spanId 字段
-      method: this.method, // 设置 method 字段
-      path: this.path, // 设置 path 字段
-      userId: this.userId, // 设置 userId 字段
-      duration: this.getDuration(), // 设置 duration 字段
+      requestId: this.requestId, // requestID
+      traceId: this.traceId, // traceID
+      spanId: this.spanId, // spanID
+      method: this.method, // method
+      path: this.path, // 路径
+      userId: this.userId, // 用户ID
+      duration: this.getDuration(), // duration
     }; // 结束代码块
   } // 结束代码块
 
@@ -152,19 +152,19 @@ export class RequestContext { // 导出类 RequestContext
    */
   toJSON() { // 调用 toJSON
     return { // 返回结果
-      requestId: this.requestId, // 设置 requestId 字段
-      traceId: this.traceId, // 设置 traceId 字段
-      spanId: this.spanId, // 设置 spanId 字段
-      parentSpanId: this.parentSpanId, // 设置 parentSpanId 字段
-      method: this.method, // 设置 method 字段
-      path: this.path, // 设置 path 字段
-      ip: this.ip, // 设置 ip 字段
-      userId: this.userId, // 设置 userId 字段
-      startTime: this.startTime, // 设置 startTime 字段
-      duration: this.getDuration(), // 设置 duration 字段
-      attributes: Object.fromEntries(this.attributes), // 设置 attributes 字段
-      events: this.events, // 设置 events 字段
-      spans: this.spans.map(s => s.toJSON()), // 设置 spans 字段
+      requestId: this.requestId, // requestID
+      traceId: this.traceId, // traceID
+      spanId: this.spanId, // spanID
+      parentSpanId: this.parentSpanId, // parentSpanID
+      method: this.method, // method
+      path: this.path, // 路径
+      ip: this.ip, // ip
+      userId: this.userId, // 用户ID
+      startTime: this.startTime, // 启动时间
+      duration: this.getDuration(), // duration
+      attributes: Object.fromEntries(this.attributes), // attributes
+      events: this.events, // events
+      spans: this.spans.map(s => s.toJSON()), // spans
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -196,7 +196,7 @@ export class Span { // 导出类 Span
   addEvent(name, attributes = {}) { // 调用 addEvent
     this.events.push({ // 访问 events
       name, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       attributes, // 执行语句
     }); // 结束代码块
     return this; // 返回结果
@@ -224,16 +224,16 @@ export class Span { // 导出类 Span
 
   toJSON() { // 调用 toJSON
     return { // 返回结果
-      name: this.name, // 设置 name 字段
-      traceId: this.traceId, // 设置 traceId 字段
-      spanId: this.spanId, // 设置 spanId 字段
-      parentSpanId: this.parentSpanId, // 设置 parentSpanId 字段
-      startTime: this.startTime, // 设置 startTime 字段
-      endTime: this.endTime, // 设置 endTime 字段
-      duration: this.getDuration(), // 设置 duration 字段
-      status: this.status, // 设置 status 字段
-      attributes: Object.fromEntries(this.attributes), // 设置 attributes 字段
-      events: this.events, // 设置 events 字段
+      name: this.name, // name
+      traceId: this.traceId, // traceID
+      spanId: this.spanId, // spanID
+      parentSpanId: this.parentSpanId, // parentSpanID
+      startTime: this.startTime, // 启动时间
+      endTime: this.endTime, // end时间
+      duration: this.getDuration(), // duration
+      status: this.status, // 状态
+      attributes: Object.fromEntries(this.attributes), // attributes
+      events: this.events, // events
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -251,38 +251,38 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
     super(); // 调用父类
     this.config = { // 设置 config
       // 是否启用追踪 / Enable tracing
-      enabled: config.enabled !== false, // 设置 enabled 字段
+      enabled: config.enabled !== false, // 启用
 
       // 请求 ID 头名称 / Request ID header name
-      requestIdHeader: config.requestIdHeader || 'x-request-id', // 设置 requestIdHeader 字段
+      requestIdHeader: config.requestIdHeader || 'x-request-id', // 请求 ID 头名称
 
       // 追踪 ID 头名称 / Trace ID header name
-      traceIdHeader: config.traceIdHeader || 'x-trace-id', // 设置 traceIdHeader 字段
+      traceIdHeader: config.traceIdHeader || 'x-trace-id', // 追踪 ID 头名称
 
       // 是否记录请求体 / Log request body
-      logRequestBody: config.logRequestBody || false, // 设置 logRequestBody 字段
+      logRequestBody: config.logRequestBody || false, // 日志RequestBody
 
       // 是否记录响应体 / Log response body
-      logResponseBody: config.logResponseBody || false, // 设置 logResponseBody 字段
+      logResponseBody: config.logResponseBody || false, // 日志ResponseBody
 
       // 慢请求阈值 (ms) / Slow request threshold (ms)
-      slowRequestThreshold: config.slowRequestThreshold || 1000, // 设置 slowRequestThreshold 字段
+      slowRequestThreshold: config.slowRequestThreshold || 1000, // 慢请求阈值 (ms)
 
       // 排除的路径 / Excluded paths
-      excludePaths: config.excludePaths || ['/api/health', '/favicon.ico'], // 设置 excludePaths 字段
+      excludePaths: config.excludePaths || ['/api/health', '/favicon.ico'], // excludePaths
 
       // 敏感字段（不记录） / Sensitive fields (not logged)
-      sensitiveFields: config.sensitiveFields || ['password', 'token', 'secret', 'apiKey', 'authorization'], // 设置 sensitiveFields 字段
+      sensitiveFields: config.sensitiveFields || ['password', 'token', 'secret', 'apiKey', 'authorization'], // 敏感字段（不记录）
 
       ...config, // 展开对象或数组
     }; // 结束代码块
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalRequests: 0, // 设置 totalRequests 字段
-      activeRequests: 0, // 设置 activeRequests 字段
-      slowRequests: 0, // 设置 slowRequests 字段
-      errorRequests: 0, // 设置 errorRequests 字段
+      totalRequests: 0, // 总Requests
+      activeRequests: 0, // 活跃Requests
+      slowRequests: 0, // slowRequests
+      errorRequests: 0, // 错误Requests
     }; // 结束代码块
   } // 结束代码块
 
@@ -328,12 +328,12 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
 
       // 创建请求上下文
       const context = new RequestContext({ // 定义常量 context
-        requestId: req.headers[this.config.requestIdHeader] || undefined, // 设置 requestId 字段
-        traceId: req.headers[this.config.traceIdHeader] || undefined, // 设置 traceId 字段
-        method: req.method, // 设置 method 字段
-        path: req.path, // 设置 path 字段
-        userAgent: req.headers['user-agent'], // 设置 userAgent 字段
-        ip: req.ip || req.connection?.remoteAddress, // 设置 ip 字段
+        requestId: req.headers[this.config.requestIdHeader] || undefined, // requestID
+        traceId: req.headers[this.config.traceIdHeader] || undefined, // traceID
+        method: req.method, // method
+        path: req.path, // 路径
+        userAgent: req.headers['user-agent'], // 用户Agent
+        ip: req.ip || req.connection?.remoteAddress, // ip
       }); // 结束代码块
 
       // 设置响应头
@@ -350,12 +350,12 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
 
       // 记录请求开始
       this.emit('requestStart', { // 调用 emit
-        requestId: context.requestId, // 设置 requestId 字段
-        method: req.method, // 设置 method 字段
-        path: req.path, // 设置 path 字段
-        query: req.query, // 设置 query 字段
-        ip: context.ip, // 设置 ip 字段
-        userAgent: context.userAgent, // 设置 userAgent 字段
+        requestId: context.requestId, // requestID
+        method: req.method, // method
+        path: req.path, // 路径
+        query: req.query, // query
+        ip: context.ip, // ip
+        userAgent: context.userAgent, // 用户Agent
       }); // 结束代码块
 
       // 监听响应完成
@@ -371,11 +371,11 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
           this.stats.slowRequests++; // 访问 stats
           context.addEvent('slow_request', { duration, threshold: this.config.slowRequestThreshold }); // 调用 context.addEvent
           this.emit('slowRequest', { // 调用 emit
-            requestId: context.requestId, // 设置 requestId 字段
-            method: req.method, // 设置 method 字段
-            path: req.path, // 设置 path 字段
+            requestId: context.requestId, // requestID
+            method: req.method, // method
+            path: req.path, // 路径
             duration, // 执行语句
-            statusCode: res.statusCode, // 设置 statusCode 字段
+            statusCode: res.statusCode, // 状态代码
           }); // 结束代码块
         } // 结束代码块
 
@@ -386,12 +386,12 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
 
         // 记录请求完成
         this.emit('requestEnd', { // 调用 emit
-          requestId: context.requestId, // 设置 requestId 字段
-          method: req.method, // 设置 method 字段
-          path: req.path, // 设置 path 字段
-          statusCode: res.statusCode, // 设置 statusCode 字段
+          requestId: context.requestId, // requestID
+          method: req.method, // method
+          path: req.path, // 路径
+          statusCode: res.statusCode, // 状态代码
           duration, // 执行语句
-          userId: context.userId, // 设置 userId 字段
+          userId: context.userId, // 用户ID
         }); // 结束代码块
       }); // 结束代码块
 
@@ -438,10 +438,10 @@ export class RequestTracingManager extends EventEmitter { // 导出类 RequestTr
    */
   resetStats() { // 调用 resetStats
     this.stats = { // 设置 stats
-      totalRequests: 0, // 设置 totalRequests 字段
-      activeRequests: 0, // 设置 activeRequests 字段
-      slowRequests: 0, // 设置 slowRequests 字段
-      errorRequests: 0, // 设置 errorRequests 字段
+      totalRequests: 0, // 总Requests
+      activeRequests: 0, // 活跃Requests
+      slowRequests: 0, // slowRequests
+      errorRequests: 0, // 错误Requests
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -462,10 +462,10 @@ export function createContextLogger(baseLogger) { // 导出函数 createContextL
     return (message, meta = {}) => { // 返回结果
       const context = RequestTracingManager.getContext(); // 定义常量 context
       const contextMeta = context ? { // 定义常量 contextMeta
-        requestId: context.requestId, // 设置 requestId 字段
-        traceId: context.traceId, // 设置 traceId 字段
-        spanId: context.spanId, // 设置 spanId 字段
-        userId: context.userId, // 设置 userId 字段
+        requestId: context.requestId, // requestID
+        traceId: context.traceId, // traceID
+        spanId: context.spanId, // spanID
+        userId: context.userId, // 用户ID
       } : {}; // 执行语句
 
       baseLogger[method](message, { ...contextMeta, ...meta }); // 执行语句
@@ -473,29 +473,29 @@ export function createContextLogger(baseLogger) { // 导出函数 createContextL
   }; // 结束代码块
 
   return { // 返回结果
-    error: wrapMethod('error'), // 设置 error 字段
-    warn: wrapMethod('warn'), // 设置 warn 字段
-    info: wrapMethod('info'), // 设置 info 字段
-    http: wrapMethod('http'), // 设置 http 字段
-    verbose: wrapMethod('verbose'), // 设置 verbose 字段
-    debug: wrapMethod('debug'), // 设置 debug 字段
-    silly: wrapMethod('silly'), // 设置 silly 字段
+    error: wrapMethod('error'), // 错误
+    warn: wrapMethod('warn'), // warn
+    info: wrapMethod('info'), // info
+    http: wrapMethod('http'), // http
+    verbose: wrapMethod('verbose'), // 详细日志
+    debug: wrapMethod('debug'), // debug
+    silly: wrapMethod('silly'), // silly
 
     // 直接访问基础日志记录器
-    _base: baseLogger, // 设置 _base 字段
+    _base: baseLogger, // 直接访问基础日志记录器
 
     // 创建子日志记录器
-    child: (defaultMeta = {}) => { // 设置 child 字段
+    child: (defaultMeta = {}) => { // 创建子日志记录器
       return createContextLogger(baseLogger.child(defaultMeta)); // 返回结果
     }, // 结束代码块
 
     // 手动设置上下文
-    withContext: (additionalContext) => { // 设置 withContext 字段
+    withContext: (additionalContext) => { // withContext
       return { // 返回结果
-        error: (msg, meta = {}) => wrapMethod('error')(msg, { ...additionalContext, ...meta }), // 设置 error 字段
-        warn: (msg, meta = {}) => wrapMethod('warn')(msg, { ...additionalContext, ...meta }), // 设置 warn 字段
-        info: (msg, meta = {}) => wrapMethod('info')(msg, { ...additionalContext, ...meta }), // 设置 info 字段
-        debug: (msg, meta = {}) => wrapMethod('debug')(msg, { ...additionalContext, ...meta }), // 设置 debug 字段
+        error: (msg, meta = {}) => wrapMethod('error')(msg, { ...additionalContext, ...meta }), // 错误
+        warn: (msg, meta = {}) => wrapMethod('warn')(msg, { ...additionalContext, ...meta }), // warn
+        info: (msg, meta = {}) => wrapMethod('info')(msg, { ...additionalContext, ...meta }), // info
+        debug: (msg, meta = {}) => wrapMethod('debug')(msg, { ...additionalContext, ...meta }), // debug
       }; // 结束代码块
     }, // 结束代码块
   }; // 结束代码块

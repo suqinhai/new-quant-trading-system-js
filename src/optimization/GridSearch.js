@@ -16,13 +16,13 @@ import { BacktestEngine } from '../backtest/BacktestEngine.js'; // 导入模块 
  * Optimization Target Enum
  */
 export const OptimizationTarget = { // 导出常量 OptimizationTarget
-  TOTAL_RETURN: 'totalReturn',           // 总收益率
-  ANNUAL_RETURN: 'annualReturn',         // 年化收益率
-  SHARPE_RATIO: 'sharpeRatio',           // 夏普比率
-  CALMAR_RATIO: 'calmarRatio',           // Calmar比率
-  PROFIT_FACTOR: 'profitFactor',         // 盈亏比
-  WIN_RATE: 'winRate',                   // 胜率
-  MAX_DRAWDOWN: 'maxDrawdownPercent',    // 最大回撤（取反）
+  TOTAL_RETURN: 'totalReturn',           // 总RETURN
+  ANNUAL_RETURN: 'annualReturn',         // ANNUALRETURN
+  SHARPE_RATIO: 'sharpeRatio',           // SHARPE比例
+  CALMAR_RATIO: 'calmarRatio',           // CALMAR比例
+  PROFIT_FACTOR: 'profitFactor',         // 盈利FACTOR
+  WIN_RATE: 'winRate',                   // WIN频率
+  MAX_DRAWDOWN: 'maxDrawdownPercent',    // 最大回撤
   CUSTOM: 'custom',                      // 自定义
 }; // 结束代码块
 
@@ -32,28 +32,28 @@ export const OptimizationTarget = { // 导出常量 OptimizationTarget
  */
 export const DEFAULT_GRID_SEARCH_CONFIG = { // 导出常量 DEFAULT_GRID_SEARCH_CONFIG
   // 优化目标
-  target: OptimizationTarget.SHARPE_RATIO, // 设置 target 字段
+  target: OptimizationTarget.SHARPE_RATIO, // target
 
   // 是否并行执行 (使用 Worker)
-  parallel: false, // 设置 parallel 字段
+  parallel: false, // 是否并行执行 (使用 Worker)
 
   // 最大并行数
-  maxWorkers: 4, // 设置 maxWorkers 字段
+  maxWorkers: 4, // 最大Workers
 
   // 是否记录所有结果
-  recordAllResults: true, // 设置 recordAllResults 字段
+  recordAllResults: true, // 是否记录所有结果
 
   // 最小交易次数（过滤无效参数）
-  minTrades: 5, // 设置 minTrades 字段
+  minTrades: 5, // 最小交易次数（过滤无效参数）
 
   // 进度回调间隔
-  progressInterval: 10, // 设置 progressInterval 字段
+  progressInterval: 10, // progress间隔
 
   // 回测配置
-  backtestConfig: { // 设置 backtestConfig 字段
-    initialCapital: 10000, // 设置 initialCapital 字段
-    commissionRate: 0.001, // 设置 commissionRate 字段
-    slippage: 0.0005, // 设置 slippage 字段
+  backtestConfig: { // backtest配置
+    initialCapital: 10000, // 初始资金
+    commissionRate: 0.001, // 手续费频率
+    slippage: 0.0005, // 滑点
   }, // 结束代码块
 }; // 结束代码块
 
@@ -204,7 +204,7 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
           params, // 执行语句
           stats, // 执行语句
           score, // 执行语句
-          isValid: stats.totalTrades >= this.config.minTrades, // 设置 isValid 字段
+          isValid: stats.totalTrades >= this.config.minTrades, // 是否有效
         }; // 结束代码块
 
         if (this.config.recordAllResults) { // 条件判断 this.config.recordAllResults
@@ -243,15 +243,15 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
 
     // 构建最终结果
     const finalResult = { // 定义常量 finalResult
-      bestParams: this.bestResult?.params || null, // 设置 bestParams 字段
-      bestStats: this.bestResult?.stats || null, // 设置 bestStats 字段
-      bestScore: this.bestResult?.score || null, // 设置 bestScore 字段
-      totalCombinations: combinations.length, // 设置 totalCombinations 字段
-      validCombinations: this.results.filter(r => r.isValid).length, // 设置 validCombinations 字段
+      bestParams: this.bestResult?.params || null, // bestParams
+      bestStats: this.bestResult?.stats || null, // bestStats
+      bestScore: this.bestResult?.score || null, // best分数
+      totalCombinations: combinations.length, // 总Combinations
+      validCombinations: this.results.filter(r => r.isValid).length, // 有效Combinations
       duration, // 执行语句
-      allResults: this.config.recordAllResults ? this.results : null, // 设置 allResults 字段
-      topResults: this._getTopResults(10), // 设置 topResults 字段
-      parameterSensitivity: this._analyzeParameterSensitivity(), // 设置 parameterSensitivity 字段
+      allResults: this.config.recordAllResults ? this.results : null, // allResults
+      topResults: this._getTopResults(10), // topResults
+      parameterSensitivity: this._analyzeParameterSensitivity(), // parameterSensitivity
     }; // 结束代码块
 
     this.emit('complete', finalResult); // 调用 emit
@@ -298,7 +298,7 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
         // 最大回撤越小越好，取反
         return -(stats.maxDrawdownPercent || 100); // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return stats.sharpeRatio || 0; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -313,12 +313,12 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
       .filter(r => r.isValid) // 定义箭头函数
       .slice(0, n) // 执行语句
       .map(r => ({ // 定义箭头函数
-        params: r.params, // 设置 params 字段
-        score: r.score, // 设置 score 字段
-        totalReturn: r.stats.totalReturn, // 设置 totalReturn 字段
-        sharpeRatio: r.stats.sharpeRatio, // 设置 sharpeRatio 字段
-        maxDrawdown: r.stats.maxDrawdownPercent, // 设置 maxDrawdown 字段
-        trades: r.stats.totalTrades, // 设置 trades 字段
+        params: r.params, // params
+        score: r.score, // 分数
+        totalReturn: r.stats.totalReturn, // 总Return
+        sharpeRatio: r.stats.sharpeRatio, // sharpe比例
+        maxDrawdown: r.stats.maxDrawdownPercent, // 最大回撤
+        trades: r.stats.totalTrades, // 成交
       })); // 结束代码块
   } // 结束代码块
 
@@ -363,8 +363,8 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
 
         sensitivity[key] = { // 执行语句
           stdDev, // 执行语句
-          valueScores: avgScores.sort((a, b) => b.avgScore - a.avgScore), // 设置 valueScores 字段
-          bestValue: avgScores[0]?.value, // 设置 bestValue 字段
+          valueScores: avgScores.sort((a, b) => b.avgScore - a.avgScore), // valueScores
+          bestValue: avgScores[0]?.value, // bestValue
         }; // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -420,16 +420,16 @@ export class GridSearch extends EventEmitter { // 导出类 GridSearch
       data.push({ // 调用 data.push
         [param1]: parseFloat(v1), // 执行语句
         [param2]: parseFloat(v2), // 执行语句
-        score: avgScore, // 设置 score 字段
-        count: value.count, // 设置 count 字段
+        score: avgScore, // 分数
+        count: value.count, // 数量
       }); // 结束代码块
     } // 结束代码块
 
     return { // 返回结果
       param1, // 执行语句
       param2, // 执行语句
-      param1Values: Array.from(param1Values).sort((a, b) => a - b), // 设置 param1Values 字段
-      param2Values: Array.from(param2Values).sort((a, b) => a - b), // 设置 param2Values 字段
+      param1Values: Array.from(param1Values).sort((a, b) => a - b), // param1Values
+      param2Values: Array.from(param2Values).sort((a, b) => a - b), // param2Values
       data, // 执行语句
     }; // 结束代码块
   } // 结束代码块

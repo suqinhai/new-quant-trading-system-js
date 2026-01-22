@@ -14,9 +14,9 @@ import { EventEmitter } from 'events'; // 导入模块 events
  * 熔断器状态
  */
 const CircuitState = { // 定义常量 CircuitState
-  CLOSED: 'closed',     // 正常状态，允许请求
-  OPEN: 'open',         // 熔断状态，拒绝请求
-  HALF_OPEN: 'half_open', // 半开状态，允许试探性请求
+  CLOSED: 'closed',     // CLOSED权限
+  OPEN: 'open',         // 开盘
+  HALF_OPEN: 'half_open', // 半开盘
 }; // 结束代码块
 
 /**
@@ -38,13 +38,13 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
 
     this.name = config.name || 'default'; // 设置 name
     this.config = { // 设置 config
-      failureThreshold: config.failureThreshold || 5, // 设置 failureThreshold 字段
-      successThreshold: config.successThreshold || 3, // 设置 successThreshold 字段
-      timeout: config.timeout || 30000, // 30秒
-      halfOpenMaxCalls: config.halfOpenMaxCalls || 3, // 设置 halfOpenMaxCalls 字段
-      volumeThreshold: config.volumeThreshold || 10, // 最小请求量才计算错误率
-      errorRateThreshold: config.errorRateThreshold || 0.5, // 50% 错误率
-      fallback: config.fallback || null, // 设置 fallback 字段
+      failureThreshold: config.failureThreshold || 5, // failure阈值
+      successThreshold: config.successThreshold || 3, // 成功标记阈值
+      timeout: config.timeout || 30000, // 超时
+      halfOpenMaxCalls: config.halfOpenMaxCalls || 3, // 半开盘最大Calls
+      volumeThreshold: config.volumeThreshold || 10, // 成交量阈值
+      errorRateThreshold: config.errorRateThreshold || 0.5, // 错误频率阈值
+      fallback: config.fallback || null, // fallback
     }; // 结束代码块
 
     // 状态
@@ -53,22 +53,22 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
 
     // 统计
     this.stats = { // 设置 stats
-      totalCalls: 0, // 设置 totalCalls 字段
-      successfulCalls: 0, // 设置 successfulCalls 字段
-      failedCalls: 0, // 设置 failedCalls 字段
-      rejectedCalls: 0, // 设置 rejectedCalls 字段
-      timeoutCalls: 0, // 设置 timeoutCalls 字段
-      lastFailure: null, // 设置 lastFailure 字段
-      lastSuccess: null, // 设置 lastSuccess 字段
-      consecutiveFailures: 0, // 设置 consecutiveFailures 字段
-      consecutiveSuccesses: 0, // 设置 consecutiveSuccesses 字段
+      totalCalls: 0, // 总Calls
+      successfulCalls: 0, // successfulCalls
+      failedCalls: 0, // failedCalls
+      rejectedCalls: 0, // rejectedCalls
+      timeoutCalls: 0, // 超时Calls
+      lastFailure: null, // lastFailure
+      lastSuccess: null, // last成功标记
+      consecutiveFailures: 0, // consecutiveFailures
+      consecutiveSuccesses: 0, // consecutiveSuccesses
     }; // 结束代码块
 
     // 滑动窗口统计 (用于计算错误率)
     this.window = { // 设置 window
-      size: config.windowSize || 60000, // 1分钟窗口
-      buckets: [], // 设置 buckets 字段
-      bucketSize: config.bucketSize || 1000, // 1秒一个桶
+      size: config.windowSize || 60000, // 大小
+      buckets: [], // buckets
+      bucketSize: config.bucketSize || 1000, // bucket大小
     }; // 结束代码块
 
     // 半开状态计数器
@@ -144,7 +144,7 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
         } // 结束代码块
         return false; // 返回结果
 
-      default: // 默认分支
+      default: // 默认
         return false; // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -171,9 +171,9 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
     } // 结束代码块
 
     this.emit('success', { // 调用 emit
-      name: this.name, // 设置 name 字段
+      name: this.name, // name
       duration, // 执行语句
-      state: this.state, // 设置 state 字段
+      state: this.state, // state
     }); // 结束代码块
   } // 结束代码块
 
@@ -198,10 +198,10 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
     } // 结束代码块
 
     this.emit('failure', { // 调用 emit
-      name: this.name, // 设置 name 字段
-      error: error.message, // 设置 error 字段
+      name: this.name, // name
+      error: error.message, // 错误
       duration, // 执行语句
-      state: this.state, // 设置 state 字段
+      state: this.state, // state
     }); // 结束代码块
 
     // 状态转换逻辑
@@ -259,25 +259,25 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
     } // 结束代码块
 
     this.emit('stateChange', { // 调用 emit
-      name: this.name, // 设置 name 字段
-      from: oldState, // 设置 from 字段
-      to: newState, // 设置 to 字段
-      timestamp: this.lastStateChange, // 设置 timestamp 字段
+      name: this.name, // name
+      from: oldState, // from
+      to: newState, // to
+      timestamp: this.lastStateChange, // 时间戳
     }); // 结束代码块
 
     // 熔断触发告警
     if (newState === CircuitState.OPEN) { // 条件判断 newState === CircuitState.OPEN
       this.emit('trip', { // 调用 emit
-        name: this.name, // 设置 name 字段
-        stats: this.getStats(), // 设置 stats 字段
+        name: this.name, // name
+        stats: this.getStats(), // stats
       }); // 结束代码块
     } // 结束代码块
 
     // 恢复告警
     if (oldState === CircuitState.OPEN && newState === CircuitState.CLOSED) { // 条件判断 oldState === CircuitState.OPEN && newState ==...
       this.emit('reset', { // 调用 emit
-        name: this.name, // 设置 name 字段
-        duration: this.lastStateChange - this.stats.lastFailure, // 设置 duration 字段
+        name: this.name, // name
+        duration: this.lastStateChange - this.stats.lastFailure, // duration
       }); // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -328,7 +328,7 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
     } // 结束代码块
 
     return { // 返回结果
-      total: successes + failures, // 设置 total 字段
+      total: successes + failures, // 总
       successes, // 执行语句
       failures, // 执行语句
     }; // 结束代码块
@@ -382,12 +382,12 @@ class CircuitBreaker extends EventEmitter { // 定义类 CircuitBreaker(继承Ev
     const windowStats = this.getWindowStats(); // 定义常量 windowStats
 
     return { // 返回结果
-      name: this.name, // 设置 name 字段
-      state: this.state, // 设置 state 字段
-      lastStateChange: this.lastStateChange, // 设置 lastStateChange 字段
+      name: this.name, // name
+      state: this.state, // state
+      lastStateChange: this.lastStateChange, // lastState修改
       ...this.stats, // 展开对象或数组
-      window: windowStats, // 设置 window 字段
-      errorRate: windowStats.total > 0 // 设置 errorRate 字段
+      window: windowStats, // 窗口
+      errorRate: windowStats.total > 0 // 错误频率
         ? (windowStats.failures / windowStats.total * 100).toFixed(2) + '%' // 执行语句
         : '0%', // 执行语句
     }; // 结束代码块

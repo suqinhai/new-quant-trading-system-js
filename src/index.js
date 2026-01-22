@@ -57,7 +57,7 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
 
     // 引擎状态 / Engine state
     this.state = { // 设置 state
-      status: 'stopped',    // stopped | starting | running | stopping
+      status: 'stopped',    // 状态
       startTime: null,      // 启动时间 / Start time
       error: null,          // 最后错误 / Last error
     }; // 结束代码块
@@ -273,7 +273,7 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
       this.runningStrategies.set(strategyName, { // 访问 runningStrategies
         strategy, // 执行语句
         config, // 执行语句
-        startTime: Date.now(), // 设置 startTime 字段
+        startTime: Date.now(), // 启动时间
       }); // 结束代码块
 
       this.logger.info(`[TradingEngine] 策略已启动 / Strategy started: ${strategyName}`); // 访问 logger
@@ -330,29 +330,29 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
   getStatus() { // 调用 getStatus
     return { // 返回结果
       // 引擎状态 / Engine state
-      status: this.state.status, // 设置 status 字段
-      startTime: this.state.startTime, // 设置 startTime 字段
-      uptime: this.state.startTime ? Date.now() - this.state.startTime : 0, // 设置 uptime 字段
-      error: this.state.error?.message, // 设置 error 字段
+      status: this.state.status, // 状态引擎状态
+      startTime: this.state.startTime, // 启动时间
+      uptime: this.state.startTime ? Date.now() - this.state.startTime : 0, // uptime
+      error: this.state.error?.message, // 错误
 
       // 交易所状态 / Exchange status
-      exchange: { // 设置 exchange 字段
-        name: this.config.exchange.default, // 设置 name 字段
-        connected: !!this.exchange, // 设置 connected 字段
+      exchange: { // 交易所交易所状态
+        name: this.config.exchange.default, // name
+        connected: !!this.exchange, // connected
       }, // 结束代码块
 
       // 策略状态 / Strategy status
-      strategies: Array.from(this.runningStrategies.entries()).map(([name, data]) => ({ // 设置 strategies 字段
+      strategies: Array.from(this.runningStrategies.entries()).map(([name, data]) => ({ // 策略策略状态
         name, // 执行语句
-        startTime: data.startTime, // 设置 startTime 字段
-        symbols: data.config.symbols, // 设置 symbols 字段
+        startTime: data.startTime, // 启动时间
+        symbols: data.config.symbols, // 交易对列表
       })), // 结束代码块
 
       // 执行器状态 / Executor status
-      executor: this.executor?.getStats(), // 设置 executor 字段
+      executor: this.executor?.getStats(), // executor执行器状态
 
       // 监控指标 / Monitor metrics
-      metrics: this.monitor?.getMetrics(), // 设置 metrics 字段
+      metrics: this.monitor?.getMetrics(), // 指标
     }; // 结束代码块
   } // 结束代码块
 
@@ -491,10 +491,10 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
     try { // 尝试执行
       // 1. 风控检查 / Risk check
       const riskCheck = await this.riskManager.checkOrder({ // 定义常量 riskCheck
-        symbol: signal.symbol, // 设置 symbol 字段
-        side: signal.side, // 设置 side 字段
-        amount: signal.amount, // 设置 amount 字段
-        price: signal.price, // 设置 price 字段
+        symbol: signal.symbol, // 交易对
+        side: signal.side, // 方向
+        amount: signal.amount, // 数量
+        price: signal.price, // 价格
       }); // 结束代码块
 
       if (!riskCheck.allowed) { // 条件判断 !riskCheck.allowed
@@ -509,9 +509,9 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
 
       const positionSize = this.positionCalculator.calculate({ // 定义常量 positionSize
         totalCapital, // 执行语句
-        entryPrice: signal.price, // 设置 entryPrice 字段
-        stopLossPrice: signal.stopLoss, // 设置 stopLossPrice 字段
-        symbol: signal.symbol, // 设置 symbol 字段
+        entryPrice: signal.price, // 入场价格
+        stopLossPrice: signal.stopLoss, // 止损价格
+        symbol: signal.symbol, // 交易对
       }); // 结束代码块
 
       // 3. 调整数量 / Adjust amount
@@ -519,10 +519,10 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
 
       // 4. 执行订单 / Execute order
       const orderParams = { // 定义常量 orderParams
-        symbol: signal.symbol, // 设置 symbol 字段
-        side: signal.side, // 设置 side 字段
-        amount: adjustedAmount, // 设置 amount 字段
-        price: signal.price, // 设置 price 字段
+        symbol: signal.symbol, // 交易对
+        side: signal.side, // 方向
+        amount: adjustedAmount, // 数量
+        price: signal.price, // 价格
       }; // 结束代码块
 
       let result; // 定义变量 result
@@ -534,10 +534,10 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
 
       // 5. 记录交易 / Record trade
       this.riskManager.recordTrade({ // 访问 riskManager
-        symbol: signal.symbol, // 设置 symbol 字段
-        side: signal.side, // 设置 side 字段
-        amount: adjustedAmount, // 设置 amount 字段
-        price: result.result?.average || signal.price, // 设置 price 字段
+        symbol: signal.symbol, // 交易对
+        side: signal.side, // 方向
+        amount: adjustedAmount, // 数量
+        price: result.result?.average || signal.price, // 价格
         pnl: 0,  // 开仓时 PnL 为 0 / PnL is 0 when opening
       }); // 结束代码块
 

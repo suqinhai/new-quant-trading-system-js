@@ -39,10 +39,10 @@ const BACKUP_TYPE = { // 定义常量 BACKUP_TYPE
  * Backup status enum
  */
 const BACKUP_STATUS = { // 定义常量 BACKUP_STATUS
-  PENDING: 'pending', // 设置 PENDING 字段
-  IN_PROGRESS: 'in_progress', // 设置 IN_PROGRESS 字段
-  COMPLETED: 'completed', // 设置 COMPLETED 字段
-  FAILED: 'failed', // 设置 FAILED 字段
+  PENDING: 'pending', // 待处理
+  IN_PROGRESS: 'in_progress', // 在PROGRESS
+  COMPLETED: 'completed', // COMPLETED
+  FAILED: 'failed', // FAILED
 }; // 结束代码块
 
 /**
@@ -51,29 +51,29 @@ const BACKUP_STATUS = { // 定义常量 BACKUP_STATUS
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 备份目录 / Backup directory
-  backupDir: process.env.REDIS_BACKUP_DIR || './backups/redis', // 读取环境变量 REDIS_BACKUP_DIR
+  backupDir: process.env.REDIS_BACKUP_DIR || './backups/redis', // backupDir
   // 保留天数 / Retention days
-  retentionDays: 30, // 设置 retentionDays 字段
+  retentionDays: 30, // 保留天数
   // 最小保留备份数 / Min backups to keep
-  minBackups: 5, // 设置 minBackups 字段
+  minBackups: 5, // 最小Backups
   // 最大备份数 / Max backups
-  maxBackups: 100, // 设置 maxBackups 字段
+  maxBackups: 100, // 最大Backups
   // 是否压缩 JSON 备份 / Compress JSON backups
-  compress: true, // 设置 compress 字段
+  compress: true, // 是否压缩 JSON 备份
   // 是否加密备份 / Encrypt backups
-  encrypt: false, // 设置 encrypt 字段
+  encrypt: false, // encrypt
   // 加密密钥 / Encryption key
-  encryptionKey: process.env.REDIS_BACKUP_ENCRYPTION_KEY, // 读取环境变量 REDIS_BACKUP_ENCRYPTION_KEY
+  encryptionKey: process.env.REDIS_BACKUP_ENCRYPTION_KEY, // encryption密钥
   // 定时备份间隔 (ms) / Scheduled backup interval
-  scheduleInterval: 6 * 60 * 60 * 1000, // 6 hours
+  scheduleInterval: 6 * 60 * 60 * 1000, // 定时备份间隔 (ms)
   // JSON 备份间隔 (ms) / JSON backup interval
-  jsonBackupInterval: 24 * 60 * 60 * 1000, // 24 hours
+  jsonBackupInterval: 24 * 60 * 60 * 1000, // JSON 备份间隔 (ms)
   // 扫描批量大小 / Scan batch size
-  scanBatchSize: 1000, // 设置 scanBatchSize 字段
+  scanBatchSize: 1000, // scan批次大小
   // 备份超时 (ms) / Backup timeout
-  backupTimeout: 30 * 60 * 1000, // 30 minutes
+  backupTimeout: 30 * 60 * 1000, // 备份超时 (ms)
   // 键前缀 / Key prefix to backup
-  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 读取环境变量 REDIS_PREFIX
+  keyPrefix: process.env.REDIS_PREFIX || 'quant:', // 密钥前缀
 }; // 结束代码块
 
 /**
@@ -104,12 +104,12 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
 
     // 统计 / Statistics
     this.stats = { // 设置 stats
-      totalBackups: 0, // 设置 totalBackups 字段
-      successfulBackups: 0, // 设置 successfulBackups 字段
-      failedBackups: 0, // 设置 failedBackups 字段
-      lastBackupTime: null, // 设置 lastBackupTime 字段
-      lastRestoreTime: null, // 设置 lastRestoreTime 字段
-      totalDataSize: 0, // 设置 totalDataSize 字段
+      totalBackups: 0, // 总Backups
+      successfulBackups: 0, // successfulBackups
+      failedBackups: 0, // failedBackups
+      lastBackupTime: null, // lastBackup时间
+      lastRestoreTime: null, // lastRestore时间
+      totalDataSize: 0, // 总数据大小
     }; // 结束代码块
   } // 结束代码块
 
@@ -242,13 +242,13 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
     const backupId = this._generateBackupId(); // 定义常量 backupId
 
     const backupInfo = { // 定义常量 backupInfo
-      id: backupId, // 设置 id 字段
-      type: BACKUP_TYPE.RDB, // 设置 type 字段
-      status: BACKUP_STATUS.IN_PROGRESS, // 设置 status 字段
-      startTime: new Date().toISOString(), // 设置 startTime 字段
-      endTime: null, // 设置 endTime 字段
-      duration: 0, // 设置 duration 字段
-      error: null, // 设置 error 字段
+      id: backupId, // ID
+      type: BACKUP_TYPE.RDB, // 类型
+      status: BACKUP_STATUS.IN_PROGRESS, // 状态
+      startTime: new Date().toISOString(), // 启动时间
+      endTime: null, // end时间
+      duration: 0, // duration
+      error: null, // 错误
     }; // 结束代码块
 
     this.currentBackup = backupInfo; // 设置 currentBackup
@@ -403,9 +403,9 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
       await this._waitForAOFRewriteComplete(); // 等待异步结果
 
       const result = { // 定义常量 result
-        success: true, // 设置 success 字段
-        duration: Date.now() - startTime, // 设置 duration 字段
-        message: 'AOF rewrite completed', // 设置 message 字段
+        success: true, // 成功标记
+        duration: Date.now() - startTime, // duration
+        message: 'AOF rewrite completed', // 消息
       }; // 结束代码块
 
       this.emit('aof:rewrite', result); // 调用 emit
@@ -449,12 +449,12 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
     const config = await this.redis.client.configGet('appendonly'); // 定义常量 config
 
     return { // 返回结果
-      enabled: config.appendonly === 'yes', // 设置 enabled 字段
-      rewriteInProgress: info.includes('aof_rewrite_in_progress:1'), // 设置 rewriteInProgress 字段
-      currentSize: this._parseInfoValue(info, 'aof_current_size'), // 设置 currentSize 字段
-      baseSize: this._parseInfoValue(info, 'aof_base_size'), // 设置 baseSize 字段
-      lastRewriteTime: this._parseInfoValue(info, 'aof_last_rewrite_time_sec'), // 设置 lastRewriteTime 字段
-      lastBgrewriteStatus: this._parseInfoString(info, 'aof_last_bgrewrite_status'), // 设置 lastBgrewriteStatus 字段
+      enabled: config.appendonly === 'yes', // 启用
+      rewriteInProgress: info.includes('aof_rewrite_in_progress:1'), // rewrite在Progress
+      currentSize: this._parseInfoValue(info, 'aof_current_size'), // current大小
+      baseSize: this._parseInfoValue(info, 'aof_base_size'), // base大小
+      lastRewriteTime: this._parseInfoValue(info, 'aof_last_rewrite_time_sec'), // lastRewrite时间
+      lastBgrewriteStatus: this._parseInfoString(info, 'aof_last_bgrewrite_status'), // lastBgrewrite状态
     }; // 结束代码块
   } // 结束代码块
 
@@ -475,18 +475,18 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
     const type = options.type || 'scheduled'; // 定义常量 type
 
     const backupInfo = { // 定义常量 backupInfo
-      id: backupId, // 设置 id 字段
-      type: BACKUP_TYPE.JSON, // 设置 type 字段
-      subtype: type, // 设置 subtype 字段
-      status: BACKUP_STATUS.IN_PROGRESS, // 设置 status 字段
-      startTime: new Date().toISOString(), // 设置 startTime 字段
-      endTime: null, // 设置 endTime 字段
-      duration: 0, // 设置 duration 字段
-      keyCount: 0, // 设置 keyCount 字段
-      size: 0, // 设置 size 字段
-      compressed: this.config.compress, // 设置 compressed 字段
-      encrypted: this.config.encrypt, // 设置 encrypted 字段
-      error: null, // 设置 error 字段
+      id: backupId, // ID
+      type: BACKUP_TYPE.JSON, // 类型
+      subtype: type, // subtype
+      status: BACKUP_STATUS.IN_PROGRESS, // 状态
+      startTime: new Date().toISOString(), // 启动时间
+      endTime: null, // end时间
+      duration: 0, // duration
+      keyCount: 0, // 密钥数量
+      size: 0, // 大小
+      compressed: this.config.compress, // compressed
+      encrypted: this.config.encrypt, // encrypted
+      error: null, // 错误
     }; // 结束代码块
 
     this.currentBackup = backupInfo; // 设置 currentBackup
@@ -576,14 +576,14 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
   async _exportAllData(options = {}) { // 执行语句
     const pattern = options.pattern || `${this.config.keyPrefix}*`; // 定义常量 pattern
     const data = { // 定义常量 data
-      metadata: { // 设置 metadata 字段
-        version: '1.0', // 设置 version 字段
-        exportTime: new Date().toISOString(), // 设置 exportTime 字段
-        keyPrefix: this.config.keyPrefix, // 设置 keyPrefix 字段
-        totalKeys: 0, // 设置 totalKeys 字段
-        keyTypes: {}, // 设置 keyTypes 字段
+      metadata: { // 元数据
+        version: '1.0', // version
+        exportTime: new Date().toISOString(), // 导出时间
+        keyPrefix: this.config.keyPrefix, // 密钥前缀
+        totalKeys: 0, // 总Keys
+        keyTypes: {}, // 密钥Types
       }, // 结束代码块
-      keys: {}, // 设置 keys 字段
+      keys: {}, // keys
     }; // 结束代码块
 
     // 扫描所有键 / Scan all keys
@@ -592,8 +592,8 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
 
     do { // 执行语句
       const result = await this.redis.client.scan(cursor, { // 定义常量 result
-        MATCH: pattern, // 设置 MATCH 字段
-        COUNT: this.config.scanBatchSize, // 设置 COUNT 字段
+        MATCH: pattern, // MATCH
+        COUNT: this.config.scanBatchSize, // 数量
       }); // 结束代码块
 
       cursor = result.cursor; // 赋值 cursor
@@ -612,9 +612,9 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
         data.metadata.keyTypes[keyType] = (data.metadata.keyTypes[keyType] || 0) + 1; // 执行语句
 
         const keyData = { // 定义常量 keyData
-          type: keyType, // 设置 type 字段
-          ttl: ttl > 0 ? ttl : null, // 设置 ttl 字段
-          value: null, // 设置 value 字段
+          type: keyType, // 类型
+          ttl: ttl > 0 ? ttl : null, // ttl
+          value: null, // value
         }; // 结束代码块
 
         // 根据类型获取值 / Get value by type
@@ -635,7 +635,7 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
             const members = await this.redis.client.zRangeWithScores(key, 0, -1); // 定义常量 members
             keyData.value = members.map(m => ({ value: m.value, score: m.score })); // 赋值 keyData.value
             break; // 跳出循环或分支
-          default: // 默认分支
+          default: // 默认
             keyData.value = null; // 赋值 keyData.value
         } // 结束代码块
 
@@ -729,10 +729,10 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
    */
   async _restoreData(data, options = {}) { // 执行语句
     const result = { // 定义常量 result
-      success: true, // 设置 success 字段
-      restored: 0, // 设置 restored 字段
-      skipped: 0, // 设置 skipped 字段
-      errors: [], // 设置 errors 字段
+      success: true, // 成功标记
+      restored: 0, // restored
+      skipped: 0, // skipped
+      errors: [], // 错误列表
     }; // 结束代码块
 
     const { // 解构赋值
@@ -813,14 +813,14 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
       case 'zset': // 分支 'zset'
         if (value && value.length > 0) { // 条件判断 value && value.length > 0
           const members = value.map(m => ({ // 定义函数 members
-            score: m.score, // 设置 score 字段
-            value: m.value, // 设置 value 字段
+            score: m.score, // 分数
+            value: m.value, // value
           })); // 结束代码块
           await this.redis.client.zAdd(key, members); // 等待异步结果
         } // 结束代码块
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         throw new Error(`不支持的键类型: ${type}`); // 抛出异常
     } // 结束代码块
 
@@ -880,9 +880,9 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
       return { // 返回结果
         valid, // 执行语句
         hash, // 执行语句
-        expectedHash: backup.hash, // 设置 expectedHash 字段
-        size: buffer.length, // 设置 size 字段
-        error: valid ? null : '哈希不匹配', // 设置 error 字段
+        expectedHash: backup.hash, // expectedHash
+        size: buffer.length, // 大小
+        error: valid ? null : '哈希不匹配', // 错误
       }; // 结束代码块
 
     } catch (error) { // 执行语句
@@ -931,8 +931,8 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
   getLatestBackup(type = null) { // 调用 getLatestBackup
     const backups = this.getBackups({ // 定义常量 backups
       type, // 执行语句
-      status: BACKUP_STATUS.COMPLETED, // 设置 status 字段
-      limit: 1, // 设置 limit 字段
+      status: BACKUP_STATUS.COMPLETED, // 状态
+      limit: 1, // 限制
     }); // 结束代码块
 
     return backups.length > 0 ? backups[0] : null; // 返回结果
@@ -1024,31 +1024,31 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
 
     return { // 返回结果
       // RDB 状态 / RDB status
-      rdb: { // 设置 rdb 字段
-        enabled: true, // RDB 默认启用
-        lastSaveTime: this._parseInfoValue(info, 'rdb_last_save_time'), // 设置 lastSaveTime 字段
-        lastSaveStatus: this._parseInfoString(info, 'rdb_last_bgsave_status'), // 设置 lastSaveStatus 字段
-        changesSinceLastSave: this._parseInfoValue(info, 'rdb_changes_since_last_save'), // 设置 changesSinceLastSave 字段
-        bgsaveInProgress: info.includes('rdb_bgsave_in_progress:1'), // 设置 bgsaveInProgress 字段
-        lastBgsaveTime: this._parseInfoValue(info, 'rdb_last_bgsave_time_sec'), // 设置 lastBgsaveTime 字段
-        currentCowSize: this._parseInfoValue(info, 'rdb_last_cow_size'), // 设置 currentCowSize 字段
+      rdb: { // rdbRDB 状态
+        enabled: true, // 启用
+        lastSaveTime: this._parseInfoValue(info, 'rdb_last_save_time'), // lastSave时间
+        lastSaveStatus: this._parseInfoString(info, 'rdb_last_bgsave_status'), // lastSave状态
+        changesSinceLastSave: this._parseInfoValue(info, 'rdb_changes_since_last_save'), // 变更SinceLastSave
+        bgsaveInProgress: info.includes('rdb_bgsave_in_progress:1'), // bgsave在Progress
+        lastBgsaveTime: this._parseInfoValue(info, 'rdb_last_bgsave_time_sec'), // lastBgsave时间
+        currentCowSize: this._parseInfoValue(info, 'rdb_last_cow_size'), // currentCow大小
       }, // 结束代码块
       // AOF 状态 / AOF status
-      aof: { // 设置 aof 字段
-        enabled: info.includes('aof_enabled:1'), // 设置 enabled 字段
-        rewriteInProgress: info.includes('aof_rewrite_in_progress:1'), // 设置 rewriteInProgress 字段
-        lastRewriteTime: this._parseInfoValue(info, 'aof_last_rewrite_time_sec'), // 设置 lastRewriteTime 字段
-        lastRewriteStatus: this._parseInfoString(info, 'aof_last_bgrewrite_status'), // 设置 lastRewriteStatus 字段
-        currentSize: this._parseInfoValue(info, 'aof_current_size'), // 设置 currentSize 字段
-        baseSize: this._parseInfoValue(info, 'aof_base_size'), // 设置 baseSize 字段
-        pendingRewrite: info.includes('aof_rewrite_scheduled:1'), // 设置 pendingRewrite 字段
+      aof: { // aofAOF 状态
+        enabled: info.includes('aof_enabled:1'), // 启用
+        rewriteInProgress: info.includes('aof_rewrite_in_progress:1'), // rewrite在Progress
+        lastRewriteTime: this._parseInfoValue(info, 'aof_last_rewrite_time_sec'), // lastRewrite时间
+        lastRewriteStatus: this._parseInfoString(info, 'aof_last_bgrewrite_status'), // lastRewrite状态
+        currentSize: this._parseInfoValue(info, 'aof_current_size'), // current大小
+        baseSize: this._parseInfoValue(info, 'aof_base_size'), // base大小
+        pendingRewrite: info.includes('aof_rewrite_scheduled:1'), // 待处理Rewrite
       }, // 结束代码块
       // 备份统计 / Backup statistics
-      backup: { // 设置 backup 字段
+      backup: { // backup
         ...this.stats, // 展开对象或数组
-        totalBackupsInHistory: this.backupHistory.length, // 设置 totalBackupsInHistory 字段
-        latestRDBBackup: this.getLatestBackup(BACKUP_TYPE.RDB)?.startTime, // 设置 latestRDBBackup 字段
-        latestJSONBackup: this.getLatestBackup(BACKUP_TYPE.JSON)?.startTime, // 设置 latestJSONBackup 字段
+        totalBackupsInHistory: this.backupHistory.length, // 总Backups在历史
+        latestRDBBackup: this.getLatestBackup(BACKUP_TYPE.RDB)?.startTime, // latestRDBBackup
+        latestJSONBackup: this.getLatestBackup(BACKUP_TYPE.JSON)?.startTime, // latestJSONBackup
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -1060,10 +1060,10 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      isRunning: this.isRunning, // 设置 isRunning 字段
-      currentBackup: this.currentBackup, // 设置 currentBackup 字段
-      backupCount: this.backupHistory.length, // 设置 backupCount 字段
-      successRate: this.stats.totalBackups > 0 // 设置 successRate 字段
+      isRunning: this.isRunning, // 是否Running
+      currentBackup: this.currentBackup, // currentBackup
+      backupCount: this.backupHistory.length, // backup数量
+      successRate: this.stats.totalBackups > 0 // 成功标记频率
         ? (this.stats.successfulBackups / this.stats.totalBackups * 100).toFixed(2) + '%' // 执行语句
         : 'N/A', // 执行语句
     }; // 结束代码块

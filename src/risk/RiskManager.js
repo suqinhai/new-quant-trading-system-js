@@ -28,58 +28,58 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
     // 风控配置 / Risk configuration
     this.config = { // 设置 config
       // 单笔最大亏损 (占总资金百分比) / Max loss per trade (percentage of total capital)
-      maxLossPerTrade: config.maxLossPerTrade || 0.02,  // 2%
+      maxLossPerTrade: config.maxLossPerTrade || 0.02,  // 单笔最大亏损 (占总资金百分比)
 
       // 单日最大亏损 (占总资金百分比) / Max daily loss (percentage of total capital)
-      maxDailyLoss: config.maxDailyLoss || 0.05,  // 5%
+      maxDailyLoss: config.maxDailyLoss || 0.05,  // 单日最大亏损 (占总资金百分比)
 
       // 最大持仓数量 / Maximum number of positions
-      maxPositions: config.maxPositions || 10, // 设置 maxPositions 字段
+      maxPositions: config.maxPositions || 10, // 最大持仓数量
 
       // 单个交易对最大仓位占比 / Max position size per symbol (percentage)
-      maxPositionSize: config.maxPositionSize || 0.2,  // 20%
+      maxPositionSize: config.maxPositionSize || 0.2,  // 单个交易对最大仓位占比
 
       // 最大杠杆倍数 / Maximum leverage
-      maxLeverage: config.maxLeverage || 3, // 设置 maxLeverage 字段
+      maxLeverage: config.maxLeverage || 3, // 最大杠杆
 
       // 默认止损百分比 / Default stop loss percentage
-      defaultStopLoss: config.defaultStopLoss || 0.05,  // 5%
+      defaultStopLoss: config.defaultStopLoss || 0.05,  // 默认止损百分比
 
       // 默认止盈百分比 / Default take profit percentage
-      defaultTakeProfit: config.defaultTakeProfit || 0.1,  // 10%
+      defaultTakeProfit: config.defaultTakeProfit || 0.1,  // 默认止盈百分比
 
       // 是否启用追踪止损 / Whether to enable trailing stop
-      enableTrailingStop: config.enableTrailingStop || false, // 设置 enableTrailingStop 字段
+      enableTrailingStop: config.enableTrailingStop || false, // 是否启用追踪止损
 
       // 追踪止损距离 (百分比) / Trailing stop distance (percentage)
-      trailingStopDistance: config.trailingStopDistance || 0.03,  // 3%
+      trailingStopDistance: config.trailingStopDistance || 0.03,  // 追踪止损距离 (百分比)
 
       // 冷却期 (毫秒) / Cooldown period (milliseconds)
-      cooldownPeriod: config.cooldownPeriod || 60000,  // 1 分钟
+      cooldownPeriod: config.cooldownPeriod || 60000,  // 冷却期 (毫秒)
     }; // 结束代码块
 
     // 风控状态 / Risk state
     this.state = { // 设置 state
       // 是否允许交易 / Whether trading is allowed
-      tradingAllowed: true, // 设置 tradingAllowed 字段
+      tradingAllowed: true, // 交易Allowed
 
       // 今日已实现盈亏 / Today's realized PnL
-      dailyPnL: 0, // 设置 dailyPnL 字段
+      dailyPnL: 0, // 每日PnL
 
       // 今日交易次数 / Today's trade count
-      dailyTradeCount: 0, // 设置 dailyTradeCount 字段
+      dailyTradeCount: 0, // 今日交易次数
 
       // 当前持仓数量 / Current position count
-      currentPositions: 0, // 设置 currentPositions 字段
+      currentPositions: 0, // 当前持仓数量
 
       // 上次交易时间 / Last trade time
-      lastTradeTime: 0, // 设置 lastTradeTime 字段
+      lastTradeTime: 0, // last交易时间
 
       // 连续亏损次数 / Consecutive losses
-      consecutiveLosses: 0, // 设置 consecutiveLosses 字段
+      consecutiveLosses: 0, // 连续亏损次数
 
       // 风控触发记录 / Risk trigger records
-      triggers: [], // 设置 triggers 字段
+      triggers: [], // triggers
     }; // 结束代码块
 
     // 持仓监控 / Position monitoring
@@ -216,12 +216,12 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
       side, // 执行语句
       amount, // 执行语句
       entryPrice, // 执行语句
-      stopLoss: stopLoss || this._calculateStopLoss(entryPrice, side), // 设置 stopLoss 字段
-      takeProfit: takeProfit || this._calculateTakeProfit(entryPrice, side), // 设置 takeProfit 字段
+      stopLoss: stopLoss || this._calculateStopLoss(entryPrice, side), // 止损
+      takeProfit: takeProfit || this._calculateTakeProfit(entryPrice, side), // 止盈
       highestPrice: entryPrice,   // 最高价 (用于追踪止损) / Highest price (for trailing stop)
       lowestPrice: entryPrice,    // 最低价 (用于追踪止损) / Lowest price (for trailing stop)
-      openTime: Date.now(), // 设置 openTime 字段
-      unrealizedPnL: 0, // 设置 unrealizedPnL 字段
+      openTime: Date.now(), // 开盘时间
+      unrealizedPnL: 0, // 未实现PnL
     }; // 结束代码块
 
     // 保存持仓 / Save position
@@ -277,9 +277,9 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
     // 检查止损 / Check stop loss
     if (this._checkStopLoss(position, currentPrice)) { // 条件判断 this._checkStopLoss(position, currentPrice)
       return { // 返回结果
-        type: 'stopLoss', // 设置 type 字段
+        type: 'stopLoss', // 类型
         symbol, // 执行语句
-        price: currentPrice, // 设置 price 字段
+        price: currentPrice, // 价格
         position, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -287,9 +287,9 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
     // 检查止盈 / Check take profit
     if (this._checkTakeProfit(position, currentPrice)) { // 条件判断 this._checkTakeProfit(position, currentPrice)
       return { // 返回结果
-        type: 'takeProfit', // 设置 type 字段
+        type: 'takeProfit', // 类型
         symbol, // 执行语句
-        price: currentPrice, // 设置 price 字段
+        price: currentPrice, // 价格
         position, // 执行语句
       }; // 结束代码块
     } // 结束代码块
@@ -333,12 +333,12 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
     // 创建平仓记录 / Create close record
     const closeRecord = { // 定义常量 closeRecord
       symbol, // 执行语句
-      entryPrice: position.entryPrice, // 设置 entryPrice 字段
+      entryPrice: position.entryPrice, // 入场价格
       exitPrice, // 执行语句
-      amount: position.amount, // 设置 amount 字段
-      side: position.side, // 设置 side 字段
+      amount: position.amount, // 数量
+      side: position.side, // 方向
       realizedPnL, // 执行语句
-      holdingTime: Date.now() - position.openTime, // 设置 holdingTime 字段
+      holdingTime: Date.now() - position.openTime, // 持有时间
       reason, // 执行语句
     }; // 结束代码块
 
@@ -401,8 +401,8 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
   getStatus() { // 调用 getStatus
     return { // 返回结果
       ...this.state, // 展开对象或数组
-      positions: Array.from(this.positions.values()), // 设置 positions 字段
-      config: this.config, // 设置 config 字段
+      positions: Array.from(this.positions.values()), // 持仓
+      config: this.config, // 配置
     }; // 结束代码块
   } // 结束代码块
 
@@ -507,7 +507,7 @@ export class RiskManager extends EventEmitter { // 导出类 RiskManager
     const trigger = { // 定义常量 trigger
       type, // 执行语句
       message, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }; // 结束代码块
 
     this.state.triggers.push(trigger); // 访问 state

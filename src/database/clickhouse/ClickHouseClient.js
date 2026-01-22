@@ -17,17 +17,17 @@ import { EventEmitter } from 'events'; // 导入模块 events
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123', // 读取环境变量 CLICKHOUSE_HOST
-  username: process.env.CLICKHOUSE_USER || 'default', // 读取环境变量 CLICKHOUSE_USER
-  password: process.env.CLICKHOUSE_PASSWORD || '', // 读取环境变量 CLICKHOUSE_PASSWORD
-  database: process.env.CLICKHOUSE_DB || 'quant_trading', // 读取环境变量 CLICKHOUSE_DB
+  username: process.env.CLICKHOUSE_USER || 'default', // username
+  password: process.env.CLICKHOUSE_PASSWORD || '', // 密码
+  database: process.env.CLICKHOUSE_DB || 'quant_trading', // database
   // 连接超时 (ms) / Connection timeout (ms)
-  request_timeout: 30000, // 设置 request_timeout 字段
+  request_timeout: 30000, // 连接超时 (ms)
   // 最大重试次数 / Max retries
-  max_open_connections: 10, // 设置 max_open_connections 字段
+  max_open_connections: 10, // 最大重试次数
   // 压缩设置 / Compression settings
-  compression: { // 设置 compression 字段
-    request: true, // 设置 request 字段
-    response: true, // 设置 response 字段
+  compression: { // compression
+    request: true, // request
+    response: true, // response
   }, // 结束代码块
 }; // 结束代码块
 
@@ -54,13 +54,13 @@ class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继�
 
     try { // 尝试执行
       this.client = createClient({ // 设置 client
-        host: this.config.host, // 设置 host 字段
-        username: this.config.username, // 设置 username 字段
-        password: this.config.password, // 设置 password 字段
-        database: this.config.database, // 设置 database 字段
-        request_timeout: this.config.request_timeout, // 设置 request_timeout 字段
-        max_open_connections: this.config.max_open_connections, // 设置 max_open_connections 字段
-        compression: this.config.compression, // 设置 compression 字段
+        host: this.config.host, // 主机
+        username: this.config.username, // username
+        password: this.config.password, // 密码
+        database: this.config.database, // database
+        request_timeout: this.config.request_timeout, // request超时
+        max_open_connections: this.config.max_open_connections, // 最大开盘connections
+        compression: this.config.compression, // compression
       }); // 结束代码块
 
       // 测试连接 / Test connection
@@ -90,13 +90,13 @@ class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继�
   async _createDatabase() { // 执行语句
     // 临时使用无数据库连接 / Temporarily connect without database
     const tempClient = createClient({ // 定义常量 tempClient
-      host: this.config.host, // 设置 host 字段
-      username: this.config.username, // 设置 username 字段
-      password: this.config.password, // 设置 password 字段
+      host: this.config.host, // 主机
+      username: this.config.username, // username
+      password: this.config.password, // 密码
     }); // 结束代码块
 
     await tempClient.command({ // 等待异步结果
-      query: `CREATE DATABASE IF NOT EXISTS ${this.config.database}`, // 设置 query 字段
+      query: `CREATE DATABASE IF NOT EXISTS ${this.config.database}`, // query
     }); // 结束代码块
 
     await tempClient.close(); // 等待异步结果
@@ -312,8 +312,8 @@ class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继�
 
     const result = await this.client.query({ // 定义常量 result
       query, // 执行语句
-      query_params: params, // 设置 query_params 字段
-      format: 'JSONEachRow', // 设置 format 字段
+      query_params: params, // queryparams
+      format: 'JSONEachRow', // 格式
     }); // 结束代码块
 
     return result.json(); // 返回结果
@@ -351,7 +351,7 @@ class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继�
     await this.client.insert({ // 等待异步结果
       table, // 执行语句
       values, // 执行语句
-      format: 'JSONEachRow', // 设置 format 字段
+      format: 'JSONEachRow', // 格式
     }); // 结束代码块
 
     return { inserted: values.length }; // 返回结果
@@ -369,15 +369,15 @@ class ClickHouseClient extends EventEmitter { // 定义类 ClickHouseClient(继�
     try { // 尝试执行
       await this.client.ping(); // 等待异步结果
       return { // 返回结果
-        status: 'healthy', // 设置 status 字段
-        connected: true, // 设置 connected 字段
-        database: this.config.database, // 设置 database 字段
+        status: 'healthy', // 状态
+        connected: true, // connected
+        database: this.config.database, // database
       }; // 结束代码块
     } catch (error) { // 执行语句
       return { // 返回结果
-        status: 'unhealthy', // 设置 status 字段
-        connected: false, // 设置 connected 字段
-        error: error.message, // 设置 error 字段
+        status: 'unhealthy', // 状态
+        connected: false, // connected
+        error: error.message, // 错误
       }; // 结束代码块
     } // 结束代码块
   } // 结束代码块

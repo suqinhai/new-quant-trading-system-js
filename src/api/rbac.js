@@ -20,48 +20,48 @@ export const Role = { // 导出常量 Role
  */
 export const Permission = { // 导出常量 Permission
   // 系统权限
-  SYSTEM_CONFIG_READ: 'system:config:read', // 设置 SYSTEM_CONFIG_READ 字段
-  SYSTEM_CONFIG_WRITE: 'system:config:write', // 设置 SYSTEM_CONFIG_WRITE 字段
-  SYSTEM_METRICS_READ: 'system:metrics:read', // 设置 SYSTEM_METRICS_READ 字段
+  SYSTEM_CONFIG_READ: 'system:config:read', // 系统配置读取权限
+  SYSTEM_CONFIG_WRITE: 'system:config:write', // 系统配置写入权限
+  SYSTEM_METRICS_READ: 'system:metrics:read', // 系统指标读取权限
 
   // 策略权限
-  STRATEGY_READ: 'strategy:read', // 设置 STRATEGY_READ 字段
-  STRATEGY_CREATE: 'strategy:create', // 设置 STRATEGY_CREATE 字段
-  STRATEGY_UPDATE: 'strategy:update', // 设置 STRATEGY_UPDATE 字段
-  STRATEGY_DELETE: 'strategy:delete', // 设置 STRATEGY_DELETE 字段
-  STRATEGY_START: 'strategy:start', // 设置 STRATEGY_START 字段
-  STRATEGY_STOP: 'strategy:stop', // 设置 STRATEGY_STOP 字段
-  STRATEGY_BACKTEST: 'strategy:backtest', // 设置 STRATEGY_BACKTEST 字段
+  STRATEGY_READ: 'strategy:read', // 策略读取权限
+  STRATEGY_CREATE: 'strategy:create', // 策略创建权限
+  STRATEGY_UPDATE: 'strategy:update', // 策略更新权限
+  STRATEGY_DELETE: 'strategy:delete', // 策略删除权限
+  STRATEGY_START: 'strategy:start', // 策略启动权限
+  STRATEGY_STOP: 'strategy:stop', // 策略停止权限
+  STRATEGY_BACKTEST: 'strategy:backtest', // 策略回测权限
 
   // 交易权限
-  TRADE_READ: 'trade:read', // 设置 TRADE_READ 字段
-  TRADE_EXPORT: 'trade:export', // 设置 TRADE_EXPORT 字段
-  ORDER_READ: 'order:read', // 设置 ORDER_READ 字段
-  ORDER_CREATE: 'order:create', // 设置 ORDER_CREATE 字段
-  ORDER_CANCEL: 'order:cancel', // 设置 ORDER_CANCEL 字段
+  TRADE_READ: 'trade:read', // 交易读取权限
+  TRADE_EXPORT: 'trade:export', // 交易导出权限
+  ORDER_READ: 'order:read', // 订单读取权限
+  ORDER_CREATE: 'order:create', // 订单创建权限
+  ORDER_CANCEL: 'order:cancel', // 订单取消权限
 
   // 持仓权限
-  POSITION_READ: 'position:read', // 设置 POSITION_READ 字段
-  POSITION_CLOSE: 'position:close', // 设置 POSITION_CLOSE 字段
-  POSITION_CLOSE_ALL: 'position:close:all', // 设置 POSITION_CLOSE_ALL 字段
+  POSITION_READ: 'position:read', // 持仓读取权限
+  POSITION_CLOSE: 'position:close', // 持仓平仓权限
+  POSITION_CLOSE_ALL: 'position:close:all', // 持仓全部平仓权限
 
   // 风控权限
-  RISK_READ: 'risk:read', // 设置 RISK_READ 字段
-  RISK_CONFIG_WRITE: 'risk:config:write', // 设置 RISK_CONFIG_WRITE 字段
-  RISK_TRADING_CONTROL: 'risk:trading:control', // 设置 RISK_TRADING_CONTROL 字段
-  ALERT_READ: 'alert:read', // 设置 ALERT_READ 字段
-  ALERT_DISMISS: 'alert:dismiss', // 设置 ALERT_DISMISS 字段
+  RISK_READ: 'risk:read', // 风险读取权限
+  RISK_CONFIG_WRITE: 'risk:config:write', // 风险配置写入权限
+  RISK_TRADING_CONTROL: 'risk:trading:control', // 风险交易控制权限
+  ALERT_READ: 'alert:read', // 告警读取权限
+  ALERT_DISMISS: 'alert:dismiss', // 告警忽略权限
 
   // 交易所权限
-  EXCHANGE_READ: 'exchange:read', // 设置 EXCHANGE_READ 字段
-  EXCHANGE_CONFIG_WRITE: 'exchange:config:write', // 设置 EXCHANGE_CONFIG_WRITE 字段
-  EXCHANGE_BALANCE_READ: 'exchange:balance:read', // 设置 EXCHANGE_BALANCE_READ 字段
+  EXCHANGE_READ: 'exchange:read', // 交易所读取权限
+  EXCHANGE_CONFIG_WRITE: 'exchange:config:write', // 交易所配置写入权限
+  EXCHANGE_BALANCE_READ: 'exchange:balance:read', // 交易所余额读取权限
 
   // 用户权限
-  USER_PROFILE_READ: 'user:profile:read', // 设置 USER_PROFILE_READ 字段
-  USER_PROFILE_WRITE: 'user:profile:write', // 设置 USER_PROFILE_WRITE 字段
-  USER_PASSWORD_CHANGE: 'user:password:change', // 设置 USER_PASSWORD_CHANGE 字段
-  USER_MANAGE: 'user:manage',  // 管理其他用户
+  USER_PROFILE_READ: 'user:profile:read', // 用户资料读取权限
+  USER_PROFILE_WRITE: 'user:profile:write', // 用户资料写入权限
+  USER_PASSWORD_CHANGE: 'user:password:change', // 用户密码修改权限
+  USER_MANAGE: 'user:manage',  // 用户管理权限
 }; // 结束代码块
 
 /**
@@ -378,10 +378,10 @@ export class RBACManager { // 导出类 RBACManager
 
       if (!this.hasAnyPermission(req.user, permissions)) { // 条件判断 !this.hasAnyPermission(req.user, permissions)
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Insufficient permissions', // 设置 error 字段
-          code: 'FORBIDDEN', // 设置 code 字段
-          required: permissions, // 设置 required 字段
+          success: false, // 成功标记
+          error: 'Insufficient permissions', // 错误
+          code: 'FORBIDDEN', // 代码
+          required: permissions, // required
         }); // 结束代码块
       } // 结束代码块
 
@@ -403,9 +403,9 @@ export class RBACManager { // 导出类 RBACManager
       if (!this.canAccessRoute(req.user, req.method, req.path)) { // 条件判断 !this.canAccessRoute(req.user, req.method, re...
         const required = this.getRouteRequiredPermissions(req.method, req.path); // 定义常量 required
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Insufficient permissions', // 设置 error 字段
-          code: 'FORBIDDEN', // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Insufficient permissions', // 错误
+          code: 'FORBIDDEN', // 代码
           required, // 执行语句
         }); // 结束代码块
       } // 结束代码块
@@ -449,19 +449,19 @@ export function RequirePermission(permission) { // 导出函数 RequirePermissio
 
       if (!req.user) { // 条件判断 !req.user
         return res.status(401).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Authentication required', // 设置 error 字段
-          code: 'UNAUTHORIZED', // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Authentication required', // 错误
+          code: 'UNAUTHORIZED', // 代码
         }); // 结束代码块
       } // 结束代码块
 
       const rbac = new RBACManager(); // 定义常量 rbac
       if (!rbac.hasPermission(req.user, permission)) { // 条件判断 !rbac.hasPermission(req.user, permission)
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Insufficient permissions', // 设置 error 字段
-          code: 'FORBIDDEN', // 设置 code 字段
-          required: [permission], // 设置 required 字段
+          success: false, // 成功标记
+          error: 'Insufficient permissions', // 错误
+          code: 'FORBIDDEN', // 代码
+          required: [permission], // required
         }); // 结束代码块
       } // 结束代码块
 

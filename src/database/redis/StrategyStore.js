@@ -34,10 +34,10 @@ import { KEY_PREFIX } from './RedisClient.js'; // 导入模块 ./RedisClient.js
  * Strategy running state enum
  */
 export const STRATEGY_STATE = { // 导出常量 STRATEGY_STATE
-  STOPPED: 'stopped', // 设置 STOPPED 字段
-  RUNNING: 'running', // 设置 RUNNING 字段
-  PAUSED: 'paused', // 设置 PAUSED 字段
-  ERROR: 'error', // 设置 ERROR 字段
+  STOPPED: 'stopped', // STOPPED权限
+  RUNNING: 'running', // RUNNING
+  PAUSED: 'paused', // PAUSED
+  ERROR: 'error', // 错误
 }; // 结束代码块
 
 /**
@@ -45,12 +45,12 @@ export const STRATEGY_STATE = { // 导出常量 STRATEGY_STATE
  * Signal type enum
  */
 export const SIGNAL_TYPE = { // 导出常量 SIGNAL_TYPE
-  BUY: 'buy', // 设置 BUY 字段
-  SELL: 'sell', // 设置 SELL 字段
-  HOLD: 'hold', // 设置 HOLD 字段
-  CLOSE: 'close', // 设置 CLOSE 字段
-  CLOSE_LONG: 'closeLong', // 设置 CLOSE_LONG 字段
-  CLOSE_SHORT: 'closeShort', // 设置 CLOSE_SHORT 字段
+  BUY: 'buy', // BUY
+  SELL: 'sell', // SELL
+  HOLD: 'hold', // HOLD
+  CLOSE: 'close', // 平仓权限
+  CLOSE_LONG: 'closeLong', // 平仓LONG权限
+  CLOSE_SHORT: 'closeShort', // 平仓SHORT权限
 }; // 结束代码块
 
 /**
@@ -117,11 +117,11 @@ class StrategyStore { // 定义类 StrategyStore
    */
   _serialize(strategy) { // 调用 _serialize
     const data = { // 定义常量 data
-      strategyId: strategy.strategyId || strategy.id || '', // 设置 strategyId 字段
-      strategyName: strategy.strategyName || strategy.name || '', // 设置 strategyName 字段
-      state: strategy.state || STRATEGY_STATE.STOPPED, // 设置 state 字段
-      createdAt: String(strategy.createdAt || Date.now()), // 设置 createdAt 字段
-      updatedAt: String(strategy.updatedAt || Date.now()), // 设置 updatedAt 字段
+      strategyId: strategy.strategyId || strategy.id || '', // 策略ID
+      strategyName: strategy.strategyName || strategy.name || '', // 策略Name
+      state: strategy.state || STRATEGY_STATE.STOPPED, // state
+      createdAt: String(strategy.createdAt || Date.now()), // createdAt
+      updatedAt: String(strategy.updatedAt || Date.now()), // updatedAt
     }; // 结束代码块
 
     // 序列化配置 / Serialize config
@@ -160,12 +160,12 @@ class StrategyStore { // 定义类 StrategyStore
     } // 结束代码块
 
     const strategy = { // 定义常量 strategy
-      strategyId: data.strategyId, // 设置 strategyId 字段
-      strategyName: data.strategyName, // 设置 strategyName 字段
-      state: data.state, // 设置 state 字段
-      createdAt: parseInt(data.createdAt, 10), // 设置 createdAt 字段
-      updatedAt: parseInt(data.updatedAt, 10) || null, // 设置 updatedAt 字段
-      lastSignalTime: data.lastSignalTime ? parseInt(data.lastSignalTime, 10) : null, // 设置 lastSignalTime 字段
+      strategyId: data.strategyId, // 策略ID
+      strategyName: data.strategyName, // 策略Name
+      state: data.state, // state
+      createdAt: parseInt(data.createdAt, 10), // createdAt
+      updatedAt: parseInt(data.updatedAt, 10) || null, // updatedAt
+      lastSignalTime: data.lastSignalTime ? parseInt(data.lastSignalTime, 10) : null, // last信号时间
     }; // 结束代码块
 
     // 解析配置 / Parse config
@@ -226,7 +226,7 @@ class StrategyStore { // 定义类 StrategyStore
 
     const serialized = this._serialize({ // 定义常量 serialized
       ...strategy, // 展开对象或数组
-      updatedAt: Date.now(), // 设置 updatedAt 字段
+      updatedAt: Date.now(), // updatedAt
     }); // 结束代码块
     const isRunning = serialized.state === STRATEGY_STATE.RUNNING; // 定义常量 isRunning
 
@@ -266,7 +266,7 @@ class StrategyStore { // 定义类 StrategyStore
     await this.redis.transaction(async (multi) => { // 等待异步结果
       multi.hSet(key, { // 调用 multi.hSet
         state, // 执行语句
-        updatedAt: String(Date.now()), // 设置 updatedAt 字段
+        updatedAt: String(Date.now()), // updatedAt
       }); // 结束代码块
 
       // 更新运行状态索引 / Update running state index
@@ -291,8 +291,8 @@ class StrategyStore { // 定义类 StrategyStore
     const key = this._strategyKey(strategyId); // 定义常量 key
 
     await this.redis.hSet(key, { // 等待异步结果
-      config: JSON.stringify(config), // 设置 config 字段
-      updatedAt: String(Date.now()), // 设置 updatedAt 字段
+      config: JSON.stringify(config), // 配置
+      updatedAt: String(Date.now()), // updatedAt
     }); // 结束代码块
 
     return { strategyId }; // 返回结果
@@ -309,8 +309,8 @@ class StrategyStore { // 定义类 StrategyStore
     const key = this._strategyKey(strategyId); // 定义常量 key
 
     await this.redis.hSet(key, { // 等待异步结果
-      stateData: JSON.stringify(stateData), // 设置 stateData 字段
-      updatedAt: String(Date.now()), // 设置 updatedAt 字段
+      stateData: JSON.stringify(stateData), // state数据
+      updatedAt: String(Date.now()), // updatedAt
     }); // 结束代码块
 
     return { strategyId }; // 返回结果
@@ -336,15 +336,15 @@ class StrategyStore { // 定义类 StrategyStore
     await this.redis.transaction(async (multi) => { // 等待异步结果
       // 更新最后信号 / Update last signal
       multi.hSet(this._strategyKey(strategyId), { // 调用 multi.hSet
-        lastSignal: JSON.stringify(signalData), // 设置 lastSignal 字段
-        lastSignalTime: String(timestamp), // 设置 lastSignalTime 字段
-        updatedAt: String(Date.now()), // 设置 updatedAt 字段
+        lastSignal: JSON.stringify(signalData), // last信号
+        lastSignalTime: String(timestamp), // last信号时间
+        updatedAt: String(Date.now()), // updatedAt
       }); // 结束代码块
 
       // 添加到信号历史 / Add to signal history
       multi.zAdd(this._signalHistoryKey(strategyId), { // 调用 multi.zAdd
-        score: timestamp, // 设置 score 字段
-        value: JSON.stringify(signalData), // 设置 value 字段
+        score: timestamp, // 分数
+        value: JSON.stringify(signalData), // value
       }); // 结束代码块
 
       // 限制历史长度 / Limit history length
@@ -585,8 +585,8 @@ class StrategyStore { // 定义类 StrategyStore
     } // 结束代码块
 
     return { // 返回结果
-      total: allCount, // 设置 total 字段
-      running: runningCount, // 设置 running 字段
+      total: allCount, // 总
+      running: runningCount, // running
       byState, // 执行语句
     }; // 结束代码块
   } // 结束代码块

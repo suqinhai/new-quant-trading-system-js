@@ -65,25 +65,25 @@ export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
   maxSliceInterval: 60000,  // 1 分钟 / 1 minute
 
   // 切片数量 / Number of slices
-  defaultSlices: 20, // 设置 defaultSlices 字段
+  defaultSlices: 20, // 切片数量
 
   // 最大滑点容忍度 / Maximum slippage tolerance
-  maxSlippage: 0.005,  // 0.5%
+  maxSlippage: 0.005,  // 最大滑点
 
   // 价格偏离暂停阈值 / Price deviation pause threshold
-  priceDeviationPause: 0.02,  // 2%
+  priceDeviationPause: 0.02,  // 价格偏离暂停阈值
 
   // 紧急停止阈值 / Emergency stop threshold
-  emergencyStopThreshold: 0.05,  // 5%
+  emergencyStopThreshold: 0.05,  // 紧急停止阈值
 
   // 参与率上限（相对于市场成交量）/ Participation rate limit
-  maxParticipationRate: 0.1,  // 10%
+  maxParticipationRate: 0.1,  // 参与率上限（相对于市场成交量）/ Participation rate limit
 
   // 是否启用动态调整 / Enable dynamic adjustment
-  enableDynamicAdjustment: true, // 设置 enableDynamicAdjustment 字段
+  enableDynamicAdjustment: true, // 是否启用动态调整
 
   // 是否启用详细日志 / Enable verbose logging
-  verbose: true, // 设置 verbose 字段
+  verbose: true, // 是否启用详细日志
 }; // 结束代码块
 
 /**
@@ -92,7 +92,7 @@ export const DEFAULT_CONFIG = { // 导出常量 DEFAULT_CONFIG
  */
 export const VOLUME_CURVES = { // 导出常量 VOLUME_CURVES
   // 加密货币24小时分布（基于历史数据）/ Crypto 24h distribution
-  crypto: [ // 设置 crypto 字段
+  crypto: [ // 加密货币24小时分布（基于历史数据）/ Crypto 24h distribution
     0.032, 0.028, 0.025, 0.024, 0.026, 0.032,  // 00:00 - 05:00
     0.042, 0.055, 0.062, 0.058, 0.052, 0.048,  // 06:00 - 11:00
     0.045, 0.048, 0.055, 0.062, 0.058, 0.052,  // 12:00 - 17:00
@@ -100,7 +100,7 @@ export const VOLUME_CURVES = { // 导出常量 VOLUME_CURVES
   ], // 结束数组或索引
 
   // 美股交易时段分布 / US stock trading hours distribution
-  usStock: [ // 设置 usStock 字段
+  usStock: [ // 美股交易时段分布
     0, 0, 0, 0, 0, 0,                          // 00:00 - 05:00 (休市)
     0, 0, 0, 0.12, 0.10, 0.08,                 // 06:00 - 11:00 (09:30 开盘)
     0.07, 0.06, 0.06, 0.08, 0.10, 0,           // 12:00 - 17:00 (16:00 收盘)
@@ -108,7 +108,7 @@ export const VOLUME_CURVES = { // 导出常量 VOLUME_CURVES
   ], // 结束数组或索引
 
   // 均匀分布 / Uniform distribution
-  uniform: Array(24).fill(1 / 24), // 设置 uniform 字段
+  uniform: Array(24).fill(1 / 24), // uniform
 }; // 结束代码块
 
 // ============================================
@@ -136,10 +136,10 @@ class SliceGenerator { // 定义类 SliceGenerator
 
     for (let i = 0; i < sliceCount; i++) { // 循环 let i = 0; i < sliceCount; i++
       slices.push({ // 调用 slices.push
-        index: i, // 设置 index 字段
-        size: sliceSize, // 设置 size 字段
-        scheduledTime: i * interval, // 设置 scheduledTime 字段
-        weight: 1 / sliceCount, // 设置 weight 字段
+        index: i, // index
+        size: sliceSize, // 大小
+        scheduledTime: i * interval, // scheduled时间
+        weight: 1 / sliceCount, // weight
       }); // 结束代码块
     } // 结束代码块
 
@@ -180,11 +180,11 @@ class SliceGenerator { // 定义类 SliceGenerator
     for (let i = 0; i < sliceCount; i++) { // 循环 let i = 0; i < sliceCount; i++
       const normalizedWeight = weights[i] / totalWeight; // 定义常量 normalizedWeight
       slices.push({ // 调用 slices.push
-        index: i, // 设置 index 字段
-        size: totalSize * normalizedWeight, // 设置 size 字段
-        scheduledTime: i * interval, // 设置 scheduledTime 字段
-        weight: normalizedWeight, // 设置 weight 字段
-        hour: new Date(startTime.getTime() + i * interval).getUTCHours(), // 设置 hour 字段
+        index: i, // index
+        size: totalSize * normalizedWeight, // 大小
+        scheduledTime: i * interval, // scheduled时间
+        weight: normalizedWeight, // weight
+        hour: new Date(startTime.getTime() + i * interval).getUTCHours(), // 小时
       }); // 结束代码块
     } // 结束代码块
 
@@ -233,11 +233,11 @@ class SliceGenerator { // 定义类 SliceGenerator
     for (let i = 0; i < sliceCount; i++) { // 循环 let i = 0; i < sliceCount; i++
       const weight = sizeMultipliers[i] / totalMultiplier; // 定义常量 weight
       slices.push({ // 调用 slices.push
-        index: i, // 设置 index 字段
-        size: totalSize * weight, // 设置 size 字段
-        scheduledTime: i * (duration / sliceCount), // 设置 scheduledTime 字段
+        index: i, // index
+        size: totalSize * weight, // 大小
+        scheduledTime: i * (duration / sliceCount), // scheduled时间
         weight, // 执行语句
-        adaptiveFactors: { // 设置 adaptiveFactors 字段
+        adaptiveFactors: { // adaptiveFactors
           volatility, // 执行语句
           liquidity, // 执行语句
           trend, // 执行语句
@@ -327,7 +327,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
   createTWAPTask(params) { // 调用 createTWAPTask
     return this._createExecutionTask({ // 返回结果
       ...params, // 展开对象或数组
-      algoType: ALGO_TYPE.TWAP, // 设置 algoType 字段
+      algoType: ALGO_TYPE.TWAP, // algo类型
     }); // 结束代码块
   } // 结束代码块
 
@@ -341,7 +341,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
   createVWAPTask(params) { // 调用 createVWAPTask
     return this._createExecutionTask({ // 返回结果
       ...params, // 展开对象或数组
-      algoType: ALGO_TYPE.VWAP, // 设置 algoType 字段
+      algoType: ALGO_TYPE.VWAP, // algo类型
     }); // 结束代码块
   } // 结束代码块
 
@@ -355,7 +355,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
   createAdaptiveTask(params) { // 调用 createAdaptiveTask
     return this._createExecutionTask({ // 返回结果
       ...params, // 展开对象或数组
-      algoType: ALGO_TYPE.ADAPTIVE, // 设置 algoType 字段
+      algoType: ALGO_TYPE.ADAPTIVE, // algo类型
     }); // 结束代码块
   } // 结束代码块
 
@@ -403,7 +403,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
         break; // 跳出循环或分支
 
       case ALGO_TYPE.TWAP: // 分支 ALGO_TYPE.TWAP
-      default: // 默认分支
+      default: // 默认
         slices = SliceGenerator.generateTWAPSlices(totalSize, sliceCount, duration); // 赋值 slices
         break; // 跳出循环或分支
     } // 结束代码块
@@ -419,18 +419,18 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
 
       // 数量信息 / Size info
       totalSize, // 执行语句
-      executedSize: 0, // 设置 executedSize 字段
-      remainingSize: totalSize, // 设置 remainingSize 字段
+      executedSize: 0, // executed大小
+      remainingSize: totalSize, // remaining大小
 
       // 时间信息 / Time info
       duration, // 执行语句
-      startTime: startTime.getTime(), // 设置 startTime 字段
-      endTime: startTime.getTime() + duration, // 设置 endTime 字段
-      createdAt: Date.now(), // 设置 createdAt 字段
+      startTime: startTime.getTime(), // 启动时间
+      endTime: startTime.getTime() + duration, // end时间
+      createdAt: Date.now(), // createdAt
 
       // 切片信息 / Slice info
       slices, // 执行语句
-      currentSliceIndex: 0, // 设置 currentSliceIndex 字段
+      currentSliceIndex: 0, // currentSliceIndex
 
       // 价格信息 / Price info
       limitPrice, // 执行语句
@@ -440,14 +440,14 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
       totalCost: 0,          // 总成本 / Total cost
 
       // 状态 / Status
-      status: EXECUTION_STATUS.PENDING, // 设置 status 字段
+      status: EXECUTION_STATUS.PENDING, // 状态
 
       // 执行记录 / Execution records
-      executionRecords: [], // 设置 executionRecords 字段
+      executionRecords: [], // executionRecords
 
       // 动态调整参数 / Dynamic adjustment params
-      adjustmentHistory: [], // 设置 adjustmentHistory 字段
-      currentParticipationRate: 0, // 设置 currentParticipationRate 字段
+      adjustmentHistory: [], // adjustment历史
+      currentParticipationRate: 0, // currentParticipation频率
 
       // 选项 / Options
       options, // 执行语句
@@ -715,15 +715,15 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
 
     // 记录执行开始 / Record execution start
     const executionRecord = { // 定义常量 executionRecord
-      sliceIndex: slice.index, // 设置 sliceIndex 字段
-      plannedSize: slice.size, // 设置 plannedSize 字段
-      actualSize: executeSize, // 设置 actualSize 字段
-      startTime: Date.now(), // 设置 startTime 字段
-      startPrice: currentPrice, // 设置 startPrice 字段
-      endPrice: null, // 设置 endPrice 字段
-      avgPrice: null, // 设置 avgPrice 字段
-      slippage: null, // 设置 slippage 字段
-      status: 'pending', // 设置 status 字段
+      sliceIndex: slice.index, // sliceIndex
+      plannedSize: slice.size, // planned大小
+      actualSize: executeSize, // actual大小
+      startTime: Date.now(), // 启动时间
+      startPrice: currentPrice, // 启动价格
+      endPrice: null, // end价格
+      avgPrice: null, // avg价格
+      slippage: null, // 滑点
+      status: 'pending', // 状态
     }; // 结束代码块
 
     // 执行订单 / Execute order
@@ -731,15 +731,15 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
       if (this.orderExecutor) { // 条件判断 this.orderExecutor
         // 使用订单执行器 / Use order executor
         const result = await this.orderExecutor.executeSmartLimitOrder({ // 定义常量 result
-          exchangeId: task.exchangeId, // 设置 exchangeId 字段
-          symbol: task.symbol, // 设置 symbol 字段
-          side: task.side, // 设置 side 字段
-          amount: executeSize, // 设置 amount 字段
-          price: currentPrice, // 设置 price 字段
+          exchangeId: task.exchangeId, // 交易所ID
+          symbol: task.symbol, // 交易对
+          side: task.side, // 方向
+          amount: executeSize, // 数量
+          price: currentPrice, // 价格
           postOnly: false,  // TWAP/VWAP 通常需要尽快成交 / TWAP/VWAP usually needs quick execution
-          options: { // 设置 options 字段
-            taskId: task.taskId, // 设置 taskId 字段
-            sliceIndex: slice.index, // 设置 sliceIndex 字段
+          options: { // options
+            taskId: task.taskId, // taskID
+            sliceIndex: slice.index, // sliceIndex
           }, // 结束代码块
         }); // 结束代码块
 
@@ -779,7 +779,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
         task, // 执行语句
         slice, // 执行语句
         executionRecord, // 执行语句
-        progress: task.executedSize / task.totalSize, // 设置 progress 字段
+        progress: task.executedSize / task.totalSize, // progress
       }); // 结束代码块
 
       // 记录日志 / Log
@@ -821,11 +821,11 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
 
     // 创建补充切片 / Create supplementary slice
     const supplementarySlice = { // 定义常量 supplementarySlice
-      index: task.slices.length, // 设置 index 字段
-      size: task.remainingSize, // 设置 size 字段
-      scheduledTime: Date.now() - task.startTime, // 设置 scheduledTime 字段
-      weight: task.remainingSize / task.totalSize, // 设置 weight 字段
-      isSupplementary: true, // 设置 isSupplementary 字段
+      index: task.slices.length, // index
+      size: task.remainingSize, // 大小
+      scheduledTime: Date.now() - task.startTime, // scheduled时间
+      weight: task.remainingSize / task.totalSize, // weight
+      isSupplementary: true, // 是否Supplementary
     }; // 结束代码块
 
     await this._executeSlice(task, supplementarySlice); // 等待异步结果
@@ -864,7 +864,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
         adjustmentFactor = 1.2; // 赋值 adjustmentFactor
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         adjustmentFactor = 1.0; // 赋值 adjustmentFactor
     } // 结束代码块
 
@@ -886,20 +886,20 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
     // 记录调整 / Record adjustment
     if (adjustmentFactor !== 1.0) { // 条件判断 adjustmentFactor !== 1.0
       task.adjustmentHistory.push({ // 调用 task.adjustmentHistory.push
-        sliceIndex: slice.index, // 设置 sliceIndex 字段
-        originalSize: slice.size, // 设置 originalSize 字段
-        adjustedSize: slice.size * adjustmentFactor, // 设置 adjustedSize 字段
+        sliceIndex: slice.index, // sliceIndex
+        originalSize: slice.size, // original大小
+        adjustedSize: slice.size * adjustmentFactor, // adjusted大小
         adjustmentFactor, // 执行语句
         marketCondition, // 执行语句
-        timestamp: Date.now(), // 设置 timestamp 字段
+        timestamp: Date.now(), // 时间戳
       }); // 结束代码块
     } // 结束代码块
 
     // 返回调整后的切片 / Return adjusted slice
     return { // 返回结果
       ...slice, // 展开对象或数组
-      size: slice.size * adjustmentFactor, // 设置 size 字段
-      adjusted: adjustmentFactor !== 1.0, // 设置 adjusted 字段
+      size: slice.size * adjustmentFactor, // 大小
+      adjusted: adjustmentFactor !== 1.0, // adjusted
       adjustmentFactor, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -1023,20 +1023,20 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
 
     // 保存到历史记录 / Save to history
     this.executionHistory.push({ // 访问 executionHistory
-      taskId: task.taskId, // 设置 taskId 字段
-      symbol: task.symbol, // 设置 symbol 字段
-      side: task.side, // 设置 side 字段
-      algoType: task.algoType, // 设置 algoType 字段
-      totalSize: task.totalSize, // 设置 totalSize 字段
-      executedSize: task.executedSize, // 设置 executedSize 字段
-      avgExecutionPrice: task.avgExecutionPrice, // 设置 avgExecutionPrice 字段
-      benchmarkPrice: task.benchmarkPrice, // 设置 benchmarkPrice 字段
-      totalSlippage: task.totalSlippage, // 设置 totalSlippage 字段
-      completionRate: task.completionRate, // 设置 completionRate 字段
-      status: task.status, // 设置 status 字段
-      duration: task.actualDuration, // 设置 duration 字段
-      sliceCount: task.slices.length, // 设置 sliceCount 字段
-      completedAt: task.completedAt, // 设置 completedAt 字段
+      taskId: task.taskId, // taskID
+      symbol: task.symbol, // 交易对
+      side: task.side, // 方向
+      algoType: task.algoType, // algo类型
+      totalSize: task.totalSize, // 总大小
+      executedSize: task.executedSize, // executed大小
+      avgExecutionPrice: task.avgExecutionPrice, // avgExecution价格
+      benchmarkPrice: task.benchmarkPrice, // benchmark价格
+      totalSlippage: task.totalSlippage, // 总滑点
+      completionRate: task.completionRate, // completion频率
+      status: task.status, // 状态
+      duration: task.actualDuration, // duration
+      sliceCount: task.slices.length, // slice数量
+      completedAt: task.completedAt, // completedAt
     }); // 结束代码块
 
     // 从活跃任务中移除 / Remove from active tasks
@@ -1073,16 +1073,16 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
     } // 结束代码块
 
     return { // 返回结果
-      taskId: task.taskId, // 设置 taskId 字段
-      status: task.status, // 设置 status 字段
-      progress: task.executedSize / task.totalSize, // 设置 progress 字段
-      executedSize: task.executedSize, // 设置 executedSize 字段
-      remainingSize: task.remainingSize, // 设置 remainingSize 字段
-      avgExecutionPrice: task.avgExecutionPrice, // 设置 avgExecutionPrice 字段
-      currentSlice: task.currentSliceIndex, // 设置 currentSlice 字段
-      totalSlices: task.slices.length, // 设置 totalSlices 字段
-      elapsedTime: Date.now() - task.startTime, // 设置 elapsedTime 字段
-      remainingTime: Math.max(0, task.endTime - Date.now()), // 设置 remainingTime 字段
+      taskId: task.taskId, // taskID
+      status: task.status, // 状态
+      progress: task.executedSize / task.totalSize, // progress
+      executedSize: task.executedSize, // executed大小
+      remainingSize: task.remainingSize, // remaining大小
+      avgExecutionPrice: task.avgExecutionPrice, // avgExecution价格
+      currentSlice: task.currentSliceIndex, // currentSlice
+      totalSlices: task.slices.length, // 总Slices
+      elapsedTime: Date.now() - task.startTime, // elapsed时间
+      remainingTime: Math.max(0, task.endTime - Date.now()), // remaining时间
     }; // 结束代码块
   } // 结束代码块
 
@@ -1116,8 +1116,8 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
   getStats() { // 调用 getStats
     return { // 返回结果
       ...this.stats, // 展开对象或数组
-      activeTasks: this.activeTasks.size, // 设置 activeTasks 字段
-      historyCount: this.executionHistory.length, // 设置 historyCount 字段
+      activeTasks: this.activeTasks.size, // 活跃Tasks
+      historyCount: this.executionHistory.length, // 历史数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -1154,7 +1154,7 @@ export class TWAPVWAPExecutor extends EventEmitter { // 导出类 TWAPVWAPExecut
       case 'warn': // 分支 'warn'
         console.warn(fullMessage); // 控制台输出
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
     } // 结束代码块
   } // 结束代码块

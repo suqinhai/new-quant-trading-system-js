@@ -34,11 +34,11 @@ import { // 导入依赖
  * Strength metric types
  */
 export const STRENGTH_METRICS = { // 导出常量 STRENGTH_METRICS
-  RELATIVE_STRENGTH: 'relative_strength',   // 相对强弱 (相对于基准)
+  RELATIVE_STRENGTH: 'relative_strength',   // RELATIVESTRENGTH
   MOMENTUM: 'momentum',                      // 动量
-  RISK_ADJUSTED: 'risk_adjusted',            // 风险调整收益
-  TREND_STRENGTH: 'trend_strength',          // 趋势强度
-  COMPOSITE: 'composite',                    // 复合指标
+  RISK_ADJUSTED: 'risk_adjusted',            // 风险ADJUSTED
+  TREND_STRENGTH: 'trend_strength',          // TRENDSTRENGTH
+  COMPOSITE: 'composite',                    // COMPOSITE
 }; // 结束代码块
 
 /**
@@ -46,10 +46,10 @@ export const STRENGTH_METRICS = { // 导出常量 STRENGTH_METRICS
  * Rotation trigger types
  */
 export const ROTATION_TRIGGERS = { // 导出常量 ROTATION_TRIGGERS
-  PERIODIC: 'periodic',           // 周期性轮动
-  RANK_CHANGE: 'rank_change',     // 排名变化触发
-  THRESHOLD: 'threshold',         // 阈值触发
-  HYBRID: 'hybrid',               // 混合触发
+  PERIODIC: 'periodic',           // PERIODIC
+  RANK_CHANGE: 'rank_change',     // RANK修改
+  THRESHOLD: 'threshold',         // 阈值
+  HYBRID: 'hybrid',               // HYBRID
 }; // 结束代码块
 
 /**
@@ -61,11 +61,11 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 基础配置 / Basic Configuration
   // ============================================
 
-  name: 'RotationStrategy', // 设置 name 字段
+  name: 'RotationStrategy', // name
 
   // 监控的交易对列表 / Symbols to monitor
   // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
-  symbols: [ // 设置 symbols 字段
+  symbols: [ // 注意: 永续合约使用 BTC/USDT 格式 (不带 :USDT 后缀)
     'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT', // 执行语句
     'ADA/USDT', 'AVAX/USDT', 'DOGE/USDT', 'DOT/USDT', 'MATIC/USDT', // 执行语句
     'LINK/USDT', 'UNI/USDT', 'ATOM/USDT', 'LTC/USDT', 'ETC/USDT', // 执行语句
@@ -73,64 +73,64 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   ], // 结束数组或索引
 
   // 基准资产 (用于计算相对强弱) / Benchmark asset
-  benchmarkSymbol: 'BTC/USDT', // 设置 benchmarkSymbol 字段
+  benchmarkSymbol: 'BTC/USDT', // 基准资产 (用于计算相对强弱)
 
   // ============================================
   // 轮动配置 / Rotation Configuration
   // ============================================
 
   // 回看周期 / Lookback period
-  lookbackPeriod: 14, // 设置 lookbackPeriod 字段
+  lookbackPeriod: 14, // 回看周期
 
   // 短期回看 / Short-term lookback
-  shortLookback: 7, // 设置 shortLookback 字段
+  shortLookback: 7, // short回溯
 
   // 长期回看 / Long-term lookback
-  longLookback: 30, // 设置 longLookback 字段
+  longLookback: 30, // long回溯
 
   // 强弱指标 / Strength metric
-  strengthMetric: STRENGTH_METRICS.COMPOSITE, // 设置 strengthMetric 字段
+  strengthMetric: STRENGTH_METRICS.COMPOSITE, // strength指标
 
   // 轮动触发类型 / Rotation trigger type
-  rotationTrigger: ROTATION_TRIGGERS.HYBRID, // 设置 rotationTrigger 字段
+  rotationTrigger: ROTATION_TRIGGERS.HYBRID, // rotationTrigger轮动触发类型
 
   // ============================================
   // 选股配置 / Selection Configuration
   // ============================================
 
   // Top N 数量 / Top N count
-  topN: 5, // 设置 topN 字段
+  topN: 5, // Top N 数量
 
   // Bottom N 数量 / Bottom N count
-  bottomN: 3, // 设置 bottomN 字段
+  bottomN: 3, // Bottom N 数量
 
   // 排名方向 / Ranking direction
-  rankDirection: RANK_DIRECTION.DESCENDING, // 设置 rankDirection 字段
+  rankDirection: RANK_DIRECTION.DESCENDING, // rankDirection
 
   // 最小强弱分数阈值 / Minimum strength score threshold
-  minStrengthScore: 0.02, // 设置 minStrengthScore 字段
+  minStrengthScore: 0.02, // 最小强弱分数阈值
 
   // 最大强弱分数阈值 (用于做空) / Max strength score threshold (for short)
-  maxWeakScore: -0.02, // 设置 maxWeakScore 字段
+  maxWeakScore: -0.02, // 最大强弱分数阈值 (用于做空)
 
   // ============================================
   // 仓位配置 / Position Configuration
   // ============================================
 
   // 仓位类型 / Position type
-  positionType: POSITION_TYPE.LONG_SHORT, // 设置 positionType 字段
+  positionType: POSITION_TYPE.LONG_SHORT, // 持仓类型仓位类型
 
   // 单个资产最大仓位 / Max position per asset
-  maxPositionPerAsset: 0.12, // 设置 maxPositionPerAsset 字段
+  maxPositionPerAsset: 0.12, // 单个资产最大仓位
 
   // 单边总仓位 / Total position per side
-  maxPositionPerSide: 0.6, // 设置 maxPositionPerSide 字段
+  maxPositionPerSide: 0.6, // 最大持仓每方向
 
   // 等权重 / Equal weight
-  equalWeight: false, // 设置 equalWeight 字段
+  equalWeight: false, // equalWeight
 
   // 使用强弱加权 / Use strength-weighted
-  strengthWeighted: true, // 设置 strengthWeighted 字段
+  strengthWeighted: true, // strengthWeighted
 
   // ============================================
   // 轮动触发配置 / Rotation Trigger Configuration
@@ -140,76 +140,76 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   rebalancePeriod: 4 * 60 * 60 * 1000, // 每4小时 / Every 4 hours
 
   // 最小排名变化触发轮动 / Min rank change to trigger rotation
-  minRankChangeToRotate: 3, // 设置 minRankChangeToRotate 字段
+  minRankChangeToRotate: 3, // 最小排名变化触发轮动
 
   // 强弱分数变化阈值 / Strength score change threshold
-  strengthChangeThreshold: 0.05, // 设置 strengthChangeThreshold 字段
+  strengthChangeThreshold: 0.05, // 强弱分数变化阈值
 
   // 是否在强弱反转时立即轮动 / Rotate immediately on strength reversal
-  rotateOnReversal: true, // 设置 rotateOnReversal 字段
+  rotateOnReversal: true, // 是否在强弱反转时立即轮动
 
   // ============================================
   // 缓冲区配置 / Buffer Zone Configuration
   // ============================================
 
   // 是否使用缓冲区 (防止频繁轮动) / Use buffer zone
-  useBufferZone: true, // 设置 useBufferZone 字段
+  useBufferZone: true, // 是否使用缓冲区 (防止频繁轮动)
 
   // 缓冲区大小 (排名) / Buffer zone size (ranks)
-  bufferZoneSize: 2, // 设置 bufferZoneSize 字段
+  bufferZoneSize: 2, // 缓冲区大小 (排名)
 
   // 最小持仓周期 (毫秒) / Minimum holding period (ms)
-  minHoldingPeriod: 24 * 60 * 60 * 1000, // 至少1天
+  minHoldingPeriod: 24 * 60 * 60 * 1000, // 最小持仓周期 (毫秒)
 
   // ============================================
   // 相对强弱配置 / Relative Strength Configuration
   // ============================================
 
   // 是否计算相对强弱 / Calculate relative strength
-  calculateRelativeStrength: true, // 设置 calculateRelativeStrength 字段
+  calculateRelativeStrength: true, // 是否计算相对强弱
 
   // RS阈值 (强势) / RS threshold (strong)
-  rsStrongThreshold: 1.05, // 设置 rsStrongThreshold 字段
+  rsStrongThreshold: 1.05, // RS阈值 (强势)
 
   // RS阈值 (弱势) / RS threshold (weak)
-  rsWeakThreshold: 0.95, // 设置 rsWeakThreshold 字段
+  rsWeakThreshold: 0.95, // RS阈值 (弱势)
 
   // ============================================
   // 趋势过滤配置 / Trend Filter Configuration
   // ============================================
 
   // 是否使用趋势过滤 / Use trend filter
-  useTrendFilter: true, // 设置 useTrendFilter 字段
+  useTrendFilter: true, // 是否使用趋势过滤
 
   // 趋势判断周期 / Trend period
-  trendPeriod: 20, // 设置 trendPeriod 字段
+  trendPeriod: 20, // 趋势判断周期
 
   // 只在上涨趋势中做多 / Only long in uptrend
-  longOnlyInUptrend: false, // 设置 longOnlyInUptrend 字段
+  longOnlyInUptrend: false, // 只在上涨趋势中做多
 
   // 只在下跌趋势中做空 / Only short in downtrend
-  shortOnlyInDowntrend: false, // 设置 shortOnlyInDowntrend 字段
+  shortOnlyInDowntrend: false, // 只在下跌趋势中做空
 
   // ============================================
   // 风控配置 / Risk Control Configuration
   // ============================================
 
-  stopLoss: 0.10, // 设置 stopLoss 字段
-  takeProfit: 0.25, // 设置 takeProfit 字段
-  maxDrawdown: 0.15, // 设置 maxDrawdown 字段
+  stopLoss: 0.10, // 止损
+  takeProfit: 0.25, // 止盈
+  maxDrawdown: 0.15, // 最大回撤
 
   // 是否使用动态止损 / Use dynamic stop loss
-  useDynamicStopLoss: true, // 设置 useDynamicStopLoss 字段
+  useDynamicStopLoss: true, // 是否使用动态止损
 
   // 动态止损 ATR 乘数 / Dynamic stop loss ATR multiplier
-  atrStopMultiplier: 2.5, // 设置 atrStopMultiplier 字段
+  atrStopMultiplier: 2.5, // 动态止损 ATR 乘数
 
   // ============================================
   // 日志配置 / Logging Configuration
   // ============================================
 
-  verbose: true, // 设置 verbose 字段
-  logPrefix: '[Rotation]', // 设置 logPrefix 字段
+  verbose: true, // 详细日志
+  logPrefix: '[Rotation]', // 日志前缀
 }; // 结束代码块
 
 // ============================================
@@ -305,7 +305,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
         return this._calculateTrendStrength(metrics); // 返回结果
 
       case STRENGTH_METRICS.COMPOSITE: // 分支 STRENGTH_METRICS.COMPOSITE
-      default: // 默认分支
+      default: // 默认
         return this._calculateCompositeStrength(metrics, symbol); // 返回结果
     } // 结束代码块
   } // 结束代码块
@@ -473,10 +473,10 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
 
       ranking.push({ // 调用 ranking.push
         symbol, // 执行语句
-        value: strengthScore, // 设置 value 字段
+        value: strengthScore, // value
         metrics, // 执行语句
-        relativeStrength: this.relativeStrength.get(symbol) || 1, // 设置 relativeStrength 字段
-        atr: this._calculateATR(symbol), // 设置 atr 字段
+        relativeStrength: this.relativeStrength.get(symbol) || 1, // relativeStrength
+        atr: this._calculateATR(symbol), // ATR
       }); // 结束代码块
     } // 结束代码块
 
@@ -541,7 +541,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
     const history = this.strengthHistory.get(symbol); // 定义常量 history
     history.push({ // 调用 history.push
       score, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
 
     // 保留最近 30 条 / Keep last 30 records
@@ -572,7 +572,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
         return this._checkStrengthThreshold(ranking); // 返回结果
 
       case ROTATION_TRIGGERS.HYBRID: // 分支 ROTATION_TRIGGERS.HYBRID
-      default: // 默认分支
+      default: // 默认
         // 满足周期条件，或者排名/强弱变化显著
         // Meet period condition, or significant rank/strength change
         const periodicTrigger = now - this.lastRotationTime >= this.config.rebalancePeriod; // 定义常量 periodicTrigger
@@ -777,7 +777,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
 
       return { // 返回结果
         ...a, // 展开对象或数组
-        weight: Math.min(weight, this.config.maxPositionPerAsset), // 设置 weight 字段
+        weight: Math.min(weight, this.config.maxPositionPerAsset), // weight
       }; // 结束代码块
     }); // 结束代码块
   } // 结束代码块
@@ -802,8 +802,8 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
     // 记录轮动 / Record rotation
     this.lastRotationTime = Date.now(); // 设置 lastRotationTime
     this.rotationHistory.push({ // 访问 rotationHistory
-      timestamp: this.lastRotationTime, // 设置 timestamp 字段
-      ranking: ranking.slice(0, 10).map(r => ({ symbol: r.symbol, rank: r.rank, score: r.value })), // 设置 ranking 字段
+      timestamp: this.lastRotationTime, // 时间戳
+      ranking: ranking.slice(0, 10).map(r => ({ symbol: r.symbol, rank: r.rank, score: r.value })), // ranking
     }); // 结束代码块
 
     // 调用父类执行再平衡 / Call parent to execute rebalance
@@ -865,11 +865,11 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
 
     return { // 返回结果
       ...baseStatus, // 展开对象或数组
-      strengthMetric: this.config.strengthMetric, // 设置 strengthMetric 字段
-      rotationTrigger: this.config.rotationTrigger, // 设置 rotationTrigger 字段
-      lastRotationTime: this.lastRotationTime, // 设置 lastRotationTime 字段
-      rotationCount: this.rotationHistory.length, // 设置 rotationCount 字段
-      relativeStrength: Object.fromEntries(this.relativeStrength), // 设置 relativeStrength 字段
+      strengthMetric: this.config.strengthMetric, // strength指标
+      rotationTrigger: this.config.rotationTrigger, // rotationTrigger
+      lastRotationTime: this.lastRotationTime, // lastRotation时间
+      rotationCount: this.rotationHistory.length, // rotation数量
+      relativeStrength: Object.fromEntries(this.relativeStrength), // relativeStrength
     }; // 结束代码块
   } // 结束代码块
 
@@ -893,14 +893,14 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
     const ranking = this.getCurrentRanking(); // 定义常量 ranking
 
     return ranking.map(item => ({ // 返回结果
-      symbol: item.symbol, // 设置 symbol 字段
-      rank: item.rank, // 设置 rank 字段
-      strengthScore: item.value, // 设置 strengthScore 字段
-      relativeStrength: this.relativeStrength.get(item.symbol) || 1, // 设置 relativeStrength 字段
-      isStrong: item.value >= this.config.minStrengthScore, // 设置 isStrong 字段
-      isWeak: item.value <= this.config.maxWeakScore, // 设置 isWeak 字段
-      inTopN: item.rank <= this.config.topN, // 设置 inTopN 字段
-      inBottomN: item.rank > ranking.length - this.config.bottomN, // 设置 inBottomN 字段
+      symbol: item.symbol, // 交易对
+      rank: item.rank, // rank
+      strengthScore: item.value, // strength分数
+      relativeStrength: this.relativeStrength.get(item.symbol) || 1, // relativeStrength
+      isStrong: item.value >= this.config.minStrengthScore, // 是否Strong
+      isWeak: item.value <= this.config.maxWeakScore, // 是否Weak
+      inTopN: item.rank <= this.config.topN, // 在TopN
+      inBottomN: item.rank > ranking.length - this.config.bottomN, // 在BottomN
     })); // 结束代码块
   } // 结束代码块
 } // 结束代码块

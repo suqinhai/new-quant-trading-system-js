@@ -15,10 +15,10 @@ import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
  * Simulation Type
  */
 export const SimulationType = { // 导出常量 SimulationType
-  TRADE_RESAMPLING: 'trade_resampling',     // 交易重采样
-  RETURN_RESAMPLING: 'return_resampling',   // 收益率重采样
-  BOOTSTRAP: 'bootstrap',                    // Bootstrap 方法
-  PATH_DEPENDENCY: 'path_dependency',        // 路径依赖模拟
+  TRADE_RESAMPLING: 'trade_resampling',     // 交易RESAMPLING
+  RETURN_RESAMPLING: 'return_resampling',   // RETURNRESAMPLING
+  BOOTSTRAP: 'bootstrap',                    // BOOTSTRAP
+  PATH_DEPENDENCY: 'path_dependency',        // 路径DEPENDENCY
 }; // 结束代码块
 
 /**
@@ -27,26 +27,26 @@ export const SimulationType = { // 导出常量 SimulationType
  */
 export const DEFAULT_MC_CONFIG = { // 导出常量 DEFAULT_MC_CONFIG
   // 模拟次数
-  numSimulations: 1000, // 设置 numSimulations 字段
+  numSimulations: 1000, // 模拟次数
 
   // 模拟类型
-  type: SimulationType.TRADE_RESAMPLING, // 设置 type 字段
+  type: SimulationType.TRADE_RESAMPLING, // 类型模拟类型
 
   // 是否使用有放回抽样
-  withReplacement: true, // 设置 withReplacement 字段
+  withReplacement: true, // 是否使用有放回抽样
 
   // 置信区间
-  confidenceLevels: [0.95, 0.99], // 设置 confidenceLevels 字段
+  confidenceLevels: [0.95, 0.99], // confidenceLevels
 
   // 风险指标计算
-  calculateVaR: true, // 设置 calculateVaR 字段
-  calculateCVaR: true, // 设置 calculateCVaR 字段
+  calculateVaR: true, // calculateVaR
+  calculateCVaR: true, // calculateCVaR
 
   // 初始资金
-  initialCapital: 10000, // 设置 initialCapital 字段
+  initialCapital: 10000, // 初始资金
 
   // 进度回调间隔
-  progressInterval: 100, // 设置 progressInterval 字段
+  progressInterval: 100, // progress间隔
 }; // 结束代码块
 
 /**
@@ -127,14 +127,14 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
     // 构建最终结果
     const finalResult = { // 定义常量 finalResult
-      type: this.config.type, // 设置 type 字段
-      numSimulations: this.config.numSimulations, // 设置 numSimulations 字段
+      type: this.config.type, // 类型
+      numSimulations: this.config.numSimulations, // numSimulations
       duration, // 执行语句
-      statistics: this.statistics, // 设置 statistics 字段
-      distribution: this._getDistribution(), // 设置 distribution 字段
-      riskMetrics: this._calculateRiskMetrics(), // 设置 riskMetrics 字段
-      confidenceIntervals: this._calculateConfidenceIntervals(), // 设置 confidenceIntervals 字段
-      recommendations: this._generateRecommendations(), // 设置 recommendations 字段
+      statistics: this.statistics, // statistics
+      distribution: this._getDistribution(), // distribution
+      riskMetrics: this._calculateRiskMetrics(), // 风险指标
+      confidenceIntervals: this._calculateConfidenceIntervals(), // confidenceIntervals
+      recommendations: this._generateRecommendations(), // recommendations
     }; // 结束代码块
 
     this.emit('complete', finalResult); // 调用 emit
@@ -165,9 +165,9 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
       // 进度回调
       if ((i + 1) % this.config.progressInterval === 0) { // 条件判断 (i + 1) % this.config.progressInterval === 0
         this.emit('progress', { // 调用 emit
-          current: i + 1, // 设置 current 字段
-          total: this.config.numSimulations, // 设置 total 字段
-          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 设置 percent 字段
+          current: i + 1, // current
+          total: this.config.numSimulations, // 总
+          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 百分比
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -191,9 +191,9 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
       if ((i + 1) % this.config.progressInterval === 0) { // 条件判断 (i + 1) % this.config.progressInterval === 0
         this.emit('progress', { // 调用 emit
-          current: i + 1, // 设置 current 字段
-          total: this.config.numSimulations, // 设置 total 字段
-          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 设置 percent 字段
+          current: i + 1, // current
+          total: this.config.numSimulations, // 总
+          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 百分比
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -219,9 +219,9 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
       if ((i + 1) % this.config.progressInterval === 0) { // 条件判断 (i + 1) % this.config.progressInterval === 0
         this.emit('progress', { // 调用 emit
-          current: i + 1, // 设置 current 字段
-          total: this.config.numSimulations, // 设置 total 字段
-          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 设置 percent 字段
+          current: i + 1, // current
+          total: this.config.numSimulations, // 总
+          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 百分比
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -244,9 +244,9 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
       if ((i + 1) % this.config.progressInterval === 0) { // 条件判断 (i + 1) % this.config.progressInterval === 0
         this.emit('progress', { // 调用 emit
-          current: i + 1, // 设置 current 字段
-          total: this.config.numSimulations, // 设置 total 字段
-          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 设置 percent 字段
+          current: i + 1, // current
+          total: this.config.numSimulations, // 总
+          percent: ((i + 1) / this.config.numSimulations * 100).toFixed(2), // 百分比
         }); // 结束代码块
       } // 结束代码块
     } // 结束代码块
@@ -350,13 +350,13 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
     const winRate = trades.length > 0 ? (winCount / trades.length) * 100 : 0; // 定义常量 winRate
 
     return { // 返回结果
-      finalCapital: capital, // 设置 finalCapital 字段
+      finalCapital: capital, // final资金
       totalReturn, // 执行语句
       totalPnL, // 执行语句
       maxDrawdown, // 执行语句
       maxDrawdownPercent, // 执行语句
       winRate, // 执行语句
-      numTrades: trades.length, // 设置 numTrades 字段
+      numTrades: trades.length, // num成交
       equityCurve, // 执行语句
     }; // 结束代码块
   } // 结束代码块
@@ -398,7 +398,7 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
     const sharpeRatio = stdDev > 0 ? (avgReturn * 252) / (stdDev * Math.sqrt(252)) : 0; // 定义常量 sharpeRatio
 
     return { // 返回结果
-      finalCapital: capital, // 设置 finalCapital 字段
+      finalCapital: capital, // final资金
       totalReturn, // 执行语句
       maxDrawdown, // 执行语句
       maxDrawdownPercent, // 执行语句
@@ -421,49 +421,49 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
     return { // 返回结果
       // 收益统计
-      return: { // 返回结果
-        mean: this._mean(returns), // 设置 mean 字段
-        std: this._std(returns), // 设置 std 字段
-        min: Math.min(...returns), // 设置 min 字段
-        max: Math.max(...returns), // 设置 max 字段
-        median: this._median(returns), // 设置 median 字段
-        skewness: this._skewness(returns), // 设置 skewness 字段
-        kurtosis: this._kurtosis(returns), // 设置 kurtosis 字段
+      return: { // 收益统计
+        mean: this._mean(returns), // mean
+        std: this._std(returns), // 标准
+        min: Math.min(...returns), // 最小
+        max: Math.max(...returns), // 最大
+        median: this._median(returns), // median
+        skewness: this._skewness(returns), // skewness
+        kurtosis: this._kurtosis(returns), // kurtosis
       }, // 结束代码块
 
       // 最大回撤统计
-      maxDrawdown: { // 设置 maxDrawdown 字段
-        mean: this._mean(drawdowns), // 设置 mean 字段
-        std: this._std(drawdowns), // 设置 std 字段
-        min: Math.min(...drawdowns), // 设置 min 字段
-        max: Math.max(...drawdowns), // 设置 max 字段
-        median: this._median(drawdowns), // 设置 median 字段
+      maxDrawdown: { // 最大回撤
+        mean: this._mean(drawdowns), // mean
+        std: this._std(drawdowns), // 标准
+        min: Math.min(...drawdowns), // 最小
+        max: Math.max(...drawdowns), // 最大
+        median: this._median(drawdowns), // median
       }, // 结束代码块
 
       // 最终资金统计
-      finalCapital: { // 设置 finalCapital 字段
-        mean: this._mean(finalCapitals), // 设置 mean 字段
-        std: this._std(finalCapitals), // 设置 std 字段
-        min: Math.min(...finalCapitals), // 设置 min 字段
-        max: Math.max(...finalCapitals), // 设置 max 字段
-        median: this._median(finalCapitals), // 设置 median 字段
+      finalCapital: { // final资金
+        mean: this._mean(finalCapitals), // mean
+        std: this._std(finalCapitals), // 标准
+        min: Math.min(...finalCapitals), // 最小
+        max: Math.max(...finalCapitals), // 最大
+        median: this._median(finalCapitals), // median
       }, // 结束代码块
 
       // 盈利概率
-      profitProbability: returns.filter(r => r > 0).length / returns.length, // 设置 profitProbability 字段
+      profitProbability: returns.filter(r => r > 0).length / returns.length, // 盈利Probability
 
       // 亏损概率
-      lossProbability: returns.filter(r => r < 0).length / returns.length, // 设置 lossProbability 字段
+      lossProbability: returns.filter(r => r < 0).length / returns.length, // 亏损Probability
 
       // 超过特定收益的概率
-      probabilityAbove: { // 设置 probabilityAbove 字段
+      probabilityAbove: { // 超过特定收益的概率
         '10%': returns.filter(r => r > 10).length / returns.length, // 定义箭头函数
         '20%': returns.filter(r => r > 20).length / returns.length, // 定义箭头函数
         '50%': returns.filter(r => r > 50).length / returns.length, // 定义箭头函数
       }, // 结束代码块
 
       // 亏损超过特定比例的概率
-      probabilityLossAbove: { // 设置 probabilityLossAbove 字段
+      probabilityLossAbove: { // 亏损超过特定比例的概率
         '10%': returns.filter(r => r < -10).length / returns.length, // 定义箭头函数
         '20%': returns.filter(r => r < -20).length / returns.length, // 定义箭头函数
         '50%': returns.filter(r => r < -50).length / returns.length, // 定义箭头函数
@@ -505,8 +505,8 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
     // 最大预期回撤
     metrics.expectedMaxDrawdown = { // 赋值 metrics.expectedMaxDrawdown
-      mean: this._mean(drawdowns), // 设置 mean 字段
-      worst: drawdowns[drawdowns.length - 1], // 设置 worst 字段
+      mean: this._mean(drawdowns), // mean
+      worst: drawdowns[drawdowns.length - 1], // worst
     }; // 结束代码块
 
     for (const level of this.config.confidenceLevels) { // 循环 const level of this.config.confidenceLevels
@@ -535,9 +535,9 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
       const upperIdx = Math.floor(returns.length * (1 - alpha)); // 定义常量 upperIdx
 
       intervals[`${level * 100}%`] = { // 执行语句
-        lower: returns[lowerIdx], // 设置 lower 字段
-        upper: returns[upperIdx], // 设置 upper 字段
-        range: returns[upperIdx] - returns[lowerIdx], // 设置 range 字段
+        lower: returns[lowerIdx], // 下限
+        upper: returns[upperIdx], // 上限
+        range: returns[upperIdx] - returns[lowerIdx], // range
       }; // 结束代码块
     } // 结束代码块
 
@@ -568,10 +568,10 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
     const bins = []; // 定义常量 bins
     for (let i = 0; i < binCount; i++) { // 循环 let i = 0; i < binCount; i++
       bins.push({ // 调用 bins.push
-        binStart: min + i * binWidth, // 设置 binStart 字段
-        binEnd: min + (i + 1) * binWidth, // 设置 binEnd 字段
-        count: histogram[i], // 设置 count 字段
-        frequency: histogram[i] / returns.length, // 设置 frequency 字段
+        binStart: min + i * binWidth, // bin启动
+        binEnd: min + (i + 1) * binWidth, // binEnd
+        count: histogram[i], // 数量
+        frequency: histogram[i] / returns.length, // frequency
       }); // 结束代码块
     } // 结束代码块
 
@@ -580,7 +580,7 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
       min, // 执行语句
       max, // 执行语句
       binWidth, // 执行语句
-      totalCount: returns.length, // 设置 totalCount 字段
+      totalCount: returns.length, // 总数量
     }; // 结束代码块
   } // 结束代码块
 
@@ -594,8 +594,8 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
 
     if (!this.statistics) { // 条件判断 !this.statistics
       recommendations.push({ // 调用 recommendations.push
-        level: 'error', // 设置 level 字段
-        message: '没有有效的模拟结果 / No valid simulation results', // 设置 message 字段
+        level: 'error', // 级别
+        message: '没有有效的模拟结果 / No valid simulation results', // 消息
       }); // 结束代码块
       return recommendations; // 返回结果
     } // 结束代码块
@@ -605,42 +605,42 @@ export class MonteCarloSimulation extends EventEmitter { // 导出类 MonteCarlo
     // 检查盈利概率
     if (stats.profitProbability < 0.5) { // 条件判断 stats.profitProbability < 0.5
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: `盈利概率较低 (${(stats.profitProbability * 100).toFixed(1)}%)，策略风险较高 / Low profit probability`, // 设置 message 字段
+        level: 'warning', // 级别
+        message: `盈利概率较低 (${(stats.profitProbability * 100).toFixed(1)}%)，策略风险较高 / Low profit probability`, // 消息
       }); // 结束代码块
     } else if (stats.profitProbability > 0.7) { // 执行语句
       recommendations.push({ // 调用 recommendations.push
-        level: 'success', // 设置 level 字段
-        message: `盈利概率较高 (${(stats.profitProbability * 100).toFixed(1)}%)，策略相对稳定 / High profit probability`, // 设置 message 字段
+        level: 'success', // 级别
+        message: `盈利概率较高 (${(stats.profitProbability * 100).toFixed(1)}%)，策略相对稳定 / High profit probability`, // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查收益分布偏度
     if (stats.return.skewness < -0.5) { // 条件判断 stats.return.skewness < -0.5
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: '收益分布左偏，存在较大亏损风险 / Left-skewed return distribution', // 设置 message 字段
+        level: 'warning', // 级别
+        message: '收益分布左偏，存在较大亏损风险 / Left-skewed return distribution', // 消息
       }); // 结束代码块
     } else if (stats.return.skewness > 0.5) { // 执行语句
       recommendations.push({ // 调用 recommendations.push
-        level: 'info', // 设置 level 字段
-        message: '收益分布右偏，有较大盈利潜力 / Right-skewed return distribution', // 设置 message 字段
+        level: 'info', // 级别
+        message: '收益分布右偏，有较大盈利潜力 / Right-skewed return distribution', // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查尾部风险
     if (stats.probabilityLossAbove['20%'] > 0.1) { // 条件判断 stats.probabilityLossAbove['20%'] > 0.1
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: `超过 ${(stats.probabilityLossAbove['20%'] * 100).toFixed(1)}% 的情况亏损超过 20%，建议加强风控 / High tail risk`, // 设置 message 字段
+        level: 'warning', // 级别
+        message: `超过 ${(stats.probabilityLossAbove['20%'] * 100).toFixed(1)}% 的情况亏损超过 20%，建议加强风控 / High tail risk`, // 消息
       }); // 结束代码块
     } // 结束代码块
 
     // 检查回撤
     if (stats.maxDrawdown.mean > 20) { // 条件判断 stats.maxDrawdown.mean > 20
       recommendations.push({ // 调用 recommendations.push
-        level: 'warning', // 设置 level 字段
-        message: `平均最大回撤 ${stats.maxDrawdown.mean.toFixed(1)}% 较高，建议优化仓位管理 / High average max drawdown`, // 设置 message 字段
+        level: 'warning', // 级别
+        message: `平均最大回撤 ${stats.maxDrawdown.mean.toFixed(1)}% 较高，建议优化仓位管理 / High average max drawdown`, // 消息
       }); // 结束代码块
     } // 结束代码块
 

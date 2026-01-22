@@ -29,13 +29,13 @@ const ARCHIVABLE_STATUSES = [ // 定义常量 ARCHIVABLE_STATUSES
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 批量大小 / Batch size
-  batchSize: 100, // 设置 batchSize 字段
+  batchSize: 100, // 批次大小
   // 归档阈值 (秒) - 订单完成后多久可以归档 / Archive threshold (seconds)
-  archiveAfterSeconds: 3600, // 1 hour
+  archiveAfterSeconds: 3600, // 归档阈值 (秒) - 订单完成后多久可以归档
   // 是否在归档后删除 Redis 中的数据 / Whether to delete from Redis after archiving
-  deleteAfterArchive: true, // 设置 deleteAfterArchive 字段
+  deleteAfterArchive: true, // 是否在归档后删除 Redis 中的数据
   // 保留天数 (在删除前保留多少天) / Days to keep before deletion
-  retentionDays: 7, // 设置 retentionDays 字段
+  retentionDays: 7, // 保留天数 (在删除前保留多少天)
 }; // 结束代码块
 
 /**
@@ -52,10 +52,10 @@ class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承Even
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      totalArchived: 0, // 设置 totalArchived 字段
-      totalDeleted: 0, // 设置 totalDeleted 字段
-      lastArchiveTime: null, // 设置 lastArchiveTime 字段
-      errors: 0, // 设置 errors 字段
+      totalArchived: 0, // 总Archived
+      totalDeleted: 0, // 总Deleted
+      lastArchiveTime: null, // last归档时间
+      errors: 0, // 错误列表
     }; // 结束代码块
   } // 结束代码块
 
@@ -68,9 +68,9 @@ class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承Even
   async archive() { // 执行语句
     const startTime = Date.now(); // 定义常量 startTime
     const result = { // 定义常量 result
-      archived: 0, // 设置 archived 字段
-      deleted: 0, // 设置 deleted 字段
-      errors: [], // 设置 errors 字段
+      archived: 0, // archived
+      deleted: 0, // deleted
+      errors: [], // 错误列表
     }; // 结束代码块
 
     try { // 尝试执行
@@ -101,9 +101,9 @@ class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承Even
 
         } catch (error) { // 执行语句
           result.errors.push({ // 调用 result.errors.push
-            batch: i / this.config.batchSize, // 设置 batch 字段
-            error: error.message, // 设置 error 字段
-            orderIds: batch.map(o => o.orderId), // 设置 orderIds 字段
+            batch: i / this.config.batchSize, // 批次
+            error: error.message, // 错误
+            orderIds: batch.map(o => o.orderId), // 订单ID列表
           }); // 结束代码块
           this.stats.errors++; // 访问 stats
         } // 结束代码块
@@ -174,27 +174,27 @@ class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承Even
    */
   _transformOrder(order) { // 调用 _transformOrder
     return { // 返回结果
-      order_id: order.orderId || '', // 设置 order_id 字段
-      client_order_id: order.clientOrderId || '', // 设置 client_order_id 字段
-      symbol: order.symbol || '', // 设置 symbol 字段
-      side: order.side || 'buy', // 设置 side 字段
-      type: order.type || 'market', // 设置 type 字段
-      status: order.status || 'filled', // 设置 status 字段
-      amount: order.amount || 0, // 设置 amount 字段
-      filled: order.filled || 0, // 设置 filled 字段
-      remaining: order.remaining || 0, // 设置 remaining 字段
-      price: order.price || 0, // 设置 price 字段
-      average_price: order.averagePrice || 0, // 设置 average_price 字段
-      stop_price: order.stopPrice || 0, // 设置 stop_price 字段
-      cost: order.cost || 0, // 设置 cost 字段
-      fee: order.fee || 0, // 设置 fee 字段
-      exchange: order.exchange || '', // 设置 exchange 字段
-      strategy: order.strategy || '', // 设置 strategy 字段
-      created_at: this._toDateTime(order.createdAt), // 设置 created_at 字段
-      updated_at: this._toDateTime(order.updatedAt), // 设置 updated_at 字段
-      closed_at: this._toDateTime(order.closedAt), // 设置 closed_at 字段
-      error_message: order.errorMessage || '', // 设置 error_message 字段
-      metadata: order.metadata ? JSON.stringify(order.metadata) : '', // 设置 metadata 字段
+      order_id: order.orderId || '', // 订单ID
+      client_order_id: order.clientOrderId || '', // client订单ID
+      symbol: order.symbol || '', // 交易对
+      side: order.side || 'buy', // 方向
+      type: order.type || 'market', // 类型
+      status: order.status || 'filled', // 状态
+      amount: order.amount || 0, // 数量
+      filled: order.filled || 0, // filled
+      remaining: order.remaining || 0, // remaining
+      price: order.price || 0, // 价格
+      average_price: order.averagePrice || 0, // 平均价格
+      stop_price: order.stopPrice || 0, // 停止价格
+      cost: order.cost || 0, // cost
+      fee: order.fee || 0, // 手续费
+      exchange: order.exchange || '', // 交易所
+      strategy: order.strategy || '', // 策略
+      created_at: this._toDateTime(order.createdAt), // createdat
+      updated_at: this._toDateTime(order.updatedAt), // updatedat
+      closed_at: this._toDateTime(order.closedAt), // closedat
+      error_message: order.errorMessage || '', // 错误消息
+      metadata: order.metadata ? JSON.stringify(order.metadata) : '', // 元数据
     }; // 结束代码块
   } // 结束代码块
 
@@ -242,10 +242,10 @@ class OrderArchiver extends EventEmitter { // 定义类 OrderArchiver(继承Even
    */
   resetStats() { // 调用 resetStats
     this.stats = { // 设置 stats
-      totalArchived: 0, // 设置 totalArchived 字段
-      totalDeleted: 0, // 设置 totalDeleted 字段
-      lastArchiveTime: null, // 设置 lastArchiveTime 字段
-      errors: 0, // 设置 errors 字段
+      totalArchived: 0, // 总Archived
+      totalDeleted: 0, // 总Deleted
+      lastArchiveTime: null, // last归档时间
+      errors: 0, // 错误列表
     }; // 结束代码块
   } // 结束代码块
 } // 结束代码块

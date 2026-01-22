@@ -36,14 +36,14 @@ import { // 导入依赖
  */
 const REDIS_KEYS = { // 定义常量 REDIS_KEYS
   // 通知请求频道 / Notification request channel
-  NOTIFICATION_REQUEST: 'notification:request', // 设置 NOTIFICATION_REQUEST 字段
+  NOTIFICATION_REQUEST: 'notification:request', // NOTIFICATIONREQUEST权限
 
   // 服务状态 / Service status
-  SERVICE_STATUS: 'notification:service:status', // 设置 SERVICE_STATUS 字段
-  SERVICE_HEARTBEAT: 'notification:service:heartbeat', // 设置 SERVICE_HEARTBEAT 字段
+  SERVICE_STATUS: 'notification:service:status', // SERVICE状态权限
+  SERVICE_HEARTBEAT: 'notification:service:heartbeat', // SERVICEHEARTBEAT权限
 
   // 消息统计 / Message statistics
-  MESSAGE_STATS: 'notification:stats', // 设置 MESSAGE_STATS 字段
+  MESSAGE_STATS: 'notification:stats', // 消息STATS权限
 }; // 结束代码块
 
 /**
@@ -51,12 +51,12 @@ const REDIS_KEYS = { // 定义常量 REDIS_KEYS
  * Message types
  */
 const MESSAGE_TYPE = { // 定义常量 MESSAGE_TYPE
-  ALERT: 'alert', // 设置 ALERT 字段
-  TRADE: 'trade', // 设置 TRADE 字段
-  POSITION: 'position', // 设置 POSITION 字段
-  DAILY_REPORT: 'daily', // 设置 DAILY_REPORT 字段
-  SYSTEM: 'system', // 设置 SYSTEM 字段
-  PERFORMANCE: 'performance', // 设置 PERFORMANCE 字段
+  ALERT: 'alert', // 告警
+  TRADE: 'trade', // 交易
+  POSITION: 'position', // 持仓
+  DAILY_REPORT: 'daily', // 每日REPORT
+  SYSTEM: 'system', // 系统
+  PERFORMANCE: 'performance', // PERFORMANCE
 }; // 结束代码块
 
 /**
@@ -64,11 +64,11 @@ const MESSAGE_TYPE = { // 定义常量 MESSAGE_TYPE
  * Message priority
  */
 const MESSAGE_PRIORITY = { // 定义常量 MESSAGE_PRIORITY
-  LOW: 0, // 设置 LOW 字段
-  NORMAL: 1, // 设置 NORMAL 字段
-  HIGH: 2, // 设置 HIGH 字段
-  URGENT: 3, // 设置 URGENT 字段
-  CRITICAL: 4, // 设置 CRITICAL 字段
+  LOW: 0, // 最低
+  NORMAL: 1, // NORMAL
+  HIGH: 2, // 最高
+  URGENT: 3, // URGENT
+  CRITICAL: 4, // CRITICAL
 }; // 结束代码块
 
 /**
@@ -77,32 +77,32 @@ const MESSAGE_PRIORITY = { // 定义常量 MESSAGE_PRIORITY
  */
 const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // Redis 配置 / Redis configuration
-  redis: { // 设置 redis 字段
-    host: process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-    password: process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-    db: parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+  redis: { // Redis 配置
+    host: process.env.REDIS_HOST || 'localhost', // 主机
+    port: parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+    password: process.env.REDIS_PASSWORD || null, // 密码
+    db: parseInt(process.env.REDIS_DB || '0', 10), // db
   }, // 结束代码块
 
   // Telegram 配置 / Telegram configuration
-  telegram: { // 设置 telegram 字段
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '', // 读取环境变量 TELEGRAM_BOT_TOKEN
-    chatId: process.env.TELEGRAM_CHAT_ID || '', // 读取环境变量 TELEGRAM_CHAT_ID
-    enabled: process.env.TELEGRAM_ENABLED !== 'false', // 读取环境变量 TELEGRAM_ENABLED
+  telegram: { // Telegram 配置
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '', // 机器人令牌
+    chatId: process.env.TELEGRAM_CHAT_ID || '', // 聊天ID
+    enabled: process.env.TELEGRAM_ENABLED !== 'false', // 启用
   }, // 结束代码块
 
   // 限流配置 / Rate limit configuration
-  rateLimit: { // 设置 rateLimit 字段
-    maxMessagesPerSecond: 1, // 设置 maxMessagesPerSecond 字段
-    maxMessagesPerMinute: 20, // 设置 maxMessagesPerMinute 字段
-    maxQueueLength: 100, // 设置 maxQueueLength 字段
+  rateLimit: { // 频率限制
+    maxMessagesPerSecond: 1, // 最大Messages每秒
+    maxMessagesPerMinute: 20, // 最大Messages每分钟
+    maxQueueLength: 100, // 最大队列Length
   }, // 结束代码块
 
   // 心跳间隔 / Heartbeat interval
-  heartbeatInterval: 5000, // 设置 heartbeatInterval 字段
+  heartbeatInterval: 5000, // heartbeat间隔
 
   // 消息聚合间隔 (毫秒) / Message aggregation interval (ms)
-  aggregationInterval: 2000, // 设置 aggregationInterval 字段
+  aggregationInterval: 2000, // 消息聚合间隔 (毫秒)
 }; // 结束代码块
 
 /**
@@ -121,11 +121,11 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
 
     // 合并配置 / Merge configuration
     this.config = { // 设置 config
-      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // 设置 redis 字段
-      telegram: { ...DEFAULT_CONFIG.telegram, ...config.telegram }, // 设置 telegram 字段
-      rateLimit: { ...DEFAULT_CONFIG.rateLimit, ...config.rateLimit }, // 设置 rateLimit 字段
-      heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // 设置 heartbeatInterval 字段
-      aggregationInterval: config.aggregationInterval || DEFAULT_CONFIG.aggregationInterval, // 设置 aggregationInterval 字段
+      redis: { ...DEFAULT_CONFIG.redis, ...config.redis }, // redis
+      telegram: { ...DEFAULT_CONFIG.telegram, ...config.telegram }, // Telegram
+      rateLimit: { ...DEFAULT_CONFIG.rateLimit, ...config.rateLimit }, // 频率限制
+      heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // heartbeat间隔
+      aggregationInterval: config.aggregationInterval || DEFAULT_CONFIG.aggregationInterval, // aggregation间隔
     }; // 结束代码块
 
     // Redis 客户端 / Redis clients
@@ -140,10 +140,10 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
 
     // 限流计数器 / Rate limit counters
     this.rateLimitCounters = { // 设置 rateLimitCounters
-      second: 0, // 设置 second 字段
-      minute: 0, // 设置 minute 字段
-      lastSecond: Date.now(), // 设置 lastSecond 字段
-      lastMinute: Date.now(), // 设置 lastMinute 字段
+      second: 0, // 秒
+      minute: 0, // 分钟
+      lastSecond: Date.now(), // last秒
+      lastMinute: Date.now(), // last分钟
     }; // 结束代码块
 
     // 定时器 / Timers
@@ -155,12 +155,12 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
 
     // 统计信息 / Statistics
     this.stats = { // 设置 stats
-      startTime: null, // 设置 startTime 字段
-      messagesSent: 0, // 设置 messagesSent 字段
-      messagesDropped: 0, // 设置 messagesDropped 字段
-      errors: 0, // 设置 errors 字段
-      byType: {}, // 设置 byType 字段
-      bySource: {}, // 设置 bySource 字段
+      startTime: null, // 启动时间
+      messagesSent: 0, // messagesSent
+      messagesDropped: 0, // messagesDropped
+      errors: 0, // 错误列表
+      byType: {}, // by类型
+      bySource: {}, // by来源
     }; // 结束代码块
 
     // 日志前缀 / Log prefix
@@ -274,11 +274,11 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
    */
   getStatus() { // 调用 getStatus
     return { // 返回结果
-      running: this.running, // 设置 running 字段
-      uptime: this.stats.startTime ? Date.now() - this.stats.startTime : 0, // 设置 uptime 字段
-      stats: this.stats, // 设置 stats 字段
-      queueLength: this.messageQueue.length, // 设置 queueLength 字段
-      telegramEnabled: this.config.telegram.enabled, // 设置 telegramEnabled 字段
+      running: this.running, // running
+      uptime: this.stats.startTime ? Date.now() - this.stats.startTime : 0, // uptime
+      stats: this.stats, // stats
+      queueLength: this.messageQueue.length, // 队列Length
+      telegramEnabled: this.config.telegram.enabled, // Telegram启用
     }; // 结束代码块
   } // 结束代码块
 
@@ -296,11 +296,11 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
     console.log(`${this.logPrefix} 正在连接 Redis... / Connecting to Redis...`); // 控制台输出
 
     const redisConfig = { // 定义常量 redisConfig
-      host: this.config.redis.host, // 设置 host 字段
-      port: this.config.redis.port, // 设置 port 字段
-      password: this.config.redis.password, // 设置 password 字段
-      db: this.config.redis.db, // 设置 db 字段
-      retryStrategy: (times) => Math.min(times * 100, 3000), // 设置 retryStrategy 字段
+      host: this.config.redis.host, // 主机
+      port: this.config.redis.port, // 端口
+      password: this.config.redis.password, // 密码
+      db: this.config.redis.db, // db
+      retryStrategy: (times) => Math.min(times * 100, 3000), // 重试策略
     }; // 结束代码块
 
     // 主连接 / Main connection
@@ -428,9 +428,9 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
 
     // 添加到队列 / Add to queue
     this.messageQueue.push({ // 访问 messageQueue
-      message: formattedMessage, // 设置 message 字段
+      message: formattedMessage, // 消息
       priority, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
       source, // 执行语句
     }); // 结束代码块
 
@@ -469,7 +469,7 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
       case MESSAGE_TYPE.PERFORMANCE: // 分支 MESSAGE_TYPE.PERFORMANCE
         prefix = '📈'; // 赋值 prefix
         break; // 跳出循环或分支
-      default: // 默认分支
+      default: // 默认
         prefix = '📢'; // 赋值 prefix
     } // 结束代码块
 
@@ -556,8 +556,8 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
     } // 结束代码块
 
     await this.telegramBot.sendMessage(chatId, message, { // 等待异步结果
-      parse_mode: 'HTML', // 设置 parse_mode 字段
-      disable_web_page_preview: true, // 设置 disable_web_page_preview 字段
+      parse_mode: 'HTML', // parse模式
+      disable_web_page_preview: true, // 禁用webpagepreview
     }); // 结束代码块
   } // 结束代码块
 
@@ -589,11 +589,11 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
         await this.redis.set( // 等待异步结果
           REDIS_KEYS.SERVICE_HEARTBEAT, // 执行语句
           JSON.stringify({ // 调用 JSON.stringify
-            timestamp: Date.now(), // 设置 timestamp 字段
-            status: 'alive', // 设置 status 字段
-            uptime: status.uptime, // 设置 uptime 字段
-            stats: status.stats, // 设置 stats 字段
-            queueLength: status.queueLength, // 设置 queueLength 字段
+            timestamp: Date.now(), // 时间戳
+            status: 'alive', // 状态
+            uptime: status.uptime, // uptime
+            stats: status.stats, // stats
+            queueLength: status.queueLength, // 队列Length
           }), // 结束代码块
           'EX', // 执行语句
           30 // 执行语句
@@ -617,8 +617,8 @@ export class NotificationService extends EventEmitter { // 导出类 Notificatio
         REDIS_KEYS.SERVICE_STATUS, // 执行语句
         JSON.stringify({ // 调用 JSON.stringify
           status, // 执行语句
-          timestamp: Date.now(), // 设置 timestamp 字段
-          pid: process.pid, // 设置 pid 字段
+          timestamp: Date.now(), // 时间戳
+          pid: process.pid, // pid
         }), // 结束代码块
         'EX', // 执行语句
         60 // 执行语句

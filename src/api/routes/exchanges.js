@@ -42,8 +42,8 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
       // 脱敏处理
       const safeExchanges = exchanges.map(ex => ({ // 定义函数 safeExchanges
         ...ex, // 展开对象或数组
-        apiKey: ex.apiKey ? ex.apiKey.slice(0, 8) + '******' : null, // 设置 apiKey 字段
-        secret: ex.secret ? '******' : null, // 设置 secret 字段
+        apiKey: ex.apiKey ? ex.apiKey.slice(0, 8) + '******' : null, // API密钥
+        secret: ex.secret ? '******' : null, // 密钥
       })); // 结束代码块
 
       res.json({ success: true, data: safeExchanges }); // 调用 res.json
@@ -67,17 +67,17 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
 
       if (!exchange) { // 条件判断 !exchange
         return res.status(404).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Exchange not found', // 设置 error 字段
-          code: 'NOT_FOUND' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Exchange not found', // 错误
+          code: 'NOT_FOUND' // 代码
         }); // 结束代码块
       } // 结束代码块
 
       // 脱敏处理
       const safeExchange = { // 定义常量 safeExchange
         ...exchange, // 展开对象或数组
-        apiKey: exchange.apiKey ? exchange.apiKey.slice(0, 8) + '******' : null, // 设置 apiKey 字段
-        secret: '******', // 设置 secret 字段
+        apiKey: exchange.apiKey ? exchange.apiKey.slice(0, 8) + '******' : null, // API密钥
+        secret: '******', // 密钥
       }; // 结束代码块
 
       res.json({ success: true, data: safeExchange }); // 调用 res.json
@@ -98,9 +98,9 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
       // 验证权限
       if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
         return res.status(403).json({ // 返回结果
-          success: false, // 设置 success 字段
-          error: 'Admin permission required', // 设置 error 字段
-          code: 'FORBIDDEN' // 设置 code 字段
+          success: false, // 成功标记
+          error: 'Admin permission required', // 错误
+          code: 'FORBIDDEN' // 代码
         }); // 结束代码块
       } // 结束代码块
 
@@ -134,9 +134,9 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
       } else { // 执行语句
         // 模拟测试结果
         result = { // 赋值 result
-          success: true, // 设置 success 字段
-          latency: Math.floor(Math.random() * 200) + 50, // 设置 latency 字段
-          serverTime: new Date().toISOString(), // 设置 serverTime 字段
+          success: true, // 成功标记
+          latency: Math.floor(Math.random() * 200) + 50, // latency
+          serverTime: new Date().toISOString(), // server时间
         }; // 结束代码块
       } // 结束代码块
 
@@ -161,9 +161,9 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
       } else { // 执行语句
         // 模拟余额
         balance = { // 赋值 balance
-          total: { USDT: 10000, BTC: 0.5, ETH: 5 }, // 设置 total 字段
-          free: { USDT: 8000, BTC: 0.3, ETH: 3 }, // 设置 free 字段
-          used: { USDT: 2000, BTC: 0.2, ETH: 2 }, // 设置 used 字段
+          total: { USDT: 10000, BTC: 0.5, ETH: 5 }, // 总
+          free: { USDT: 8000, BTC: 0.3, ETH: 3 }, // free
+          used: { USDT: 2000, BTC: 0.2, ETH: 2 }, // used
         }; // 结束代码块
       } // 结束代码块
 
@@ -224,14 +224,14 @@ export function createExchangeRoutes(deps = {}) { // 导出函数 createExchange
         // 模拟行情
         ticker = { // 赋值 ticker
           symbol, // 执行语句
-          last: 40000 + Math.random() * 1000, // 设置 last 字段
-          bid: 39990, // 设置 bid 字段
-          ask: 40010, // 设置 ask 字段
-          high: 41000, // 设置 high 字段
-          low: 39000, // 设置 low 字段
-          volume: 1000000, // 设置 volume 字段
-          change: 2.5, // 设置 change 字段
-          timestamp: Date.now(), // 设置 timestamp 字段
+          last: 40000 + Math.random() * 1000, // last
+          bid: 39990, // bid
+          ask: 40010, // ask
+          high: 41000, // 最高
+          low: 39000, // 最低
+          volume: 1000000, // 成交量
+          change: 2.5, // 修改
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
       } // 结束代码块
 

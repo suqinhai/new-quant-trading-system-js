@@ -81,7 +81,7 @@ const __dirname = path.dirname(__filename); // 定义常量 __dirname
  * Running mode enum
  */
 const RUN_MODE = { // 定义常量 RUN_MODE
-  BACKTEST: 'backtest',   // 回测模式 / Backtest mode
+  BACKTEST: 'backtest',   // 回测权限
   SHADOW: 'shadow',       // 影子模式 / Shadow mode
   LIVE: 'live',           // 实盘模式 / Live mode
 }; // 结束代码块
@@ -91,10 +91,10 @@ const RUN_MODE = { // 定义常量 RUN_MODE
  * System status enum
  */
 const SYSTEM_STATUS = { // 定义常量 SYSTEM_STATUS
-  STOPPED: 'stopped',     // 已停止 / Stopped
-  STARTING: 'starting',   // 启动中 / Starting
+  STOPPED: 'stopped',     // STOPPED权限
+  STARTING: 'starting',   // STARTING权限
   RUNNING: 'running',     // 运行中 / Running
-  STOPPING: 'stopping',   // 停止中 / Stopping
+  STOPPING: 'stopping',   // STOPPING权限
   ERROR: 'error',         // 错误 / Error
 }; // 结束代码块
 
@@ -226,7 +226,7 @@ function parseArgs() { // 定义函数 parseArgs
         break; // 跳出循环或分支
 
       // 未知选项 / Unknown option
-      default: // 默认分支
+      default: // 默认
         // 如果以 -- 开头，警告未知选项 / If starts with --, warn unknown option
         if (arg.startsWith('-')) { // 条件判断 arg.startsWith('-')
           console.warn(`警告: 未知选项 ${arg} / Warning: Unknown option ${arg}`); // 控制台输出
@@ -398,17 +398,17 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 行情更新计数 / Market data update counts
     this._marketDataStats = { // 设置 _marketDataStats
-      tickerCount: 0, // 设置 tickerCount 字段
-      candleCount: 0, // 设置 candleCount 字段
-      orderbookCount: 0, // 设置 orderbookCount 字段
-      fundingRateCount: 0, // 设置 fundingRateCount 字段
-      tradeCount: 0, // 设置 tradeCount 字段
-      symbols: new Set(), // 设置 symbols 字段
-      exchanges: new Set(), // 设置 exchanges 字段
-      lastDataAt: null, // 设置 lastDataAt 字段
-      lastDataType: null, // 设置 lastDataType 字段
-      lastSymbol: null, // 设置 lastSymbol 字段
-      lastExchange: null, // 设置 lastExchange 字段
+      tickerCount: 0, // ticker数量
+      candleCount: 0, // candle数量
+      orderbookCount: 0, // orderbook数量
+      fundingRateCount: 0, // 资金费率频率数量
+      tradeCount: 0, // 交易数量
+      symbols: new Set(), // 交易对列表
+      exchanges: new Set(), // 交易所
+      lastDataAt: null, // last数据At
+      lastDataType: null, // last数据类型
+      lastSymbol: null, // last交易对
+      lastExchange: null, // last交易所
     }; // 结束代码块
 
     // 行情统计定时器 / Market data stats timer
@@ -481,32 +481,32 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建日志模块 / Create logger module
     this.loggerModule = createLoggerModule({ // 设置 loggerModule
       // Telegram 配置 / Telegram configuration
-      telegram: { // 设置 telegram 字段
-        botToken: process.env.TELEGRAM_BOT_TOKEN,   // Bot Token
-        chatId: process.env.TELEGRAM_CHAT_ID,       // Chat ID
+      telegram: { // Telegram 配置
+        botToken: process.env.TELEGRAM_BOT_TOKEN,   // 机器人令牌
+        chatId: process.env.TELEGRAM_CHAT_ID,       // 聊天ID
         enabled: process.env.TELEGRAM_ENABLED === 'true',  // 通过环境变量控制 / Controlled by env variable
       }, // 结束代码块
 
       // PnL 日志配置 / PnL logger configuration
-      pnlLogger: { // 设置 pnlLogger 字段
+      pnlLogger: { // PnL 日志配置
         logDir: this.config.logging?.dir || './logs',  // 日志目录 / Log directory
       }, // 结束代码块
 
       // 指标导出配置 / Metrics exporter configuration
-      metricsExporter: { // 设置 metricsExporter 字段
+      metricsExporter: { // 指标Exporter
         httpEnabled: this.mode !== RUN_MODE.BACKTEST,  // 非回测模式启用 / Enable in non-backtest mode
         httpPort: parseInt(process.env.METRICS_PORT, 10) || this.config.server?.metricsPort || 9090,  // HTTP 端口 / HTTP port
       }, // 结束代码块
 
       // 告警管理器配置 / Alert Manager configuration
-      alertManager: { // 设置 alertManager 字段
+      alertManager: { // 告警Manager
         emailEnabled: !!process.env.SMTP_HOST,  // 如果配置了SMTP则启用邮件 / Enable email if SMTP configured
         enableTelegram: process.env.TELEGRAM_ENABLED === 'true',  // Telegram 告警 / Telegram alerts
-        smtpHost: process.env.SMTP_HOST, // 读取环境变量 SMTP_HOST
-        smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587, // 读取环境变量 SMTP_PORT
-        smtpUser: process.env.SMTP_USER, // 读取环境变量 SMTP_USER
-        smtpPass: process.env.SMTP_PASS, // 读取环境变量 SMTP_PASS
-        alertEmailTo: process.env.ALERT_EMAIL_TO, // 读取环境变量 ALERT_EMAIL_TO
+        smtpHost: process.env.SMTP_HOST, // smtp主机
+        smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587, // smtp端口
+        smtpUser: process.env.SMTP_USER, // smtp用户
+        smtpPass: process.env.SMTP_PASS, // smtpPass
+        alertEmailTo: process.env.ALERT_EMAIL_TO, // 告警邮箱To
         emailLevelThreshold: 'danger',  // danger 及以上级别发邮件 / Send email for danger level and above
       }, // 结束代码块
     }); // 结束代码块
@@ -530,13 +530,13 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建回测引擎 / Create backtest engine
     this.backtestEngine = new BacktestEngine({ // 设置 backtestEngine
       // 初始资金 / Initial capital
-      initialCapital: this.options.capital || DEFAULT_OPTIONS.initialCapital, // 设置 initialCapital 字段
+      initialCapital: this.options.capital || DEFAULT_OPTIONS.initialCapital, // 初始资金
 
       // 手续费率 / Commission rate
-      commissionRate: 0.0004,  // 0.04%
+      commissionRate: 0.0004,  // 手续费频率
 
       // 滑点 / Slippage
-      slippage: 0.0001,  // 0.01%
+      slippage: 0.0001,  // 滑点
     }); // 结束代码块
 
     // 加载策略 / Load strategy
@@ -549,7 +549,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建策略实例 / Create strategy instance
     this.strategy = new StrategyClass({ // 设置 strategy
       // 交易对 / Symbols
-      symbols: this.options.symbols.length > 0 ? this.options.symbols : DEFAULT_OPTIONS.symbols, // 设置 symbols 字段
+      symbols: this.options.symbols.length > 0 ? this.options.symbols : DEFAULT_OPTIONS.symbols, // 交易对列表
     }); // 结束代码块
   } // 结束代码块
 
@@ -659,12 +659,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
           sandbox, // 执行语句
 
           // 默认类型 (合约) / Default type (futures)
-          defaultType: 'swap', // 设置 defaultType 字段
+          defaultType: 'swap', // 默认类型 (合约)
 
           // 选项 / Options
-          options: { // 设置 options 字段
+          options: { // options
             // 默认保证金模式 / Default margin mode
-            defaultMarginMode: 'cross', // 设置 defaultMarginMode 字段
+            defaultMarginMode: 'cross', // 默认保证金模式
           }, // 结束代码块
         }; // 结束代码块
 
@@ -681,8 +681,8 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         // Shared mode: lightweight connect (skip preflight and market loading)
         // Non-shared mode: full connect (with preflight and market loading)
         await exchange.connect({ // 等待异步结果
-          skipPreflight: useSharedMarketData, // 设置 skipPreflight 字段
-          loadMarkets: !useSharedMarketData, // 设置 loadMarkets 字段
+          skipPreflight: useSharedMarketData, // skipPreflight
+          loadMarkets: !useSharedMarketData, // loadMarkets
         }); // 结束代码块
 
         // 保存到映射 / Save to map
@@ -729,11 +729,11 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // 创建行情订阅器 / Create market data subscriber
       this.marketDataSubscriber = new MarketDataSubscriber({ // 设置 marketDataSubscriber
-        redis: { // 设置 redis 字段
-          host: this.config.database?.redis?.host || process.env.REDIS_HOST || 'localhost', // 读取环境变量 REDIS_HOST
-          port: this.config.database?.redis?.port || parseInt(process.env.REDIS_PORT || '6379', 10), // 读取环境变量 REDIS_PORT
-          password: this.config.database?.redis?.password || process.env.REDIS_PASSWORD || null, // 读取环境变量 REDIS_PASSWORD
-          db: this.config.database?.redis?.db || parseInt(process.env.REDIS_DB || '0', 10), // 读取环境变量 REDIS_DB
+        redis: { // redis
+          host: this.config.database?.redis?.host || process.env.REDIS_HOST || 'localhost', // 主机
+          port: this.config.database?.redis?.port || parseInt(process.env.REDIS_PORT || '6379', 10), // 端口
+          password: this.config.database?.redis?.password || process.env.REDIS_PASSWORD || null, // 密码
+          db: this.config.database?.redis?.db || parseInt(process.env.REDIS_DB || '0', 10), // db
         }, // 结束代码块
       }); // 结束代码块
 
@@ -779,27 +779,27 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // Note: MarketDataEngine constructor only accepts one config parameter
     this.marketDataEngine = new MarketDataEngine({ // 设置 marketDataEngine
       // 是否启用 WebSocket / Enable WebSocket
-      enableWebSocket: true, // 设置 enableWebSocket 字段
+      enableWebSocket: true, // 是否启用 WebSocket
 
       // 是否启用 Redis 缓存 / Enable Redis cache
-      enableRedis: !!this.config.database?.redis?.enabled, // 设置 enableRedis 字段
+      enableRedis: !!this.config.database?.redis?.enabled, // 是否启用 Redis 缓存
 
       // Redis 配置 / Redis configuration
-      redis: this.config.database?.redis?.enabled ? { // 设置 redis 字段
-        host: this.config.database?.redis?.host || 'localhost', // 设置 host 字段
-        port: this.config.database?.redis?.port || 6379, // 设置 port 字段
-        password: this.config.database?.redis?.password || null, // 设置 password 字段
-        db: this.config.database?.redis?.db || 0, // 设置 db 字段
+      redis: this.config.database?.redis?.enabled ? { // Redis 配置
+        host: this.config.database?.redis?.host || 'localhost', // 主机
+        port: this.config.database?.redis?.port || 6379, // 端口
+        password: this.config.database?.redis?.password || null, // 密码
+        db: this.config.database?.redis?.db || 0, // db
       } : undefined, // 执行语句
 
       // 传入已配置密钥的交易所列表 (动态) / Pass exchanges with configured API keys (dynamic)
-      exchanges: connectedExchanges, // 设置 exchanges 字段
+      exchanges: connectedExchanges, // 传入已配置密钥的交易所列表 (动态)
 
       // 交易类型 / Trading type
-      tradingType: this.config.trading?.type || 'futures', // 设置 tradingType 字段
+      tradingType: this.config.trading?.type || 'futures', // 交易类型
 
       // Cache configuration
-      cache: this.config.marketData?.cache, // 设置 cache 字段
+      cache: this.config.marketData?.cache, // Cache configuration
     }); // 结束代码块
   } // 结束代码块
 
@@ -815,16 +815,16 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建风控管理器 / Create risk manager
     this.riskManager = new AdvancedRiskManager({ // 设置 riskManager
       // 最大仓位比例 / Max position ratio
-      maxPositionRatio: this.config.risk?.maxPositionRatio || 0.3, // 设置 maxPositionRatio 字段
+      maxPositionRatio: this.config.risk?.maxPositionRatio || 0.3, // 最大仓位比例
 
       // 每日最大回撤 / Max daily drawdown
-      maxDailyDrawdown: this.config.risk?.maxDrawdown || 0.1, // 设置 maxDailyDrawdown 字段
+      maxDailyDrawdown: this.config.risk?.maxDrawdown || 0.1, // 最大每日回撤
 
       // 最大杠杆 / Max leverage
-      maxLeverage: this.config.risk?.maxLeverage || 3, // 设置 maxLeverage 字段
+      maxLeverage: this.config.risk?.maxLeverage || 3, // 最大杠杆
 
       // 是否启用详细日志 / Enable verbose logging
-      verbose: this.options.verbose, // 设置 verbose 字段
+      verbose: this.options.verbose, // 是否启用详细日志
     }); // 结束代码块
   } // 结束代码块
 
@@ -843,18 +843,18 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建订单执行器 / Create order executor
     this.executor = new SmartOrderExecutor({ // 设置 executor
       // 交易所实例映射 / Exchange instance mapping
-      exchanges: { // 设置 exchanges 字段
+      exchanges: { // 交易所实例映射
         [this.options.exchange || 'binance']: this.exchange, // 执行语句
       }, // 结束代码块
 
       // 是否为影子模式 (干跑) / Shadow mode (dry run)
-      dryRun: isShadowMode, // 设置 dryRun 字段
+      dryRun: isShadowMode, // 是否为影子模式 (干跑)
 
       // 默认重试次数 / Default retry count
-      maxRetries: 3, // 设置 maxRetries 字段
+      maxRetries: 3, // 默认重试次数
 
       // 是否启用详细日志 / Enable verbose logging
-      verbose: this.options.verbose, // 设置 verbose 字段
+      verbose: this.options.verbose, // 是否启用详细日志
     }); // 结束代码块
 
     // 如果是影子模式，输出提示 / If shadow mode, output notice
@@ -890,7 +890,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 交易对 / Symbols
       symbols, // 执行语句
       maxCandleHistory, // 执行语句
-      maxCandles: maxCandleHistory, // 设置 maxCandles 字段
+      maxCandles: maxCandleHistory, // 最大Candles
 
       // 策略配置 / Strategy configuration
       ...this.config.strategy?.[strategyName], // 展开对象或数组
@@ -936,22 +936,22 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建引擎适配器对象 / Create engine adapter object
     const engineAdapter = { // 定义常量 engineAdapter
       // 交易所引用 / Exchange references
-      exchanges: this.exchanges, // 设置 exchanges 字段
+      exchanges: this.exchanges, // 交易所
 
       // 更新最新价格缓存 / Update last price cache
-      updatePrice: (symbol, price) => { // 设置 updatePrice 字段
+      updatePrice: (symbol, price) => { // 更新最新价格缓存
         if (price && !isNaN(price)) { // 条件判断 price && !isNaN(price)
           this._lastPrices.set(symbol, price); // 访问 _lastPrices
         } // 结束代码块
       }, // 结束代码块
 
       // 获取缓存的最新价格 (同步) / Get cached last price (sync)
-      getLastPrice: (symbol) => { // 设置 getLastPrice 字段
+      getLastPrice: (symbol) => { // 获取缓存的最新价格 (同步)
         return this._lastPrices.get(symbol) || 0; // 返回结果
       }, // 结束代码块
 
       // 获取当前价格 / Get current price
-      getCurrentPrice: async (symbol) => { // 设置 getCurrentPrice 字段
+      getCurrentPrice: async (symbol) => { // getCurrent价格
         try { // 尝试执行
           const exchangeId = Object.keys(this.exchanges)[0]; // 定义常量 exchangeId
           const exchange = this.exchanges[exchangeId]; // 定义常量 exchange
@@ -966,22 +966,22 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       }, // 结束代码块
 
       // 获取持仓 / Get position
-      getPosition: (symbol) => { // 设置 getPosition 字段
+      getPosition: (symbol) => { // get持仓
         return this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 }; // 返回结果
       }, // 结束代码块
 
       // 获取资金 / Get capital
-      getCapital: () => { // 设置 getCapital 字段
+      getCapital: () => { // get资金
         return this.options.capital ?? this.config.trading?.initialCapital ?? 10000; // 返回结果
       }, // 结束代码块
 
       // 获取权益 / Get equity
-      getEquity: () => { // 设置 getEquity 字段
+      getEquity: () => { // getEquity
         return this.options.capital ?? this.config.trading?.initialCapital ?? 10000; // 返回结果
       }, // 结束代码块
 
       // 买入 / Buy
-      buy: (symbol, amount, options = {}) => { // 设置 buy 字段
+      buy: (symbol, amount, options = {}) => { // buy
         // 链路日志: 引擎适配器收到买入请求 / Chain log: Engine adapter received buy request
         this._log('info', `[链路] 引擎适配器收到买入: ${symbol} 数量=${amount} / Engine adapter buy`); // 调用 _log
 
@@ -991,12 +991,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = { // 定义常量 signal
-          type: 'buy', // 设置 type 字段
-          side: 'buy', // 设置 side 字段
+          type: 'buy', // 类型
+          side: 'buy', // 方向
           symbol, // 执行语句
           amount, // 执行语句
           price, // 执行语句
-          timestamp: Date.now(), // 设置 timestamp 字段
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
         this.strategy.emit('signal', signal); // 访问 strategy
 
@@ -1009,7 +1009,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       }, // 结束代码块
 
       // 卖出 / Sell
-      sell: (symbol, amount, options = {}) => { // 设置 sell 字段
+      sell: (symbol, amount, options = {}) => { // sell
         // 链路日志: 引擎适配器收到卖出请求 / Chain log: Engine adapter received sell request
         this._log('info', `[链路] 引擎适配器收到卖出: ${symbol} 数量=${amount} / Engine adapter sell`); // 调用 _log
 
@@ -1019,12 +1019,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
         // 发出信号让 main.js 处理 / Emit signal for main.js to handle
         const signal = { // 定义常量 signal
-          type: 'sell', // 设置 type 字段
-          side: 'sell', // 设置 side 字段
+          type: 'sell', // 类型
+          side: 'sell', // 方向
           symbol, // 执行语句
           amount, // 执行语句
           price, // 执行语句
-          timestamp: Date.now(), // 设置 timestamp 字段
+          timestamp: Date.now(), // 时间戳
         }; // 结束代码块
         this.strategy.emit('signal', signal); // 访问 strategy
 
@@ -1040,7 +1040,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       }, // 结束代码块
 
       // 按百分比买入 / Buy by percentage
-      buyPercent: (symbol, percent) => { // 设置 buyPercent 字段
+      buyPercent: (symbol, percent) => { // buy百分比
         // 链路日志: 引擎适配器收到按比例买入请求 / Chain log: Engine adapter received buyPercent request
         this._log('info', `[链路] 引擎适配器收到按比例买入: ${symbol} 比例=${percent}% / Engine adapter buyPercent`); // 调用 _log
 
@@ -1055,7 +1055,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       }, // 结束代码块
 
       // 平仓 / Close position
-      closePosition: (symbol) => { // 设置 closePosition 字段
+      closePosition: (symbol) => { // 平仓
         // 链路日志: 引擎适配器收到平仓请求 / Chain log: Engine adapter received closePosition request
         this._log('info', `[链路] 引擎适配器收到平仓: ${symbol} / Engine adapter closePosition`); // 调用 _log
 
@@ -1080,10 +1080,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 设置数据源到日志模块 / Set data sources to logger module
     this.loggerModule.setDataSources({ // 访问 loggerModule
       // 风控管理器 / Risk manager
-      riskManager: this.riskManager, // 设置 riskManager 字段
+      riskManager: this.riskManager, // 风险Manager
 
       // 订单执行器 / Order executor
-      executor: this.executor, // 设置 executor 字段
+      executor: this.executor, // executor
     }); // 结束代码块
   } // 结束代码块
 
@@ -1169,11 +1169,11 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 记录到日志模块 / Log to logger module
       if (this.loggerModule) { // 条件判断 this.loggerModule
         this.loggerModule.alertManager?.triggerAlert({ // 访问 loggerModule
-          category: 'system', // 设置 category 字段
-          level: 'critical', // 设置 level 字段
-          title: '未捕获异常 / Uncaught Exception', // 设置 title 字段
-          message: error.message, // 设置 message 字段
-          data: { stack: error.stack }, // 设置 data 字段
+          category: 'system', // category
+          level: 'critical', // 级别
+          title: '未捕获异常 / Uncaught Exception', // title
+          message: error.message, // 消息
+          data: { stack: error.stack }, // 数据
         }); // 结束代码块
       } // 结束代码块
 
@@ -1439,18 +1439,18 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 记录统计 / Log stats
     this.loggerModule.pnlLogger.logMarketDataStats({ // 访问 loggerModule
-      period: '1m', // 设置 period 字段
-      tickerCount: this._marketDataStats.tickerCount, // 设置 tickerCount 字段
-      candleCount: this._marketDataStats.candleCount, // 设置 candleCount 字段
-      orderbookCount: this._marketDataStats.orderbookCount, // 设置 orderbookCount 字段
-      tradeCount: this._marketDataStats.tradeCount, // 设置 tradeCount 字段
-      fundingRateCount: this._marketDataStats.fundingRateCount, // 设置 fundingRateCount 字段
-      symbols: Array.from(this._marketDataStats.symbols), // 设置 symbols 字段
-      exchanges: Array.from(this._marketDataStats.exchanges), // 设置 exchanges 字段
-      lastDataAt: this._marketDataStats.lastDataAt, // 设置 lastDataAt 字段
-      lastDataType: this._marketDataStats.lastDataType, // 设置 lastDataType 字段
-      lastSymbol: this._marketDataStats.lastSymbol, // 设置 lastSymbol 字段
-      lastExchange: this._marketDataStats.lastExchange, // 设置 lastExchange 字段
+      period: '1m', // 周期
+      tickerCount: this._marketDataStats.tickerCount, // ticker数量
+      candleCount: this._marketDataStats.candleCount, // candle数量
+      orderbookCount: this._marketDataStats.orderbookCount, // orderbook数量
+      tradeCount: this._marketDataStats.tradeCount, // 交易数量
+      fundingRateCount: this._marketDataStats.fundingRateCount, // 资金费率频率数量
+      symbols: Array.from(this._marketDataStats.symbols), // 交易对列表
+      exchanges: Array.from(this._marketDataStats.exchanges), // 交易所
+      lastDataAt: this._marketDataStats.lastDataAt, // last数据At
+      lastDataType: this._marketDataStats.lastDataType, // last数据类型
+      lastSymbol: this._marketDataStats.lastSymbol, // last交易对
+      lastExchange: this._marketDataStats.lastExchange, // last交易所
     }); // 结束代码块
 
     // 重置计数器 / Reset counters
@@ -1484,7 +1484,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       if (this.loggerModule && this.loggerModule.pnlLogger) { // 条件判断 this.loggerModule && this.loggerModule.pnlLogger
         this.loggerModule.pnlLogger.logSignal({ // 访问 loggerModule
           ...signal, // 展开对象或数组
-          strategy: this.options.strategy || 'unknown', // 设置 strategy 字段
+          strategy: this.options.strategy || 'unknown', // 策略
         }); // 结束代码块
       } // 结束代码块
 
@@ -1560,14 +1560,14 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // 构建交易对象供日志和通知使用 / Build trade object for logging and notifications
       const trade = { // 定义常量 trade
-        symbol: orderInfo.symbol, // 设置 symbol 字段
-        side: orderInfo.side, // 设置 side 字段
-        amount: orderInfo.filledAmount || orderInfo.amount, // 设置 amount 字段
-        price: orderInfo.avgPrice || orderInfo.currentPrice, // 设置 price 字段
-        pnl: orderInfo.pnl, // 设置 pnl 字段
-        timestamp: orderInfo.updatedAt || Date.now(), // 设置 timestamp 字段
-        orderId: orderInfo.exchangeOrderId || orderInfo.clientOrderId, // 设置 orderId 字段
-        dryRun: exchangeOrder?.info?.dryRun || false, // 设置 dryRun 字段
+        symbol: orderInfo.symbol, // 交易对
+        side: orderInfo.side, // 方向
+        amount: orderInfo.filledAmount || orderInfo.amount, // 数量
+        price: orderInfo.avgPrice || orderInfo.currentPrice, // 价格
+        pnl: orderInfo.pnl, // 盈亏
+        timestamp: orderInfo.updatedAt || Date.now(), // 时间戳
+        orderId: orderInfo.exchangeOrderId || orderInfo.clientOrderId, // 订单ID
+        dryRun: exchangeOrder?.info?.dryRun || false, // dryRun
       }; // 结束代码块
 
       // 链路日志: 订单成交 / Chain log: Order filled
@@ -1657,10 +1657,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 创建回测运行器 / Create backtest runner
       const runner = new BacktestRunner({ // 定义常量 runner
         // 数据目录 / Data directory
-        dataDir: './data/historical', // 设置 dataDir 字段
+        dataDir: './data/historical', // 数据Dir
 
         // 结果输出目录 / Results output directory
-        outputDir: './backtest-results', // 设置 outputDir 字段
+        outputDir: './backtest-results', // outputDir
       }); // 结束代码块
 
       // 获取交易对 / Get symbols
@@ -1669,28 +1669,28 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 回测配置 / Backtest configuration
       const backtestConfig = { // 定义常量 backtestConfig
         // 策略实例 / Strategy instance
-        strategy: this.strategy, // 设置 strategy 字段
+        strategy: this.strategy, // 策略
 
         // 交易对 (使用第一个) / Symbol (use first one)
-        symbol: symbols[0].replace(':USDT', ''), // 设置 symbol 字段
+        symbol: symbols[0].replace(':USDT', ''), // 交易对 (使用第一个)
 
         // 时间周期 / Timeframe
-        timeframe: '1h', // 设置 timeframe 字段
+        timeframe: '1h', // 时间周期
 
         // 开始日期 / Start date
-        startDate: this.options.startDate || '2024-01-01', // 设置 startDate 字段
+        startDate: this.options.startDate || '2024-01-01', // 启动Date
 
         // 结束日期 / End date
-        endDate: this.options.endDate || new Date().toISOString().split('T')[0], // 设置 endDate 字段
+        endDate: this.options.endDate || new Date().toISOString().split('T')[0], // endDate
 
         // 初始资金 / Initial capital
-        initialCapital: this.options.capital || DEFAULT_OPTIONS.initialCapital, // 设置 initialCapital 字段
+        initialCapital: this.options.capital || DEFAULT_OPTIONS.initialCapital, // 初始资金
 
         // 手续费率 / Commission rate
-        commissionRate: 0.0004, // 设置 commissionRate 字段
+        commissionRate: 0.0004, // 手续费频率
 
         // 滑点 / Slippage
-        slippage: 0.0001, // 设置 slippage 字段
+        slippage: 0.0001, // 滑点
       }; // 结束代码块
 
       // 运行回测 / Run backtest
@@ -1925,10 +1925,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
         // 获取检查结果 / Get check result
         const riskCheck = this.riskManager.checkOrder({ // 定义常量 riskCheck
-          symbol: signal.symbol, // 设置 symbol 字段
-          side: signal.side, // 设置 side 字段
-          amount: signal.amount, // 设置 amount 字段
-          price: signal.price, // 设置 price 字段
+          symbol: signal.symbol, // 交易对
+          side: signal.side, // 方向
+          amount: signal.amount, // 数量
+          price: signal.price, // 价格
         }); // 结束代码块
 
         // 如果风控拒绝 / If risk rejected
@@ -1955,11 +1955,11 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         // 构建订单参数 / Build order parameters
         const orderParams = { // 定义常量 orderParams
           exchangeId, // 执行语句
-          symbol: signal.symbol, // 设置 symbol 字段
-          side: signal.side, // 设置 side 字段
-          amount: signal.amount, // 设置 amount 字段
-          price: signal.price, // 设置 price 字段
-          type: signal.orderType || 'market', // 设置 type 字段
+          symbol: signal.symbol, // 交易对
+          side: signal.side, // 方向
+          amount: signal.amount, // 数量
+          price: signal.price, // 价格
+          type: signal.orderType || 'market', // 类型
         }; // 结束代码块
 
         // 链路日志: 提交订单到执行器 / Chain log: Submitting order to executor
@@ -2270,10 +2270,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 级别前缀映射 / Level prefix mapping
     const levelPrefix = { // 定义常量 levelPrefix
-      info: 'ℹ️ ', // 设置 info 字段
-      warn: '⚠️ ', // 设置 warn 字段
-      error: '❌', // 设置 error 字段
-      debug: '🔍', // 设置 debug 字段
+      info: 'ℹ️ ', // info
+      warn: '⚠️ ', // warn
+      error: '❌', // 错误
+      debug: '🔍', // debug
     }; // 结束代码块
 
     // 获取前缀 / Get prefix
@@ -2296,7 +2296,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         } // 结束代码块
         break; // 跳出循环或分支
       case 'info': // 分支 'info'
-      default: // 默认分支
+      default: // 默认
         console.log(fullMessage); // 控制台输出
     } // 结束代码块
 
@@ -2319,32 +2319,32 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
   getStatus() { // 调用 getStatus
     return { // 返回结果
       // 系统状态 / System status
-      status: this.status, // 设置 status 字段
+      status: this.status, // 状态系统状态
 
       // 运行模式 / Running mode
-      mode: this.mode, // 设置 mode 字段
+      mode: this.mode, // 运行模式
 
       // 启动时间 / Start time
-      startTime: this.startTime, // 设置 startTime 字段
+      startTime: this.startTime, // 启动时间
 
       // 运行时间 / Running time
-      uptime: this.startTime ? Date.now() - this.startTime : 0, // 设置 uptime 字段
+      uptime: this.startTime ? Date.now() - this.startTime : 0, // uptime
 
       // 统计信息 / Statistics
-      stats: { // 设置 stats 字段
-        signalCount: this.signalCount, // 设置 signalCount 字段
-        orderCount: this.orderCount, // 设置 orderCount 字段
-        errorCount: this.errorCount, // 设置 errorCount 字段
+      stats: { // stats
+        signalCount: this.signalCount, // 信号数量
+        orderCount: this.orderCount, // 订单数量
+        errorCount: this.errorCount, // 错误数量
       }, // 结束代码块
 
       // 组件状态 / Component status
-      components: { // 设置 components 字段
-        exchange: !!this.exchange, // 设置 exchange 字段
-        marketData: !!this.marketDataEngine, // 设置 marketData 字段
-        strategy: !!this.strategy, // 设置 strategy 字段
-        riskManager: !!this.riskManager, // 设置 riskManager 字段
-        executor: !!this.executor, // 设置 executor 字段
-        logger: !!this.loggerModule, // 设置 logger 字段
+      components: { // components组件状态
+        exchange: !!this.exchange, // 交易所
+        marketData: !!this.marketDataEngine, // 市场数据
+        strategy: !!this.strategy, // 策略
+        riskManager: !!this.riskManager, // 风险Manager
+        executor: !!this.executor, // executor
+        logger: !!this.loggerModule, // 日志
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块
@@ -2385,28 +2385,28 @@ async function main() { // 定义函数 main
   // 创建运行器实例 / Create runner instance
   const runner = new TradingSystemRunner({ // 定义常量 runner
     // 运行模式 / Running mode
-    mode: args.mode, // 设置 mode 字段
+    mode: args.mode, // 运行模式
 
     // 策略名称 / Strategy name
-    strategy: args.strategy, // 设置 strategy 字段
+    strategy: args.strategy, // 策略
 
     // 交易对 / Symbols
-    symbols: args.symbols, // 设置 symbols 字段
+    symbols: args.symbols, // 交易对列表
 
     // 交易所 / Exchange
-    exchange: args.exchange, // 设置 exchange 字段
+    exchange: args.exchange, // 交易所
 
     // 开始日期 / Start date
-    startDate: args.startDate, // 设置 startDate 字段
+    startDate: args.startDate, // 启动Date
 
     // 结束日期 / End date
-    endDate: args.endDate, // 设置 endDate 字段
+    endDate: args.endDate, // endDate
 
     // 初始资金 / Initial capital
-    capital: args.capital, // 设置 capital 字段
+    capital: args.capital, // 资金
 
     // 详细模式 / Verbose mode
-    verbose: args.verbose, // 设置 verbose 字段
+    verbose: args.verbose, // 详细模式
   }); // 结束代码块
 
   try { // 尝试执行

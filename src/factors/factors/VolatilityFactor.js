@@ -17,10 +17,10 @@ import { BaseFactor, FACTOR_CATEGORY, FACTOR_DIRECTION, FACTOR_FREQUENCY } from 
  */
 export const VOLATILITY_METHOD = { // 导出常量 VOLATILITY_METHOD
   BOLLINGER_WIDTH: 'bb_width',      // 布林带宽度
-  ATR_RATIO: 'atr_ratio',           // ATR 与历史 ATR 比值
-  KELTNER_SQUEEZE: 'keltner',       // 肯特纳通道挤压
-  HISTORICAL_RANK: 'hist_rank',     // 历史波动率百分位
-  REALIZED_VS_IMPLIED: 'rv_iv',     // 实现波动率 vs 隐含 (需要期权数据)
+  ATR_RATIO: 'atr_ratio',           // ATR比例
+  KELTNER_SQUEEZE: 'keltner',       // KELTNER挤压
+  HISTORICAL_RANK: 'hist_rank',     // HISTORICALRANK
+  REALIZED_VS_IMPLIED: 'rv_iv',     // 已实现VSIMPLIED
 }; // 结束代码块
 
 /**
@@ -40,19 +40,19 @@ export class VolatilityFactor extends BaseFactor { // 导出类 VolatilityFactor
     const method = config.method || VOLATILITY_METHOD.BOLLINGER_WIDTH; // 定义常量 method
 
     super({ // 调用父类
-      name: config.name || `Volatility_${method}_${period}`, // 设置 name 字段
-      category: FACTOR_CATEGORY.VOLATILITY, // 设置 category 字段
-      direction: FACTOR_DIRECTION.NEGATIVE, // 低波动率 → 预期突破 (方向不定)
-      frequency: FACTOR_FREQUENCY.DAILY, // 设置 frequency 字段
-      description: `波动率收缩因子 (${method}, ${period}周期)`, // 设置 description 字段
-      params: { // 设置 params 字段
+      name: config.name || `Volatility_${method}_${period}`, // name
+      category: FACTOR_CATEGORY.VOLATILITY, // category
+      direction: FACTOR_DIRECTION.NEGATIVE, // direction
+      frequency: FACTOR_FREQUENCY.DAILY, // frequency
+      description: `波动率收缩因子 (${method}, ${period}周期)`, // description
+      params: { // params
         period, // 执行语句
         method, // 执行语句
-        lookbackPeriod: config.lookbackPeriod || 60, // 设置 lookbackPeriod 字段
-        bbStdDev: config.bbStdDev || 2, // 设置 bbStdDev 字段
-        atrPeriod: config.atrPeriod || 14, // 设置 atrPeriod 字段
-        keltnerMultiplier: config.keltnerMultiplier || 1.5, // 设置 keltnerMultiplier 字段
-        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 设置 minDataPoints 字段
+        lookbackPeriod: config.lookbackPeriod || 60, // 回溯周期
+        bbStdDev: config.bbStdDev || 2, // 布林带标准差
+        atrPeriod: config.atrPeriod || 14, // ATR周期
+        keltnerMultiplier: config.keltnerMultiplier || 1.5, // keltner倍数
+        minDataPoints: config.minDataPoints || Math.ceil(period * 0.8), // 最小数据Points
       }, // 结束代码块
       ...config, // 展开对象或数组
     }); // 结束代码块
@@ -92,7 +92,7 @@ export class VolatilityFactor extends BaseFactor { // 导出类 VolatilityFactor
         value = this._calculateHistoricalRank(candles); // 赋值 value
         break; // 跳出循环或分支
 
-      default: // 默认分支
+      default: // 默认
         value = this._calculateBollingerWidth(candles); // 赋值 value
     } // 结束代码块
 
@@ -294,32 +294,32 @@ export class VolatilityFactor extends BaseFactor { // 导出类 VolatilityFactor
 
 // 布林带宽度 (20周期)
 export const BollingerWidth20 = new VolatilityFactor({ // 导出常量 BollingerWidth20
-  name: 'BB_Width_20', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: VOLATILITY_METHOD.BOLLINGER_WIDTH, // 设置 method 字段
+  name: 'BB_Width_20', // name
+  period: 20, // 周期
+  method: VOLATILITY_METHOD.BOLLINGER_WIDTH, // method
 }); // 结束代码块
 
 // ATR 比值
 export const ATRRatio = new VolatilityFactor({ // 导出常量 ATRRatio
-  name: 'ATR_Ratio', // 设置 name 字段
-  period: 14, // 设置 period 字段
-  method: VOLATILITY_METHOD.ATR_RATIO, // 设置 method 字段
-  lookbackPeriod: 60, // 设置 lookbackPeriod 字段
+  name: 'ATR_Ratio', // name
+  period: 14, // 周期
+  method: VOLATILITY_METHOD.ATR_RATIO, // method
+  lookbackPeriod: 60, // 回溯周期
 }); // 结束代码块
 
 // 肯特纳挤压
 export const KeltnerSqueeze = new VolatilityFactor({ // 导出常量 KeltnerSqueeze
-  name: 'Keltner_Squeeze', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: VOLATILITY_METHOD.KELTNER_SQUEEZE, // 设置 method 字段
+  name: 'Keltner_Squeeze', // name
+  period: 20, // 周期
+  method: VOLATILITY_METHOD.KELTNER_SQUEEZE, // method
 }); // 结束代码块
 
 // 历史波动率百分位
 export const VolatilityPercentile = new VolatilityFactor({ // 导出常量 VolatilityPercentile
-  name: 'Vol_Percentile', // 设置 name 字段
-  period: 20, // 设置 period 字段
-  method: VOLATILITY_METHOD.HISTORICAL_RANK, // 设置 method 字段
-  lookbackPeriod: 120, // 设置 lookbackPeriod 字段
+  name: 'Vol_Percentile', // name
+  period: 20, // 周期
+  method: VOLATILITY_METHOD.HISTORICAL_RANK, // method
+  lookbackPeriod: 120, // 回溯周期
 }); // 结束代码块
 
 /**

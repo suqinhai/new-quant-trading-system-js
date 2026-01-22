@@ -38,16 +38,16 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
     // 配置 / Configuration
     this.config = { // 设置 config
       // 数据更新间隔 (毫秒) / Data update interval (ms)
-      updateInterval: config.updateInterval || 1000, // 设置 updateInterval 字段
+      updateInterval: config.updateInterval || 1000, // 数据更新间隔 (毫秒)
 
       // 是否启用价格聚合 / Whether to enable price aggregation
-      enableAggregation: config.enableAggregation !== false, // 设置 enableAggregation 字段
+      enableAggregation: config.enableAggregation !== false, // 是否启用价格聚合
 
       // 是否启用套利检测 / Whether to enable arbitrage detection
-      enableArbitrageDetection: config.enableArbitrageDetection || false, // 设置 enableArbitrageDetection 字段
+      enableArbitrageDetection: config.enableArbitrageDetection || false, // 是否启用套利检测
 
       // 套利阈值 (百分比) / Arbitrage threshold (percentage)
-      arbitrageThreshold: config.arbitrageThreshold || 0.1, // 设置 arbitrageThreshold 字段
+      arbitrageThreshold: config.arbitrageThreshold || 0.1, // 套利阈值 (百分比)
     }; // 结束代码块
 
     // 更新定时器 / Update timer
@@ -70,8 +70,8 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
 
     // 创建行情引擎 / Create market data engine
     const engine = new MarketDataEngine({ // 定义常量 engine
-      exchange: exchangeName, // 设置 exchange 字段
-      type: options.type || 'spot', // 设置 type 字段
+      exchange: exchangeName, // 交易所
+      type: options.type || 'spot', // 类型
     }); // 结束代码块
 
     // 绑定事件处理 / Bind event handlers
@@ -288,13 +288,13 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
       const key = `${exchangeName}:${ticker.symbol}`; // 定义常量 key
       this.aggregatedData.tickers.set(key, { // 访问 aggregatedData
         ...ticker, // 展开对象或数组
-        exchange: exchangeName, // 设置 exchange 字段
+        exchange: exchangeName, // 交易所
       }); // 结束代码块
 
       // 转发事件 / Forward event
       this.emit('ticker', { // 调用 emit
         ...ticker, // 展开对象或数组
-        exchange: exchangeName, // 设置 exchange 字段
+        exchange: exchangeName, // 交易所
       }); // 结束代码块
     }); // 结束代码块
 
@@ -303,7 +303,7 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
       // 转发事件 / Forward event
       this.emit('orderbook', { // 调用 emit
         ...orderbook, // 展开对象或数组
-        exchange: exchangeName, // 设置 exchange 字段
+        exchange: exchangeName, // 交易所
       }); // 结束代码块
     }); // 结束代码块
 
@@ -312,7 +312,7 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
       // 转发事件 / Forward event
       this.emit('trade', { // 调用 emit
         ...trade, // 展开对象或数组
-        exchange: exchangeName, // 设置 exchange 字段
+        exchange: exchangeName, // 交易所
       }); // 结束代码块
     }); // 结束代码块
 
@@ -321,7 +321,7 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
       // 转发事件 / Forward event
       this.emit('kline', { // 调用 emit
         ...kline, // 展开对象或数组
-        exchange: exchangeName, // 设置 exchange 字段
+        exchange: exchangeName, // 交易所
       }); // 结束代码块
     }); // 结束代码块
 
@@ -440,7 +440,7 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
       symbol, // 执行语句
       lowestAsk, // 执行语句
       highestBid, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
@@ -467,11 +467,11 @@ export class DataAggregator extends EventEmitter { // 导出类 DataAggregator
     // 保存价差数据 / Save spread data
     this.aggregatedData.spreads.set(symbol, { // 访问 aggregatedData
       symbol, // 执行语句
-      lowestAsk: bestPrice.lowestAsk, // 设置 lowestAsk 字段
-      highestBid: bestPrice.highestBid, // 设置 highestBid 字段
+      lowestAsk: bestPrice.lowestAsk, // lowestAsk
+      highestBid: bestPrice.highestBid, // highestBid
       spread, // 执行语句
       spreadPercent, // 执行语句
-      timestamp: Date.now(), // 设置 timestamp 字段
+      timestamp: Date.now(), // 时间戳
     }); // 结束代码块
   } // 结束代码块
 
