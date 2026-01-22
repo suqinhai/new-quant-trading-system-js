@@ -151,6 +151,12 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
   // 日报时区偏移 (小时) / Daily report timezone offset (hours)
   timezoneOffset: 8,  // UTC+8 中国时区 / China timezone
 
+  // 运行模式 (live/shadow) / Run mode (live/shadow)
+  mode: (process.env.RUN_MODE || 'live').toLowerCase(), // 运行模式
+
+  // 初始资金 (影子模式日报使用) / Initial capital (shadow report)
+  initialCapital: 0, // 初始资金
+
   // ============================================
   // 警报配置 / Alert Configuration
   // ============================================
@@ -254,8 +260,16 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       riskManager: null,      // 风控管理器 / Risk manager
       positionManager: null,  // 仓位管理器 / Position manager
       accountManager: null,   // 账户管理器 / Account manager
+      pnlLogger: null,        // PnL 日志器 / PnL logger
       executor: null,         // 订单执行器 / Order executor
     }; // 结束代码块
+
+    // 运行模式 / Run mode
+    this.mode = typeof this.config.mode === 'string' ? this.config.mode.toLowerCase() : 'live'; // 运行模式
+
+    // 影子模式日报统计 / Shadow mode daily stats
+    this.shadowStats = this._initShadowStats(); // 初始化 shadow 统计
+    this.shadowTradeListenerBound = false; // shadow 交易监听绑定标记
 
     // 是否已初始化 / Whether initialized
     this.initialized = false; // 设置 initialized
@@ -402,6 +416,12 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
     // 设置账户管理器 / Set account manager
     if (sources.accountManager) { // 条件判断 sources.accountManager
       this.dataSources.accountManager = sources.accountManager; // 访问 dataSources
+    } // 结束代码块
+
+    // 设置 PnL 日志器 / Set PnL logger
+    if (sources.pnlLogger) { // 条件判断 sources.pnlLogger
+      this.dataSources.pnlLogger = sources.pnlLogger; // 访问 dataSources
+      this._bindShadowTradeListener(); // 调用 _bindShadowTradeListener
     } // 结束代码块
 
     // 设置订单执行器 / Set order executor
@@ -1005,6 +1025,311 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
   } // 结束代码块
 
   // ============================================
+  // 影子模式日报统计 / Shadow Mode Daily Stats
+  // ============================================
+
+  /**
+   * 是否为影子模式
+   * Whether in shadow mode
+   * @returns {boolean} 是否影子模式 / Is shadow mode
+   * @private
+   */
+  _isShadowMode() { // 调用 _isShadowMode
+    return this.mode === 'shadow'; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 获取本地日期 Key
+   * Get local date key
+   * @param {Date} date - 日期 / Date
+   * @returns {string} 日期Key / Date key
+   * @private
+   */
+  _getLocalDayKey(date = new Date()) { // 调用 _getLocalDayKey
+    const year = date.getFullYear(); // 年
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月
+    const day = String(date.getDate()).padStart(2, '0'); // 日
+    return `${year}-${month}-${day}`; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 初始化影子统计
+   * Initialize shadow stats
+   * @returns {Object} 影子统计对象 / Shadow stats
+   * @private
+   */
+  _initShadowStats() { // 调用 _initShadowStats
+    const initialCapital = Number(this.config.initialCapital); // 初始资金
+    const startingCapital = Number.isFinite(initialCapital) ? initialCapital : 0; // 起始资金
+    return { // 返回结果
+      dayKey: this._getLocalDayKey(), // 日期Key
+      initialCapital: startingCapital, // 初始资金
+      currentEquity: startingCapital, // 当前权益
+      totalRealized: 0, // 累计已实现
+      totalUnrealized: 0, // 累计未实现
+      dailyStartEquity: startingCapital, // 日起始权益
+      dailyPeakEquity: startingCapital, // 日最高权益
+      dailyStartRealized: 0, // 日起始已实现
+      dailyStartUnrealized: 0, // 日起始未实现
+      trades: { count: 0, wins: 0, losses: 0 }, // 交易统计
+      positions: new Map(), // 持仓映射
+      lastPrices: new Map(), // 最新价格缓存
+    }; // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 绑定影子交易监听
+   * Bind shadow trade listener
+   * @private
+   */
+  _bindShadowTradeListener() { // 调用 _bindShadowTradeListener
+    if (this.shadowTradeListenerBound || !this.dataSources.pnlLogger) { // 条件判断 this.shadowTradeListenerBound || !this.dataSources.pnlLogger
+      return; // 返回结果
+    } // 结束代码块
+
+    this.shadowTradeListenerBound = true; // 设置 shadowTradeListenerBound
+    this.dataSources.pnlLogger.on('tradeLogged', (tradeData) => { // 访问 pnlLogger
+      this._handleShadowTrade(tradeData); // 调用 _handleShadowTrade
+    }); // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 处理影子交易记录
+   * Handle shadow trade record
+   * @param {Object} trade - 交易记录 / Trade record
+   * @private
+   */
+  _handleShadowTrade(trade) { // 调用 _handleShadowTrade
+    if (!trade || !trade.symbol) { // 条件判断 !trade || !trade.symbol
+      return; // 返回结果
+    } // 结束代码块
+
+    const amount = Number(trade.amount); // 数量
+    const price = Number(trade.price); // 价格
+    if (!Number.isFinite(amount) || amount === 0 || !Number.isFinite(price) || price <= 0) { // 条件判断 !Number.isFinite(amount) || amount === 0 || !Number.isFinite(price) || price <= 0
+      return; // 返回结果
+    } // 结束代码块
+
+    this._rollShadowDayIfNeeded(); // 调用 _rollShadowDayIfNeeded
+
+    const side = String(trade.side || '').toLowerCase(); // 方向
+    const tradeSign = side === 'sell' ? -1 : 1; // 方向符号
+
+    // 更新交易统计 / Update trade stats
+    this.shadowStats.trades.count++; // 访问 trades
+
+    // 更新最新价格 / Update last price
+    this.shadowStats.lastPrices.set(trade.symbol, price); // 访问 lastPrices
+
+    // 更新持仓与已实现盈亏 / Update position and realized PnL
+    const position = this.shadowStats.positions.get(trade.symbol) || { amount: 0, avgPrice: 0 }; // 持仓
+    const prevAmount = position.amount; // 之前数量
+    const prevAvgPrice = position.avgPrice; // 之前均价
+    const newAmount = prevAmount + tradeSign * amount; // 新数量
+
+    let realizedDelta = 0; // 已实现变化
+    if (prevAmount === 0 || Math.sign(prevAmount) === tradeSign) { // 条件判断 prevAmount === 0 || Math.sign(prevAmount) === tradeSign
+      // 同向开仓/加仓 / Same direction open/add
+      const totalQty = Math.abs(prevAmount) + amount; // 总数量
+      const totalCost = prevAvgPrice * Math.abs(prevAmount) + price * amount; // 总成本
+      position.amount = newAmount; // 赋值 position.amount
+      position.avgPrice = totalQty > 0 ? totalCost / totalQty : 0; // 赋值 position.avgPrice
+    } else { // 执行语句
+      // 反向平仓/反手 / Opposite direction close/flip
+      const closingQty = Math.min(Math.abs(prevAmount), amount); // 平仓数量
+      if (prevAmount > 0 && tradeSign < 0) { // 条件判断 prevAmount > 0 && tradeSign < 0
+        realizedDelta = (price - prevAvgPrice) * closingQty; // 多头平仓收益
+      } else if (prevAmount < 0 && tradeSign > 0) { // 条件判断 prevAmount < 0 && tradeSign > 0
+        realizedDelta = (prevAvgPrice - price) * closingQty; // 空头平仓收益
+      } // 结束代码块
+
+      const remainingQty = amount - closingQty; // 剩余数量
+      position.amount = newAmount; // 赋值 position.amount
+      if (remainingQty > 0) { // 条件判断 remainingQty > 0
+        // 反手开仓 / Flip position
+        position.avgPrice = price; // 赋值 position.avgPrice
+      } else if (newAmount === 0) { // 条件判断 newAmount === 0
+        position.avgPrice = 0; // 赋值 position.avgPrice
+      } else { // 执行语句
+        // 仍在原方向 / Still same direction
+        position.avgPrice = prevAvgPrice; // 赋值 position.avgPrice
+      } // 结束代码块
+    } // 结束代码块
+
+    // 处理手续费 / Handle fees
+    const feeCost = this._extractFeeCost(trade.fee); // 定义常量 feeCost
+    if (feeCost > 0) { // 条件判断 feeCost > 0
+      realizedDelta -= feeCost; // 执行语句
+    } // 结束代码块
+
+    // 更新累计已实现盈亏 / Update total realized PnL
+    this.shadowStats.totalRealized += realizedDelta; // 访问 totalRealized
+
+    // 更新胜负统计 / Update win/loss stats
+    if (realizedDelta > 0) { // 条件判断 realizedDelta > 0
+      this.shadowStats.trades.wins++; // 访问 trades
+    } else if (realizedDelta < 0) { // 条件判断 realizedDelta < 0
+      this.shadowStats.trades.losses++; // 访问 trades
+    } // 结束代码块
+
+    // 更新持仓映射 / Update position map
+    if (position.amount === 0) { // 条件判断 position.amount === 0
+      this.shadowStats.positions.delete(trade.symbol); // 调用 delete
+    } else { // 执行语句
+      this.shadowStats.positions.set(trade.symbol, position); // 访问 positions
+    } // 结束代码块
+
+    // 更新权益 / Update equity
+    this._updateShadowEquity(); // 调用 _updateShadowEquity
+  } // 结束代码块
+
+  /**
+   * 计算影子未实现盈亏
+   * Calculate shadow unrealized PnL
+   * @returns {number} 未实现盈亏 / Unrealized PnL
+   * @private
+   */
+  _calculateShadowUnrealized() { // 调用 _calculateShadowUnrealized
+    let unrealized = 0; // 未实现盈亏
+    for (const [symbol, position] of this.shadowStats.positions) { // 循环 positions
+      const lastPrice = this.shadowStats.lastPrices.get(symbol) || position.avgPrice || 0; // 最新价格
+      if (!lastPrice || !position.amount) { // 条件判断 !lastPrice || !position.amount
+        continue; // 继续
+      } // 结束代码块
+      if (position.amount > 0) { // 条件判断 position.amount > 0
+        unrealized += (lastPrice - position.avgPrice) * position.amount; // 多头未实现
+      } else if (position.amount < 0) { // 条件判断 position.amount < 0
+        unrealized += (position.avgPrice - lastPrice) * Math.abs(position.amount); // 空头未实现
+      } // 结束代码块
+    } // 结束代码块
+    return unrealized; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 更新影子权益
+   * Update shadow equity
+   * @private
+   */
+  _updateShadowEquity() { // 调用 _updateShadowEquity
+    const unrealized = this._calculateShadowUnrealized(); // 定义常量 unrealized
+    this.shadowStats.totalUnrealized = unrealized; // 访问 totalUnrealized
+    const equity = this.shadowStats.initialCapital + this.shadowStats.totalRealized + unrealized; // 当前权益
+    this.shadowStats.currentEquity = equity; // 访问 currentEquity
+    if (equity > this.shadowStats.dailyPeakEquity) { // 条件判断 equity > this.shadowStats.dailyPeakEquity
+      this.shadowStats.dailyPeakEquity = equity; // 访问 dailyPeakEquity
+    } // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 跨天重置影子统计
+   * Reset shadow stats on day rollover
+   * @private
+   */
+  _rollShadowDayIfNeeded() { // 调用 _rollShadowDayIfNeeded
+    const dayKey = this._getLocalDayKey(); // 定义常量 dayKey
+    if (dayKey === this.shadowStats.dayKey) { // 条件判断 dayKey === this.shadowStats.dayKey
+      return; // 返回结果
+    } // 结束代码块
+
+    // 更新当前权益后再重置 / Update equity before reset
+    this._updateShadowEquity(); // 调用 _updateShadowEquity
+
+    // 重置日报基线 / Reset daily baseline
+    this.shadowStats.dayKey = dayKey; // 设置 dayKey
+    this.shadowStats.dailyStartEquity = this.shadowStats.currentEquity; // 设置 dailyStartEquity
+    this.shadowStats.dailyPeakEquity = this.shadowStats.currentEquity; // 设置 dailyPeakEquity
+    this.shadowStats.dailyStartRealized = this.shadowStats.totalRealized; // 设置 dailyStartRealized
+    this.shadowStats.dailyStartUnrealized = this.shadowStats.totalUnrealized; // 设置 dailyStartUnrealized
+    this.shadowStats.trades = { count: 0, wins: 0, losses: 0 }; // 重置交易统计
+  } // 结束代码块
+
+  /**
+   * 提取手续费
+   * Extract fee cost
+   * @param {Object|number} fee - 手续费 / Fee
+   * @returns {number} 手续费金额 / Fee cost
+   * @private
+   */
+  _extractFeeCost(fee) { // 调用 _extractFeeCost
+    if (!fee) { // 条件判断 !fee
+      return 0; // 返回结果
+    } // 结束代码块
+    if (typeof fee === 'number') { // 条件判断 typeof fee === 'number'
+      return fee; // 返回结果
+    } // 结束代码块
+    if (typeof fee === 'object' && fee.cost) { // 条件判断 typeof fee === 'object' && fee.cost
+      return Number(fee.cost) || 0; // 返回结果
+    } // 结束代码块
+    return 0; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 构建影子日报数据
+   * Build shadow daily report data
+   * @returns {Object} 报告数据 / Report data
+   * @private
+   */
+  _buildShadowReportData() { // 调用 _buildShadowReportData
+    this._rollShadowDayIfNeeded(); // 调用 _rollShadowDayIfNeeded
+    this._updateShadowEquity(); // 调用 _updateShadowEquity
+
+    const equityEnd = this.shadowStats.currentEquity; // 当前权益
+    const equityStart = this.shadowStats.dailyStartEquity; // 日起始权益
+    const equityPeak = this.shadowStats.dailyPeakEquity; // 日最高权益
+    const change = equityEnd - equityStart; // 变化
+    const changePercent = equityStart > 0 ? (change / equityStart) * 100 : 0; // 变化百分比
+
+    const realized = this.shadowStats.totalRealized - this.shadowStats.dailyStartRealized; // 日已实现
+    const unrealized = this.shadowStats.totalUnrealized - this.shadowStats.dailyStartUnrealized; // 日未实现
+
+    let longCount = 0; // 多头数量
+    let shortCount = 0; // 空头数量
+    for (const position of this.shadowStats.positions.values()) { // 循环 positions
+      if (position.amount > 0) { // 条件判断 position.amount > 0
+        longCount++; // 多头
+      } else if (position.amount < 0) { // 条件判断 position.amount < 0
+        shortCount++; // 空头
+      } // 结束代码块
+    } // 结束代码块
+
+    const tradeCount = this.shadowStats.trades.count; // 交易数量
+    const winRate = tradeCount > 0 ? (this.shadowStats.trades.wins / tradeCount) * 100 : 0; // 胜率
+
+    const maxDrawdown = equityPeak > 0 ? (equityPeak - equityEnd) / equityPeak : 0; // 最大回撤
+
+    return { // 返回结果
+      equity: { // equity
+        start: equityStart, // 起始
+        end: equityEnd, // 当前
+        peak: equityPeak, // 最高
+        change, // 变化
+        changePercent, // 变化百分比
+      }, // 结束代码块
+      pnl: { // pnl
+        realized, // 已实现
+        unrealized, // 未实现
+        total: realized + unrealized, // 总计
+      }, // 结束代码块
+      trades: { // 成交
+        count: tradeCount, // 交易次数
+        wins: this.shadowStats.trades.wins, // 盈利次数
+        losses: this.shadowStats.trades.losses, // 亏损次数
+        winRate, // 胜率
+      }, // 结束代码块
+      positions: { // 持仓
+        count: longCount + shortCount, // 持仓数量
+        long: longCount, // 多头数量
+        short: shortCount, // 空头数量
+      }, // 结束代码块
+      risk: { // 风险
+        maxDrawdown, // 最大回撤
+        marginRate: 0, // 保证金率
+        alerts: 0, // 警报次数
+      }, // 结束代码块
+    }; // 结束代码块
+  } // 结束代码块
+
+  // ============================================
   // 日报方法 / Daily Report Methods
   // ============================================
 
@@ -1130,6 +1455,12 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
         alerts: 0,      // 警报次数 / Alert count
       }, // 结束代码块
     }; // 结束代码块
+
+    // 影子模式使用模拟统计 / Use shadow stats in shadow mode
+    if (this._isShadowMode()) { // 条件判断 this._isShadowMode()
+      const shadowData = this._buildShadowReportData(); // 定义常量 shadowData
+      return { ...data, ...shadowData }; // 返回结果
+    } // 结束代码块
 
     // 从风控管理器获取数据 / Get data from risk manager
     if (this.dataSources.riskManager) { // 条件判断 this.dataSources.riskManager

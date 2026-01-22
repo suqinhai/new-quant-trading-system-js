@@ -485,6 +485,8 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         botToken: process.env.TELEGRAM_BOT_TOKEN,   // 机器人令牌
         chatId: process.env.TELEGRAM_CHAT_ID,       // 聊天ID
         enabled: process.env.TELEGRAM_ENABLED === 'true',  // 通过环境变量控制 / Controlled by env variable
+        mode: this.mode, // 运行模式 / Run mode
+        initialCapital: this.options.capital ?? this.config.trading?.initialCapital ?? DEFAULT_OPTIONS.initialCapital, // 初始资金
       }, // 结束代码块
 
       // PnL 日志配置 / PnL logger configuration
@@ -573,6 +575,11 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 4. 创建订单执行器 / Create order executor
     this._initOrderExecutor(); // 调用 _initOrderExecutor
+
+    // 4.5 初始化风控管理器数据源 / Initialize risk manager data sources
+    if (this.riskManager && typeof this.riskManager.init === 'function') { // 条件判断 this.riskManager && typeof this.riskManager.init === 'function'
+      await this.riskManager.init(this.exchanges, this.executor); // 等待异步结果
+    } // 结束代码块
 
     // 5. 加载策略 / Load strategy
     await this._initStrategy(); // 等待异步结果
@@ -1087,6 +1094,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // 订单执行器 / Order executor
       executor: this.executor, // executor
+
+      // PnL 日志器 / PnL logger
+      pnlLogger: this.loggerModule?.pnlLogger, // PnL logger
     }); // 结束代码块
   } // 结束代码块
 
