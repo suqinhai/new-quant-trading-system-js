@@ -353,9 +353,6 @@ node examples/runAdaptiveStrategy.js
 │   ├── services/           # 核心服务
 │   ├── utils/              # 工具函数
 │   └── main.js             # 入口文件
-├── tests/
-│   ├── unit/               # 单元测试
-│   └── integration/        # 集成测试
 ├── examples/               # 示例代码
 │   ├── runWeightedCombo.js
 │   ├── runFactorInvesting.js
@@ -367,33 +364,6 @@ node examples/runAdaptiveStrategy.js
 │   └── adaptive-strategy.md          # 自适应参数策略文档
 ├── ecosystem.config.cjs    # PM2 配置
 └── package.json
-```
-
-## 测试
-
-### 测试概览
-
-| 类别 | 文件数 | 测试用例 | 说明 |
-|------|--------|----------|------|
-| 单元测试 | 64 | ~3500+ | 模块级别测试 |
-| 集成测试 | 7 | ~150+ | 模块间交互测试 |
-| 端到端测试 | 10 | ~250+ | 全流程测试 |
-| **总计** | **87** | **~4200+** | 覆盖率目标 60% |
-
-### 运行测试
-
-```bash
-# 运行所有测试
-pnpm test
-
-# 运行单元测试
-pnpm test:unit
-
-# 运行集成测试
-pnpm test:integration
-
-# 测试覆盖率
-pnpm test:coverage
 ```
 
 ## PM2 命令

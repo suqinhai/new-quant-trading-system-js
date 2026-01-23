@@ -124,17 +124,6 @@ docker compose up -d redis-master clickhouse
 pnpm dev
 ```
 
-### 运行测试
-
-```bash
-# 在容器中运行测试
-docker compose run --rm quant-dev pnpm test
-
-# 或本地运行
-pnpm test
-pnpm test:coverage
-```
-
 ---
 
 ## 生产部署

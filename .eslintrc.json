@@ -30,15 +30,6 @@
   },
   "overrides": [
     {
-      "files": ["tests/**/*.js"],
-      "env": {
-        "node": true
-      },
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
       "files": ["scripts/**/*.js"],
       "rules": {
         "no-console": "off"
@@ -49,7 +40,6 @@
     "node_modules/",
     "dist/",
     "build/",
-    "coverage/",
     "logs/",
     "data/",
     "*.min.js"

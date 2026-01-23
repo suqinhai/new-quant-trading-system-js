@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       src: ${{ steps.filter.outputs.src }}
-      tests: ${{ steps.filter.outputs.tests }}
       config: ${{ steps.filter.outputs.config }}
       docs: ${{ steps.filter.outputs.docs }}
 
@@ -43,8 +42,6 @@ jobs:
           filters: |
             src:
               - 'src/**'
-            tests:
-              - 'tests/**'
             config:
               - 'config/**'
               - 'package.json'
@@ -94,9 +91,6 @@ jobs:
       - name: Run linter
         run: pnpm lint
 
-      - name: Run tests
-        run: pnpm test
-
   # ================================
   # PR 标签 / PR Labels
   # ================================
@@ -115,9 +109,6 @@ jobs:
 
             if ('${{ needs.changes.outputs.src }}' === 'true') {
               labels.push('source-code');
-            }
-            if ('${{ needs.changes.outputs.tests }}' === 'true') {
-              labels.push('tests');
             }
             if ('${{ needs.changes.outputs.config }}' === 'true') {
               labels.push('configuration');

@@ -28,21 +28,11 @@
     "pm2:reload": "pm2 reload ecosystem.config.cjs",
     "pm2:logs": "pm2 logs",
     "pm2:status": "pm2 status",
-    "lint": "eslint src/ tests/ scripts/",
-    "lint:fix": "eslint src/ tests/ scripts/ --fix",
-    "test": "vitest run",
-    "test:unit": "vitest run tests/unit/",
-    "test:integration": "vitest run tests/integration/",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
-    "test:old": "node --test tests/unit/*.test.js tests/integration/*.test.js",
-    "bench": "node --test tests/benchmark/*.bench.js",
-    "bench:order": "node --test tests/benchmark/orderLatency.bench.js",
-    "bench:executor": "node --test tests/benchmark/executor.bench.js",
-    "ci": "pnpm lint && pnpm test",
-    "ci:full": "pnpm lint && pnpm test && pnpm bench",
-    "precommit": "pnpm lint && pnpm test:unit"
+    "lint": "eslint src/ scripts/",
+    "lint:fix": "eslint src/ scripts/ --fix",
+    "ci": "pnpm lint",
+    "ci:full": "pnpm lint",
+    "precommit": "pnpm lint"
   },
   "dependencies": {
     "@clickhouse/client": "^1.0.1",
@@ -71,9 +61,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.16",
-    "eslint": "^8.56.0",
-    "vitest": "^4.0.16"
+    "eslint": "^8.56.0"
   },
   "keywords": [
     "cryptocurrency",

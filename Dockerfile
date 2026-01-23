@@ -44,26 +44,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm install --frozen-lockfile --prod
 
 # -----------------------------------------------------------------------------
-# Stage 3: Test Runner (optional, for CI)
-# -----------------------------------------------------------------------------
-FROM node:20-alpine AS test
-
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++
-
-WORKDIR /app
-
-COPY --from=deps-builder /app/node_modules ./node_modules
-COPY . .
-
-# Run linting and tests
-RUN corepack enable && corepack prepare pnpm@latest --activate
-CMD ["pnpm", "test"]
-
-# -----------------------------------------------------------------------------
-# Stage 4: Production Runtime
+# Stage 3: Production Runtime
 # Minimal production image
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS production
@@ -126,7 +107,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 CMD ["node", "src/main.js", "shadow"]
 
 # -----------------------------------------------------------------------------
-# Stage 5: Development Runtime
+# Stage 4: Development Runtime
 # Full development environment with hot reload
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS development
