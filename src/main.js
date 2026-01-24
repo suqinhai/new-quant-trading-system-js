@@ -1283,6 +1283,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
         this.strategy.onTicker(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'ticker', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1307,6 +1308,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
           this._recordClosedCandle(data); // 调用 _recordClosedCandle
           await this.strategy.onCandle(data); // 访问 strategy
+          this._logStrategyScore(this.strategy, 'candle', data); // Log score
         }); // 结束代码块
       } else { // 执行语句
         this._recordClosedCandle(data); // 调用 _recordClosedCandle
@@ -1324,6 +1326,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
         this.strategy.onOrderBook(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'orderbook', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1338,6 +1341,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
         this.strategy.onFundingRate(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'fundingRate', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1384,6 +1388,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
         this.strategy.onTicker(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'ticker', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1413,6 +1418,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
           this._recordClosedCandle(data); // 调用 _recordClosedCandle
           await this.strategy.onCandle(data); // 访问 strategy
+          this._logStrategyScore(this.strategy, 'candle', data); // Log score
         }); // 结束代码块
       } else { // 执行语句
         this._recordClosedCandle(data); // 调用 _recordClosedCandle
@@ -1430,6 +1436,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
         this.strategy.onOrderBook(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'depth', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1444,6 +1451,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onTrade) { // 条件判断 this.strategy && this.strategy.onTrade
         this.strategy.onTrade(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'trade', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1458,6 +1466,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
         this.strategy.onFundingRate(data); // 访问 strategy
+        this._logStrategyScore(this.strategy, 'fundingRate', data); // Log score
       } // 结束代码块
     }); // 结束代码块
 
@@ -1589,6 +1598,86 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     if (data?.exchange) { // 条件判断 data?.exchange
       this._marketDataStats.lastExchange = data.exchange; // 访问 _marketDataStats
     } // 结束代码块
+  } // 结束代码块
+
+  _logStrategyScore(strategy, dataType, data) { // Log strategy score
+    if (!strategy) { // 条件判断 !strategy
+      return; // 返回结果
+    } // 结束代码块
+    const name = strategy.name || strategy.constructor?.name || 'strategy'; // 定义常量 name
+    const symbol = data?.symbol || 'n/a'; // 定义常量 symbol
+    const exchange = data?.exchange || 'n/a'; // 定义常量 exchange
+    const scores = this._collectStrategyScores(strategy); // 定义常量 scores
+    const scoreText = scores ? this._formatScoreSnapshot(scores) : 'score=n/a'; // 定义常量 scoreText
+    this._log('info', `[score] ${name} ${dataType} ${exchange}:${symbol} ${scoreText}`); // 调用 _log
+  } // 结束代码块
+
+  _collectStrategyScores(strategy) { // Collect numeric score indicators
+    const scores = {}; // 定义常量 scores
+    const addScore = (key, value) => { // 定义函数 addScore
+      if (Number.isFinite(value)) { // 条件判断 Number.isFinite(value)
+        scores[key] = value; // 访问 scores
+      } // 结束代码块
+    }; // 结束代码块
+
+    if (Number.isFinite(strategy.score)) { // 条件判断 Number.isFinite(strategy.score)
+      addScore('score', strategy.score); // 调用 addScore
+    } // 结束代码块
+
+    if (typeof strategy.getScore === 'function') { // 条件判断 typeof strategy.getScore === 'function'
+      try { // 尝试执行
+        const value = strategy.getScore(); // 定义常量 value
+        if (Number.isFinite(value)) { // 条件判断 Number.isFinite(value)
+          addScore('score', value); // 调用 addScore
+        } else if (value && typeof value === 'object') { // 条件判断 value && typeof value === 'object'
+          for (const [key, val] of Object.entries(value)) { // 循环 const [key, val] of Object.entries(value)
+            addScore(key, val); // 调用 addScore
+          } // 结束代码块
+        } // 结束代码块
+      } catch { // 执行语句
+        // Ignore score errors
+      } // 结束代码块
+    } // 结束代码块
+
+    const indicators = strategy.indicators && typeof strategy.indicators === 'object' // 定义常量 indicators
+      ? strategy.indicators // 执行语句
+      : {}; // 执行语句
+    for (const [key, val] of Object.entries(indicators)) { // 循环 const [key, val] of Object.entries(indicators)
+      if (key && key.toLowerCase().includes('score')) { // 条件判断 key && key.toLowerCase().includes('score')
+        addScore(key, val); // 调用 addScore
+      } // 结束代码块
+    } // 结束代码块
+
+    const stateData = strategy.state?.data && typeof strategy.state.data === 'object' // 定义常量 stateData
+      ? strategy.state.data // 执行语句
+      : {}; // 执行语句
+    for (const [key, val] of Object.entries(stateData)) { // 循环 const [key, val] of Object.entries(stateData)
+      if (key && key.toLowerCase().includes('score')) { // 条件判断 key && key.toLowerCase().includes('score')
+        addScore(key, val); // 调用 addScore
+      } // 结束代码块
+    } // 结束代码块
+
+    return Object.keys(scores).length > 0 ? scores : null; // 返回结果
+  } // 结束代码块
+
+  _formatScoreSnapshot(scores) { // Format score log
+    const entries = Object.entries(scores); // 定义常量 entries
+    if (entries.length === 0) { // 条件判断 entries.length === 0
+      return 'score=n/a'; // 返回结果
+    } // 结束代码块
+    const parts = []; // 定义常量 parts
+    for (const [key, value] of entries.slice(0, 6)) { // 循环 const [key, value] of entries.slice(0, 6)
+      const num = Number(value); // 定义常量 num
+      if (!Number.isFinite(num)) { // 条件判断 !Number.isFinite(num)
+        continue; // 继续下一轮循环
+      } // 结束代码块
+      parts.push(`${key}=${num.toFixed(4)}`); // 调用 parts.push
+    } // 结束代码块
+    if (parts.length === 0) { // 条件判断 parts.length === 0
+      return 'score=n/a'; // 返回结果
+    } // 结束代码块
+    const suffix = entries.length > 6 ? ' ...' : ''; // 定义常量 suffix
+    return `${parts.join(' ')}${suffix}`.trim(); // 返回结果
   } // 结束代码块
 
   /**
@@ -2638,5 +2727,7 @@ export default main; // 默认导出
 
 // 运行主函数 / Run main function
 main(); // 调用 main
+
+
 
 

@@ -466,6 +466,7 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
     for (const [, running] of this.runningStrategies) { // 循环 const [, running] of this.runningStrategies
       if (running.config.symbols?.includes(data.symbol)) { // 条件判断 running.config.symbols?.includes(data.symbol)
         running.strategy.onTicker?.(data); // 执行语句
+        this._logStrategyScore(running.strategy, 'ticker', data); // 记录得分日志
       } // 结束代码块
     } // 结束代码块
   } // 结束代码块
@@ -481,8 +482,89 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
     for (const [, running] of this.runningStrategies) { // 循环 const [, running] of this.runningStrategies
       if (running.config.symbols?.includes(data.symbol)) { // 条件判断 running.config.symbols?.includes(data.symbol)
         running.strategy.onCandle?.(data); // 执行语句
+        this._logStrategyScore(running.strategy, 'candle', data); // 记录得分日志
       } // 结束代码块
     } // 结束代码块
+  } // 结束代码块
+
+  _logStrategyScore(strategy, dataType, data) { // 记录策略得分
+    if (!strategy) { // 条件判断 !strategy
+      return; // 返回结果
+    } // 结束代码块
+    const name = strategy.name || strategy.constructor?.name || 'strategy'; // 定义常量 name
+    const symbol = data?.symbol || 'n/a'; // 定义常量 symbol
+    const exchange = data?.exchange || this.config?.exchange?.default || 'n/a'; // 定义常量 exchange
+    const scores = this._collectStrategyScores(strategy); // 定义常量 scores
+    const scoreText = scores ? this._formatScoreSnapshot(scores) : 'score=n/a'; // 定义常量 scoreText
+    this.logger.info(`[score] ${name} ${dataType} ${exchange}:${symbol} ${scoreText}`); // 访问 logger
+  } // 结束代码块
+
+  _collectStrategyScores(strategy) { // 收集策略得分
+    const scores = {}; // 定义常量 scores
+    const addScore = (key, value) => { // 定义函数 addScore
+      if (Number.isFinite(value)) { // 条件判断 Number.isFinite(value)
+        scores[key] = value; // 访问 scores
+      } // 结束代码块
+    }; // 结束代码块
+
+    if (Number.isFinite(strategy.score)) { // 条件判断 Number.isFinite(strategy.score)
+      addScore('score', strategy.score); // 调用 addScore
+    } // 结束代码块
+
+    if (typeof strategy.getScore === 'function') { // 条件判断 typeof strategy.getScore === 'function'
+      try { // 尝试执行
+        const value = strategy.getScore(); // 定义常量 value
+        if (Number.isFinite(value)) { // 条件判断 Number.isFinite(value)
+          addScore('score', value); // 调用 addScore
+        } else if (value && typeof value === 'object') { // 条件判断 value && typeof value === 'object'
+          for (const [key, val] of Object.entries(value)) { // 循环 const [key, val] of Object.entries(value)
+            addScore(key, val); // 调用 addScore
+          } // 结束代码块
+        } // 结束代码块
+      } catch { // 执行语句
+        // Ignore score errors
+      } // 结束代码块
+    } // 结束代码块
+
+    const indicators = strategy.indicators && typeof strategy.indicators === 'object' // 定义常量 indicators
+      ? strategy.indicators // 执行语句
+      : {}; // 执行语句
+    for (const [key, val] of Object.entries(indicators)) { // 循环 const [key, val] of Object.entries(indicators)
+      if (key && key.toLowerCase().includes('score')) { // 条件判断 key && key.toLowerCase().includes('score')
+        addScore(key, val); // 调用 addScore
+      } // 结束代码块
+    } // 结束代码块
+
+    const stateData = strategy.state?.data && typeof strategy.state.data === 'object' // 定义常量 stateData
+      ? strategy.state.data // 执行语句
+      : {}; // 执行语句
+    for (const [key, val] of Object.entries(stateData)) { // 循环 const [key, val] of Object.entries(stateData)
+      if (key && key.toLowerCase().includes('score')) { // 条件判断 key && key.toLowerCase().includes('score')
+        addScore(key, val); // 调用 addScore
+      } // 结束代码块
+    } // 结束代码块
+
+    return Object.keys(scores).length > 0 ? scores : null; // 返回结果
+  } // 结束代码块
+
+  _formatScoreSnapshot(scores) { // 格式化得分日志
+    const entries = Object.entries(scores); // 定义常量 entries
+    if (entries.length === 0) { // 条件判断 entries.length === 0
+      return 'score=n/a'; // 返回结果
+    } // 结束代码块
+    const parts = []; // 定义常量 parts
+    for (const [key, value] of entries.slice(0, 6)) { // 循环 const [key, value] of entries.slice(0, 6)
+      const num = Number(value); // 定义常量 num
+      if (!Number.isFinite(num)) { // 条件判断 !Number.isFinite(num)
+        continue; // 继续下一轮循环
+      } // 结束代码块
+      parts.push(`${key}=${num.toFixed(4)}`); // 调用 parts.push
+    } // 结束代码块
+    if (parts.length === 0) { // 条件判断 parts.length === 0
+      return 'score=n/a'; // 返回结果
+    } // 结束代码块
+    const suffix = entries.length > 6 ? ' ...' : ''; // 定义常量 suffix
+    return `${parts.join(' ')}${suffix}`.trim(); // 返回结果
   } // 结束代码块
 
   /**
