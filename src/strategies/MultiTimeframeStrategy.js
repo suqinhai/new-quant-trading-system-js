@@ -39,6 +39,11 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
     // 仓位百分比 / Position percentage
     this.positionPercent = params.positionPercent || 95; // 设置 positionPercent
 
+    // Base timeframe in minutes (expected input candle interval)
+    this.baseTimeframeMinutes = params.baseTimeframeMinutes ?? 5; // 设置 baseTimeframeMinutes
+    this.m15Factor = Math.max(1, Math.round(15 / this.baseTimeframeMinutes)); // 设置 m15Factor
+    this.h1Factor = Math.max(1, Math.round(60 / this.baseTimeframeMinutes)); // 设置 h1Factor
+
     // ============================================
     // 1H 趋势参数 (大周期) / 1H Trend Parameters (Major Timeframe)
     // ============================================
@@ -140,6 +145,10 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
     // 入场价格 (用于止盈止损) / Entry price (for TP/SL)
     this.entryPrice = null; // 设置 entryPrice
     this.entryDirection = null; // 设置 entryDirection
+
+    // Base timeframe check
+    this._intervalSamples = []; // 设置 _intervalSamples
+    this._intervalChecked = false; // 设置 _intervalChecked
   } // 结束代码块
 
   /**
@@ -176,6 +185,8 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
    * @param {Array} history - 历史数据 / Historical data
    */
   async onTick(candle, history) { // 执行语句
+    this._checkBaseTimeframe(candle, history); // 调用 _checkBaseTimeframe
+
     // ============================================
     // 1. 更新多周期K线数据 / Update multi-timeframe candle data
     // ============================================
@@ -257,14 +268,14 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
    * @private
    */
   _updateMultiTimeframeCandles(candle) { // 调用 _updateMultiTimeframeCandles
-    // 添加5M K线 / Add 5M candle
+    // 添加基础周期K线 / Add base timeframe candle
     this.candles5m.push({ ...candle }); // 访问 candles5m
     if (this.candles5m.length > this.maxCandles) { // 条件判断 this.candles5m.length > this.maxCandles
       this.candles5m.shift(); // 访问 candles5m
     } // 结束代码块
 
     // ============================================
-    // 聚合15M K线 (每3根5M) / Aggregate 15M candles (every 3 5M candles)
+    // 聚合15M K线 / Aggregate 15M candles
     // ============================================
     if (!this.current15mCandle) { // 条件判断 !this.current15mCandle
       this.current15mCandle = { // 设置 current15mCandle
@@ -284,8 +295,8 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
       this.candle15mCount++; // 访问 candle15mCount
     } // 结束代码块
 
-    // 每3根5M完成一根15M / Complete 15M candle every 3 5M candles
-    if (this.candle15mCount >= 3) { // 条件判断 this.candle15mCount >= 3
+    // 每 m15Factor 根完成一根15M / Complete 15M candle by factor
+    if (this.candle15mCount >= this.m15Factor) { // 条件判断 this.candle15mCount >= this.m15Factor
       this.candles15m.push({ ...this.current15mCandle }); // 访问 candles15m
       if (this.candles15m.length > this.maxCandles) { // 条件判断 this.candles15m.length > this.maxCandles
         this.candles15m.shift(); // 访问 candles15m
@@ -295,7 +306,7 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
     } // 结束代码块
 
     // ============================================
-    // 聚合1H K线 (每12根5M) / Aggregate 1H candles (every 12 5M candles)
+    // 聚合1H K线 / Aggregate 1H candles
     // ============================================
     if (!this.current1hCandle) { // 条件判断 !this.current1hCandle
       this.current1hCandle = { // 设置 current1hCandle
@@ -315,14 +326,44 @@ export class MultiTimeframeStrategy extends BaseStrategy { // 导出类 MultiTim
       this.candle1hCount++; // 访问 candle1hCount
     } // 结束代码块
 
-    // 每12根5M完成一根1H / Complete 1H candle every 12 5M candles
-    if (this.candle1hCount >= 12) { // 条件判断 this.candle1hCount >= 12
+    // 每 h1Factor 根完成一根1H / Complete 1H candle by factor
+    if (this.candle1hCount >= this.h1Factor) { // 条件判断 this.candle1hCount >= this.h1Factor
       this.candles1h.push({ ...this.current1hCandle }); // 访问 candles1h
       if (this.candles1h.length > this.maxCandles) { // 条件判断 this.candles1h.length > this.maxCandles
         this.candles1h.shift(); // 访问 candles1h
       } // 结束代码块
       this.current1hCandle = null; // 设置 current1hCandle
       this.candle1hCount = 0; // 设置 candle1hCount
+    } // 结束代码块
+  } // 结束代码块
+
+  _checkBaseTimeframe(candle, history) { // 调用 _checkBaseTimeframe
+    if (this._intervalChecked) { // 条件判断 this._intervalChecked
+      return; // 返回结果
+    } // 结束代码块
+    if (!history || history.length < 2) { // 条件判断 !history || history.length < 2
+      return; // 返回结果
+    } // 结束代码块
+    const prev = history[history.length - 2]; // 定义常量 prev
+    const dtMs = candle.timestamp - prev.timestamp; // 定义常量 dtMs
+    if (!Number.isFinite(dtMs) || dtMs <= 0) { // 条件判断 !Number.isFinite(dtMs) || dtMs <= 0
+      return; // 返回结果
+    } // 结束代码块
+    const minutes = dtMs / 60000; // 定义常量 minutes
+    this._intervalSamples.push(minutes); // 访问 _intervalSamples
+    if (this._intervalSamples.length < 5) { // 条件判断 this._intervalSamples.length < 5
+      return; // 返回结果
+    } // 结束代码块
+    const sorted = [...this._intervalSamples].sort((a, b) => a - b); // 定义常量 sorted
+    const median = sorted[Math.floor(sorted.length / 2)]; // 定义常量 median
+    this._intervalChecked = true; // 赋值 _intervalChecked
+
+    const expected = this.baseTimeframeMinutes; // 定义常量 expected
+    const tolerance = Math.max(1, expected * 0.2); // 定义常量 tolerance
+    if (Math.abs(median - expected) > tolerance) { // 条件判断 Math.abs(median - expected) > tolerance
+      this.log(`WARN Base timeframe mismatch: expected ~${expected}m, got ~${median.toFixed(1)}m`, 'warn'); // 调用 log
+    } else { // 执行语句
+      this.log(`Base timeframe confirmed: ~${median.toFixed(1)}m`); // 调用 log
     } // 结束代码块
   } // 结束代码块
 

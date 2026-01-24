@@ -413,6 +413,17 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 行情统计定时器 / Market data stats timer
     this._marketDataStatsTimer = null; // 设置 _marketDataStatsTimer
+
+    // Candle processing queues per symbol (prevent concurrent onCandle)
+    this._candleQueues = new Map(); // 设置 _candleQueues
+    // Closed candle sequence per symbol
+    this._closedCandleSeq = new Map(); // 设置 _closedCandleSeq
+    // Last trade candle sequence per symbol (cooldown)
+    this._lastTradeCandleSeq = new Map(); // 设置 _lastTradeCandleSeq
+    // Min candles between trades (cooldown)
+    this._minTradeIntervalCandles = 2; // 设置 _minTradeIntervalCandles
+    // Kline timeframe used by market data
+    this._klineTimeframe = null; // 设置 _klineTimeframe
   } // 结束代码块
 
   // ============================================
@@ -726,6 +737,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 输出日志 / Output log
     this._log('info', '初始化行情引擎... / Initializing market data engine...'); // 调用 _log
 
+    // Resolve kline timeframe for subscriptions/backfill
+    if (!this._klineTimeframe) { // 条件判断 !this._klineTimeframe
+      this._klineTimeframe = this._resolveKlineTimeframe(); // 赋值 this._klineTimeframe
+      this._log('info', `K线周期: ${this._klineTimeframe} / Kline timeframe: ${this._klineTimeframe}`); // 调用 _log
+    } // 结束代码块
+
     // 检查是否使用共享行情服务 / Check if using shared market data service
     const useSharedMarketData = process.env.USE_SHARED_MARKET_DATA === 'true' || // 定义常量 useSharedMarketData
                                  this.config.marketData?.useShared === true; // 访问 config
@@ -810,6 +827,8 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // Cache configuration
       cache: this.config.marketData?.cache, // Cache configuration
+      // Kline timeframe
+      klineTimeframe: this._klineTimeframe, // Kline timeframe
     }); // 结束代码块
   } // 结束代码块
 
@@ -851,7 +870,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     const isShadowMode = this.mode === RUN_MODE.SHADOW; // 定义常量 isShadowMode
 
     // 创建订单执行器 / Create order executor
-    this.executor = new SmartOrderExecutor({ // 设置 executor
+    const executorConfig = { // 定义常量 executorConfig
       // 交易所实例映射 / Exchange instance mapping
       exchanges: { // 交易所实例映射
         [this.options.exchange || 'binance']: this.exchange, // 执行语句
@@ -865,7 +884,19 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
       // 是否启用详细日志 / Enable verbose logging
       verbose: this.options.verbose, // 是否启用详细日志
-    }); // 结束代码块
+    }; // 结束代码块
+
+    if (this.config?.executor?.dryRunFillDelay !== undefined) { // 条件判断 this.config?.executor?.dryRunFillDelay !== undefined
+      executorConfig.dryRunFillDelay = this.config.executor.dryRunFillDelay; // 赋值 executorConfig.dryRunFillDelay
+    } // 结束代码块
+
+    if (this.config?.executor?.dryRunSlippage !== undefined) { // 条件判断 this.config?.executor?.dryRunSlippage !== undefined
+      executorConfig.dryRunSlippage = this.config.executor.dryRunSlippage; // 赋值 executorConfig.dryRunSlippage
+    } else if (isShadowMode) { // 执行语句
+      executorConfig.dryRunSlippage = 0; // 赋值 executorConfig.dryRunSlippage
+    } // 结束代码块
+
+    this.executor = new SmartOrderExecutor(executorConfig); // 设置 executor
 
     // 如果是影子模式，输出提示 / If shadow mode, output notice
     if (isShadowMode) { // 条件判断 isShadowMode
@@ -925,6 +956,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     if (this.strategy.initialize) { // 条件判断 this.strategy.initialize
       await this.strategy.initialize(); // 等待异步结果
     } // 结束代码块
+
+    // 设置最小交易间隔 (按K线根数) / Set min trade interval (candles)
+    this._minTradeIntervalCandles = this._resolveMinTradeIntervalCandles(strategyName); // 赋值 _minTradeIntervalCandles
+    this._log('info', `最小交易间隔: ${this._minTradeIntervalCandles} 根K线 / Min trade interval: ${this._minTradeIntervalCandles} candles`); // 调用 _log
 
     // 输出日志 / Output log
     this._log('info', `策略已加载: ${strategyName}, 交易对: ${symbols.join(', ')} / Strategy loaded`); // 调用 _log
@@ -1254,8 +1289,16 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       } // 结束代码块
 
       // 传递给策略 / Pass to strategy
+      if (data.isClosed !== true) { // 条件判断 data.isClosed !== true
+        return; // 返回结果
+      } // 结束代码块
       if (this.strategy && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
-        this.strategy.onCandle(data); // 访问 strategy
+        this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
+          this._recordClosedCandle(data); // 调用 _recordClosedCandle
+          await this.strategy.onCandle(data); // 访问 strategy
+        }); // 结束代码块
+      } else { // 执行语句
+        this._recordClosedCandle(data); // 调用 _recordClosedCandle
       } // 结束代码块
     }); // 结束代码块
 
@@ -1349,13 +1392,19 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       } // 结束代码块
 
       // 只处理已闭合的 K 线 / Only process closed candles
-      if (data.isClosed) { // 条件判断 data.isClosed
-        this._log('debug', `[共享行情] 收到闭合K线: ${data.exchange}:${data.symbol} close=${data.close} / Received closed kline`); // 调用 _log
+      if (data.isClosed !== true) { // 条件判断 data.isClosed !== true
+        return; // 返回结果
       } // 结束代码块
+      this._log('debug', `[共享行情] 收到闭合K线: ${data.exchange}:${data.symbol} close=${data.close} / Received closed kline`); // 调用 _log
 
       // 传递给策略 / Pass to strategy
       if (this.strategy && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
-        this.strategy.onCandle(data); // 访问 strategy
+        this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
+          this._recordClosedCandle(data); // 调用 _recordClosedCandle
+          await this.strategy.onCandle(data); // 访问 strategy
+        }); // 结束代码块
+      } else { // 执行语句
+        this._recordClosedCandle(data); // 调用 _recordClosedCandle
       } // 结束代码块
     }); // 结束代码块
 
@@ -1414,6 +1463,52 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     this._marketDataStatsTimer = setInterval(() => { // 设置 _marketDataStatsTimer
       this._logMarketDataStats(); // 调用 _logMarketDataStats
     }, 60000); // 执行语句
+  } // 结束代码块
+
+  _resolveKlineTimeframe(strategyName) { // 调用 _resolveKlineTimeframe
+    const envTimeframe = process.env.MARKET_DATA_TIMEFRAME || process.env.KLINE_TIMEFRAME || process.env.DEFAULT_TIMEFRAME; // 定义常量 envTimeframe
+    const strategyKey = strategyName || this.options.strategy || DEFAULT_OPTIONS.strategy; // 定义常量 strategyKey
+    const strategyConfig = this.config?.strategy?.[strategyKey] || {}; // 定义常量 strategyConfig
+    const timeframe = // 定义常量 timeframe
+      this.config?.marketData?.klineTimeframe ||
+      strategyConfig.timeframe ||
+      strategyConfig.defaultTimeframe ||
+      this.config?.strategy?.timeframe ||
+      this.config?.strategy?.defaults?.timeframe ||
+      envTimeframe ||
+      '1h';
+    return typeof timeframe === 'string' ? timeframe : '1h'; // 返回结果
+  } // 结束代码块
+
+  _resolveMinTradeIntervalCandles(strategyName) { // 调用 _resolveMinTradeIntervalCandles
+    const strategyKey = strategyName || this.options.strategy || DEFAULT_OPTIONS.strategy; // 定义常量 strategyKey
+    const fromStrategy = this.strategy?.params?.minTradeIntervalCandles; // 定义常量 fromStrategy
+    const fromConfig = this.config?.strategy?.[strategyKey]?.minTradeIntervalCandles ?? this.config?.trading?.minTradeIntervalCandles; // 定义常量 fromConfig
+    const fromEnv = process.env.MIN_TRADE_INTERVAL_CANDLES; // 定义常量 fromEnv
+    const value = Number.isFinite(fromStrategy) ? fromStrategy : Number(fromConfig ?? fromEnv); // 定义常量 value
+    if (Number.isFinite(value) && value >= 0) { // 条件判断 Number.isFinite(value) && value >= 0
+      return Math.floor(value); // 返回结果
+    } // 结束代码块
+    return this._minTradeIntervalCandles; // 返回结果
+  } // 结束代码块
+
+  _recordClosedCandle(data) { // 调用 _recordClosedCandle
+    const symbol = data?.symbol || 'n/a'; // 定义常量 symbol
+    const nextSeq = (this._closedCandleSeq.get(symbol) || 0) + 1; // 定义常量 nextSeq
+    this._closedCandleSeq.set(symbol, nextSeq); // 访问 _closedCandleSeq
+    return nextSeq; // 返回结果
+  } // 结束代码块
+
+  _enqueueCandle(symbol, handler) { // 调用 _enqueueCandle
+    const key = symbol || 'n/a'; // 定义常量 key
+    const prev = this._candleQueues.get(key) || Promise.resolve(); // 定义常量 prev
+    const next = prev.catch(() => {}) // 执行语句
+      .then(handler) // 执行语句
+      .catch(error => { // 执行语句
+        this._log('error', `[链路] onCandle 处理异常: ${error.message} / onCandle handler error`); // 调用 _log
+      }); // 结束代码块
+    this._candleQueues.set(key, next); // 访问 _candleQueues
+    return next; // 返回结果
   } // 结束代码块
 
   _recordMarketDataEvent(dataType, data) { // 调用 _recordMarketDataEvent
@@ -1885,7 +1980,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     this._log('info', '预加载历史 K 线数据... / Preloading historical candle data...'); // 调用 _log
 
     // 获取 K 线时间周期 (默认 1h) / Get kline timeframe (default 1h)
-    const timeframe = this.config?.strategy?.timeframe || '1h'; // 定义常量 timeframe
+    const timeframe = this._klineTimeframe || this._resolveKlineTimeframe(); // 定义常量 timeframe
 
     // Get history limit (default 200, enough for complex strategies like cointegration, multi-timeframe)
     const maxCandles = this.config?.marketData?.cache?.maxCandles; // 定义常量 maxCandles
@@ -1930,6 +2025,16 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     try { // 尝试执行
       // 链路日志: 开始处理信号 / Chain log: Start handling signal
       this._log('info', `[链路] 开始处理信号: ${signal.symbol} ${signal.side} / Start handling signal`); // 调用 _log
+
+      const candleSeq = signal?.symbol ? this._closedCandleSeq.get(signal.symbol) : undefined; // 定义常量 candleSeq
+      if (this._minTradeIntervalCandles > 0 && candleSeq !== undefined) { // 条件判断 this._minTradeIntervalCandles > 0 && candleSeq !== undefined
+        const lastSeq = this._lastTradeCandleSeq.get(signal.symbol); // 定义常量 lastSeq
+        if (Number.isFinite(lastSeq) && (candleSeq - lastSeq) < this._minTradeIntervalCandles) { // 条件判断 Number.isFinite(lastSeq) && (candleSeq - lastSeq) < this._minTradeIntervalCandles
+          this._log('warn', `[链路] 冷却期内忽略信号: ${signal.symbol} ${signal.side} (min=${this._minTradeIntervalCandles}根K线) / Cooldown active`); // 调用 _log
+          this.emit('signalRejected', { signal, reason: `cooldown:${this._minTradeIntervalCandles} candles` }); // 调用 emit
+          return; // 返回结果
+        } // 结束代码块
+      } // 结束代码块
 
       // 1. 风控检查 / Risk check
       if (this.riskManager) { // 条件判断 this.riskManager
@@ -1985,6 +2090,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         if (result.success) { // 条件判断 result.success
           // 链路日志: 订单执行成功 / Chain log: Order executed successfully
           this._log('info', `[链路] 订单执行成功: orderId=${result.orderId} ${signal.symbol} ${signal.side} / Order executed successfully`); // 调用 _log
+          if (candleSeq !== undefined) { // 条件判断 candleSeq !== undefined
+            this._lastTradeCandleSeq.set(signal.symbol, candleSeq); // 访问 _lastTradeCandleSeq
+          } // 结束代码块
         } else { // 执行语句
           // 链路日志: 订单执行失败 / Chain log: Order execution failed
           this._log('error', `[链路] 订单执行失败: ${result.error} ${signal.symbol} ${signal.side} / Order execution failed`); // 调用 _log

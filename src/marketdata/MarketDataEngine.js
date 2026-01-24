@@ -151,6 +151,8 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
     maxCandles: 1000, // 最大Candles
     historyCandles: 200, // 历史Candles
   }, // 结束代码块
+  // Default kline timeframe (e.g. 5m, 1h)
+  klineTimeframe: '1h',
   // Exchange-specific configuration overrides
   exchangeConfigs: {}, // Exchange configuration overrides
 }; // 结束代码块
@@ -197,6 +199,8 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       dataTimeout: { ...DEFAULT_CONFIG.dataTimeout, ...config.dataTimeout }, // 数据超时
       // Cache configuration
       cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // Cache configuration
+      // Kline timeframe
+      klineTimeframe: config.klineTimeframe || DEFAULT_CONFIG.klineTimeframe, // K线时间周期
       // 启用的交易所 / Enabled exchanges
       exchanges: config.exchanges || ['binance', 'bybit', 'okx'], // 交易所
       // Exchange-specific configs (e.g., sandbox/testnet)
@@ -821,6 +825,80 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
     return `${streamBaseUrl}?streams=${streams.join('/')}`; // 返回结果
   } // 结束代码块
 
+  _parseTimeframe(timeframe) { // 调用 _parseTimeframe
+    const tf = typeof timeframe === 'string' ? timeframe.trim() : ''; // 定义常量 tf
+    const match = tf.match(/^(\d+)\s*([mhdwM])$/); // 定义常量 match
+    if (!match) { // 条件判断 !match
+      return { value: 1, unit: 'h', normalized: '1h' }; // 返回结果
+    } // 结束代码块
+    const value = Math.max(1, parseInt(match[1], 10)); // 定义常量 value
+    const rawUnit = match[2]; // 定义常量 rawUnit
+    const unit = rawUnit === 'M' ? 'M' : rawUnit.toLowerCase(); // 定义常量 unit
+    const normalized = unit === 'M' ? `${value}M` : `${value}${unit}`; // 定义常量 normalized
+    return { value, unit, normalized }; // 返回结果
+  } // 结束代码块
+
+  _getKlineTimeframeInfo() { // 调用 _getKlineTimeframeInfo
+    return this._parseTimeframe(this.config.klineTimeframe); // 返回结果
+  } // 结束代码块
+
+  _timeframeToMinutes(timeframe) { // 调用 _timeframeToMinutes
+    const { value, unit } = this._parseTimeframe(timeframe); // 解构赋值
+    switch (unit) { // 分支选择 unit
+      case 'm':
+        return value; // 返回结果
+      case 'h':
+        return value * 60; // 返回结果
+      case 'd':
+        return value * 1440; // 返回结果
+      case 'w':
+        return value * 10080; // 返回结果
+      case 'M':
+        return value * 43200; // 返回结果
+      default:
+        return 60; // 返回结果
+    } // 结束代码块
+  } // 结束代码块
+
+  _getBinanceKlineInterval() { // 调用 _getBinanceKlineInterval
+    const { value, unit } = this._getKlineTimeframeInfo(); // 解构赋值
+    return unit === 'M' ? `${value}M` : `${value}${unit}`; // 返回结果
+  } // 结束代码块
+
+  _getOkxCandleChannel() { // 调用 _getOkxCandleChannel
+    const { value, unit } = this._getKlineTimeframeInfo(); // 解构赋值
+    const unitMap = { m: 'm', h: 'H', d: 'D', w: 'W', M: 'M' }; // 定义常量 unitMap
+    const suffix = unitMap[unit] || 'm'; // 定义常量 suffix
+    return `candle${value}${suffix}`; // 返回结果
+  } // 结束代码块
+
+  _getBitgetCandleChannel() { // 调用 _getBitgetCandleChannel
+    const { value, unit } = this._getKlineTimeframeInfo(); // 解构赋值
+    const unitMap = { m: 'm', h: 'H', d: 'D', w: 'W', M: 'M' }; // 定义常量 unitMap
+    const suffix = unitMap[unit] || 'm'; // 定义常量 suffix
+    return `candle${value}${suffix}`; // 返回结果
+  } // 结束代码块
+
+  _getKuCoinKlineSuffix() { // 调用 _getKuCoinKlineSuffix
+    const { value, unit } = this._getKlineTimeframeInfo(); // 解构赋值
+    const unitMap = { m: 'min', h: 'hour', d: 'day', w: 'week', M: 'month' }; // 定义常量 unitMap
+    const suffix = unitMap[unit] || 'min'; // 定义常量 suffix
+    return `${value}${suffix}`; // 返回结果
+  } // 结束代码块
+
+  _getGateKlineInterval() { // 调用 _getGateKlineInterval
+    const { value, unit } = this._getKlineTimeframeInfo(); // 解构赋值
+    return unit === 'M' ? `${value}M` : `${value}${unit}`; // 返回结果
+  } // 结束代码块
+
+  _getBybitKlineInterval() { // 调用 _getBybitKlineInterval
+    return this._timeframeToMinutes(this.config.klineTimeframe); // 返回结果
+  } // 结束代码块
+
+  _getDeribitKlineInterval() { // 调用 _getDeribitKlineInterval
+    return this._timeframeToMinutes(this.config.klineTimeframe); // 返回结果
+  } // 结束代码块
+
   /**
    * 将订阅键转换为 Binance 流名称
    * Convert subscription key to Binance stream name
@@ -843,7 +921,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       case DATA_TYPES.FUNDING_RATE: // 分支 DATA_TYPES.FUNDING_RATE
         return `${binanceSymbol}@markPrice@1s`; // 返回结果
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
-        return `${binanceSymbol}@kline_1h`; // 返回结果
+        return `${binanceSymbol}@kline_${this._getBinanceKlineInterval()}`; // 返回结果
       default: // 默认
         return `${binanceSymbol}@ticker`; // 返回结果
     } // 结束代码块
@@ -2206,7 +2284,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 (1小时) / Kline data (1 hour)
-        stream = `${binanceSymbol}@kline_1h`; // 赋值 stream
+        stream = `${binanceSymbol}@kline_${this._getBinanceKlineInterval()}`; // 赋值 stream
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2259,7 +2337,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 (60分钟) / Kline data (60 minutes)
-        topic = `kline.60.${bybitSymbol}`; // 赋值 topic
+        topic = `kline.${this._getBybitKlineInterval()}.${bybitSymbol}`; // 赋值 topic
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2314,7 +2392,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 (1小时) / Kline data (1 hour)
-        args = [{ channel: 'candle1H', instId: okxSymbol }]; // 赋值 args
+        args = [{ channel: this._getOkxCandleChannel(), instId: okxSymbol }]; // 赋值 args
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2373,7 +2451,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 (1小时) / Kline data (1 hour)
-        channels = [`chart.trades.${deribitSymbol}.60`]; // 赋值 channels
+        channels = [`chart.trades.${deribitSymbol}.${this._getDeribitKlineInterval()}`]; // 赋值 channels
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2453,7 +2531,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // K线数据 / Kline data
         channel = `${prefix}.candlesticks`; // 赋值 channel
         // 参数: [interval, symbol] / Args: [interval, symbol]
-        payload = ['1h', gateSymbol]; // 赋值 payload
+        payload = [this._getGateKlineInterval(), gateSymbol]; // 赋值 payload
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2523,7 +2601,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 / Kline data
         // Bitget K线频道格式: candle1H / Bitget kline channel format: candle1H
-        channel = 'candle1H'; // 赋值 channel
+        channel = this._getBitgetCandleChannel(); // 赋值 channel
         break; // 跳出循环或分支
 
       default: // 默认
@@ -2615,10 +2693,10 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         // K线数据 / Kline data
         if (isSpot) { // 条件判断 isSpot
           // 现货K线: /market/candles:BTC-USDT_1hour
-          topic = `/market/candles:${kucoinSymbol}_1hour`; // 赋值 topic
+          topic = `/market/candles:${kucoinSymbol}_${this._getKuCoinKlineSuffix()}`; // 赋值 topic
         } else { // 执行语句
           const futuresSymbol = this._toKuCoinFuturesSymbol(symbol); // 定义常量 futuresSymbol
-          topic = `/contractMarket/candle:${futuresSymbol}_1hour`; // 赋值 topic
+          topic = `/contractMarket/candle:${futuresSymbol}_${this._getKuCoinKlineSuffix()}`; // 赋值 topic
         } // 结束代码块
         break; // 跳出循环或分支
 
@@ -2701,7 +2779,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 (60分钟) / Kline data (60 minutes)
-        subscription = { name: 'ohlc', interval: 60 }; // 赋值 subscription
+        subscription = { name: 'ohlc', interval: this._timeframeToMinutes(this.config.klineTimeframe) }; // 赋值 subscription
         break; // 跳出循环或分支
 
       default: // 默认
@@ -3712,11 +3790,13 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
       ); // 结束调用或参数
     } // 结束代码块
 
-    // 发出 candle 事件 (用于策略) / Emit candle event (for strategies)
-    this.emit('candle', { // 调用 emit
-      ...candle, // 展开对象或数组
-      history: klineCache.slice(-historyCandles), // 历史
-    }); // 结束代码块
+    // 发出 candle 事件 (用于策略) - 仅在 K 线闭合时 / Emit candle event only when closed
+    if (candle.isClosed) { // 条件判断 candle.isClosed
+      this.emit('candle', { // 调用 emit
+        ...candle, // 展开对象或数组
+        history: klineCache.slice(-historyCandles), // 历史
+      }); // 结束代码块
+    } // 结束代码块
   } // 结束代码块
 
   // ============================================

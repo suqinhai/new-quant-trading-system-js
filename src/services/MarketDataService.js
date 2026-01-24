@@ -113,6 +113,8 @@ const DEFAULT_CONFIG = { // 定义常量 DEFAULT_CONFIG
 
   // Cache configuration
   cache: SYSTEM_CONFIG.marketData?.cache || {}, // Cache configuration
+  // Kline timeframe (e.g. 5m, 1h)
+  klineTimeframe: process.env.MARKET_DATA_TIMEFRAME || SYSTEM_CONFIG.marketData?.klineTimeframe || '1h',
 
   // 心跳间隔 (毫秒) / Heartbeat interval (ms)
   heartbeatInterval: 5000, // 心跳间隔 (毫秒)
@@ -151,6 +153,7 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
       exchangeConfigs: config.exchangeConfigs || DEFAULT_CONFIG.exchangeConfigs, // 交易所配置
       tradingType: config.tradingType || DEFAULT_CONFIG.tradingType, // 交易类型
       cache: { ...DEFAULT_CONFIG.cache, ...config.cache }, // cache
+      klineTimeframe: config.klineTimeframe || DEFAULT_CONFIG.klineTimeframe, // kline timeframe
       heartbeatInterval: config.heartbeatInterval || DEFAULT_CONFIG.heartbeatInterval, // heartbeat间隔
       subscribeAll: config.subscribeAll ?? DEFAULT_CONFIG.subscribeAll, // subscribeAll
       symbols: config.symbols || DEFAULT_CONFIG.symbols, // 交易对列表
@@ -207,6 +210,7 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
       tradingType: this.config.tradingType, // 交易类型
       subscribeAll: this.config.subscribeAll, // subscribeAll
       symbolsCount: this.config.symbols.length, // 交易对列表数量
+      klineTimeframe: this.config.klineTimeframe, // kline timeframe
     }); // 结束代码块
 
     try { // 尝试执行
@@ -394,6 +398,8 @@ export class MarketDataService extends EventEmitter { // 导出类 MarketDataSer
 
         // Cache configuration
         cache: this.config.cache, // Cache configuration
+        // Kline timeframe
+        klineTimeframe: this.config.klineTimeframe, // kline timeframe
       }); // 结束代码块
 
     console.log(`${this.logPrefix} 行情引擎初始化完成 / Market data engine initialized`); // 控制台输出
