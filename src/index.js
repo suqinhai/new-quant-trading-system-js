@@ -89,9 +89,16 @@ export class TradingEngine extends EventEmitter { // 导出类 TradingEngine
     try { // 尝试执行
       // 1. 创建交易所实例 / Create exchange instance
       this.logger.info('[TradingEngine] 创建交易所连接 / Creating exchange connection'); // 访问 logger
+      const sharedBalance = this.config.account?.sharedBalance || this.config.sharedBalance; // Shared balance config
+      const exchangeConfig = { // Exchange config
+        ...this.config.exchange[this.config.exchange.default], // Base exchange config
+        sharedBalance: sharedBalance || undefined, // Shared balance
+        redis: this.config.database?.redis, // Redis config
+      };
+
       this.exchange = ExchangeFactory.create( // 设置 exchange
         this.config.exchange.default, // 访问 config
-        this.config.exchange[this.config.exchange.default] // 访问 config
+        exchangeConfig // 访问 config
       ); // 结束调用或参数
 
       // 加载市场信息 / Load market info
@@ -617,3 +624,4 @@ if (isMainModule) { // 条件判断 isMainModule
     process.exit(1); // 退出进程
   }); // 结束代码块
 } // 结束代码块
+

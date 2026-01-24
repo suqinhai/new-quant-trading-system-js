@@ -1,301 +1,315 @@
-/**
- * 默认配置文件
+﻿/**
+ * 榛樿閰嶇疆鏂囦欢
  * Default Configuration File
  *
- * 系统默认配置，会被环境变量覆盖
+ * 绯荤粺榛樿閰嶇疆锛屼細琚幆澧冨彉閲忚鐩?
  * System default configuration, can be overridden by environment variables
  */
 
 export default {
   // ============================================
-  // 交易所配置 / Exchange Configuration
+  // 浜ゆ槗鎵€閰嶇疆 / Exchange Configuration
   // ============================================
   exchange: {
-    // 默认交易所 / Default exchange
+    // 榛樿浜ゆ槗鎵€ / Default exchange
     default: 'binance',
 
-    // Binance 配置 / Binance configuration
+    // Binance 閰嶇疆 / Binance configuration
     binance: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 / Whether to use sandbox mode
+      // 鏄惁浣跨敤娌欑洅妯″紡 / Whether to use sandbox mode
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'future' | 'swap'
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'future' | 'swap'
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 默认时间周期 / Default timeframe
+        // 榛樿鏃堕棿鍛ㄦ湡 / Default timeframe
         defaultTimeframe: '1h',
 
-        // 调整 K 线时间 / Adjust for time difference
+        // 璋冩暣 K 绾挎椂闂?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
 
-    // OKX 配置 / OKX configuration
+    // OKX 閰嶇疆 / OKX configuration
     okx: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 / Whether to use sandbox mode
+      // 鏄惁浣跨敤娌欑洅妯″紡 / Whether to use sandbox mode
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'swap' | 'future'
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'swap' | 'future'
       defaultType: 'swap',
     },
 
-    // Gate.io 配置 / Gate.io configuration
+    // Gate.io 閰嶇疆 / Gate.io configuration
     gate: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 / Whether to use sandbox mode
+      // 鏄惁浣跨敤娌欑洅妯″紡 / Whether to use sandbox mode
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'swap' | 'future'
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'swap' | 'future'
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 调整时间戳 / Adjust for time difference
+        // 璋冩暣鏃堕棿鎴?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
 
-    // Deribit 配置 / Deribit configuration
+    // Deribit 閰嶇疆 / Deribit configuration
     deribit: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      // 鏄惁浣跨敤娌欑洅妯″紡 (娴嬭瘯缃? / Whether to use sandbox mode (testnet)
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'swap' | 'future' | 'option'
-      // Deribit 专注于衍生品，默认为永续合约
+      // 榛樿浜ゆ槗绫诲瀷: 'swap' | 'future' | 'option'
+      // Deribit 涓撴敞浜庤鐢熷搧锛岄粯璁や负姘哥画鍚堢害
       // Deribit focuses on derivatives, default to perpetual
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 调整时间戳 / Adjust for time difference
+        // 璋冩暣鏃堕棿鎴?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
 
-    // Bitget 配置 / Bitget configuration
+    // Bitget 閰嶇疆 / Bitget configuration
     bitget: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
+      // 鏄惁浣跨敤娌欑洅妯″紡 (娴嬭瘯缃? / Whether to use sandbox mode (testnet)
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'swap' | 'future'
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'swap' | 'future'
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 调整时间戳 / Adjust for time difference
+        // 璋冩暣鏃堕棿鎴?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
 
-    // KuCoin 配置 / KuCoin configuration
+    // KuCoin 閰嶇疆 / KuCoin configuration
     kucoin: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
-      // 测试网: sandbox.kucoin.com | 生产: api.kucoin.com
+      // 鏄惁浣跨敤娌欑洅妯″紡 (娴嬭瘯缃? / Whether to use sandbox mode (testnet)
+      // 娴嬭瘯缃? sandbox.kucoin.com | 鐢熶骇: api.kucoin.com
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'swap' | 'future'
-      // KuCoin 支持现货和合约交易 / KuCoin supports spot and futures trading
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'swap' | 'future'
+      // KuCoin 鏀寔鐜拌揣鍜屽悎绾︿氦鏄?/ KuCoin supports spot and futures trading
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 调整时间戳 / Adjust for time difference
+        // 璋冩暣鏃堕棿鎴?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
 
-    // Kraken 配置 / Kraken configuration
+    // Kraken 閰嶇疆 / Kraken configuration
     kraken: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 是否使用沙盒模式 (测试网) / Whether to use sandbox mode (testnet)
-      // 现货: 无测试网 | 合约测试网: demo-futures.kraken.com
+      // 鏄惁浣跨敤娌欑洅妯″紡 (娴嬭瘯缃? / Whether to use sandbox mode (testnet)
+      // 鐜拌揣: 鏃犳祴璇曠綉 | 鍚堢害娴嬭瘯缃? demo-futures.kraken.com
       sandbox: false,
 
-      // API 请求超时 (毫秒) / API request timeout (ms)
+      // API 璇锋眰瓒呮椂 (姣) / API request timeout (ms)
       timeout: 30000,
 
-      // 是否启用限速 / Whether to enable rate limiting
+      // 鏄惁鍚敤闄愰€?/ Whether to enable rate limiting
       enableRateLimit: true,
 
-      // 默认交易类型: 'spot' | 'swap' | 'future'
-      // Kraken 支持现货和合约交易 / Kraken supports spot and futures trading
+      // 榛樿浜ゆ槗绫诲瀷: 'spot' | 'swap' | 'future'
+      // Kraken 鏀寔鐜拌揣鍜屽悎绾︿氦鏄?/ Kraken supports spot and futures trading
       defaultType: 'swap',
 
-      // 选项 / Options
+      // 閫夐」 / Options
       options: {
-        // 调整时间戳 / Adjust for time difference
+        // 璋冩暣鏃堕棿鎴?/ Adjust for time difference
         adjustForTimeDifference: true,
       },
     },
   },
 
   // ============================================
-  // 行情配置 / Market Data Configuration
+  // 琛屾儏閰嶇疆 / Market Data Configuration
   // ============================================
   marketData: {
-    // WebSocket 配置 / WebSocket configuration
+    // WebSocket 閰嶇疆 / WebSocket configuration
     websocket: {
-      // 心跳间隔 (毫秒) / Heartbeat interval (ms)
+      // 蹇冭烦闂撮殧 (姣) / Heartbeat interval (ms)
       pingInterval: 30000,
 
-      // 超时时间 (毫秒) / Timeout (ms)
+      // 瓒呮椂鏃堕棿 (姣) / Timeout (ms)
       pongTimeout: 10000,
 
-      // 重连延迟 (毫秒) / Reconnect delay (ms)
+      // 閲嶈繛寤惰繜 (姣) / Reconnect delay (ms)
       reconnectDelay: 5000,
 
-      // 最大重连次数 / Max reconnection attempts
+      // 鏈€澶ч噸杩炴鏁?/ Max reconnection attempts
       maxReconnectAttempts: 10,
     },
 
-    // 数据聚合配置 / Data aggregation configuration
+    // 鏁版嵁鑱氬悎閰嶇疆 / Data aggregation configuration
     aggregator: {
-      // 聚合间隔 (毫秒) / Aggregation interval (ms)
+      // 鑱氬悎闂撮殧 (姣) / Aggregation interval (ms)
       aggregateInterval: 1000,
 
-      // 套利检测阈值 (百分比) / Arbitrage detection threshold (%)
+      // 濂楀埄妫€娴嬮槇鍊?(鐧惧垎姣? / Arbitrage detection threshold (%)
       arbitrageThreshold: 0.5,
     },
 
-    // 缓存配置 / Cache configuration
+    // 缂撳瓨閰嶇疆 / Cache configuration
     cache: {
-      // K线缓存大小 / Candle cache size
+      // K绾跨紦瀛樺ぇ灏?/ Candle cache size
       maxCandles: 1000,
 
-      // 行情缓存过期时间 (毫秒) / Ticker cache expiry (ms)
+      // 琛屾儏缂撳瓨杩囨湡鏃堕棿 (姣) / Ticker cache expiry (ms)
       tickerExpiry: 5000,
     },
   },
 
   // ============================================
-  // 交易配置 / Trading Configuration
+  // Account Configuration
+  // ============================================
+  account: {
+    sharedBalance: {
+      enabled: false,
+      role: 'auto',
+      ttlMs: 5000,
+      staleMaxMs: 15000,
+      lockTtlMs: 8000,
+      waitTimeoutMs: 2000,
+    },
+  },
+
+  // ============================================
+  // 浜ゆ槗閰嶇疆 / Trading Configuration
   // ============================================
   trading: {
-    // 初始资金 (USDT) / Initial capital (USDT)
+    // 鍒濆璧勯噾 (USDT) / Initial capital (USDT)
     initialCapital: 10000,
   },
 
   // ============================================
-  // 策略配置 / Strategy Configuration
+  // 绛栫暐閰嶇疆 / Strategy Configuration
   // ============================================
   strategy: {
-    // 默认策略 / Default strategy
+    // 榛樿绛栫暐 / Default strategy
     default: 'sma',
 
-    // 默认参数 / Default parameters
+    // 榛樿鍙傛暟 / Default parameters
     defaults: {
-      // 默认时间周期 / Default timeframe
+      // 榛樿鏃堕棿鍛ㄦ湡 / Default timeframe
       timeframe: '1h',
 
-      // 默认资金比例 / Default capital ratio
+      // 榛樿璧勯噾姣斾緥 / Default capital ratio
       capitalRatio: 0.1,
 
-      // 默认止损比例 / Default stop loss ratio
+      // 榛樿姝㈡崯姣斾緥 / Default stop loss ratio
       stopLoss: 0.02,
 
-      // 默认止盈比例 / Default take profit ratio
+      // 榛樿姝㈢泩姣斾緥 / Default take profit ratio
       takeProfit: 0.04,
     },
 
-    // SMA 策略默认参数 / SMA strategy defaults
+    // SMA 绛栫暐榛樿鍙傛暟 / SMA strategy defaults
     sma: {
       fastPeriod: 10,
       slowPeriod: 20,
     },
 
-    // RSI 策略默认参数 / RSI strategy defaults
+    // RSI 绛栫暐榛樿鍙傛暟 / RSI strategy defaults
     rsi: {
       period: 14,
       overbought: 70,
       oversold: 30,
     },
 
-    // 布林带策略默认参数 / Bollinger Bands strategy defaults
+    // 甯冩灄甯︾瓥鐣ラ粯璁ゅ弬鏁?/ Bollinger Bands strategy defaults
     bollingerBands: {
       period: 20,
       stdDev: 2,
     },
 
-    // MACD 策略默认参数 / MACD strategy defaults
+    // MACD 绛栫暐榛樿鍙傛暟 / MACD strategy defaults
     macd: {
       fastPeriod: 12,
       slowPeriod: 26,
       signalPeriod: 9,
     },
 
-    // 网格策略默认参数 / Grid strategy defaults
+    // 缃戞牸绛栫暐榛樿鍙傛暟 / Grid strategy defaults
     grid: {
       gridCount: 10,
-      // 网格宽度百分比 (基于当前价格)，0.1 表示上下各 5%
+      // 缃戞牸瀹藉害鐧惧垎姣?(鍩轰簬褰撳墠浠锋牸)锛?.1 琛ㄧず涓婁笅鍚?5%
       // Grid width percentage (based on current price), 0.1 means 5% above and below
       gridWidthPercent: 0.1,
-      // 是否使用动态价格初始化 (从交易所获取当前价格)
+      // 鏄惁浣跨敤鍔ㄦ€佷环鏍煎垵濮嬪寲 (浠庝氦鏄撴墍鑾峰彇褰撳墠浠锋牸)
       // Whether to use dynamic price initialization (get current price from exchange)
       useDynamicPrice: true,
     },
 
     // ============================================
-    // 波动率策略默认参数 / Volatility Strategy Defaults
+    // 娉㈠姩鐜囩瓥鐣ラ粯璁ゅ弬鏁?/ Volatility Strategy Defaults
     // ============================================
 
-    // ATR 突破策略默认参数 / ATR Breakout strategy defaults
+    // ATR 绐佺牬绛栫暐榛樿鍙傛暟 / ATR Breakout strategy defaults
     atrBreakout: {
       atrPeriod: 14,
       atrMultiplier: 2.0,
@@ -305,7 +319,7 @@ export default {
       positionPercent: 95,
     },
 
-    // 布林宽度策略默认参数 / Bollinger Width strategy defaults
+    // 甯冩灄瀹藉害绛栫暐榛樿鍙傛暟 / Bollinger Width strategy defaults
     bollingerWidth: {
       bbPeriod: 20,
       bbStdDev: 2.0,
@@ -316,7 +330,7 @@ export default {
       positionPercent: 95,
     },
 
-    // 波动率 Regime 策略默认参数 / Volatility Regime strategy defaults
+    // 娉㈠姩鐜?Regime 绛栫暐榛樿鍙傛暟 / Volatility Regime strategy defaults
     volatilityRegime: {
       atrPeriod: 14,
       volatilityLookback: 100,
@@ -329,145 +343,145 @@ export default {
     },
 
     // ============================================
-    // 订单流策略默认参数 / Order Flow Strategy Defaults
+    // 璁㈠崟娴佺瓥鐣ラ粯璁ゅ弬鏁?/ Order Flow Strategy Defaults
     // ============================================
 
-    // 订单流/成交行为策略默认参数 / Order Flow strategy defaults
+    // 璁㈠崟娴?鎴愪氦琛屼负绛栫暐榛樿鍙傛暟 / Order Flow strategy defaults
     orderFlow: {
-      // 成交量突增参数 / Volume spike parameters
-      volumeMAPeriod: 20,           // 成交量均线周期
-      volumeSpikeMultiplier: 2.0,   // 成交量突增倍数阈值
+      // 鎴愪氦閲忕獊澧炲弬鏁?/ Volume spike parameters
+      volumeMAPeriod: 20,           // 鎴愪氦閲忓潎绾垮懆鏈?
+      volumeSpikeMultiplier: 2.0,   // 鎴愪氦閲忕獊澧炲€嶆暟闃堝€?
 
-      // VWAP 参数 / VWAP parameters
-      vwapPeriod: 20,               // VWAP 计算周期
-      vwapDeviationThreshold: 1.0,  // VWAP 偏离阈值 (%)
+      // VWAP 鍙傛暟 / VWAP parameters
+      vwapPeriod: 20,               // VWAP 璁＄畻鍛ㄦ湡
+      vwapDeviationThreshold: 1.0,  // VWAP 鍋忕闃堝€?(%)
 
-      // 大单参数 / Large order parameters
-      largeOrderMultiplier: 3.0,    // 大单判定阈值
-      largeOrderRatioThreshold: 0.6, // 大单比例阈值
+      // 澶у崟鍙傛暟 / Large order parameters
+      largeOrderMultiplier: 3.0,    // 澶у崟鍒ゅ畾闃堝€?
+      largeOrderRatioThreshold: 0.6, // 澶у崟姣斾緥闃堝€?
 
-      // Taker 参数 / Taker parameters
-      takerWindow: 10,              // Taker 计算窗口
-      takerBuyThreshold: 0.6,       // 看涨阈值
-      takerSellThreshold: 0.4,      // 看跌阈值
+      // Taker 鍙傛暟 / Taker parameters
+      takerWindow: 10,              // Taker 璁＄畻绐楀彛
+      takerBuyThreshold: 0.6,       // 鐪嬫定闃堝€?
+      takerSellThreshold: 0.4,      // 鐪嬭穼闃堝€?
 
-      // 信号参数 / Signal parameters
-      minSignalsForEntry: 2,        // 入场所需最少信号数
+      // 淇″彿鍙傛暟 / Signal parameters
+      minSignalsForEntry: 2,        // 鍏ュ満鎵€闇€鏈€灏戜俊鍙锋暟
 
-      // 启用开关 / Enable flags
-      useVolumeSpike: true,         // 是否启用成交量突增
-      useVWAPDeviation: true,       // 是否启用 VWAP 偏离
-      useLargeOrderRatio: true,     // 是否启用大单比例
-      useTakerBuyRatio: true,       // 是否启用 Taker Buy Ratio
+      // 鍚敤寮€鍏?/ Enable flags
+      useVolumeSpike: true,         // 鏄惁鍚敤鎴愪氦閲忕獊澧?
+      useVWAPDeviation: true,       // 鏄惁鍚敤 VWAP 鍋忕
+      useLargeOrderRatio: true,     // 鏄惁鍚敤澶у崟姣斾緥
+      useTakerBuyRatio: true,       // 鏄惁鍚敤 Taker Buy Ratio
 
-      // 风控参数 / Risk parameters
-      stopLossPercent: 1.5,         // 止损百分比
-      takeProfitPercent: 3.0,       // 止盈百分比
-      useTrailingStop: true,        // 是否启用跟踪止损
-      trailingStopPercent: 1.0,     // 跟踪止损百分比
+      // 椋庢帶鍙傛暟 / Risk parameters
+      stopLossPercent: 1.5,         // 姝㈡崯鐧惧垎姣?
+      takeProfitPercent: 3.0,       // 姝㈢泩鐧惧垎姣?
+      useTrailingStop: true,        // 鏄惁鍚敤璺熻釜姝㈡崯
+      trailingStopPercent: 1.0,     // 璺熻釜姝㈡崯鐧惧垎姣?
 
-      // 仓位参数 / Position parameters
-      positionPercent: 95,          // 仓位百分比
+      // 浠撲綅鍙傛暟 / Position parameters
+      positionPercent: 95,          // 浠撲綅鐧惧垎姣?
     },
 
     // ============================================
-    // 多周期共振策略默认参数 / Multi-Timeframe Resonance Strategy Defaults
+    // 澶氬懆鏈熷叡鎸瓥鐣ラ粯璁ゅ弬鏁?/ Multi-Timeframe Resonance Strategy Defaults
     // ============================================
 
-    // 多周期共振策略默认参数 / Multi-Timeframe strategy defaults
+    // 澶氬懆鏈熷叡鎸瓥鐣ラ粯璁ゅ弬鏁?/ Multi-Timeframe strategy defaults
     multiTimeframe: {
       // ============================================
-      // 1H 大周期参数 (趋势判断) / 1H Major Timeframe Parameters
+      // 1H 澶у懆鏈熷弬鏁?(瓒嬪娍鍒ゆ柇) / 1H Major Timeframe Parameters
       // ============================================
-      h1ShortPeriod: 10,            // 1H 短期均线周期
-      h1LongPeriod: 30,             // 1H 长期均线周期
+      h1ShortPeriod: 10,            // 1H 鐭湡鍧囩嚎鍛ㄦ湡
+      h1LongPeriod: 30,             // 1H 闀挎湡鍧囩嚎鍛ㄦ湡
 
       // ============================================
-      // 15M 中周期参数 (回调判断) / 15M Medium Timeframe Parameters
+      // 15M 涓懆鏈熷弬鏁?(鍥炶皟鍒ゆ柇) / 15M Medium Timeframe Parameters
       // ============================================
-      m15RsiPeriod: 14,             // 15M RSI 周期
-      m15RsiPullbackLong: 40,       // 多头回调 RSI 阈值 (低于此值认为回调到位)
-      m15RsiPullbackShort: 60,      // 空头回调 RSI 阈值 (高于此值认为回调到位)
-      m15PullbackPercent: 1.5,      // 价格回撤百分比阈值
+      m15RsiPeriod: 14,             // 15M RSI 鍛ㄦ湡
+      m15RsiPullbackLong: 40,       // 澶氬ご鍥炶皟 RSI 闃堝€?(浣庝簬姝ゅ€艰涓哄洖璋冨埌浣?
+      m15RsiPullbackShort: 60,      // 绌哄ご鍥炶皟 RSI 闃堝€?(楂樹簬姝ゅ€艰涓哄洖璋冨埌浣?
+      m15PullbackPercent: 1.5,      // 浠锋牸鍥炴挙鐧惧垎姣旈槇鍊?
 
       // ============================================
-      // 5M 小周期参数 (进场触发) / 5M Minor Timeframe Parameters
+      // 5M 灏忓懆鏈熷弬鏁?(杩涘満瑙﹀彂) / 5M Minor Timeframe Parameters
       // ============================================
-      m5RsiPeriod: 14,              // 5M RSI 周期
-      m5RsiOversold: 30,            // 5M RSI 超卖阈值
-      m5RsiOverbought: 70,          // 5M RSI 超买阈值
-      m5ShortPeriod: 5,             // 5M 短期均线周期
-      m5LongPeriod: 15,             // 5M 长期均线周期
+      m5RsiPeriod: 14,              // 5M RSI 鍛ㄦ湡
+      m5RsiOversold: 30,            // 5M RSI 瓒呭崠闃堝€?
+      m5RsiOverbought: 70,          // 5M RSI 瓒呬拱闃堝€?
+      m5ShortPeriod: 5,             // 5M 鐭湡鍧囩嚎鍛ㄦ湡
+      m5LongPeriod: 15,             // 5M 闀挎湡鍧囩嚎鍛ㄦ湡
 
       // ============================================
-      // 出场参数 / Exit Parameters
+      // 鍑哄満鍙傛暟 / Exit Parameters
       // ============================================
-      takeProfitPercent: 3.0,       // 止盈百分比
-      stopLossPercent: 1.5,         // 止损百分比
-      useTrendExit: true,           // 是否使用趋势反转出场
+      takeProfitPercent: 3.0,       // 姝㈢泩鐧惧垎姣?
+      stopLossPercent: 1.5,         // 姝㈡崯鐧惧垎姣?
+      useTrendExit: true,           // 鏄惁浣跨敤瓒嬪娍鍙嶈浆鍑哄満
 
       // ============================================
-      // 仓位参数 / Position Parameters
+      // 浠撲綅鍙傛暟 / Position Parameters
       // ============================================
-      positionPercent: 95,          // 仓位百分比
+      positionPercent: 95,          // 浠撲綅鐧惧垎姣?
     },
 
     // ============================================
-    // 市场状态切换策略默认参数 / Regime Switching Strategy Defaults
+    // 甯傚満鐘舵€佸垏鎹㈢瓥鐣ラ粯璁ゅ弬鏁?/ Regime Switching Strategy Defaults
     // ============================================
 
-    // Regime 切换元策略默认参数 / Regime Switching meta strategy defaults
+    // Regime 鍒囨崲鍏冪瓥鐣ラ粯璁ゅ弬鏁?/ Regime Switching meta strategy defaults
     regimeSwitching: {
-      // 信号聚合方式: 'weighted' | 'majority' | 'any'
+      // 淇″彿鑱氬悎鏂瑰紡: 'weighted' | 'majority' | 'any'
       // Signal aggregation mode
       signalAggregation: 'weighted',
 
-      // 加权信号阈值 / Weighted signal threshold
+      // 鍔犳潈淇″彿闃堝€?/ Weighted signal threshold
       weightedThreshold: 0.5,
 
-      // 状态切换时是否平仓 / Close position on regime change
+      // 鐘舵€佸垏鎹㈡椂鏄惁骞充粨 / Close position on regime change
       closeOnRegimeChange: true,
 
-      // 极端情况是否强制平仓 / Force close on extreme regime
+      // 鏋佺鎯呭喌鏄惁寮哄埗骞充粨 / Force close on extreme regime
       forceCloseOnExtreme: true,
 
-      // 默认仓位比例 / Default position percent
+      // 榛樿浠撲綅姣斾緥 / Default position percent
       positionPercent: 95,
 
-      // Regime 检测参数 / Regime detection parameters
+      // Regime 妫€娴嬪弬鏁?/ Regime detection parameters
       regimeParams: {
-        // ADX 周期 / ADX period
+        // ADX 鍛ㄦ湡 / ADX period
         adxPeriod: 14,
 
-        // ADX 趋势阈值 / ADX trend threshold
+        // ADX 瓒嬪娍闃堝€?/ ADX trend threshold
         adxTrendThreshold: 25,
 
-        // ADX 强趋势阈值 / ADX strong trend threshold
+        // ADX 寮鸿秼鍔块槇鍊?/ ADX strong trend threshold
         adxStrongTrendThreshold: 40,
 
-        // 布林带周期 / Bollinger Bands period
+        // 甯冩灄甯﹀懆鏈?/ Bollinger Bands period
         bbPeriod: 20,
 
-        // ATR 周期 / ATR period
+        // ATR 鍛ㄦ湡 / ATR period
         atrPeriod: 14,
 
-        // 低波动率百分位 / Low volatility percentile
+        // 浣庢尝鍔ㄧ巼鐧惧垎浣?/ Low volatility percentile
         lowVolPercentile: 25,
 
-        // 高波动率百分位 / High volatility percentile
+        // 楂樻尝鍔ㄧ巼鐧惧垎浣?/ High volatility percentile
         highVolPercentile: 80,
 
-        // 极端波动率百分位 / Extreme volatility percentile
+        // 鏋佺娉㈠姩鐜囩櫨鍒嗕綅 / Extreme volatility percentile
         extremeVolPercentile: 98,
 
-        // Hurst 指数计算周期 / Hurst exponent period
+        // Hurst 鎸囨暟璁＄畻鍛ㄦ湡 / Hurst exponent period
         hurstPeriod: 50,
 
-        // 最小状态持续 K 线数 / Minimum regime duration in candles
+        // 鏈€灏忕姸鎬佹寔缁?K 绾挎暟 / Minimum regime duration in candles
         minRegimeDuration: 5,
       },
 
-      // 子策略参数 / Sub-strategy parameters
+      // 瀛愮瓥鐣ュ弬鏁?/ Sub-strategy parameters
       strategyParams: {
         SMA: {
           shortPeriod: 10,
@@ -512,8 +526,8 @@ export default {
         },
       },
 
-      // Regime 策略映射 / Regime strategy mapping
-      // 可自定义覆盖 / Can be customized
+      // Regime 绛栫暐鏄犲皠 / Regime strategy mapping
+      // 鍙嚜瀹氫箟瑕嗙洊 / Can be customized
       regimeMap: {
         trending_up: {
           strategies: ['SMA', 'MACD', 'MultiTimeframe', 'WeightedCombo'],
@@ -539,29 +553,29 @@ export default {
     },
 
     // ============================================
-    // 加权组合策略默认参数 / Weighted Combo Strategy Defaults
+    // 鍔犳潈缁勫悎绛栫暐榛樿鍙傛暟 / Weighted Combo Strategy Defaults
     // ============================================
 
-    // 加权组合策略默认参数 / Weighted Combo strategy defaults
+    // 鍔犳潈缁勫悎绛栫暐榛樿鍙傛暟 / Weighted Combo strategy defaults
     weightedCombo: {
       // ============================================
-      // 策略权重配置 / Strategy Weight Configuration
+      // 绛栫暐鏉冮噸閰嶇疆 / Strategy Weight Configuration
       // ============================================
 
-      // 策略权重 (总和应为 1.0) / Strategy weights (should sum to 1.0)
+      // 绛栫暐鏉冮噸 (鎬诲拰搴斾负 1.0) / Strategy weights (should sum to 1.0)
       strategyWeights: {
-        SMA: 0.4,           // SMA 趋势策略权重 40%
-        RSI: 0.2,           // RSI 超买超卖策略权重 20%
-        MACD: 0.4,          // MACD 策略权重 40%
+        SMA: 0.4,           // SMA 瓒嬪娍绛栫暐鏉冮噸 40%
+        RSI: 0.2,           // RSI 瓒呬拱瓒呭崠绛栫暐鏉冮噸 20%
+        MACD: 0.4,          // MACD 绛栫暐鏉冮噸 40%
       },
 
-      // 交易阈值 / Trading thresholds
-      // 降低阈值增加信号频率 / Lower thresholds to increase signal frequency
-      buyThreshold: 0.8,    // 总分 >= 0.8 买入
-      sellThreshold: 0.2,   // 总分 <= 0.2 卖出
+      // 浜ゆ槗闃堝€?/ Trading thresholds
+      // 闄嶄綆闃堝€煎鍔犱俊鍙烽鐜?/ Lower thresholds to increase signal frequency
+      buyThreshold: 0.8,    // 鎬诲垎 >= 0.8 涔板叆
+      sellThreshold: 0.2,   // 鎬诲垎 <= 0.2 鍗栧嚭
 
       // ============================================
-      // 子策略参数 / Sub-strategy Parameters
+      // 瀛愮瓥鐣ュ弬鏁?/ Sub-strategy Parameters
       // ============================================
 
       smaParams: {
@@ -588,93 +602,93 @@ export default {
       },
 
       // ============================================
-      // 动态权重调整 / Dynamic Weight Adjustment
+      // 鍔ㄦ€佹潈閲嶈皟鏁?/ Dynamic Weight Adjustment
       // ============================================
 
-      // 是否启用动态权重 / Enable dynamic weights
+      // 鏄惁鍚敤鍔ㄦ€佹潈閲?/ Enable dynamic weights
       dynamicWeights: true,
 
-      // 权重调整因子 (0-1) / Weight adjustment factor
+      // 鏉冮噸璋冩暣鍥犲瓙 (0-1) / Weight adjustment factor
       adjustmentFactor: 0.2,
 
-      // 评估周期 (交易次数) / Evaluation period (trade count)
+      // 璇勪及鍛ㄦ湡 (浜ゆ槗娆℃暟) / Evaluation period (trade count)
       evaluationPeriod: 20,
 
-      // 最小权重 / Minimum weight
+      // 鏈€灏忔潈閲?/ Minimum weight
       minWeight: 0.05,
 
-      // 最大权重 / Maximum weight
+      // 鏈€澶ф潈閲?/ Maximum weight
       maxWeight: 0.6,
 
       // ============================================
-      // 相关性限制 / Correlation Limit
+      // 鐩稿叧鎬ч檺鍒?/ Correlation Limit
       // ============================================
 
-      // 是否启用相关性限制 / Enable correlation limit
+      // 鏄惁鍚敤鐩稿叧鎬ч檺鍒?/ Enable correlation limit
       correlationLimit: true,
 
-      // 最大允许相关性 / Maximum allowed correlation
+      // 鏈€澶у厑璁哥浉鍏虫€?/ Maximum allowed correlation
       maxCorrelation: 0.7,
 
-      // 相关性惩罚系数 / Correlation penalty factor
+      // 鐩稿叧鎬ф儵缃氱郴鏁?/ Correlation penalty factor
       correlationPenaltyFactor: 0.5,
 
-      // 相关性矩阵 / Correlation matrix
+      // 鐩稿叧鎬х煩闃?/ Correlation matrix
       correlationMatrix: {
-        'SMA-MACD': 0.6,            // SMA 和 MACD 相关性较高
-        'SMA-RSI': 0.3,             // SMA 和 RSI 相关性中等
-        'RSI-BollingerBands': 0.4,  // RSI 和布林带相关性中等
-        'MACD-BollingerBands': 0.5, // MACD 和布林带相关性中等
-        'SMA-BollingerBands': 0.5,  // SMA 和布林带相关性中等
+        'SMA-MACD': 0.6,            // SMA 鍜?MACD 鐩稿叧鎬ц緝楂?
+        'SMA-RSI': 0.3,             // SMA 鍜?RSI 鐩稿叧鎬т腑绛?
+        'RSI-BollingerBands': 0.4,  // RSI 鍜屽竷鏋楀甫鐩稿叧鎬т腑绛?
+        'MACD-BollingerBands': 0.5, // MACD 鍜屽竷鏋楀甫鐩稿叧鎬т腑绛?
+        'SMA-BollingerBands': 0.5,  // SMA 鍜屽竷鏋楀甫鐩稿叧鎬т腑绛?
       },
 
       // ============================================
-      // 熔断机制 / Circuit Breaker
+      // 鐔旀柇鏈哄埗 / Circuit Breaker
       // ============================================
 
-      // 是否启用熔断 / Enable circuit breaker
+      // 鏄惁鍚敤鐔旀柇 / Enable circuit breaker
       circuitBreaker: true,
 
-      // 连续亏损次数触发熔断 / Consecutive losses to trigger
+      // 杩炵画浜忔崯娆℃暟瑙﹀彂鐔旀柇 / Consecutive losses to trigger
       consecutiveLossLimit: 5,
 
-      // 最大回撤触发熔断 (百分比) / Max drawdown to trigger
+      // 鏈€澶у洖鎾よЕ鍙戠啍鏂?(鐧惧垎姣? / Max drawdown to trigger
       maxDrawdownLimit: 0.15,
 
-      // 最低胜率触发熔断 / Minimum win rate to trigger
+      // 鏈€浣庤儨鐜囪Е鍙戠啍鏂?/ Minimum win rate to trigger
       minWinRate: 0.3,
 
-      // 评估窗口 (交易次数) / Evaluation window (trade count)
+      // 璇勪及绐楀彛 (浜ゆ槗娆℃暟) / Evaluation window (trade count)
       evaluationWindow: 30,
 
-      // 冷却时间 (毫秒) / Cooling period (ms)
-      coolingPeriod: 3600000,  // 1 小时
+      // 鍐峰嵈鏃堕棿 (姣) / Cooling period (ms)
+      coolingPeriod: 3600000,  // 1 灏忔椂
 
-      // 是否自动恢复 / Auto recover
+      // 鏄惁鑷姩鎭㈠ / Auto recover
       autoRecover: true,
 
       // ============================================
-      // 止盈止损 / Take Profit & Stop Loss
+      // 姝㈢泩姝㈡崯 / Take Profit & Stop Loss
       // ============================================
 
-      takeProfitPercent: 3.0,   // 止盈百分比
-      stopLossPercent: 1.5,     // 止损百分比
+      takeProfitPercent: 3.0,   // 姝㈢泩鐧惧垎姣?
+      stopLossPercent: 1.5,     // 姝㈡崯鐧惧垎姣?
 
       // ============================================
-      // 仓位参数 / Position Parameters
+      // 浠撲綅鍙傛暟 / Position Parameters
       // ============================================
 
-      positionPercent: 95,      // 仓位百分比
+      positionPercent: 95,      // 浠撲綅鐧惧垎姣?
     },
 
     // ============================================
-    // 横截面策略默认参数 / Cross-Sectional Strategy Defaults
+    // 妯埅闈㈢瓥鐣ラ粯璁ゅ弬鏁?/ Cross-Sectional Strategy Defaults
     // ============================================
 
-    // 横截面策略基础参数 / Cross-Sectional base strategy defaults
+    // 妯埅闈㈢瓥鐣ュ熀纭€鍙傛暟 / Cross-Sectional base strategy defaults
     crossSectional: {
       // ============================================
-      // 监控交易对列表 / Symbols to monitor
+      // 鐩戞帶浜ゆ槗瀵瑰垪琛?/ Symbols to monitor
       // ============================================
       symbols: [
         'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
@@ -682,109 +696,109 @@ export default {
       ],
 
       // ============================================
-      // 基础参数 / Basic Parameters
+      // 鍩虹鍙傛暟 / Basic Parameters
       // ============================================
-      lookbackPeriod: 20,                    // 回看周期 (K线数量)
-      rebalancePeriod: 24 * 60 * 60 * 1000,  // 再平衡周期 (毫秒, 默认每天)
+      lookbackPeriod: 20,                    // 鍥炵湅鍛ㄦ湡 (K绾挎暟閲?
+      rebalancePeriod: 24 * 60 * 60 * 1000,  // 鍐嶅钩琛″懆鏈?(姣, 榛樿姣忓ぉ)
 
       // ============================================
-      // 排名配置 / Ranking Configuration
+      // 鎺掑悕閰嶇疆 / Ranking Configuration
       // ============================================
-      topN: 3,                              // 选取 Top N 个做多
-      bottomN: 3,                           // 选取 Bottom N 个做空
-      rankingMetric: 'returns',             // 排名指标: returns, sharpe, momentum, volatility
-      rankDirection: 'descending',          // 排名方向: ascending, descending
+      topN: 3,                              // 閫夊彇 Top N 涓仛澶?
+      bottomN: 3,                           // 閫夊彇 Bottom N 涓仛绌?
+      rankingMetric: 'returns',             // 鎺掑悕鎸囨爣: returns, sharpe, momentum, volatility
+      rankDirection: 'descending',          // 鎺掑悕鏂瑰悜: ascending, descending
 
       // ============================================
-      // 仓位配置 / Position Configuration
+      // 浠撲綅閰嶇疆 / Position Configuration
       // ============================================
-      positionType: 'long_short',           // 仓位类型: long_only, short_only, long_short, market_neutral
-      maxPositionPerAsset: 0.15,            // 单个资产最大仓位比例
-      maxPositionPerSide: 0.5,              // 单边总仓位比例
-      minPositionSize: 0.01,                // 最小仓位比例
-      equalWeight: true,                    // 是否等权重
+      positionType: 'long_short',           // 浠撲綅绫诲瀷: long_only, short_only, long_short, market_neutral
+      maxPositionPerAsset: 0.15,            // 鍗曚釜璧勪骇鏈€澶т粨浣嶆瘮渚?
+      maxPositionPerSide: 0.5,              // 鍗曡竟鎬讳粨浣嶆瘮渚?
+      minPositionSize: 0.01,                // 鏈€灏忎粨浣嶆瘮渚?
+      equalWeight: true,                    // 鏄惁绛夋潈閲?
 
       // ============================================
-      // 风控配置 / Risk Control Configuration
+      // 椋庢帶閰嶇疆 / Risk Control Configuration
       // ============================================
-      stopLoss: 0.05,                       // 止损比例
-      takeProfit: 0.15,                     // 止盈比例
-      maxDrawdown: 0.10,                    // 最大回撤
-      maxCorrelation: 0.8,                  // 最大相关性 (避免持有高度相关资产)
+      stopLoss: 0.05,                       // 姝㈡崯姣斾緥
+      takeProfit: 0.15,                     // 姝㈢泩姣斾緥
+      maxDrawdown: 0.10,                    // 鏈€澶у洖鎾?
+      maxCorrelation: 0.8,                  // 鏈€澶х浉鍏虫€?(閬垮厤鎸佹湁楂樺害鐩稿叧璧勪骇)
 
       // ============================================
-      // 过滤器配置 / Filter Configuration
+      // 杩囨护鍣ㄩ厤缃?/ Filter Configuration
       // ============================================
-      minDailyVolume: 10000000,             // 最小日均成交量 (USDT)
-      minPrice: 0.0001,                     // 最小价格
-      excludedSymbols: [],                  // 排除的交易对
+      minDailyVolume: 10000000,             // 鏈€灏忔棩鍧囨垚浜ら噺 (USDT)
+      minPrice: 0.0001,                     // 鏈€灏忎环鏍?
+      excludedSymbols: [],                  // 鎺掗櫎鐨勪氦鏄撳
     },
 
-    // 动量排名策略默认参数 / Momentum Rank strategy defaults
+    // 鍔ㄩ噺鎺掑悕绛栫暐榛樿鍙傛暟 / Momentum Rank strategy defaults
     momentumRank: {
-      // 继承横截面策略基础参数 / Inherits from crossSectional
+      // 缁ф壙妯埅闈㈢瓥鐣ュ熀纭€鍙傛暟 / Inherits from crossSectional
       lookbackPeriod: 20,
       rebalancePeriod: 24 * 60 * 60 * 1000,
       topN: 5,
-      bottomN: 0,                           // 只做多不做空
-      rankingMetric: 'momentum',            // 使用动量排名
+      bottomN: 0,                           // 鍙仛澶氫笉鍋氱┖
+      rankingMetric: 'momentum',            // 浣跨敤鍔ㄩ噺鎺掑悕
       positionType: 'long_only',
 
-      // 动量计算参数 / Momentum calculation parameters
-      shortMomentumPeriod: 5,               // 短期动量周期
-      longMomentumPeriod: 20,               // 长期动量周期
-      momentumSmoothing: 3,                 // 动量平滑周期
-      useRelativeMomentum: true,            // 是否使用相对动量
+      // 鍔ㄩ噺璁＄畻鍙傛暟 / Momentum calculation parameters
+      shortMomentumPeriod: 5,               // 鐭湡鍔ㄩ噺鍛ㄦ湡
+      longMomentumPeriod: 20,               // 闀挎湡鍔ㄩ噺鍛ㄦ湡
+      momentumSmoothing: 3,                 // 鍔ㄩ噺骞虫粦鍛ㄦ湡
+      useRelativeMomentum: true,            // 鏄惁浣跨敤鐩稿鍔ㄩ噺
 
-      // 仓位参数 / Position parameters
+      // 浠撲綅鍙傛暟 / Position parameters
       maxPositionPerAsset: 0.2,
       positionPercent: 95,
     },
 
-    // 轮动策略默认参数 / Rotation strategy defaults
+    // 杞姩绛栫暐榛樿鍙傛暟 / Rotation strategy defaults
     rotation: {
-      // 基础参数 / Basic parameters
+      // 鍩虹鍙傛暟 / Basic parameters
       lookbackPeriod: 14,
-      rebalancePeriod: 7 * 24 * 60 * 60 * 1000, // 每周再平衡
+      rebalancePeriod: 7 * 24 * 60 * 60 * 1000, // 姣忓懆鍐嶅钩琛?
       topN: 3,
       bottomN: 0,
       positionType: 'long_only',
 
-      // 轮动参数 / Rotation parameters
-      rotationMode: 'performance',          // 轮动模式: performance, volatility, mixed
-      holdingPeriod: 7 * 24 * 60 * 60 * 1000, // 持有周期 (毫秒)
-      minHoldingScore: 0.6,                 // 最小持有得分
+      // 杞姩鍙傛暟 / Rotation parameters
+      rotationMode: 'performance',          // 杞姩妯″紡: performance, volatility, mixed
+      holdingPeriod: 7 * 24 * 60 * 60 * 1000, // 鎸佹湁鍛ㄦ湡 (姣)
+      minHoldingScore: 0.6,                 // 鏈€灏忔寔鏈夊緱鍒?
 
-      // 动量参数 / Momentum parameters
-      momentumWeight: 0.6,                  // 动量权重
-      volatilityWeight: 0.2,                // 波动率权重
-      volumeWeight: 0.2,                    // 成交量权重
+      // 鍔ㄩ噺鍙傛暟 / Momentum parameters
+      momentumWeight: 0.6,                  // 鍔ㄩ噺鏉冮噸
+      volatilityWeight: 0.2,                // 娉㈠姩鐜囨潈閲?
+      volumeWeight: 0.2,                    // 鎴愪氦閲忔潈閲?
 
-      // 仓位参数 / Position parameters
+      // 浠撲綅鍙傛暟 / Position parameters
       maxPositionPerAsset: 0.33,
       positionPercent: 95,
     },
 
-    // 资金费率极值策略默认参数 / Funding Rate Extreme strategy defaults
+    // 璧勯噾璐圭巼鏋佸€肩瓥鐣ラ粯璁ゅ弬鏁?/ Funding Rate Extreme strategy defaults
     fundingRateExtreme: {
-      // 基础参数 / Basic parameters
-      lookbackPeriod: 24,                   // 24小时回看
-      rebalancePeriod: 8 * 60 * 60 * 1000,  // 每8小时再平衡 (与资金费率周期对齐)
+      // 鍩虹鍙傛暟 / Basic parameters
+      lookbackPeriod: 24,                   // 24灏忔椂鍥炵湅
+      rebalancePeriod: 8 * 60 * 60 * 1000,  // 姣?灏忔椂鍐嶅钩琛?(涓庤祫閲戣垂鐜囧懆鏈熷榻?
 
-      // 资金费率阈值 / Funding rate thresholds
-      extremeHighThreshold: 0.001,          // 极端高费率阈值 (0.1%)
-      extremeLowThreshold: -0.001,          // 极端低费率阈值 (-0.1%)
-      normalHighThreshold: 0.0005,          // 正常高费率阈值 (0.05%)
-      normalLowThreshold: -0.0005,          // 正常低费率阈值 (-0.05%)
+      // 璧勯噾璐圭巼闃堝€?/ Funding rate thresholds
+      extremeHighThreshold: 0.001,          // 鏋佺楂樿垂鐜囬槇鍊?(0.1%)
+      extremeLowThreshold: -0.001,          // 鏋佺浣庤垂鐜囬槇鍊?(-0.1%)
+      normalHighThreshold: 0.0005,          // 姝ｅ父楂樿垂鐜囬槇鍊?(0.05%)
+      normalLowThreshold: -0.0005,          // 姝ｅ父浣庤垂鐜囬槇鍊?(-0.05%)
 
-      // 策略模式 / Strategy mode
-      mode: 'contrarian',                   // 模式: contrarian (逆向), trend (顺势)
+      // 绛栫暐妯″紡 / Strategy mode
+      mode: 'contrarian',                   // 妯″紡: contrarian (閫嗗悜), trend (椤哄娍)
 
-      // 过滤条件 / Filter conditions
-      minFundingRateHistory: 24,            // 最小资金费率历史数量
-      minAverageDailyVolume: 50000000,      // 最小日均成交量
+      // 杩囨护鏉′欢 / Filter conditions
+      minFundingRateHistory: 24,            // 鏈€灏忚祫閲戣垂鐜囧巻鍙叉暟閲?
+      minAverageDailyVolume: 50000000,      // 鏈€灏忔棩鍧囨垚浜ら噺
 
-      // 仓位参数 / Position parameters
+      // 浠撲綅鍙傛暟 / Position parameters
       topN: 3,
       bottomN: 3,
       positionType: 'long_short',
@@ -792,162 +806,162 @@ export default {
       positionPercent: 95,
     },
 
-    // 跨交易所价差策略默认参数 / Cross-Exchange Spread strategy defaults
+    // 璺ㄤ氦鏄撴墍浠峰樊绛栫暐榛樿鍙傛暟 / Cross-Exchange Spread strategy defaults
     crossExchangeSpread: {
-      // 基础参数 / Basic parameters
-      exchanges: ['binance', 'okx'],        // 监控的交易所
+      // 鍩虹鍙傛暟 / Basic parameters
+      exchanges: ['binance', 'okx'],        // 鐩戞帶鐨勪氦鏄撴墍
       lookbackPeriod: 20,
-      rebalancePeriod: 60 * 1000,           // 每分钟检查 (套利策略需要高频)
+      rebalancePeriod: 60 * 1000,           // 姣忓垎閽熸鏌?(濂楀埄绛栫暐闇€瑕侀珮棰?
 
-      // 价差阈值 / Spread thresholds
-      minSpreadThreshold: 0.002,            // 最小价差阈值 (0.2%)
-      entrySpreadThreshold: 0.005,          // 入场价差阈值 (0.5%)
-      exitSpreadThreshold: 0.001,           // 出场价差阈值 (0.1%)
+      // 浠峰樊闃堝€?/ Spread thresholds
+      minSpreadThreshold: 0.002,            // 鏈€灏忎环宸槇鍊?(0.2%)
+      entrySpreadThreshold: 0.005,          // 鍏ュ満浠峰樊闃堝€?(0.5%)
+      exitSpreadThreshold: 0.001,           // 鍑哄満浠峰樊闃堝€?(0.1%)
 
-      // 套利模式 / Arbitrage mode
-      mode: 'statistical',                  // 模式: simple (简单), statistical (统计)
-      meanReversionPeriod: 50,              // 均值回归周期
-      stdDevThreshold: 2.0,                 // 标准差阈值
+      // 濂楀埄妯″紡 / Arbitrage mode
+      mode: 'statistical',                  // 妯″紡: simple (绠€鍗?, statistical (缁熻)
+      meanReversionPeriod: 50,              // 鍧囧€煎洖褰掑懆鏈?
+      stdDevThreshold: 2.0,                 // 鏍囧噯宸槇鍊?
 
-      // 执行参数 / Execution parameters
-      maxSlippage: 0.001,                   // 最大滑点
-      simultaneousExecution: true,          // 是否同时执行
-      executionTimeout: 5000,               // 执行超时 (毫秒)
+      // 鎵ц鍙傛暟 / Execution parameters
+      maxSlippage: 0.001,                   // 鏈€澶ф粦鐐?
+      simultaneousExecution: true,          // 鏄惁鍚屾椂鎵ц
+      executionTimeout: 5000,               // 鎵ц瓒呮椂 (姣)
 
-      // 仓位参数 / Position parameters
-      maxPositionPerPair: 0.1,              // 每对最大仓位
+      // 浠撲綅鍙傛暟 / Position parameters
+      maxPositionPerPair: 0.1,              // 姣忓鏈€澶т粨浣?
       positionPercent: 95,
     },
 
     // ============================================
-    // 统计套利策略默认参数 / Statistical Arbitrage Strategy Defaults
+    // 缁熻濂楀埄绛栫暐榛樿鍙傛暟 / Statistical Arbitrage Strategy Defaults
     // ============================================
 
-    // 统计套利策略默认参数 / Statistical Arbitrage strategy defaults
+    // 缁熻濂楀埄绛栫暐榛樿鍙傛暟 / Statistical Arbitrage strategy defaults
     statisticalArbitrage: {
       // ============================================
-      // 策略类型配置 / Strategy Type Configuration
+      // 绛栫暐绫诲瀷閰嶇疆 / Strategy Type Configuration
       // ============================================
-      // 套利类型: pairs_trading, cointegration, cross_exchange, perpetual_spot, triangular
+      // 濂楀埄绫诲瀷: pairs_trading, cointegration, cross_exchange, perpetual_spot, triangular
       arbType: 'pairs_trading',
 
       // ============================================
-      // 配对配置 / Pairs Configuration
+      // 閰嶅閰嶇疆 / Pairs Configuration
       // ============================================
 
-      // 候选配对列表 / Candidate pairs list
+      // 鍊欓€夐厤瀵瑰垪琛?/ Candidate pairs list
       candidatePairs: [
         { assetA: 'BTC/USDT', assetB: 'ETH/USDT' },
         { assetA: 'ETH/USDT', assetB: 'BNB/USDT' },
         { assetA: 'SOL/USDT', assetB: 'AVAX/USDT' },
       ],
 
-      // 最大同时持有配对数 / Max active pairs
+      // 鏈€澶у悓鏃舵寔鏈夐厤瀵规暟 / Max active pairs
       maxActivePairs: 5,
 
-      // 回看周期 (用于计算统计量) / Lookback period for statistics
+      // 鍥炵湅鍛ㄦ湡 (鐢ㄤ簬璁＄畻缁熻閲? / Lookback period for statistics
       lookbackPeriod: 60,
 
-      // 协整检验周期 / Cointegration test period
+      // 鍗忔暣妫€楠屽懆鏈?/ Cointegration test period
       cointegrationTestPeriod: 100,
 
       // ============================================
-      // 协整检验配置 / Cointegration Test Configuration
+      // 鍗忔暣妫€楠岄厤缃?/ Cointegration Test Configuration
       // ============================================
 
-      // ADF检验显著性水平 / ADF test significance level
+      // ADF妫€楠屾樉钁楁€ф按骞?/ ADF test significance level
       adfSignificanceLevel: 0.05,
 
-      // 最小相关性阈值 / Minimum correlation threshold
+      // 鏈€灏忕浉鍏虫€ч槇鍊?/ Minimum correlation threshold
       minCorrelation: 0.7,
 
-      // 半衰期限制 (天) / Half-life limits (days)
+      // 鍗婅“鏈熼檺鍒?(澶? / Half-life limits (days)
       minHalfLife: 1,
       maxHalfLife: 30,
 
       // ============================================
-      // 信号配置 / Signal Configuration
+      // 淇″彿閰嶇疆 / Signal Configuration
       // ============================================
 
-      // Z-Score开仓阈值 / Z-Score entry threshold
+      // Z-Score寮€浠撻槇鍊?/ Z-Score entry threshold
       entryZScore: 2.0,
 
-      // Z-Score平仓阈值 / Z-Score exit threshold
+      // Z-Score骞充粨闃堝€?/ Z-Score exit threshold
       exitZScore: 0.5,
 
-      // Z-Score止损阈值 / Z-Score stop loss threshold
+      // Z-Score姝㈡崯闃堝€?/ Z-Score stop loss threshold
       stopLossZScore: 4.0,
 
-      // 最大持仓时间 (毫秒) / Max holding period (ms)
-      maxHoldingPeriod: 7 * 24 * 60 * 60 * 1000, // 7天 / 7 days
+      // 鏈€澶ф寔浠撴椂闂?(姣) / Max holding period (ms)
+      maxHoldingPeriod: 7 * 24 * 60 * 60 * 1000, // 7澶?/ 7 days
 
       // ============================================
-      // 跨交易所套利配置 / Cross-Exchange Arbitrage Configuration
+      // 璺ㄤ氦鏄撴墍濂楀埄閰嶇疆 / Cross-Exchange Arbitrage Configuration
       // ============================================
 
-      // 价差开仓阈值 (百分比) / Spread entry threshold (%)
+      // 浠峰樊寮€浠撻槇鍊?(鐧惧垎姣? / Spread entry threshold (%)
       spreadEntryThreshold: 0.003, // 0.3%
 
-      // 价差平仓阈值 (百分比) / Spread exit threshold (%)
+      // 浠峰樊骞充粨闃堝€?(鐧惧垎姣? / Spread exit threshold (%)
       spreadExitThreshold: 0.001, // 0.1%
 
-      // 交易成本 (单边) / Trading cost (one side)
+      // 浜ゆ槗鎴愭湰 (鍗曡竟) / Trading cost (one side)
       tradingCost: 0.001, // 0.1%
 
-      // 滑点估计 / Slippage estimate
+      // 婊戠偣浼拌 / Slippage estimate
       slippageEstimate: 0.0005, // 0.05%
 
       // ============================================
-      // 永续-现货基差配置 / Perpetual-Spot Basis Configuration
+      // 姘哥画-鐜拌揣鍩哄樊閰嶇疆 / Perpetual-Spot Basis Configuration
       // ============================================
 
-      // 基差入场阈值 (年化) / Basis entry threshold (annualized)
+      // 鍩哄樊鍏ュ満闃堝€?(骞村寲) / Basis entry threshold (annualized)
       basisEntryThreshold: 0.15, // 15%
 
-      // 基差出场阈值 (年化) / Basis exit threshold (annualized)
+      // 鍩哄樊鍑哄満闃堝€?(骞村寲) / Basis exit threshold (annualized)
       basisExitThreshold: 0.05, // 5%
 
-      // 资金费率阈值 (8小时) / Funding rate threshold (8h)
+      // 璧勯噾璐圭巼闃堝€?(8灏忔椂) / Funding rate threshold (8h)
       fundingRateThreshold: 0.001, // 0.1%
 
       // ============================================
-      // 仓位管理 / Position Management
+      // 浠撲綅绠＄悊 / Position Management
       // ============================================
 
-      // 单个配对最大仓位 / Max position per pair
+      // 鍗曚釜閰嶅鏈€澶т粨浣?/ Max position per pair
       maxPositionPerPair: 0.1, // 10%
 
-      // 总最大仓位 / Max total position
+      // 鎬绘渶澶т粨浣?/ Max total position
       maxTotalPosition: 0.5, // 50%
 
-      // 仓位对称 / Symmetric position
+      // 浠撲綅瀵圭О / Symmetric position
       symmetricPosition: true,
 
       // ============================================
-      // 风险控制 / Risk Control
+      // 椋庨櫓鎺у埗 / Risk Control
       // ============================================
 
-      // 单配对最大亏损 / Max loss per pair
+      // 鍗曢厤瀵规渶澶т簭鎹?/ Max loss per pair
       maxLossPerPair: 0.02, // 2%
 
-      // 总最大回撤 / Max drawdown
+      // 鎬绘渶澶у洖鎾?/ Max drawdown
       maxDrawdown: 0.10, // 10%
 
-      // 连续亏损次数触发冷却 / Consecutive loss limit
+      // 杩炵画浜忔崯娆℃暟瑙﹀彂鍐峰嵈 / Consecutive loss limit
       consecutiveLossLimit: 3,
 
-      // 冷却时间 (毫秒) / Cooling period (ms)
-      coolingPeriod: 24 * 60 * 60 * 1000, // 24小时 / 24 hours
+      // 鍐峰嵈鏃堕棿 (姣) / Cooling period (ms)
+      coolingPeriod: 24 * 60 * 60 * 1000, // 24灏忔椂 / 24 hours
     },
 
     // ============================================
-    // 因子投资策略默认参数 / Factor Investing Strategy Defaults
+    // 鍥犲瓙鎶曡祫绛栫暐榛樿鍙傛暟 / Factor Investing Strategy Defaults
     // ============================================
 
-    // 因子投资策略默认参数 / Factor Investing strategy defaults
+    // 鍥犲瓙鎶曡祫绛栫暐榛樿鍙傛暟 / Factor Investing strategy defaults
     factorInvesting: {
       // ============================================
-      // 监控交易对列表 / Symbols to monitor
+      // 鐩戞帶浜ゆ槗瀵瑰垪琛?/ Symbols to monitor
       // ============================================
       symbols: [
         'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
@@ -956,10 +970,10 @@ export default {
       ],
 
       // ============================================
-      // 因子类别配置 / Factor Category Configuration
+      // 鍥犲瓙绫诲埆閰嶇疆 / Factor Category Configuration
       // ============================================
       factorConfig: {
-        // 动量因子 / Momentum factors
+        // 鍔ㄩ噺鍥犲瓙 / Momentum factors
         momentum: {
           enabled: true,
           totalWeight: 0.35,
@@ -970,7 +984,7 @@ export default {
           },
         },
 
-        // 波动率因子 / Volatility factors
+        // 娉㈠姩鐜囧洜瀛?/ Volatility factors
         volatility: {
           enabled: true,
           totalWeight: 0.15,
@@ -981,7 +995,7 @@ export default {
           },
         },
 
-        // 资金流向因子 / Money flow factors
+        // 璧勯噾娴佸悜鍥犲瓙 / Money flow factors
         moneyFlow: {
           enabled: true,
           totalWeight: 0.25,
@@ -992,7 +1006,7 @@ export default {
           },
         },
 
-        // 换手率因子 / Turnover factors
+        // 鎹㈡墜鐜囧洜瀛?/ Turnover factors
         turnover: {
           enabled: true,
           totalWeight: 0.15,
@@ -1003,9 +1017,9 @@ export default {
           },
         },
 
-        // 资金费率因子 / Funding rate factors
+        // 璧勯噾璐圭巼鍥犲瓙 / Funding rate factors
         fundingRate: {
-          enabled: false, // 需要实时数据 / Requires live data
+          enabled: false, // 闇€瑕佸疄鏃舵暟鎹?/ Requires live data
           totalWeight: 0.1,
           factors: {
             'Funding_Percentile': { weight: 0.5 },
@@ -1014,9 +1028,9 @@ export default {
           },
         },
 
-        // 大单因子 / Large order factors
+        // 澶у崟鍥犲瓙 / Large order factors
         largeOrder: {
-          enabled: false, // 需要成交明细 / Requires trade details
+          enabled: false, // 闇€瑕佹垚浜ゆ槑缁?/ Requires trade details
           totalWeight: 0.1,
           factors: {
             'LargeOrder_Imbalance': { weight: 0.4 },
@@ -1027,584 +1041,584 @@ export default {
       },
 
       // ============================================
-      // 标准化与组合配置 / Normalization & Combination Config
+      // 鏍囧噯鍖栦笌缁勫悎閰嶇疆 / Normalization & Combination Config
       // ============================================
 
-      // 标准化方法: zscore, min_max, percentile, rank, robust
+      // 鏍囧噯鍖栨柟娉? zscore, min_max, percentile, rank, robust
       normalizationMethod: 'zscore',
 
-      // 组合方法: weighted_sum, weighted_average, rank_average, ic_weighted, equal
+      // 缁勫悎鏂规硶: weighted_sum, weighted_average, rank_average, ic_weighted, equal
       combinationMethod: 'weighted_average',
 
       // ============================================
-      // 选股配置 / Stock Selection Configuration
+      // 閫夎偂閰嶇疆 / Stock Selection Configuration
       // ============================================
 
-      // 做多 Top N 个资产 / Long top N assets
+      // 鍋氬 Top N 涓祫浜?/ Long top N assets
       topN: 5,
 
-      // 做空 Bottom N 个资产 / Short bottom N assets
+      // 鍋氱┖ Bottom N 涓祫浜?/ Short bottom N assets
       bottomN: 5,
 
-      // 仓位类型: long_only, short_only, long_short, market_neutral
+      // 浠撲綅绫诲瀷: long_only, short_only, long_short, market_neutral
       positionType: 'long_short',
 
-      // 权重分配方法: equal, score_weighted, volatility_parity, risk_parity
+      // 鏉冮噸鍒嗛厤鏂规硶: equal, score_weighted, volatility_parity, risk_parity
       weightMethod: 'equal',
 
       // ============================================
-      // 再平衡配置 / Rebalancing Configuration
+      // 鍐嶅钩琛￠厤缃?/ Rebalancing Configuration
       // ============================================
 
-      // 再平衡周期 (毫秒) / Rebalance period (ms)
-      rebalancePeriod: 24 * 60 * 60 * 1000, // 每天 / Daily
+      // 鍐嶅钩琛″懆鏈?(姣) / Rebalance period (ms)
+      rebalancePeriod: 24 * 60 * 60 * 1000, // 姣忓ぉ / Daily
 
-      // 最小变化阈值 (低于此不调仓) / Minimum change threshold
+      // 鏈€灏忓彉鍖栭槇鍊?(浣庝簬姝や笉璋冧粨) / Minimum change threshold
       minRebalanceThreshold: 0.05, // 5%
 
-      // 换手限制 / Turnover limit
-      maxTurnover: 0.3, // 单次最大换手 30%
+      // 鎹㈡墜闄愬埗 / Turnover limit
+      maxTurnover: 0.3, // 鍗曟鏈€澶ф崲鎵?30%
 
       // ============================================
-      // 仓位管理 / Position Management
+      // 浠撲綅绠＄悊 / Position Management
       // ============================================
 
-      // 单资产最大仓位 / Max position per asset
+      // 鍗曡祫浜ф渶澶т粨浣?/ Max position per asset
       maxPositionPerAsset: 0.15, // 15%
 
-      // 单边最大仓位 / Max position per side
+      // 鍗曡竟鏈€澶т粨浣?/ Max position per side
       maxPositionPerSide: 0.5, // 50%
 
-      // 总仓位百分比 / Total position percent
+      // 鎬讳粨浣嶇櫨鍒嗘瘮 / Total position percent
       positionPercent: 95,
 
       // ============================================
-      // 风险控制 / Risk Control
+      // 椋庨櫓鎺у埗 / Risk Control
       // ============================================
 
-      // 单资产止损 / Stop loss per asset
+      // 鍗曡祫浜ф鎹?/ Stop loss per asset
       stopLoss: 0.05, // 5%
 
-      // 单资产止盈 / Take profit per asset
+      // 鍗曡祫浜ф鐩?/ Take profit per asset
       takeProfit: 0.15, // 15%
 
-      // 总组合最大回撤 / Max portfolio drawdown
+      // 鎬荤粍鍚堟渶澶у洖鎾?/ Max portfolio drawdown
       maxDrawdown: 0.10, // 10%
 
-      // 是否启用波动率缩放 / Enable volatility scaling
+      // 鏄惁鍚敤娉㈠姩鐜囩缉鏀?/ Enable volatility scaling
       volatilityScaling: true,
 
-      // 目标波动率 (年化) / Target volatility (annualized)
+      // 鐩爣娉㈠姩鐜?(骞村寲) / Target volatility (annualized)
       targetVolatility: 0.20, // 20%
 
       // ============================================
-      // 过滤器配置 / Filter Configuration
+      // 杩囨护鍣ㄩ厤缃?/ Filter Configuration
       // ============================================
 
-      // 最小日均成交量 (USDT) / Minimum daily volume
+      // 鏈€灏忔棩鍧囨垚浜ら噺 (USDT) / Minimum daily volume
       minDailyVolume: 10000000,
 
-      // 最小价格 / Minimum price
+      // 鏈€灏忎环鏍?/ Minimum price
       minPrice: 0.0001,
 
-      // 最小因子有效数据点 / Minimum valid data points for factors
+      // 鏈€灏忓洜瀛愭湁鏁堟暟鎹偣 / Minimum valid data points for factors
       minDataPoints: 30,
 
-      // 排除的交易对 / Excluded symbols
+      // 鎺掗櫎鐨勪氦鏄撳 / Excluded symbols
       excludedSymbols: [],
     },
 
     // ============================================
-    // 风控驱动策略默认参数 / Risk-Driven Strategy Defaults
+    // 椋庢帶椹卞姩绛栫暐榛樿鍙傛暟 / Risk-Driven Strategy Defaults
     // ============================================
 
-    // 风控驱动策略默认参数 / Risk-Driven strategy defaults
+    // 椋庢帶椹卞姩绛栫暐榛樿鍙傛暟 / Risk-Driven strategy defaults
     riskDriven: {
       // ============================================
-      // 风险模式配置 / Risk Mode Configuration
+      // 椋庨櫓妯″紡閰嶇疆 / Risk Mode Configuration
       // ============================================
 
-      // 风险模式: target_volatility, risk_parity, max_drawdown, volatility_breakout, correlation_monitor, combined
+      // 椋庨櫓妯″紡: target_volatility, risk_parity, max_drawdown, volatility_breakout, correlation_monitor, combined
       riskMode: 'combined',
 
       // ============================================
-      // 目标波动率参数 / Target Volatility Parameters
+      // 鐩爣娉㈠姩鐜囧弬鏁?/ Target Volatility Parameters
       // ============================================
 
-      // 目标年化波动率 / Target annualized volatility
+      // 鐩爣骞村寲娉㈠姩鐜?/ Target annualized volatility
       targetVolatility: 0.15, // 15%
 
-      // 波动率计算回看周期 / Volatility lookback period
+      // 娉㈠姩鐜囪绠楀洖鐪嬪懆鏈?/ Volatility lookback period
       volatilityLookback: 20,
 
-      // 波动率调整速度 (0-1) / Volatility adjustment speed
+      // 娉㈠姩鐜囪皟鏁撮€熷害 (0-1) / Volatility adjustment speed
       volatilityAdjustSpeed: 0.3,
 
-      // 最小仓位比例 / Minimum position ratio
+      // 鏈€灏忎粨浣嶆瘮渚?/ Minimum position ratio
       minPositionRatio: 0.1,
 
-      // 最大仓位比例 / Maximum position ratio
+      // 鏈€澶т粨浣嶆瘮渚?/ Maximum position ratio
       maxPositionRatio: 1.5,
 
       // ============================================
-      // 最大回撤控制参数 / Max Drawdown Control Parameters
+      // 鏈€澶у洖鎾ゆ帶鍒跺弬鏁?/ Max Drawdown Control Parameters
       // ============================================
 
-      // 最大回撤阈值 / Max drawdown threshold
+      // 鏈€澶у洖鎾ら槇鍊?/ Max drawdown threshold
       maxDrawdown: 0.15, // 15%
 
-      // 预警回撤阈值 / Warning drawdown threshold
+      // 棰勮鍥炴挙闃堝€?/ Warning drawdown threshold
       warningDrawdown: 0.10, // 10%
 
-      // 严重回撤阈值 / Critical drawdown threshold
+      // 涓ラ噸鍥炴挙闃堝€?/ Critical drawdown threshold
       criticalDrawdown: 0.20, // 20%
 
-      // 紧急回撤阈值 / Emergency drawdown threshold
+      // 绱ф€ュ洖鎾ら槇鍊?/ Emergency drawdown threshold
       emergencyDrawdown: 0.25, // 25%
 
-      // 回撤减仓速度 / Drawdown reduce speed
+      // 鍥炴挙鍑忎粨閫熷害 / Drawdown reduce speed
       drawdownReduceSpeed: 0.5,
 
       // ============================================
-      // 波动率突破参数 / Volatility Breakout Parameters
+      // 娉㈠姩鐜囩獊鐮村弬鏁?/ Volatility Breakout Parameters
       // ============================================
 
-      // 波动率突破阈值 (倍数) / Volatility breakout threshold (multiplier)
+      // 娉㈠姩鐜囩獊鐮撮槇鍊?(鍊嶆暟) / Volatility breakout threshold (multiplier)
       volatilityBreakoutThreshold: 2.0,
 
-      // 波动率突破回看周期 / Volatility breakout lookback period
+      // 娉㈠姩鐜囩獊鐮村洖鐪嬪懆鏈?/ Volatility breakout lookback period
       volatilityBreakoutLookback: 60,
 
-      // 强制减仓比例 / Force reduce ratio
+      // 寮哄埗鍑忎粨姣斾緥 / Force reduce ratio
       forceReduceRatio: 0.5,
 
       // ============================================
-      // 风险平价参数 / Risk Parity Parameters
+      // 椋庨櫓骞充环鍙傛暟 / Risk Parity Parameters
       // ============================================
 
-      // 风险平价再平衡阈值 / Risk parity rebalance threshold
+      // 椋庨櫓骞充环鍐嶅钩琛￠槇鍊?/ Risk parity rebalance threshold
       riskParityRebalanceThreshold: 0.1,
 
       // ============================================
-      // 相关性监控参数 / Correlation Monitor Parameters
+      // 鐩稿叧鎬х洃鎺у弬鏁?/ Correlation Monitor Parameters
       // ============================================
 
-      // 相关性计算回看周期 / Correlation lookback period
+      // 鐩稿叧鎬ц绠楀洖鐪嬪懆鏈?/ Correlation lookback period
       correlationLookback: 30,
 
-      // 相关性阈值 / Correlation threshold
+      // 鐩稿叧鎬ч槇鍊?/ Correlation threshold
       correlationThreshold: 0.8,
 
-      // 相关性突增倍数 / Correlation spike multiplier
+      // 鐩稿叧鎬х獊澧炲€嶆暟 / Correlation spike multiplier
       correlationSpikeMultiplier: 1.5,
 
-      // 监控资产列表 / Assets to monitor
+      // 鐩戞帶璧勪骇鍒楄〃 / Assets to monitor
       assets: ['BTC/USDT', 'ETH/USDT'],
 
       // ============================================
-      // 仓位参数 / Position Parameters
+      // 浠撲綅鍙傛暟 / Position Parameters
       // ============================================
 
-      // 仓位百分比 / Position percent
+      // 浠撲綅鐧惧垎姣?/ Position percent
       positionPercent: 95,
     },
 
     // ============================================
-    // 自适应参数策略默认参数 / Adaptive Strategy Defaults
+    // 鑷€傚簲鍙傛暟绛栫暐榛樿鍙傛暟 / Adaptive Strategy Defaults
     // ============================================
 
-    // 自适应参数策略默认参数 / Adaptive strategy defaults
+    // 鑷€傚簲鍙傛暟绛栫暐榛樿鍙傛暟 / Adaptive strategy defaults
     adaptive: {
       // ============================================
-      // 自适应模式配置 / Adaptive Mode Configuration
+      // 鑷€傚簲妯″紡閰嶇疆 / Adaptive Mode Configuration
       // ============================================
 
-      // 自适应模式: full, sma_only, rsi_only, bb_only, custom
+      // 鑷€傚簲妯″紡: full, sma_only, rsi_only, bb_only, custom
       adaptiveMode: 'full',
 
-      // 启用开关 / Enable flags
-      enableSMAAdaptive: true,       // 启用 SMA 周期自适应
-      enableRSIAdaptive: true,       // 启用 RSI 阈值自适应
-      enableBBAdaptive: true,        // 启用布林带自适应
+      // 鍚敤寮€鍏?/ Enable flags
+      enableSMAAdaptive: true,       // 鍚敤 SMA 鍛ㄦ湡鑷€傚簲
+      enableRSIAdaptive: true,       // 鍚敤 RSI 闃堝€艰嚜閫傚簲
+      enableBBAdaptive: true,        // 鍚敤甯冩灄甯﹁嚜閫傚簲
 
       // ============================================
-      // SMA 自适应参数 / SMA Adaptive Parameters
+      // SMA 鑷€傚簲鍙傛暟 / SMA Adaptive Parameters
       // ============================================
 
-      // 基准周期 / Base periods
-      smaBaseFast: 10,               // 快线基准周期
-      smaBaseSlow: 30,               // 慢线基准周期
+      // 鍩哄噯鍛ㄦ湡 / Base periods
+      smaBaseFast: 10,               // 蹇嚎鍩哄噯鍛ㄦ湡
+      smaBaseSlow: 30,               // 鎱㈢嚎鍩哄噯鍛ㄦ湡
 
-      // 波动率调整范围 (0.5 = 可缩短/延长 50%) / Volatility adjustment range
+      // 娉㈠姩鐜囪皟鏁磋寖鍥?(0.5 = 鍙缉鐭?寤堕暱 50%) / Volatility adjustment range
       smaPeriodAdjustRange: 0.5,
 
-      // 波动率阈值 / Volatility thresholds
-      smaVolLowThreshold: 25,        // 低波动百分位
-      smaVolHighThreshold: 75,       // 高波动百分位
+      // 娉㈠姩鐜囬槇鍊?/ Volatility thresholds
+      smaVolLowThreshold: 25,        // 浣庢尝鍔ㄧ櫨鍒嗕綅
+      smaVolHighThreshold: 75,       // 楂樻尝鍔ㄧ櫨鍒嗕綅
 
       // ============================================
-      // RSI 自适应参数 / RSI Adaptive Parameters
+      // RSI 鑷€傚簲鍙傛暟 / RSI Adaptive Parameters
       // ============================================
 
-      // RSI 周期 / RSI period
+      // RSI 鍛ㄦ湡 / RSI period
       rsiPeriod: 14,
 
-      // 基准阈值 / Base thresholds
-      rsiBaseOversold: 30,           // 基准超卖阈值
-      rsiBaseOverbought: 70,         // 基准超买阈值
+      // 鍩哄噯闃堝€?/ Base thresholds
+      rsiBaseOversold: 30,           // 鍩哄噯瓒呭崠闃堝€?
+      rsiBaseOverbought: 70,         // 鍩哄噯瓒呬拱闃堝€?
 
-      // 趋势市阈值 / Trending market thresholds
-      rsiTrendingOversold: 25,       // 趋势市超卖
-      rsiTrendingOverbought: 75,     // 趋势市超买
+      // 瓒嬪娍甯傞槇鍊?/ Trending market thresholds
+      rsiTrendingOversold: 25,       // 瓒嬪娍甯傝秴鍗?
+      rsiTrendingOverbought: 75,     // 瓒嬪娍甯傝秴涔?
 
-      // 震荡市阈值 / Ranging market thresholds
-      rsiRangingOversold: 35,        // 震荡市超卖
-      rsiRangingOverbought: 65,      // 震荡市超买
+      // 闇囪崱甯傞槇鍊?/ Ranging market thresholds
+      rsiRangingOversold: 35,        // 闇囪崱甯傝秴鍗?
+      rsiRangingOverbought: 65,      // 闇囪崱甯傝秴涔?
 
       // ============================================
-      // 布林带自适应参数 / Bollinger Bands Adaptive Parameters
+      // 甯冩灄甯﹁嚜閫傚簲鍙傛暟 / Bollinger Bands Adaptive Parameters
       // ============================================
 
-      // 布林带周期 / Bollinger period
+      // 甯冩灄甯﹀懆鏈?/ Bollinger period
       bbPeriod: 20,
 
-      // 标准差调整范围 / Std dev adjustment range
-      bbBaseStdDev: 2.0,             // 基准标准差
-      bbMinStdDev: 1.5,              // 低波动时标准差
-      bbMaxStdDev: 3.0,              // 高波动时标准差
+      // 鏍囧噯宸皟鏁磋寖鍥?/ Std dev adjustment range
+      bbBaseStdDev: 2.0,             // 鍩哄噯鏍囧噯宸?
+      bbMinStdDev: 1.5,              // 浣庢尝鍔ㄦ椂鏍囧噯宸?
+      bbMaxStdDev: 3.0,              // 楂樻尝鍔ㄦ椂鏍囧噯宸?
 
-      // ATR 参考参数 / ATR reference parameters
+      // ATR 鍙傝€冨弬鏁?/ ATR reference parameters
       atrPeriod: 14,
       atrLookback: 100,
 
       // ============================================
-      // 信号融合参数 / Signal Fusion Parameters
+      // 淇″彿铻嶅悎鍙傛暟 / Signal Fusion Parameters
       // ============================================
 
-      // 信号权重 / Signal weights
-      smaWeight: 0.4,                // SMA 信号权重
-      rsiWeight: 0.3,                // RSI 信号权重
-      bbWeight: 0.3,                 // 布林带信号权重
+      // 淇″彿鏉冮噸 / Signal weights
+      smaWeight: 0.4,                // SMA 淇″彿鏉冮噸
+      rsiWeight: 0.3,                // RSI 淇″彿鏉冮噸
+      bbWeight: 0.3,                 // 甯冩灄甯︿俊鍙锋潈閲?
 
-      // 信号确认阈值 / Signal threshold
+      // 淇″彿纭闃堝€?/ Signal threshold
       signalThreshold: 0.5,
 
-      // 趋势过滤 / Trend filter
+      // 瓒嬪娍杩囨护 / Trend filter
       useTrendFilter: true,
       trendMAPeriod: 50,
 
       // ============================================
-      // 市场状态检测参数 / Market Regime Detection Parameters
+      // 甯傚満鐘舵€佹娴嬪弬鏁?/ Market Regime Detection Parameters
       // ============================================
 
-      adxPeriod: 14,                 // ADX 周期
-      adxTrendThreshold: 25,         // ADX 趋势阈值
-      extremeVolPercentile: 95,      // 极端波动率百分位
+      adxPeriod: 14,                 // ADX 鍛ㄦ湡
+      adxTrendThreshold: 25,         // ADX 瓒嬪娍闃堝€?
+      extremeVolPercentile: 95,      // 鏋佺娉㈠姩鐜囩櫨鍒嗕綅
 
       // ============================================
-      // 仓位参数 / Position Parameters
+      // 浠撲綅鍙傛暟 / Position Parameters
       // ============================================
 
-      positionPercent: 95,           // 仓位百分比
+      positionPercent: 95,           // 浠撲綅鐧惧垎姣?
     },
   },
 
   // ============================================
-  // 风控配置 / Risk Management Configuration
+  // 椋庢帶閰嶇疆 / Risk Management Configuration
   // ============================================
   risk: {
-    // 全局风控开关 / Global risk management switch
+    // 鍏ㄥ眬椋庢帶寮€鍏?/ Global risk management switch
     enabled: true,
 
-    // 最大持仓比例 / Maximum position ratio
+    // 鏈€澶ф寔浠撴瘮渚?/ Maximum position ratio
     maxPositionRatio: 0.3,
 
-    // 单笔最大风险 / Maximum risk per trade
+    // 鍗曠瑪鏈€澶ч闄?/ Maximum risk per trade
     maxRiskPerTrade: 0.02,
 
-    // 每日最大亏损 (USDT) / Maximum daily loss (USDT)
+    // 姣忔棩鏈€澶т簭鎹?(USDT) / Maximum daily loss (USDT)
     maxDailyLoss: 1000,
 
-    // 最大回撤比例 / Maximum drawdown ratio
+    // 鏈€澶у洖鎾ゆ瘮渚?/ Maximum drawdown ratio
     maxDrawdown: 0.2,
 
-    // 最大持仓数量 / Maximum number of positions
+    // 鏈€澶ф寔浠撴暟閲?/ Maximum number of positions
     maxPositions: 5,
 
-    // 最大杠杆倍数 / Maximum leverage
+    // 鏈€澶ф潬鏉嗗€嶆暟 / Maximum leverage
     maxLeverage: 3,
 
-    // 仓位计算方法: 'fixed' | 'risk_based' | 'kelly' | 'atr_based'
+    // 浠撲綅璁＄畻鏂规硶: 'fixed' | 'risk_based' | 'kelly' | 'atr_based'
     positionSizing: 'risk_based',
 
-    // 止损配置 / Stop loss configuration
+    // 姝㈡崯閰嶇疆 / Stop loss configuration
     stopLoss: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 默认止损比例 / Default stop loss ratio
+      // 榛樿姝㈡崯姣斾緥 / Default stop loss ratio
       defaultRatio: 0.02,
 
-      // 是否启用追踪止损 / Whether to enable trailing stop
+      // 鏄惁鍚敤杩借釜姝㈡崯 / Whether to enable trailing stop
       trailingStop: true,
 
-      // 追踪止损回撤比例 / Trailing stop drawdown ratio
+      // 杩借釜姝㈡崯鍥炴挙姣斾緥 / Trailing stop drawdown ratio
       trailingRatio: 0.015,
     },
 
-    // 止盈配置 / Take profit configuration
+    // 姝㈢泩閰嶇疆 / Take profit configuration
     takeProfit: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 默认止盈比例 / Default take profit ratio
+      // 榛樿姝㈢泩姣斾緥 / Default take profit ratio
       defaultRatio: 0.04,
 
-      // 是否启用分批止盈 / Whether to enable partial take profit
+      // 鏄惁鍚敤鍒嗘壒姝㈢泩 / Whether to enable partial take profit
       partialTakeProfit: false,
 
-      // 分批止盈比例 / Partial take profit ratios
+      // 鍒嗘壒姝㈢泩姣斾緥 / Partial take profit ratios
       partialRatios: [0.5, 0.3, 0.2],
     },
 
-    // 黑名单交易对 / Blacklisted symbols
+    // 榛戝悕鍗曚氦鏄撳 / Blacklisted symbols
     blacklist: [],
 
-    // 白名单交易对 (空表示全部允许) / Whitelisted symbols (empty means all allowed)
+    // 鐧藉悕鍗曚氦鏄撳 (绌鸿〃绀哄叏閮ㄥ厑璁? / Whitelisted symbols (empty means all allowed)
     whitelist: [],
   },
 
   // ============================================
-  // 订单执行配置 / Order Execution Configuration
+  // 璁㈠崟鎵ц閰嶇疆 / Order Execution Configuration
   // ============================================
   executor: {
-    // 最大重试次数 / Maximum retry attempts
+    // 鏈€澶ч噸璇曟鏁?/ Maximum retry attempts
     maxRetries: 3,
 
-    // 重试延迟 (毫秒) / Retry delay (ms)
+    // 閲嶈瘯寤惰繜 (姣) / Retry delay (ms)
     retryDelay: 1000,
 
-    // 最大滑点 (百分比) / Maximum slippage (%)
+    // 鏈€澶ф粦鐐?(鐧惧垎姣? / Maximum slippage (%)
     maxSlippage: 0.5,
 
-    // 订单超时 (毫秒) / Order timeout (ms)
+    // 璁㈠崟瓒呮椂 (姣) / Order timeout (ms)
     orderTimeout: 30000,
 
-    // 是否启用 TWAP / Whether to enable TWAP
+    // 鏄惁鍚敤 TWAP / Whether to enable TWAP
     enableTWAP: true,
 
-    // TWAP 配置 / TWAP configuration
+    // TWAP 閰嶇疆 / TWAP configuration
     twap: {
-      // 拆分阈值 (USDT) / Split threshold (USDT)
+      // 鎷嗗垎闃堝€?(USDT) / Split threshold (USDT)
       splitThreshold: 10000,
 
-      // 拆分份数 / Number of splits
+      // 鎷嗗垎浠芥暟 / Number of splits
       splitCount: 5,
 
-      // 拆分间隔 (毫秒) / Split interval (ms)
+      // 鎷嗗垎闂撮殧 (姣) / Split interval (ms)
       splitInterval: 2000,
     },
 
-    // 并发订单数量 / Concurrent order count
+    // 骞跺彂璁㈠崟鏁伴噺 / Concurrent order count
     concurrency: 3,
 
     // ============================================
-    // 执行 Alpha 配置 / Execution Alpha Configuration
+    // 鎵ц Alpha 閰嶇疆 / Execution Alpha Configuration
     // ============================================
     executionAlpha: {
-      // 是否启用执行 Alpha / Whether to enable Execution Alpha
+      // 鏄惁鍚敤鎵ц Alpha / Whether to enable Execution Alpha
       enabled: true,
 
-      // 订单大小分类阈值（相对于日均量）/ Order size classification thresholds
+      // 璁㈠崟澶у皬鍒嗙被闃堝€硷紙鐩稿浜庢棩鍧囬噺锛? Order size classification thresholds
       sizeClassThresholds: {
-        tiny: 0.001,      // 0.1% 日均量 / 0.1% of daily volume
-        small: 0.005,     // 0.5% 日均量 / 0.5% of daily volume
-        medium: 0.02,     // 2% 日均量 / 2% of daily volume
-        large: 0.05,      // 5% 日均量 / 5% of daily volume
+        tiny: 0.001,      // 0.1% 鏃ュ潎閲?/ 0.1% of daily volume
+        small: 0.005,     // 0.5% 鏃ュ潎閲?/ 0.5% of daily volume
+        medium: 0.02,     // 2% 鏃ュ潎閲?/ 2% of daily volume
+        large: 0.05,      // 5% 鏃ュ潎閲?/ 5% of daily volume
       },
 
-      // 策略选择权重 / Strategy selection weights
+      // 绛栫暐閫夋嫨鏉冮噸 / Strategy selection weights
       strategyWeights: {
-        liquidity: 0.3,      // 流动性权重 / Liquidity weight
-        slippageRisk: 0.3,   // 滑点风险权重 / Slippage risk weight
-        urgency: 0.2,        // 紧急性权重 / Urgency weight
-        orderSize: 0.2,      // 订单大小权重 / Order size weight
+        liquidity: 0.3,      // 娴佸姩鎬ф潈閲?/ Liquidity weight
+        slippageRisk: 0.3,   // 婊戠偣椋庨櫓鏉冮噸 / Slippage risk weight
+        urgency: 0.2,        // 绱ф€ユ€ф潈閲?/ Urgency weight
+        orderSize: 0.2,      // 璁㈠崟澶у皬鏉冮噸 / Order size weight
       },
 
-      // 自动策略阈值 / Auto strategy thresholds
+      // 鑷姩绛栫暐闃堝€?/ Auto strategy thresholds
       autoStrategyThresholds: {
-        minSizeForAlgo: 0.01,     // 1% 日均量使用 TWAP/VWAP / 1% for TWAP/VWAP
-        minSizeForIceberg: 0.02,  // 2% 日均量使用冰山单 / 2% for iceberg
+        minSizeForAlgo: 0.01,     // 1% 鏃ュ潎閲忎娇鐢?TWAP/VWAP / 1% for TWAP/VWAP
+        minSizeForIceberg: 0.02,  // 2% 鏃ュ潎閲忎娇鐢ㄥ啺灞卞崟 / 2% for iceberg
       },
 
-      // 默认 TWAP 执行时长（毫秒）/ Default TWAP duration (ms)
-      defaultTWAPDuration: 30 * 60 * 1000,  // 30 分钟 / 30 minutes
+      // 榛樿 TWAP 鎵ц鏃堕暱锛堟绉掞級/ Default TWAP duration (ms)
+      defaultTWAPDuration: 30 * 60 * 1000,  // 30 鍒嗛挓 / 30 minutes
 
-      // 默认切片数 / Default slice count
+      // 榛樿鍒囩墖鏁?/ Default slice count
       defaultSliceCount: 20,
 
-      // 是否启用自动延迟（高滑点时段）/ Enable auto delay (high slippage periods)
+      // 鏄惁鍚敤鑷姩寤惰繜锛堥珮婊戠偣鏃舵锛? Enable auto delay (high slippage periods)
       enableAutoDelay: true,
 
-      // 是否启用滑点记录 / Enable slippage recording
+      // 鏄惁鍚敤婊戠偣璁板綍 / Enable slippage recording
       enableSlippageRecording: true,
 
-      // 是否启用详细日志 / Enable verbose logging
+      // 鏄惁鍚敤璇︾粏鏃ュ織 / Enable verbose logging
       verbose: false,
 
-      // 盘口分析配置 / Order book analyzer configuration
+      // 鐩樺彛鍒嗘瀽閰嶇疆 / Order book analyzer configuration
       orderBookAnalyzer: {
-        // 深度分析层数 / Depth analysis levels
+        // 娣卞害鍒嗘瀽灞傛暟 / Depth analysis levels
         depthLevels: 20,
-        // 流动性评估阈值 / Liquidity assessment thresholds
+        // 娴佸姩鎬ц瘎浼伴槇鍊?/ Liquidity assessment thresholds
         liquidityThresholds: {
-          veryLow: 0.1,   // 10% 可执行
+          veryLow: 0.1,   // 10% 鍙墽琛?
           low: 0.3,       // 30%
           medium: 0.6,    // 60%
           high: 0.9,      // 90%
         },
       },
 
-      // 滑点分析配置 / Slippage analyzer configuration
+      // 婊戠偣鍒嗘瀽閰嶇疆 / Slippage analyzer configuration
       slippageAnalyzer: {
-        // 历史数据回看周期 / Historical lookback period
+        // 鍘嗗彶鏁版嵁鍥炵湅鍛ㄦ湡 / Historical lookback period
         lookbackPeriod: 100,
-        // 高风险时段（UTC 小时）/ High risk periods (UTC hours)
-        highRiskHours: [0, 8, 16],  // 整点结算时段
-        // 预警滑点阈值 / Warning slippage threshold
+        // 楂橀闄╂椂娈碉紙UTC 灏忔椂锛? High risk periods (UTC hours)
+        highRiskHours: [0, 8, 16],  // 鏁寸偣缁撶畻鏃舵
+        // 棰勮婊戠偣闃堝€?/ Warning slippage threshold
         warningThreshold: 0.005,  // 0.5%
-        // 严重滑点阈值 / Critical slippage threshold
+        // 涓ラ噸婊戠偣闃堝€?/ Critical slippage threshold
         criticalThreshold: 0.01,  // 1%
       },
 
-      // 冰山单配置 / Iceberg order configuration
+      // 鍐板北鍗曢厤缃?/ Iceberg order configuration
       iceberg: {
-        // 默认拆分策略: random, linear, adaptive
+        // 榛樿鎷嗗垎绛栫暐: random, linear, adaptive
         defaultSplitStrategy: 'adaptive',
-        // 默认显示模式: fixed, random, dynamic
+        // 榛樿鏄剧ず妯″紡: fixed, random, dynamic
         defaultDisplayMode: 'dynamic',
-        // 最小拆分份数 / Minimum split count
+        // 鏈€灏忔媶鍒嗕唤鏁?/ Minimum split count
         minSplitCount: 5,
-        // 最大拆分份数 / Maximum split count
+        // 鏈€澶ф媶鍒嗕唤鏁?/ Maximum split count
         maxSplitCount: 50,
-        // 随机化范围 / Randomization range
-        randomizationRange: 0.2,  // ±20%
+        // 闅忔満鍖栬寖鍥?/ Randomization range
+        randomizationRange: 0.2,  // 卤20%
       },
 
-      // TWAP/VWAP 配置 / TWAP/VWAP configuration
+      // TWAP/VWAP 閰嶇疆 / TWAP/VWAP configuration
       twapVwap: {
-        // 默认算法: twap, vwap, adaptive
+        // 榛樿绠楁硶: twap, vwap, adaptive
         defaultAlgo: 'adaptive',
-        // 最小切片间隔（毫秒）/ Minimum slice interval (ms)
-        minSliceInterval: 5000,   // 5 秒
-        // 最大切片间隔（毫秒）/ Maximum slice interval (ms)
-        maxSliceInterval: 300000, // 5 分钟
-        // 是否使用市场条件调整 / Use market condition adjustment
+        // 鏈€灏忓垏鐗囬棿闅旓紙姣锛? Minimum slice interval (ms)
+        minSliceInterval: 5000,   // 5 绉?
+        // 鏈€澶у垏鐗囬棿闅旓紙姣锛? Maximum slice interval (ms)
+        maxSliceInterval: 300000, // 5 鍒嗛挓
+        // 鏄惁浣跨敤甯傚満鏉′欢璋冩暣 / Use market condition adjustment
         useMarketConditionAdjust: true,
-        // 成交量曲线类型: uniform, u_shaped, front_loaded, back_loaded
+        // 鎴愪氦閲忔洸绾跨被鍨? uniform, u_shaped, front_loaded, back_loaded
         defaultVolumeCurve: 'u_shaped',
       },
     },
   },
 
   // ============================================
-  // 回测配置 / Backtest Configuration
+  // 鍥炴祴閰嶇疆 / Backtest Configuration
   // ============================================
   backtest: {
-    // 初始资金 (USDT) / Initial capital (USDT)
+    // 鍒濆璧勯噾 (USDT) / Initial capital (USDT)
     initialCapital: 10000,
 
-    // 手续费率 / Commission rate
+    // 鎵嬬画璐圭巼 / Commission rate
     commission: 0.001,
 
-    // 滑点模拟 / Slippage simulation
+    // 婊戠偣妯℃嫙 / Slippage simulation
     slippage: 0.0005,
 
-    // 数据目录 / Data directory
+    // 鏁版嵁鐩綍 / Data directory
     dataDir: 'data/historical',
 
-    // 结果输出目录 / Results output directory
+    // 缁撴灉杈撳嚭鐩綍 / Results output directory
     outputDir: 'data/backtest_results',
   },
 
   // ============================================
-  // 监控配置 / Monitoring Configuration
+  // 鐩戞帶閰嶇疆 / Monitoring Configuration
   // ============================================
   monitor: {
-    // 指标收集间隔 (毫秒) / Metrics collection interval (ms)
+    // 鎸囨爣鏀堕泦闂撮殧 (姣) / Metrics collection interval (ms)
     collectInterval: 10000,
 
-    // 健康检查间隔 (毫秒) / Health check interval (ms)
+    // 鍋ュ悍妫€鏌ラ棿闅?(姣) / Health check interval (ms)
     healthCheckInterval: 30000,
 
-    // 内存警告阈值 (MB) / Memory warning threshold (MB)
+    // 鍐呭瓨璀﹀憡闃堝€?(MB) / Memory warning threshold (MB)
     memoryWarningThreshold: 512,
 
-    // CPU 警告阈值 (%) / CPU warning threshold (%)
+    // CPU 璀﹀憡闃堝€?(%) / CPU warning threshold (%)
     cpuWarningThreshold: 80,
 
-    // Prometheus 配置 / Prometheus configuration
+    // Prometheus 閰嶇疆 / Prometheus configuration
     prometheus: {
-      // 是否启用 / Whether enabled
+      // 鏄惁鍚敤 / Whether enabled
       enabled: true,
 
-      // 端口 / Port
+      // 绔彛 / Port
       port: 9090,
     },
   },
 
   // ============================================
-  // 告警配置 / Alert Configuration
+  // 鍛婅閰嶇疆 / Alert Configuration
   // ============================================
   alert: {
-    // 告警冷却时间 (毫秒) / Alert cooldown (ms)
+    // 鍛婅鍐峰嵈鏃堕棿 (姣) / Alert cooldown (ms)
     cooldown: 60000,
 
-    // 邮件告警 / Email alerts
+    // 閭欢鍛婅 / Email alerts
     email: {
       enabled: false,
-      // 其他配置从环境变量读取 / Other config from env
+      // 鍏朵粬閰嶇疆浠庣幆澧冨彉閲忚鍙?/ Other config from env
     },
 
-    // Telegram 告警 / Telegram alerts
+    // Telegram 鍛婅 / Telegram alerts
     telegram: {
       enabled: false,
-      // 其他配置从环境变量读取 / Other config from env
+      // 鍏朵粬閰嶇疆浠庣幆澧冨彉閲忚鍙?/ Other config from env
     },
 
-    // 钉钉告警 / DingTalk alerts
+    // 閽夐拤鍛婅 / DingTalk alerts
     dingtalk: {
       enabled: false,
-      // 其他配置从环境变量读取 / Other config from env
+      // 鍏朵粬閰嶇疆浠庣幆澧冨彉閲忚鍙?/ Other config from env
     },
 
-    // Webhook 告警 / Webhook alerts
+    // Webhook 鍛婅 / Webhook alerts
     webhook: {
       enabled: false,
-      // 其他配置从环境变量读取 / Other config from env
+      // 鍏朵粬閰嶇疆浠庣幆澧冨彉閲忚鍙?/ Other config from env
     },
   },
 
   // ============================================
-  // 日志配置 / Logging Configuration
+  // 鏃ュ織閰嶇疆 / Logging Configuration
   // ============================================
   logging: {
-    // 日志级别: 'error' | 'warn' | 'info' | 'debug'
+    // 鏃ュ織绾у埆: 'error' | 'warn' | 'info' | 'debug'
     level: 'info',
 
-    // 日志目录 / Log directory
+    // 鏃ュ織鐩綍 / Log directory
     dir: 'logs',
 
-    // 是否输出到控制台 / Whether to output to console
+    // 鏄惁杈撳嚭鍒版帶鍒跺彴 / Whether to output to console
     console: true,
 
-    // 是否输出到文件 / Whether to output to file
+    // 鏄惁杈撳嚭鍒版枃浠?/ Whether to output to file
     file: true,
 
-    // 单个日志文件最大大小 (字节) / Max size per log file (bytes)
+    // 鍗曚釜鏃ュ織鏂囦欢鏈€澶уぇ灏?(瀛楄妭) / Max size per log file (bytes)
     maxSize: 10 * 1024 * 1024,  // 10MB
 
-    // 保留日志文件数量 / Number of log files to keep
+    // 淇濈暀鏃ュ織鏂囦欢鏁伴噺 / Number of log files to keep
     maxFiles: 5,
   },
 
@@ -1620,16 +1634,17 @@ export default {
   },
 
   // ============================================
-  // 服务端口配置 / Service Port Configuration
+  // 鏈嶅姟绔彛閰嶇疆 / Service Port Configuration
   // ============================================
   server: {
-    // HTTP API 端口 / HTTP API port
+    // HTTP API 绔彛 / HTTP API port
     httpPort: 3000,
 
-    // WebSocket 端口 / WebSocket port
+    // WebSocket 绔彛 / WebSocket port
     wsPort: 3001,
 
-    // 仪表盘端口 / Dashboard port
+    // 浠〃鐩樼鍙?/ Dashboard port
     dashboardPort: 8080,
   },
 };
+

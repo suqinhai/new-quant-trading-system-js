@@ -11,6 +11,18 @@ import ccxt from 'ccxt'; // 导入模块 ccxt
 
 // 导入事件发射器 / Import EventEmitter
 import EventEmitter from 'eventemitter3'; // 导入模块 eventemitter3
+import { SharedBalanceCache } from './SharedBalanceCache.js'; // 导入模块 ./SharedBalanceCache.js
+
+const resolveNumber = (value, fallback) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const normalizeRole = (value) => {
+  const role = (value || '').toString().toLowerCase();
+  if (role === 'leader' || role === 'follower') return role;
+  return 'auto';
+};
 
 /**
  * 统一订单格式
@@ -46,6 +58,33 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
   constructor(config = {}) { // 构造函数
     // 调用父类构造函数 / Call parent constructor
     super(); // 调用父类
+
+    const sharedBalanceConfig = config.sharedBalance || {};
+    const envSharedBalanceEnabled = ['true', '1'].includes(
+      (process.env.SHARED_BALANCE_ENABLED || '').toLowerCase()
+    );
+    const sharedBalanceEnabled = sharedBalanceConfig.enabled !== undefined
+      ? sharedBalanceConfig.enabled
+      : envSharedBalanceEnabled;
+    const sharedBalanceRole = normalizeRole(
+      sharedBalanceConfig.role || process.env.SHARED_BALANCE_ROLE
+    );
+    const ttlMs = resolveNumber(
+      sharedBalanceConfig.ttlMs ?? process.env.SHARED_BALANCE_TTL_MS,
+      5000
+    );
+    const staleMaxMs = resolveNumber(
+      sharedBalanceConfig.staleMaxMs ?? process.env.SHARED_BALANCE_STALE_MS,
+      Math.max(ttlMs * 3, 15000)
+    );
+    const lockTtlMs = resolveNumber(
+      sharedBalanceConfig.lockTtlMs ?? process.env.SHARED_BALANCE_LOCK_TTL_MS,
+      Math.max(ttlMs * 2, 8000)
+    );
+    const waitTimeoutMs = resolveNumber(
+      sharedBalanceConfig.waitTimeoutMs ?? process.env.SHARED_BALANCE_WAIT_MS,
+      2000
+    );
 
     // 交易所名称 (子类必须覆盖) / Exchange name (must be overridden by subclass)
     this.name = 'base'; // 设置 name
@@ -84,6 +123,20 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
       // 额外选项 / Additional options
       options: config.options || {}, // options
+
+      // Shared balance cache (multi-process)
+      sharedBalance: {
+        enabled: sharedBalanceEnabled,
+        role: sharedBalanceRole,
+        ttlMs,
+        staleMaxMs,
+        lockTtlMs,
+        waitTimeoutMs,
+        keyPrefix: sharedBalanceConfig.keyPrefix || process.env.SHARED_BALANCE_KEY_PREFIX,
+        lockKeyPrefix: sharedBalanceConfig.lockKeyPrefix || process.env.SHARED_BALANCE_LOCK_PREFIX,
+        dataKeyPrefix: sharedBalanceConfig.dataKeyPrefix,
+        redis: sharedBalanceConfig.redis || config.redis || null,
+      },
     }; // 结束代码块
 
     // CCXT 交易所实例 / CCXT exchange instance
@@ -97,6 +150,10 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
 
     // 精度信息缓存 / Precision info cache
     this.precisions = {}; // 设置 precisions
+
+    // Shared balance cache (lazy)
+    this._sharedBalanceCache = null; // 设置 _sharedBalanceCache
+    this._sharedBalanceDisabled = false; // 设置 _sharedBalanceDisabled
   } // 结束代码块
 
   /**
@@ -215,6 +272,15 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
     // 确保已连接 / Ensure connected
     this._ensureConnected(); // 调用 _ensureConnected
 
+    const sharedCache = await this._getSharedBalanceCache(); // 定义常量 sharedCache
+    if (!sharedCache) { // 条件判断 !sharedCache
+      return this._fetchBalanceDirect(); // 返回结果
+    } // 结束代码块
+
+    return this._fetchBalanceShared(sharedCache); // 返回结果
+  } // 结束代码块
+
+  async _fetchBalanceDirect() { // 执行语句
     // 执行带重试的请求 / Execute request with retry
     return this._executeWithRetry(async () => { // 返回结果
       // 调用 CCXT 获取余额 / Call CCXT to fetch balance
@@ -241,6 +307,101 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
         raw: balance, // raw
       }; // 结束代码块
     }, '获取余额 / Fetch balance'); // 执行语句
+  } // 结束代码块
+
+  async _fetchBalanceShared(sharedCache) { // 执行语句
+    const exchangeKey = (this.name || 'unknown').toLowerCase(); // 定义常量 exchangeKey
+    const role = this.config.sharedBalance?.role || 'auto'; // 定义常量 role
+
+    const cached = await sharedCache.get(exchangeKey); // 定义常量 cached
+    if (cached && cached.ageMs <= sharedCache.ttlMs) { // 条件判断 cached && cached.ageMs <= sharedCache.ttlMs
+      return cached.balance; // 返回结果
+    } // 结束代码块
+
+    if (role === 'follower') { // 条件判断 role === 'follower'
+      if (cached && cached.ageMs <= sharedCache.staleMaxMs) { // 条件判断 cached && cached.ageMs <= sharedCache.staleMaxMs
+        return cached.balance; // 返回结果
+      } // 结束代码块
+      const waited = await sharedCache.waitForFresh(exchangeKey); // 定义常量 waited
+      if (waited) { // 条件判断 waited
+        return waited.balance; // 返回结果
+      } // 结束代码块
+      throw new Error(`[${this.name}] Shared balance cache unavailable`); // 抛出异常
+    } // 结束代码块
+
+    if (role === 'leader') { // 条件判断 role === 'leader'
+      const balance = await this._fetchBalanceDirect(); // 定义常量 balance
+      await sharedCache.set(exchangeKey, balance); // 等待异步结果
+      return balance; // 返回结果
+    } // 结束代码块
+
+    const lockToken = await sharedCache.acquireLock(exchangeKey); // 定义常量 lockToken
+    if (lockToken) { // 条件判断 lockToken
+      try { // 尝试执行
+        const balance = await this._fetchBalanceDirect(); // 定义常量 balance
+        await sharedCache.set(exchangeKey, balance); // 等待异步结果
+        return balance; // 返回结果
+      } finally { // 执行语句
+        try { // 尝试执行
+          await sharedCache.releaseLock(exchangeKey, lockToken); // 等待异步结果
+        } catch { // 执行语句
+          // Ignore release errors
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
+
+    if (cached && cached.ageMs <= sharedCache.staleMaxMs) { // 条件判断 cached && cached.ageMs <= sharedCache.staleMaxMs
+      return cached.balance; // 返回结果
+    } // 结束代码块
+
+    const waited = await sharedCache.waitForFresh(exchangeKey); // 定义常量 waited
+    if (waited) { // 条件判断 waited
+      return waited.balance; // 返回结果
+    } // 结束代码块
+
+    const retryToken = await sharedCache.acquireLock(exchangeKey); // 定义常量 retryToken
+    if (retryToken) { // 条件判断 retryToken
+      try { // 尝试执行
+        const balance = await this._fetchBalanceDirect(); // 定义常量 balance
+        await sharedCache.set(exchangeKey, balance); // 等待异步结果
+        return balance; // 返回结果
+      } finally { // 执行语句
+        try { // 尝试执行
+          await sharedCache.releaseLock(exchangeKey, retryToken); // 等待异步结果
+        } catch { // 执行语句
+          // Ignore release errors
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
+
+    if (cached) { // 条件判断 cached
+      return cached.balance; // 返回结果
+    } // 结束代码块
+
+    throw new Error(`[${this.name}] Shared balance cache unavailable`); // 抛出异常
+  } // 结束代码块
+
+  async _getSharedBalanceCache() { // 执行语句
+    const config = this.config.sharedBalance; // 定义常量 config
+    if (!config?.enabled) { // 条件判断 !config?.enabled
+      return null; // 返回结果
+    } // 结束代码块
+    if (this._sharedBalanceDisabled) { // 条件判断 this._sharedBalanceDisabled
+      return null; // 返回结果
+    } // 结束代码块
+
+    if (!this._sharedBalanceCache) { // 条件判断 !this._sharedBalanceCache
+      this._sharedBalanceCache = new SharedBalanceCache(config); // 设置 _sharedBalanceCache
+      try { // 尝试执行
+        await this._sharedBalanceCache.connect(); // 等待异步结果
+      } catch (error) { // 执行语句
+        this._sharedBalanceDisabled = true; // 设置 _sharedBalanceDisabled
+        console.warn(`[${this.name}] Shared balance disabled: ${error.message}`); // 控制台输出
+        return null; // 返回结果
+      } // 结束代码块
+    } // 结束代码块
+
+    return this._sharedBalanceCache; // 返回结果
   } // 结束代码块
 
   /**

@@ -424,6 +424,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     this._minTradeIntervalCandles = 2; // 设置 _minTradeIntervalCandles
     // Kline timeframe used by market data
     this._klineTimeframe = null; // 设置 _klineTimeframe
+
+    // Shared balance config (resolved lazily)
+    this._sharedBalanceConfig = null; // 设置 _sharedBalanceConfig
   } // 结束代码块
 
   // ============================================
@@ -690,6 +693,14 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         if (password) { // 条件判断 password
           exchangeOptions.password = password; // 赋值 exchangeOptions.password
         } // 结束代码块
+
+        const sharedBalanceConfig = this._resolveSharedBalanceConfig(); // Shared balance config
+        if (sharedBalanceConfig) { // Shared balance config available
+          exchangeOptions.sharedBalance = sharedBalanceConfig; // Shared balance settings
+          if (sharedBalanceConfig.redis) { // Redis config provided
+            exchangeOptions.redis = sharedBalanceConfig.redis; // Redis settings for cache
+          }
+        }
 
         const exchange = ExchangeFactory.create(exchangeName, exchangeOptions); // 定义常量 exchange
 
@@ -1491,6 +1502,64 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     } // 结束代码块
     return this._minTradeIntervalCandles; // 返回结果
   } // 结束代码块
+
+  _resolveSharedBalanceConfig() { // Resolve shared balance config
+    if (this._sharedBalanceConfig) { // Return cached config
+      return this._sharedBalanceConfig; // Return cached config
+    }
+
+    const fromConfig = this.config?.account?.sharedBalance || this.config?.sharedBalance || {}; // Shared balance config
+    const envEnabled = ['true', '1'].includes((process.env.SHARED_BALANCE_ENABLED || '').toLowerCase()); // Env flag
+    const enabled = fromConfig.enabled !== undefined ? fromConfig.enabled : envEnabled; // Enabled flag
+
+    const roleRaw = (fromConfig.role || process.env.SHARED_BALANCE_ROLE || 'auto').toString().toLowerCase(); // Role input
+    const role = ['leader', 'follower', 'auto'].includes(roleRaw) ? roleRaw : 'auto'; // Normalized role
+
+    const ttlMs = this._resolveNumber(fromConfig.ttlMs ?? process.env.SHARED_BALANCE_TTL_MS, 5000); // TTL ms
+    const staleMaxMs = this._resolveNumber(fromConfig.staleMaxMs ?? process.env.SHARED_BALANCE_STALE_MS, Math.max(ttlMs * 3, 15000)); // Stale max ms
+    const lockTtlMs = this._resolveNumber(fromConfig.lockTtlMs ?? process.env.SHARED_BALANCE_LOCK_TTL_MS, Math.max(ttlMs * 2, 8000)); // Lock TTL ms
+    const waitTimeoutMs = this._resolveNumber(fromConfig.waitTimeoutMs ?? process.env.SHARED_BALANCE_WAIT_MS, 2000); // Wait timeout ms
+
+    const redisConfig = this._resolveSharedRedisConfig(); // Redis config
+
+    this._sharedBalanceConfig = {
+      enabled,
+      role,
+      ttlMs,
+      staleMaxMs,
+      lockTtlMs,
+      waitTimeoutMs,
+      keyPrefix: fromConfig.keyPrefix || process.env.SHARED_BALANCE_KEY_PREFIX,
+      lockKeyPrefix: fromConfig.lockKeyPrefix || process.env.SHARED_BALANCE_LOCK_PREFIX,
+      dataKeyPrefix: fromConfig.dataKeyPrefix,
+      redis: fromConfig.redis || redisConfig || null,
+    };
+
+    return this._sharedBalanceConfig; // Return resolved config
+  } // End _resolveSharedBalanceConfig
+
+  _resolveSharedRedisConfig() { // Resolve Redis config for shared balance
+    const redis = this.config?.database?.redis || {}; // Redis config
+    const hasRedisEnv = Boolean(process.env.REDIS_URL || process.env.REDIS_HOST); // Env flag
+    const hasConfig = redis.enabled || redis.url || redis.host; // Config flag
+    if (!hasRedisEnv && !hasConfig) { // No Redis config
+      return null; // No Redis
+    }
+
+    return {
+      url: redis.url || process.env.REDIS_URL,
+      host: redis.host || process.env.REDIS_HOST,
+      port: redis.port || this._resolveNumber(process.env.REDIS_PORT, 6379),
+      password: redis.password || process.env.REDIS_PASSWORD,
+      db: redis.db || this._resolveNumber(process.env.REDIS_DB, 0),
+      keyPrefix: redis.keyPrefix || process.env.REDIS_PREFIX,
+    };
+  } // End _resolveSharedRedisConfig
+
+  _resolveNumber(value, fallback) { // Resolve numeric value
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  } // End _resolveNumber
 
   _recordClosedCandle(data) { // 调用 _recordClosedCandle
     const symbol = data?.symbol || 'n/a'; // 定义常量 symbol
@@ -2569,3 +2638,5 @@ export default main; // 默认导出
 
 // 运行主函数 / Run main function
 main(); // 调用 main
+
+
