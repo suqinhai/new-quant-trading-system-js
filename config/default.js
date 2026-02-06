@@ -303,6 +303,23 @@ export default {
       // 鏄惁浣跨敤鍔ㄦ€佷环鏍煎垵濮嬪寲 (浠庝氦鏄撴墍鑾峰彇褰撳墠浠锋牸)
       // Whether to use dynamic price initialization (get current price from exchange)
       useDynamicPrice: true,
+      // 价格长期超出区间时自动调整网格
+      // Auto adjust grid when price stays out of range
+      autoRecenter: true,
+      // 调整方式: 'recenter' | 'expand'
+      outOfRangeAction: 'recenter',
+      // 连续超出多少 tick 触发 (0 表示仅按时间触发)
+      outOfRangeRecenterTicks: 0,
+      // 超出持续时间触发 (ms)
+      outOfRangeRecenterMs: 30 * 60 * 1000,
+      // 最小重置间隔 (ms)
+      minRecenterIntervalMs: 10 * 60 * 1000,
+      // 重置时宽度倍数
+      recenterWidthMultiplier: 1.0,
+      // 扩网缓冲比例
+      expandBufferPercent: 0.05,
+      // 是否允许有持仓时调整
+      allowRecenterWithPosition: false,
     },
 
     // ============================================
@@ -505,6 +522,14 @@ export default {
           gridCount: 10,
           gridWidthPercent: 0.1,
           useDynamicPrice: true,
+          autoRecenter: true,
+          outOfRangeAction: 'recenter',
+          outOfRangeRecenterTicks: 0,
+          outOfRangeRecenterMs: 30 * 60 * 1000,
+          minRecenterIntervalMs: 10 * 60 * 1000,
+          recenterWidthMultiplier: 1.0,
+          expandBufferPercent: 0.05,
+          allowRecenterWithPosition: false,
         },
         ATRBreakout: {
           atrPeriod: 14,

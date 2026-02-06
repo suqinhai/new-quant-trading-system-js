@@ -39,6 +39,18 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
     // 是否使用动态价格初始化 / Whether to use dynamic price initialization
     this.useDynamicPrice = params.useDynamicPrice !== false; // 设置 useDynamicPrice
 
+    const resolveNumber = (value, fallback) => (Number.isFinite(value) ? value : fallback); // 解析数值参数
+
+    // 价格长期超出区间时自动调整网格 / Auto adjust grid when price stays out of range
+    this.autoRecenter = params.autoRecenter !== undefined ? Boolean(params.autoRecenter) : this.useDynamicPrice; // 设置 autoRecenter
+    this.outOfRangeAction = params.outOfRangeAction || 'recenter'; // outOfRangeAction: recenter | expand
+    this.outOfRangeRecenterTicks = resolveNumber(params.outOfRangeRecenterTicks, 0); // 连续超出多少 tick 触发
+    this.outOfRangeRecenterMs = resolveNumber(params.outOfRangeRecenterMs, 30 * 60 * 1000); // 超出持续时间触发 (ms)
+    this.minRecenterIntervalMs = resolveNumber(params.minRecenterIntervalMs, 10 * 60 * 1000); // 最小重置间隔
+    this.recenterWidthMultiplier = resolveNumber(params.recenterWidthMultiplier, 1.0); // 重置时宽度倍数
+    this.expandBufferPercent = resolveNumber(params.expandBufferPercent, 0.05); // 扩网缓冲比例
+    this.allowRecenterWithPosition = params.allowRecenterWithPosition === true; // 是否允许有持仓时调整
+
     // 网格数量 / Number of grids
     this.gridCount = params.gridCount || 10; // 设置 gridCount
 
@@ -56,6 +68,11 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
 
     // 网格是否已初始化 / Whether grids are initialized
     this._gridsInitialized = false; // 设置 _gridsInitialized
+
+    // 超出区间跟踪 / Out-of-range tracking
+    this._outOfRangeStreak = 0; // 连续超出次数
+    this._outOfRangeStartTs = null; // 超出开始时间
+    this._lastRecenterAt = 0; // 上次自动调整时间
   } // 结束代码块
 
   /**
@@ -164,6 +181,114 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
   } // 结束代码块
 
   /**
+   * 是否存在网格持仓
+   * Check if any grid has open position
+   * @returns {boolean}
+   * @private
+   */
+  _hasOpenGridPosition() { // 调用 _hasOpenGridPosition
+    return this.grids.some(grid => grid.position > 0); // 返回结果
+  } // 结束代码块
+
+  /**
+   * 重置超出区间跟踪
+   * Reset out-of-range tracking
+   * @private
+   */
+  _resetOutOfRangeTracking() { // 调用 _resetOutOfRangeTracking
+    this._outOfRangeStreak = 0; // 重置连续次数
+    this._outOfRangeStartTs = null; // 重置开始时间
+    this.setIndicator('outOfRangeStreak', 0); // 调用 setIndicator
+    this.setIndicator('outOfRangeMs', 0); // 调用 setIndicator
+  } // 结束代码块
+
+  /**
+   * 判断是否满足自动调整条件
+   * Determine if auto adjust should be triggered
+   * @param {number} nowTs - 当前时间戳 / Current timestamp
+   * @returns {boolean}
+   * @private
+   */
+  _shouldAutoAdjust(nowTs) { // 调用 _shouldAutoAdjust
+    if (!this.autoRecenter) { // 条件判断 !this.autoRecenter
+      return false; // 返回结果
+    } // 结束代码块
+
+    if (this.minRecenterIntervalMs > 0 && (nowTs - this._lastRecenterAt) < this.minRecenterIntervalMs) { // 条件判断 最小间隔
+      return false; // 返回结果
+    } // 结束代码块
+
+    const elapsedMs = this._outOfRangeStartTs ? (nowTs - this._outOfRangeStartTs) : 0; // 定义常量 elapsedMs
+    const tickReady = this.outOfRangeRecenterTicks > 0 && this._outOfRangeStreak >= this.outOfRangeRecenterTicks; // 定义常量 tickReady
+    const timeReady = this.outOfRangeRecenterMs > 0 && elapsedMs >= this.outOfRangeRecenterMs; // 定义常量 timeReady
+
+    if (!tickReady && !timeReady) { // 条件判断 !tickReady && !timeReady
+      return false; // 返回结果
+    } // 结束代码块
+
+    if (!this.allowRecenterWithPosition && this._hasOpenGridPosition()) { // 条件判断 不允许持仓调整
+      this.log('存在网格持仓，跳过自动调整 / Open grid positions detected, skip auto-adjust', 'warn'); // 调用 log
+      return false; // 返回结果
+    } // 结束代码块
+
+    return true; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 计算重新锚定网格范围
+   * Calculate recenter grid range
+   * @param {number} currentPrice - 当前价格 / Current price
+   * @returns {{ upper: number, lower: number }}
+   * @private
+   */
+  _calculateRecenterRange(currentPrice) { // 调用 _calculateRecenterRange
+    const widthPercent = Math.max(0.001, this.gridWidthPercent * this.recenterWidthMultiplier); // 定义常量 widthPercent
+    const halfWidth = currentPrice * (widthPercent / 2); // 定义常量 halfWidth
+    const upper = Math.round(currentPrice + halfWidth); // 定义常量 upper
+    const lower = Math.max(0, Math.round(currentPrice - halfWidth)); // 定义常量 lower
+    return { upper, lower }; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 计算扩网后的范围 (保持中心不变)
+   * Calculate expanded range (keep center)
+   * @param {number} currentPrice - 当前价格 / Current price
+   * @returns {{ upper: number, lower: number }}
+   * @private
+   */
+  _calculateExpandRange(currentPrice) { // 调用 _calculateExpandRange
+    const center = (this.upperPrice + this.lowerPrice) / 2; // 定义常量 center
+    const currentHalf = (this.upperPrice - this.lowerPrice) / 2; // 定义常量 currentHalf
+    const distance = Math.abs(currentPrice - center); // 定义常量 distance
+    const targetHalf = Math.max(currentHalf, distance * (1 + this.expandBufferPercent)); // 定义常量 targetHalf
+    const upper = Math.round(center + targetHalf); // 定义常量 upper
+    const lower = Math.max(0, Math.round(center - targetHalf)); // 定义常量 lower
+    return { upper, lower }; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 执行自动调整
+   * Execute auto adjustment
+   * @param {number} currentPrice - 当前价格 / Current price
+   * @param {number} nowTs - 当前时间戳 / Current timestamp
+   * @private
+   */
+  _autoAdjustGridRange(currentPrice, nowTs) { // 调用 _autoAdjustGridRange
+    const action = (this.outOfRangeAction || 'recenter').toLowerCase(); // 定义常量 action
+    const range = action === 'expand' // 三元表达式
+      ? this._calculateExpandRange(currentPrice) // 扩网
+      : this._calculateRecenterRange(currentPrice); // 重新锚定
+
+    this.log(`自动调整网格 / Auto-adjust grid (${action}): ${range.lower} - ${range.upper} (当前价格/current price: ${currentPrice})`); // 调用 log
+
+    this.adjustGridRange(range.upper, range.lower); // 调用 adjustGridRange
+    this._logGridInfo(); // 调用 _logGridInfo
+
+    this._lastRecenterAt = nowTs; // 记录时间
+    this._resetOutOfRangeTracking(); // 重置跟踪
+  } // 结束代码块
+
+  /**
    * 动态初始化网格范围 (从交易所获取当前价格)
    * Dynamically initialize grid range (get current price from exchange)
    * @private
@@ -249,9 +374,27 @@ export class GridStrategy extends BaseStrategy { // 导出类 GridStrategy
 
     // 检查价格是否在网格范围内 / Check if price is within grid range
     if (currentPrice < this.lowerPrice || currentPrice > this.upperPrice) { // 条件判断 currentPrice < this.lowerPrice || currentPric...
-      // 价格超出范围，记录日志 / Price out of range, log warning
-      this.log(`价格 ${currentPrice} 超出网格范围 [${this.lowerPrice}, ${this.upperPrice}] / Price out of grid range`, 'warn'); // 调用 log
+      const nowTs = candle.timestamp || Date.now(); // 定义常量 nowTs
+      if (this._outOfRangeStartTs === null) { // 条件判断 _outOfRangeStartTs
+        this._outOfRangeStartTs = nowTs; // 记录开始时间
+      } // 结束代码块
+      this._outOfRangeStreak += 1; // 连续次数+1
+
+      const elapsedMs = nowTs - this._outOfRangeStartTs; // 定义常量 elapsedMs
+      this.setIndicator('outOfRangeStreak', this._outOfRangeStreak); // 调用 setIndicator
+      this.setIndicator('outOfRangeMs', elapsedMs); // 调用 setIndicator
+
+      // 满足条件则自动调整 / Auto adjust when conditions met
+      if (this._shouldAutoAdjust(nowTs)) { // 条件判断 _shouldAutoAdjust
+        this._autoAdjustGridRange(currentPrice, nowTs); // 调用 _autoAdjustGridRange
+      } else { // 执行语句
+        // 价格超出范围，记录日志 / Price out of range, log warning
+        this.log(`价格 ${currentPrice} 超出网格范围 [${this.lowerPrice}, ${this.upperPrice}] / Price out of grid range (streak=${this._outOfRangeStreak}, elapsed=${(elapsedMs / 60000).toFixed(1)}m)`, 'warn'); // 调用 log
+      } // 结束代码块
       return; // 返回结果
+    } else if (this._outOfRangeStreak > 0) { // 执行语句
+      // 价格回到范围内，重置计数 / Price back in range, reset tracking
+      this._resetOutOfRangeTracking(); // 调用 _resetOutOfRangeTracking
     } // 结束代码块
 
     // 遍历所有网格 / Iterate all grids
