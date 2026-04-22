@@ -728,7 +728,6 @@ function getRedisClient(config = {}) { // 定义函数 getRedisClient
 export { // 导出命名成员
   RedisClient, // 执行语句
   getRedisClient, // 执行语句
-  KEY_PREFIX, // 执行语句
 }; // 结束代码块
 
 export default RedisClient; // 默认导出

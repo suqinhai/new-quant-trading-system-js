@@ -285,9 +285,9 @@ class TradeWriter extends EventEmitter { // 定义类 TradeWriter(继承EventEmi
 
         if (retries < this.config.maxRetries) { // 条件判断 retries < this.config.maxRetries
           // 等待后重试 / Wait before retry
-          await new Promise(resolve => // 等待异步结果
-            setTimeout(resolve, this.config.retryDelay * retries) // 设置延时任务
-          ); // 结束调用或参数
+          await new Promise(resolve => { // 等待异步结果
+            setTimeout(resolve, this.config.retryDelay * retries); // 设置延时任务
+          }); // 结束调用或参数
         } // 结束代码块
       } // 结束代码块
     } // 结束代码块

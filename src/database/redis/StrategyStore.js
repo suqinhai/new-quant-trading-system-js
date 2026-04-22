@@ -592,5 +592,5 @@ class StrategyStore { // 定义类 StrategyStore
   } // 结束代码块
 } // 结束代码块
 
-export { StrategyStore, STRATEGY_STATE, SIGNAL_TYPE }; // 导出命名成员
+export { StrategyStore }; // 导出命名成员
 export default StrategyStore; // 默认导出

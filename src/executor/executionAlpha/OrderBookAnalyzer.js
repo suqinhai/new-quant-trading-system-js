@@ -443,15 +443,16 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
     let expectedImpact; // 定义变量 expectedImpact
 
     switch (priceStrategy) { // 分支选择 priceStrategy
-      case 'aggressive': // 分支 'aggressive'
+      case 'aggressive': { // 分支 'aggressive'
         // 激进：穿透到能成交目标量的价位 / Aggressive: penetrate to fill target
         const impactResult = this.estimateImpactCost(symbol, side, orderSize * targetFillRatio, orderBook); // 定义常量 impactResult
         optimalPrice = impactResult.estimatedPrice; // 赋值 optimalPrice
         expectedFill = impactResult.fillRatio; // 赋值 expectedFill
         expectedImpact = impactResult.impactBps; // 赋值 expectedImpact
         break; // 跳出循环或分支
+      }
 
-      case 'passive': // 分支 'passive'
+      case 'passive': { // 分支 'passive'
         // 被动：挂在对手盘最优价之内 / Passive: place inside spread
         const spreadMid = (bestPrice + oppositePrice) / 2; // 定义常量 spreadMid
         optimalPrice = isBuy // 赋值 optimalPrice
@@ -460,6 +461,7 @@ export class OrderBookAnalyzer extends EventEmitter { // 导出类 OrderBookAnal
         expectedFill = 0.3;  // 预期30%成交 / Expected 30% fill
         expectedImpact = 0; // 赋值 expectedImpact
         break; // 跳出循环或分支
+      }
 
       default: // 默认
         // 平衡：在最优价附近，控制冲击 / Balanced: near best price, control impact

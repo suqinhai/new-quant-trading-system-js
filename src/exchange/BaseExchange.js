@@ -1751,7 +1751,7 @@ export class BaseExchange extends EventEmitter { // 导出类 BaseExchange
    * @private
    */
   _sleep(ms) { // 调用 _sleep
-    return new Promise(resolve => setTimeout(resolve, ms)); // 返回结果
+    return new Promise(resolve => { setTimeout(resolve, ms); }); // 返回结果
   } // 结束代码块
 } // 结束代码块
 

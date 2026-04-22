@@ -2680,7 +2680,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         } // 结束代码块
         break; // 跳出循环或分支
 
-      case DATA_TYPES.FUNDING_RATE: // 分支 DATA_TYPES.FUNDING_RATE
+      case DATA_TYPES.FUNDING_RATE: { // 分支 DATA_TYPES.FUNDING_RATE
         // 资金费率 (仅合约) / Funding rate (futures only)
         if (isSpot) { // 条件判断 isSpot
           throw new Error('资金费率仅适用于合约 / Funding rate only available for futures'); // 抛出异常
@@ -2688,6 +2688,7 @@ export class MarketDataEngine extends EventEmitter { // 导出类 MarketDataEngi
         const futuresSymbol = this._toKuCoinFuturesSymbol(symbol); // 定义常量 futuresSymbol
         topic = `/contract/instrument:${futuresSymbol}`; // 赋值 topic
         break; // 跳出循环或分支
+      }
 
       case DATA_TYPES.KLINE: // 分支 DATA_TYPES.KLINE
         // K线数据 / Kline data

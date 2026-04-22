@@ -669,7 +669,7 @@ export class TelegramNotifier extends EventEmitter { // 导出类 TelegramNotifi
       await this._sendMessageDirect(messageObj); // 等待异步结果
 
       // 等待一小段时间避免限流 / Wait briefly to avoid rate limit
-      await new Promise(resolve => setTimeout(resolve, 100)); // 等待异步结果
+      await new Promise(resolve => { setTimeout(resolve, 100); }); // 等待异步结果
     } // 结束代码块
   } // 结束代码块
 

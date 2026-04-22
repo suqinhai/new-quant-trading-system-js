@@ -572,7 +572,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
         return this._checkStrengthThreshold(ranking); // 返回结果
 
       case ROTATION_TRIGGERS.HYBRID: // 分支 ROTATION_TRIGGERS.HYBRID
-      default: // 默认
+      default: { // 默认
         // 满足周期条件，或者排名/强弱变化显著
         // Meet period condition, or significant rank/strength change
         const periodicTrigger = now - this.lastRotationTime >= this.config.rebalancePeriod; // 定义常量 periodicTrigger
@@ -580,6 +580,7 @@ export class RotationStrategy extends CrossSectionalStrategy { // 导出类 Rota
         const thresholdTrigger = this._checkStrengthThreshold(ranking); // 定义常量 thresholdTrigger
 
         return periodicTrigger || (rankChangeTrigger && thresholdTrigger); // 返回结果
+      }
     } // 结束代码块
   } // 结束代码块
 

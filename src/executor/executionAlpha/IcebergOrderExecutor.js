@@ -836,13 +836,15 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
     const { liquidityInfo = {}, marketCondition = {} } = params; // 解构赋值
 
     switch (strategy) { // 分支选择 strategy
-      case SPLIT_STRATEGY.FIXED: // 分支 SPLIT_STRATEGY.FIXED
+      case SPLIT_STRATEGY.FIXED: { // 分支 SPLIT_STRATEGY.FIXED
         const fixedSize = params.splitSize || totalSize * 0.1; // 定义常量 fixedSize
         return SplitCalculator.fixedSplit(totalSize, fixedSize); // 返回结果
+      }
 
-      case SPLIT_STRATEGY.PERCENTAGE: // 分支 SPLIT_STRATEGY.PERCENTAGE
+      case SPLIT_STRATEGY.PERCENTAGE: { // 分支 SPLIT_STRATEGY.PERCENTAGE
         const percentage = params.splitPercentage || 0.1; // 定义常量 percentage
         return SplitCalculator.percentageSplit(totalSize, percentage); // 返回结果
+      }
 
       case SPLIT_STRATEGY.LIQUIDITY: // 分支 SPLIT_STRATEGY.LIQUIDITY
         return SplitCalculator.liquiditySplit(totalSize, liquidityInfo); // 返回结果
@@ -867,10 +869,11 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
    */
   _applyDisplayMode(iceberg, size) { // 调用 _applyDisplayMode
     switch (iceberg.displayMode) { // 分支选择 iceberg.displayMode
-      case DISPLAY_MODE.RANDOM: // 分支 DISPLAY_MODE.RANDOM
+      case DISPLAY_MODE.RANDOM: { // 分支 DISPLAY_MODE.RANDOM
         // 随机显示量 / Random display size
         const randomFactor = 1 + (Math.random() * 2 - 1) * this.config.randomRange; // 定义常量 randomFactor
         return Math.min(size * randomFactor, iceberg.remainingSize); // 返回结果
+      }
 
       case DISPLAY_MODE.DYNAMIC: // 分支 DISPLAY_MODE.DYNAMIC
         // 动态显示量（基于流动性）/ Dynamic display size (liquidity-based)
@@ -1099,7 +1102,7 @@ export class IcebergOrderExecutor extends EventEmitter { // 导出类 IcebergOrd
    * @private
    */
   _sleep(ms) { // 调用 _sleep
-    return new Promise(resolve => setTimeout(resolve, ms)); // 返回结果
+    return new Promise(resolve => { setTimeout(resolve, ms); }); // 返回结果
   } // 结束代码块
 
   /**

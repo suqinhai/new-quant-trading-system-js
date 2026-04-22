@@ -24,7 +24,7 @@ class AsyncLock { // 定义类 AsyncLock
    */
   async acquire() { // 执行语句
     while (this._locked) { // 循环条件 this._locked
-      await new Promise(resolve => this._waiting.push(resolve)); // 等待异步结果
+      await new Promise(resolve => { this._waiting.push(resolve); }); // 等待异步结果
     } // 结束代码块
     this._locked = true; // 设置 _locked
   } // 结束代码块

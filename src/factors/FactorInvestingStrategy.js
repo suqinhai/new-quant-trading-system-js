@@ -363,13 +363,14 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
     const weights = new Map(); // 定义常量 weights
 
     switch (this.weightMethod) { // 分支选择 this.weightMethod
-      case WEIGHT_METHOD.EQUAL: // 分支 WEIGHT_METHOD.EQUAL
+      case WEIGHT_METHOD.EQUAL: { // 分支 WEIGHT_METHOD.EQUAL
         // 等权重 / Equal weight
         const equalWeight = Math.min(1 / n, this.maxPositionPerAsset); // 定义常量 equalWeight
         assets.forEach(a => weights.set(a.symbol, equalWeight)); // 调用 assets.forEach
         break; // 跳出循环或分支
+      }
 
-      case WEIGHT_METHOD.SCORE_WEIGHTED: // 分支 WEIGHT_METHOD.SCORE_WEIGHTED
+      case WEIGHT_METHOD.SCORE_WEIGHTED: { // 分支 WEIGHT_METHOD.SCORE_WEIGHTED
         // 按得分加权 / Score weighted
         const totalScore = assets.reduce((sum, a) => sum + Math.max(a.score, 0), 0); // 定义函数 totalScore
         if (totalScore > 0) { // 条件判断 totalScore > 0
@@ -383,10 +384,12 @@ export class FactorInvestingStrategy extends BaseStrategy { // 导出类 FactorI
           assets.forEach(a => weights.set(a.symbol, ew)); // 调用 assets.forEach
         } // 结束代码块
         break; // 跳出循环或分支
+      }
 
-      default: // 默认
+      default: { // 默认
         const defaultWeight = Math.min(1 / n, this.maxPositionPerAsset); // 定义常量 defaultWeight
         assets.forEach(a => weights.set(a.symbol, defaultWeight)); // 调用 assets.forEach
+      }
     } // 结束代码块
 
     // 归一化确保总权重不超过限制 / Normalize to ensure total weight within limit

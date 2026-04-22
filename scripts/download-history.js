@@ -178,7 +178,7 @@ const TABLE_SCHEMAS = {
  * @param {number} ms - 延迟毫秒数 / Delay in milliseconds
  * @returns {Promise<void>}
  */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => { setTimeout(resolve, ms); });
 
 /**
  * 解析日期字符串为时间戳

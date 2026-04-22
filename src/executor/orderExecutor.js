@@ -458,7 +458,7 @@ class RateLimitManager { // 定义类 RateLimitManager
     // 如果需要等待 / If need to wait
     if (waitTime > 0) { // 条件判断 waitTime > 0
       // 等待指定时间 / Wait for specified time
-      await new Promise(resolve => setTimeout(resolve, waitTime)); // 等待异步结果
+      await new Promise(resolve => { setTimeout(resolve, waitTime); }); // 等待异步结果
     } // 结束代码块
   } // 结束代码块
 } // 结束代码块
@@ -1167,7 +1167,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
             this.log(`Nonce 冲突: ${orderInfo.exchangeId}，调整后重试 / Nonce conflict, adjusting and retrying`, 'warn'); // 调用 log
 
             // 短暂延迟后重试 / Retry after short delay
-            await new Promise(resolve => setTimeout(resolve, this.config.nonceRetryDelay)); // 等待异步结果
+            await new Promise(resolve => { setTimeout(resolve, this.config.nonceRetryDelay); }); // 等待异步结果
             continue; // 继续下一轮循环
 
           case ERROR_TYPE.INSUFFICIENT_BALANCE: // 分支 ERROR_TYPE.INSUFFICIENT_BALANCE
@@ -1186,7 +1186,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
             // 增加重试计数并继续 / Increment retry count and continue
             orderInfo.resubmitCount++; // 执行语句
-            await new Promise(resolve => setTimeout(resolve, 500)); // 等待异步结果
+            await new Promise(resolve => { setTimeout(resolve, 500); }); // 等待异步结果
             continue; // 继续下一轮循环
         } // 结束代码块
       } // 结束代码块
@@ -1213,7 +1213,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
     ); // 结束调用或参数
 
     // 模拟网络延迟 / Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, this.config.dryRunFillDelay)); // 等待异步结果
+    await new Promise(resolve => { setTimeout(resolve, this.config.dryRunFillDelay); }); // 等待异步结果
 
     // 计算模拟成交价格 (添加滑点) / Calculate simulated fill price (with slippage)
     const slippageMultiplier = orderInfo.side === SIDE.BUY // 定义常量 slippageMultiplier
@@ -1389,7 +1389,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
           // Nonce 冲突处理 / Nonce conflict handling
           this.nonceManager.handleNonceConflict(orderInfo.exchangeId, error); // 访问 nonceManager
           this.stats.nonceConflicts++; // 访问 stats
-          await new Promise(resolve => setTimeout(resolve, this.config.nonceRetryDelay)); // 等待异步结果
+          await new Promise(resolve => { setTimeout(resolve, this.config.nonceRetryDelay); }); // 等待异步结果
           retries++; // 执行语句
           continue; // 继续下一轮循环
         } // 结束代码块

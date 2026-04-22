@@ -991,9 +991,9 @@ export class NetworkPartitionHandler extends EventEmitter { // 导出类 Network
       if (typeof this.exchangeClient.fetchTime === 'function') { // 条件判断 typeof this.exchangeClient.fetchTime === 'fun...
         await Promise.race([ // 等待异步结果
           this.exchangeClient.fetchTime(), // 访问 exchangeClient
-          new Promise((_, reject) => // 创建 Promise 实例
-            setTimeout(() => reject(new Error('心跳超时')), this.config.heartbeatTimeout) // 设置延时任务
-          ), // 结束调用或参数
+          new Promise((_, reject) => { // 创建 Promise 实例
+            setTimeout(() => reject(new Error('心跳超时')), this.config.heartbeatTimeout); // 设置延时任务
+          }), // 结束调用或参数
         ]); // 结束数组或索引
       } // 结束代码块
 

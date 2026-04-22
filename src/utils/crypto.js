@@ -255,7 +255,7 @@ export function validatePasswordStrength(password) { // 导出函数 validatePas
   if (/[0-9]/.test(password)) result.score += 1; // 条件判断 /[0-9]/.test(password)
   else result.messages.push('建议包含数字 / Should include numbers'); // 否则分支
 
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) result.score += 2;
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) result.score += 2;
   else result.messages.push('建议包含特殊字符 / Should include special characters');
 
   // 评分等级 / Score level

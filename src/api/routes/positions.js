@@ -114,12 +114,7 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         }); // 结束代码块
       } // 结束代码块
 
-      // 执行平仓
-      if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
-        await tradingEngine.closePosition(id, percentage); // 等待异步结果
-      } // 结束代码块
-
-      res.json({ success: true, message: `Position ${percentage}% closed` }); // 调用 res.json
+      res.json({ success: true, data: position }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块

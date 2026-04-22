@@ -638,5 +638,5 @@ class OrderStore { // 定义类 OrderStore
   } // 结束代码块
 } // 结束代码块
 
-export { OrderStore, ORDER_STATUS }; // 导出命名成员
+export { OrderStore }; // 导出命名成员
 export default OrderStore; // 默认导出

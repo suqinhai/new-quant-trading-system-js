@@ -315,7 +315,7 @@ export function parseInterval(interval) { // 导出函数 parseInterval
  * @returns {Promise<void>}
  */
 export function sleep(ms) { // 导出函数 sleep
-  return new Promise(resolve => setTimeout(resolve, ms)); // 返回结果
+  return new Promise(resolve => { setTimeout(resolve, ms); }); // 返回结果
 } // 结束代码块
 
 /**

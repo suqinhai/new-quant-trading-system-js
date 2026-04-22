@@ -333,10 +333,11 @@ class DrawdownMonitor { // 定义类 DrawdownMonitor
         return 0.1; // 只保留10%
       case RiskLevel.HIGH: // 分支 RiskLevel.HIGH
         return 0.3; // 减到30%
-      case RiskLevel.ELEVATED: // 分支 RiskLevel.ELEVATED
+      case RiskLevel.ELEVATED: { // 分支 RiskLevel.ELEVATED
         // 线性减仓
         const ratio = 1 - (dd - this.warningDrawdown) / (this.maxDrawdown - this.warningDrawdown); // 定义常量 ratio
         return Math.max(0.5, ratio); // 返回结果
+      }
       case RiskLevel.NORMAL: // 分支 RiskLevel.NORMAL
         return 0.8; // 返回结果
       default: // 默认

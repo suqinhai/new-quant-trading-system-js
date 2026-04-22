@@ -631,10 +631,11 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
           case 'set': // 分支 'set'
             keyData.value = await this.redis.client.sMembers(key); // 赋值 keyData.value
             break; // 跳出循环或分支
-          case 'zset': // 分支 'zset'
+          case 'zset': { // 分支 'zset'
             const members = await this.redis.client.zRangeWithScores(key, 0, -1); // 定义常量 members
             keyData.value = members.map(m => ({ value: m.value, score: m.score })); // 赋值 keyData.value
             break; // 跳出循环或分支
+          }
           default: // 默认
             keyData.value = null; // 赋值 keyData.value
         } // 结束代码块
@@ -1154,7 +1155,7 @@ class RedisBackupManager extends EventEmitter { // 定义类 RedisBackupManager(
    * @private
    */
   _sleep(ms) { // 调用 _sleep
-    return new Promise(resolve => setTimeout(resolve, ms)); // 返回结果
+    return new Promise(resolve => { setTimeout(resolve, ms); }); // 返回结果
   } // 结束代码块
 } // 结束代码块
 

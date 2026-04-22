@@ -254,7 +254,7 @@ class AuditLogWriter extends EventEmitter { // 定义类 AuditLogWriter(继承Ev
 
         if (retries < this.config.maxRetries) { // 条件判断 retries < this.config.maxRetries
           // 等待后重试 / Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // 等待异步结果
+          await new Promise(resolve => { setTimeout(resolve, 1000 * retries); }); // 等待异步结果
         } // 结束代码块
       } // 结束代码块
     } // 结束代码块

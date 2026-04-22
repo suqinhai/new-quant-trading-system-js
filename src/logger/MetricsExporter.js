@@ -528,7 +528,7 @@ export class MetricsExporter extends EventEmitter { // 导出类 MetricsExporter
         // 如果是端口占用错误且还有重试机会 / If port in use and can retry
         if (error.code === 'EADDRINUSE' && attempt < maxRetries) { // 条件判断 error.code === 'EADDRINUSE' && attempt < maxR...
           this.log(`端口 ${this.config.httpPort} 被占用，${retryDelay}ms 后重试 (${attempt}/${maxRetries}) / Port in use, retrying...`, 'warn'); // 调用 log
-          await new Promise(resolve => setTimeout(resolve, retryDelay)); // 等待异步结果
+          await new Promise(resolve => { setTimeout(resolve, retryDelay); }); // 等待异步结果
         } else { // 执行语句
           throw error; // 抛出异常
         } // 结束代码块

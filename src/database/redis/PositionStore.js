@@ -678,5 +678,5 @@ class PositionStore { // 定义类 PositionStore
   } // 结束代码块
 } // 结束代码块
 
-export { PositionStore, POSITION_STATUS, POSITION_SIDE }; // 导出命名成员
+export { PositionStore }; // 导出命名成员
 export default PositionStore; // 默认导出
