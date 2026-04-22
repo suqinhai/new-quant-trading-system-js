@@ -32,6 +32,41 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
     })); // 结束代码块
   }; // 结束代码块
 
+  const summarizePerformance = (trades = [], period = '7d') => { // 定义函数 summarizePerformance
+    const pnlSeries = trades.map(trade => Number(
+      trade.realizedPnL
+      ?? trade.pnl
+      ?? trade.profit
+      ?? trade.netPnl
+      ?? 0
+    ));
+    const totalPnL = pnlSeries.reduce((sum, value) => sum + value, 0);
+    const winningTrades = pnlSeries.filter(value => value > 0).length;
+    const totalTrades = pnlSeries.length;
+    let equity = 0;
+    let peak = 0;
+    let maxDrawdown = 0;
+
+    for (const value of pnlSeries) {
+      equity += value;
+      peak = Math.max(peak, equity);
+      maxDrawdown = Math.min(maxDrawdown, equity - peak);
+    }
+
+    return {
+      period,
+      totalTrades,
+      winningTrades,
+      losingTrades: pnlSeries.filter(value => value < 0).length,
+      winRate: totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0,
+      totalPnL,
+      averagePnL: totalTrades > 0 ? totalPnL / totalTrades : 0,
+      maxDrawdown: Math.abs(maxDrawdown),
+      sharpeRatio: 0,
+      totalReturn: totalPnL,
+    };
+  }; // 结束代码块
+
   /**
    * GET /api/dashboard/summary
    * 获取仪表板摘要
@@ -94,6 +129,35 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
       const points = normalizePnLPoints(pnlData); // 定义常量 points
 
       res.json({ success: true, data: { ...pnlData, points } }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
+
+  /**
+   * GET /api/dashboard/performance
+   * 获取绩效概览
+   */
+  router.get('/performance', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      const period = req.query.period || req.query.range || '7d'; // 定义常量 period
+
+      if (dashboardService?.getPerformance) { // 条件判断 dashboardService?.getPerformance
+        const performance = await dashboardService.getPerformance(period); // 定义常量 performance
+        return res.json({ success: true, data: { period, ...performance } }); // 返回结果
+      } // 结束代码块
+
+      let trades = []; // 定义变量 trades
+      if (tradeRepository?.getTradeHistory) { // 条件判断 tradeRepository?.getTradeHistory
+        const result = await tradeRepository.getTradeHistory({ // 定义常量 result
+          limit: 200, // 限制
+          sortBy: 'timestamp', // sortBy
+          sortOrder: 'desc', // sortOrder
+        }); // 结束代码块
+        trades = result?.trades || []; // 赋值 trades
+      } // 结束代码块
+
+      res.json({ success: true, data: summarizePerformance(trades, period) }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块

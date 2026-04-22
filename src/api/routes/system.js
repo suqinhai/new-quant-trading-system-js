@@ -1,165 +1,295 @@
-﻿/**
+/**
  * RESTful API 路由 - 系统管理
  * System Management Routes
  *
  * @module src/api/routes/system
  */
 
-import { Router } from 'express'; // 导入模块 express
+import { Router } from 'express';
+
+function isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function deepClone(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return JSON.parse(JSON.stringify(value));
+}
+
+function mergeDeep(base = {}, updates = {}) {
+  const output = isPlainObject(base) ? deepClone(base) : {};
+
+  for (const [key, value] of Object.entries(updates || {})) {
+    if (isPlainObject(value) && isPlainObject(output[key])) {
+      output[key] = mergeDeep(output[key], value);
+      continue;
+    }
+
+    output[key] = deepClone(value);
+  }
+
+  return output;
+}
+
+function applyUpdatesWithSetter(configManager, updates, prefix = '') {
+  for (const [key, value] of Object.entries(updates || {})) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (isPlainObject(value)) {
+      applyUpdatesWithSetter(configManager, value, path);
+      continue;
+    }
+
+    configManager.set(path, value);
+  }
+}
+
+function buildDefaultConfig() {
+  return {
+    runMode: process.env.RUN_MODE || 'shadow',
+    refreshInterval: Number(process.env.REFRESH_INTERVAL || 10),
+    logging: {
+      level: process.env.LOG_LEVEL || 'info',
+    },
+    server: {
+      httpPort: Number(process.env.HTTP_PORT || 3000),
+      wsPort: Number(process.env.WS_PORT || 3001),
+    },
+    database: {
+      type: process.env.DB_TYPE || 'SQLite',
+      redis: {
+        enabled: !!(process.env.REDIS_URL || process.env.REDIS_HOST),
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT || 6379),
+        db: Number(process.env.REDIS_DB || 0),
+      },
+    },
+    alert: {
+      email: {
+        enabled: false,
+      },
+      telegram: {
+        enabled: false,
+      },
+      webhook: {
+        enabled: false,
+      },
+    },
+  };
+}
+
+function buildSafeConfig(config) {
+  const safeConfig = mergeDeep(buildDefaultConfig(), config || {});
+
+  if (safeConfig.exchange) {
+    for (const [exchangeId, exchangeConfig] of Object.entries(safeConfig.exchange)) {
+      if (!isPlainObject(exchangeConfig)) {
+        continue;
+      }
+
+      if (exchangeConfig.secret) {
+        exchangeConfig.secret = '******';
+      }
+
+      if (exchangeConfig.password) {
+        exchangeConfig.password = '******';
+      }
+
+      if (exchangeConfig.apiKey) {
+        const value = String(exchangeConfig.apiKey);
+        exchangeConfig.apiKey = value.length > 8 ? `${value.slice(0, 8)}******` : '******';
+      }
+
+      safeConfig.exchange[exchangeId] = exchangeConfig;
+    }
+  }
+
+  return safeConfig;
+}
+
+function buildSystemStatus(config, deps = {}, tradingEngine) {
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+  const startTime = new Date(Date.now() - (process.uptime() * 1000)).toISOString();
+  const databaseConfig = config.database || {};
+  const redisConfig = databaseConfig.redis || {};
+  const redisClient = deps.redis
+    || deps.redisClient
+    || deps.redisService
+    || deps.notificationService?.redis
+    || deps.marketDataEngine?.redis
+    || deps.tradingEngine?.marketDataEngine?.redis
+    || null;
+
+  const redisConnected = redisClient?.status === 'ready'
+    || redisClient?.isOpen === true
+    || redisClient?.connected === true
+    || false;
+
+  const status = {
+    version: process.env.npm_package_version || '1.0.0',
+    nodeVersion: process.version,
+    uptime: process.uptime(),
+    memoryUsage,
+    cpuUsage,
+    timestamp: new Date().toISOString(),
+    startTime,
+    mode: config.runMode || process.env.RUN_MODE || 'shadow',
+    runMode: config.runMode || process.env.RUN_MODE || 'shadow',
+    pid: process.pid,
+    database: {
+      type: databaseConfig.type || process.env.DB_TYPE || 'SQLite',
+      connected: true,
+    },
+    redis: {
+      enabled: !!redisConfig.enabled,
+      connected: !!redisConnected,
+      host: redisConfig.host || process.env.REDIS_HOST || 'localhost',
+      port: redisConfig.port || Number(process.env.REDIS_PORT || 6379),
+      db: redisConfig.db || Number(process.env.REDIS_DB || 0),
+    },
+  };
+
+  if (tradingEngine) {
+    status.engine = {
+      running: tradingEngine.isRunning?.() || false,
+      strategies: tradingEngine.getActiveStrategies?.()?.length || 0,
+    };
+  }
+
+  return status;
+}
+
+async function persistConfigUpdates(configManager, updates) {
+  if (!configManager) {
+    return;
+  }
+
+  if (typeof configManager.update === 'function') {
+    await configManager.update(updates);
+  } else if (typeof configManager.set === 'function') {
+    applyUpdatesWithSetter(configManager, updates);
+    if (typeof configManager.save === 'function') {
+      await configManager.save();
+    }
+  }
+}
 
 /**
  * 创建系统管理路由
  * @param {Object} deps - 依赖注入
  * @returns {Router}
  */
-export function createSystemRoutes(deps = {}) { // 导出函数 createSystemRoutes
-  const router = Router(); // 定义常量 router
-  const { configManager, healthChecker, tradingEngine } = deps; // 解构赋值
+export function createSystemRoutes(deps = {}) {
+  const router = Router();
+  const { configManager, healthChecker, tradingEngine } = deps;
+  let runtimeConfig = mergeDeep(buildDefaultConfig(), configManager?.getAll?.() || {});
 
-  /**
-   * GET /api/system/status
-   * 获取系统状态
-   */
-  router.get('/status', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const status = { // 定义常量 status
-        version: process.env.npm_package_version || '1.0.0', // version
-        nodeVersion: process.version, // nodeVersion
-        uptime: process.uptime(), // uptime
-        memoryUsage: process.memoryUsage(), // 内存使用
-        cpuUsage: process.cpuUsage(), // CPU使用
-        timestamp: new Date().toISOString(), // 时间戳
-        mode: process.env.RUN_MODE || 'shadow', // 模式
-        pid: process.pid, // pid
-      }; // 结束代码块
+  const getCurrentConfig = () => {
+    const managerConfig = configManager?.getAll?.() || {};
+    runtimeConfig = mergeDeep(runtimeConfig, managerConfig);
+    return mergeDeep(buildDefaultConfig(), runtimeConfig);
+  };
 
-      if (tradingEngine) { // 条件判断 tradingEngine
-        status.engine = { // 赋值 status.engine
-          running: tradingEngine.isRunning?.() || false, // running
-          strategies: tradingEngine.getActiveStrategies?.()?.length || 0, // 策略
-        }; // 结束代码块
-      } // 结束代码块
+  router.get('/status', async (req, res) => {
+    try {
+      const config = getCurrentConfig();
+      const status = buildSystemStatus(config, deps, tradingEngine);
+      res.json({ success: true, data: status });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
-      res.json({ success: true, data: status }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+  router.get('/config', async (req, res) => {
+    try {
+      const config = getCurrentConfig();
+      res.json({ success: true, data: buildSafeConfig(config) });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
-  /**
-   * GET /api/system/config
-   * 获取系统配置
-   */
-  router.get('/config', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      let config = {}; // 定义变量 config
+  router.put('/config', async (req, res) => {
+    try {
+      const updates = req.body || {};
 
-      if (configManager) { // 条件判断 configManager
-        config = configManager.getAll?.() || {}; // 赋值 config
-      } else { // 执行语句
-        config = { // 赋值 config
-          runMode: process.env.RUN_MODE || 'shadow', // run模式
-          logging: { level: process.env.LOG_LEVEL || 'info' }, // logging
-          server: { // server
-            httpPort: parseInt(process.env.HTTP_PORT) || 3000, // http端口
-            wsPort: parseInt(process.env.WS_PORT) || 3001, // ws端口
-          }, // 结束代码块
-        }; // 结束代码块
-      } // 结束代码块
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'Admin permission required',
+          code: 'FORBIDDEN',
+        });
+      }
 
-      // 移除敏感信息
-      const safeConfig = { ...config }; // 定义常量 safeConfig
-      if (safeConfig.exchange) { // 条件判断 safeConfig.exchange
-        Object.keys(safeConfig.exchange).forEach(key => { // 调用 Object.keys
-          if (safeConfig.exchange[key]?.secret) { // 条件判断 safeConfig.exchange[key]?.secret
-            safeConfig.exchange[key].secret = '******'; // 执行语句
-          } // 结束代码块
-          if (safeConfig.exchange[key]?.apiKey) { // 条件判断 safeConfig.exchange[key]?.apiKey
-            safeConfig.exchange[key].apiKey = safeConfig.exchange[key].apiKey.slice(0, 8) + '******'; // 执行语句
-          } // 结束代码块
-        }); // 结束代码块
-      } // 结束代码块
+      runtimeConfig = mergeDeep(runtimeConfig, updates);
+      await persistConfigUpdates(configManager, updates);
 
-      res.json({ success: true, data: safeConfig }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      if (updates.runMode) {
+        process.env.RUN_MODE = updates.runMode;
+      }
 
-  /**
-   * PUT /api/system/config
-   * 更新系统配置
-   */
-  router.put('/config', async (req, res) => { // 调用 router.put
-    try { // 尝试执行
-      const updates = req.body; // 定义常量 updates
+      if (updates.logging?.level) {
+        process.env.LOG_LEVEL = updates.logging.level;
+      }
 
-      // 验证权限 - 只有管理员可以修改配置
-      if (req.user?.role !== 'admin') { // 条件判断 req.user?.role !== 'admin'
-        return res.status(403).json({ // 返回结果
-          success: false, // 成功标记
-          error: 'Admin permission required', // 错误
-          code: 'FORBIDDEN' // 代码
-        }); // 结束代码块
-      } // 结束代码块
+      if (updates.refreshInterval !== undefined) {
+        process.env.REFRESH_INTERVAL = String(updates.refreshInterval);
+      }
 
-      if (configManager) { // 条件判断 configManager
-        await configManager.update(updates); // 等待异步结果
-      } // 结束代码块
+      const savedConfig = getCurrentConfig();
 
-      res.json({ success: true, message: 'Configuration updated' }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({
+        success: true,
+        message: 'Configuration updated',
+        data: buildSafeConfig(savedConfig),
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
-  /**
-   * GET /api/system/metrics
-   * 获取系统指标
-   */
-  router.get('/metrics', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const metrics = { // 定义常量 metrics
-        memory: process.memoryUsage(), // 内存
-        cpu: process.cpuUsage(), // CPU
-        uptime: process.uptime(), // uptime
-        timestamp: Date.now(), // 时间戳
-      }; // 结束代码块
+  router.get('/metrics', async (req, res) => {
+    try {
+      const metrics = {
+        memory: process.memoryUsage(),
+        cpu: process.cpuUsage(),
+        uptime: process.uptime(),
+        timestamp: Date.now(),
+      };
 
-      // 添加交易引擎指标
-      if (tradingEngine?.getMetrics) { // 条件判断 tradingEngine?.getMetrics
-        metrics.trading = tradingEngine.getMetrics(); // 赋值 metrics.trading
-      } // 结束代码块
+      if (tradingEngine?.getMetrics) {
+        metrics.trading = tradingEngine.getMetrics();
+      }
 
-      res.json({ success: true, data: metrics }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({ success: true, data: metrics });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
-  /**
-   * GET /api/health
-   * 健康检查
-   */
-  router.get('/health', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      if (healthChecker) { // 条件判断 healthChecker
-        const health = await healthChecker.check(); // 定义常量 health
-        const statusCode = health.status === 'healthy' ? 200 : 503; // 定义常量 statusCode
-        return res.status(statusCode).json(health); // 返回结果
-      } // 结束代码块
+  router.get('/health', async (req, res) => {
+    try {
+      if (healthChecker) {
+        const health = await healthChecker.check();
+        const statusCode = health.status === 'healthy' ? 200 : 503;
+        return res.status(statusCode).json(health);
+      }
 
-      res.json({ // 调用 res.json
-        status: 'healthy', // 状态
-        timestamp: new Date().toISOString(), // 时间戳
-        uptime: process.uptime(), // uptime
-      }); // 结束代码块
-    } catch (error) { // 执行语句
-      res.status(503).json({ status: 'unhealthy', error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      });
+    } catch (error) {
+      res.status(503).json({ status: 'unhealthy', error: error.message });
+    }
+  });
 
-  return router; // 返回结果
-} // 结束代码块
+  return router;
+}
 
-export default createSystemRoutes; // 默认导出
+export default createSystemRoutes;
