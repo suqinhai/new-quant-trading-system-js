@@ -7,6 +7,26 @@
 
 import { Router } from 'express'; // 导入模块 express
 
+function getClientIp(req) { // 定义函数 getClientIp
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection?.remoteAddress || 'unknown'; // 返回结果
+} // 结束代码块
+
+function buildAuthResponse({ accessToken, refreshToken, user, expiresIn }) { // 定义函数 buildAuthResponse
+  const payload = { // 定义常量 payload
+    token: accessToken, // token
+    accessToken, // accessToken
+    refreshToken, // refreshToken
+    user, // 用户
+    expiresIn, // expiresIn
+  }; // 结束代码块
+
+  return { // 返回结果
+    success: true, // 成功标记
+    ...payload, // 展开对象或数组
+    data: payload, // 数据
+  }; // 结束代码块
+} // 结束代码块
+
 /**
  * 创建用户管理路由
  * @param {Object} deps - 依赖注入
@@ -35,13 +55,12 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       if (authManager?.login) { // 条件判断 authManager?.login
         const result = await authManager.login(username, password); // 定义常量 result
         if (result.success) { // 条件判断 result.success
-          return res.json({ // 返回结果
-            success: true, // 成功标记
-            data: { // 数据
-              token: result.token, // 令牌
-              user: result.user, // 用户
-            } // 结束代码块
-          }); // 结束代码块
+          return res.json(buildAuthResponse({ // 返回结果
+            accessToken: result.token || result.accessToken, // accessToken
+            refreshToken: result.refreshToken, // refreshToken
+            user: result.user, // 用户
+            expiresIn: result.expiresIn, // expiresIn
+          })); // 结束代码块
         } else { // 执行语句
           return res.status(401).json({ // 返回结果
             success: false, // 成功标记
@@ -51,20 +70,35 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
         } // 结束代码块
       } // 结束代码块
 
-      // 默认测试用户
-      if (username === 'admin' && password === 'admin123') { // 条件判断 username === 'admin' && password === 'admin123'
-        return res.json({ // 返回结果
-          success: true, // 成功标记
-          data: { // 数据
-            token: 'test_token_' + Date.now(), // 令牌
-            user: { // 用户
-              id: 'user_1', // ID
-              username: 'admin', // username
-              role: 'admin', // role
-              email: 'admin@example.com', // 邮箱
-            } // 结束代码块
-          } // 结束代码块
+      if (authManager?.verifyPassword && authManager?.generateToken) { // 条件判断 authManager?.verifyPassword && authManager?.gen...
+        const authResult = await authManager.verifyPassword(username, password); // 定义常量 authResult
+        if (!authResult.valid) { // 条件判断 !authResult.valid
+          return res.status(401).json({ // 返回结果
+            success: false, // 成功标记
+            error: authResult.error || 'Invalid credentials', // 错误
+            code: 'UNAUTHORIZED' // 代码
+          }); // 结束代码块
+        } // 结束代码块
+
+        const user = { // 定义常量 user
+          username: authResult.user.username, // username
+          role: authResult.user.role, // role
+        }; // 结束代码块
+        const accessToken = authManager.generateToken({ // 定义常量 accessToken
+          sub: user.username, // sub
+          username: user.username, // username
+          role: user.role, // role
         }); // 结束代码块
+        const refreshToken = authManager.generateRefreshToken // 定义常量 refreshToken
+          ? await authManager.generateRefreshToken(user.username, getClientIp(req)) // 等待异步结果
+          : undefined; // 执行语句
+
+        return res.json(buildAuthResponse({ // 返回结果
+          accessToken, // accessToken
+          refreshToken, // refreshToken
+          user, // 用户
+          expiresIn: authManager.config?.jwtExpiry, // expiresIn
+        })); // 结束代码块
       } // 结束代码块
 
       res.status(401).json({ // 调用 res.status
@@ -83,8 +117,14 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
    */
   router.post('/logout', async (req, res) => { // 调用 router.post
     try { // 尝试执行
+      const authHeader = req.headers.authorization; // 定义常量 authHeader
+      const accessToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null; // 定义常量 accessToken
+      const { refreshToken } = req.body || {}; // 解构赋值
+
       if (authManager?.logout && req.user) { // 条件判断 authManager?.logout && req.user
         await authManager.logout(req.user.sub); // 等待异步结果
+      } else if (authManager?.revokeToken && accessToken) { // 条件判断 authManager?.revokeToken && accessToken
+        await authManager.revokeToken(accessToken, refreshToken); // 等待异步结果
       } // 结束代码块
 
       res.json({ success: true, message: 'Logged out successfully' }); // 调用 res.json
@@ -112,10 +152,24 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       if (authManager?.refreshToken) { // 条件判断 authManager?.refreshToken
         const result = await authManager.refreshToken(refreshToken); // 定义常量 result
         if (result.success) { // 条件判断 result.success
-          return res.json({ // 返回结果
-            success: true, // 成功标记
-            data: { token: result.token } // 数据
-          }); // 结束代码块
+          return res.json(buildAuthResponse({ // 返回结果
+            accessToken: result.token || result.accessToken, // accessToken
+            refreshToken, // refreshToken
+            user: req.user, // 用户
+            expiresIn: result.expiresIn || authManager.config?.jwtExpiry, // expiresIn
+          })); // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
+
+      if (authManager?.refreshAccessToken) { // 条件判断 authManager?.refreshAccessToken
+        const result = await authManager.refreshAccessToken(refreshToken, getClientIp(req)); // 定义常量 result
+        if (result.success) { // 条件判断 result.success
+          return res.json(buildAuthResponse({ // 返回结果
+            accessToken: result.accessToken, // accessToken
+            refreshToken, // refreshToken
+            user: req.user, // 用户
+            expiresIn: authManager.config?.jwtExpiry, // expiresIn
+          })); // 结束代码块
         } // 结束代码块
       } // 结束代码块
 
@@ -145,7 +199,7 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
 
       let profile = { // 定义变量 profile
         id: req.user.sub, // ID
-        username: req.user.username, // username
+        username: req.user.username || req.user.sub, // username
         role: req.user.role, // role
         email: req.user.email, // 邮箱
       }; // 结束代码块
@@ -307,7 +361,10 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       }; // 结束代码块
 
       if (authManager?.createUser) { // 条件判断 authManager?.createUser
-        await authManager.createUser(user, password); // 等待异步结果
+        await authManager.createUser(username, password, { role: user.role }); // 等待异步结果
+        if (userStore?.save) { // 条件判断 userStore?.save
+          await userStore.save({ ...user, password: undefined }); // 等待异步结果
+        } // 结束代码块
       } else if (userStore?.save) { // 执行语句
         await userStore.save({ ...user, password }); // 等待异步结果
       } // 结束代码块

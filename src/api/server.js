@@ -24,6 +24,7 @@ import { // 导入依赖
 
 import { RateLimiter } from './rateLimit.js'; // 导入模块 ./rateLimit.js
 import { RBACManager } from './rbac.js'; // 导入模块 ./rbac.js
+import AuthManager from '../middleware/auth.js'; // 导入模块 ../middleware/auth.js
 import { RequestTracingManager, getContext } from '../middleware/requestTracing.js'; // 导入模块 ../middleware/requestTracing.js
 import { setContextGetter } from '../utils/logger.js'; // 导入模块 ../utils/logger.js
 import { logger } from '../utils/logger.js'; // 导入模块 ../utils/logger.js
@@ -46,7 +47,13 @@ export class ApiServer { // 导出类 ApiServer
 
     this.app = express(); // 设置 app
     this.server = null; // 设置 server
-    this.deps = config.deps || {}; // 设置 deps
+    this.deps = { ...(config.deps || {}) }; // 设置 deps
+    this.authManager = this.deps.authManager || new AuthManager({ // 设置 authManager
+      jwtSecret: this.config.jwtSecret, // jwt密钥
+      jwtExpiry: config.jwtExpiry, // jwt过期时间
+      refreshTokenExpiry: config.refreshTokenExpiry, // refresh过期时间
+    }); // 结束代码块
+    this.deps.authManager = this.authManager; // 访问 deps
 
     // 初始化中间件
     this.rateLimiter = new RateLimiter(config.rateLimit); // 设置 rateLimiter
@@ -131,6 +138,8 @@ export class ApiServer { // 导出类 ApiServer
     // 跳过公开路由
     const publicPaths = [ // 定义常量 publicPaths
       '/api/auth/login', // 执行语句
+      '/api/auth/refresh', // 执行语句
+      '/api/auth/logout', // 执行语句
       '/api/health', // 执行语句
       '/api/system/health', // 执行语句
     ]; // 结束数组或索引
@@ -153,7 +162,7 @@ export class ApiServer { // 导出类 ApiServer
     try { // 尝试执行
       // 验证 JWT
       const payload = this.verifyToken(token); // 定义常量 payload
-      req.user = payload; // 赋值 req.user
+      req.user = { ...payload, username: payload.username || payload.sub }; // 赋值 req.user
       next(); // 调用 next
     } catch (error) { // 执行语句
       return res.status(401).json({ // 返回结果
@@ -168,24 +177,11 @@ export class ApiServer { // 导出类 ApiServer
    * 验证 JWT Token
    */
   verifyToken(token) { // 调用 verifyToken
-    // 简化的 JWT 验证 (生产环境应使用 jsonwebtoken 库)
-    const parts = token.split('.'); // 定义常量 parts
-    if (parts.length !== 3) { // 条件判断 parts.length !== 3
-      throw new Error('Invalid token format'); // 抛出异常
+    const result = this.authManager.verifyToken(token); // 定义常量 result
+    if (!result?.valid) { // 条件判断 !result?.valid
+      throw new Error(result?.error || 'Invalid token'); // 抛出异常
     } // 结束代码块
-
-    try { // 尝试执行
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); // 定义常量 payload
-
-      // 检查过期时间
-      if (payload.exp && payload.exp < Date.now() / 1000) { // 条件判断 payload.exp && payload.exp < Date.now() / 1000
-        throw new Error('Token expired'); // 抛出异常
-      } // 结束代码块
-
-      return payload; // 返回结果
-    } catch (error) { // 执行语句
-      throw new Error('Invalid token'); // 抛出异常
-    } // 结束代码块
+    return result.payload; // 返回结果
   } // 结束代码块
 
   /**

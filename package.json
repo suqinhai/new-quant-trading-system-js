@@ -2,7 +2,7 @@
   "name": "quant-trading-system",
   "version": "1.0.0",
   "description": "工业级加密货币量化交易系统 - Industrial-grade Cryptocurrency Quantitative Trading System",
-  "main": "src/index.js",
+  "main": "src/main.js",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"

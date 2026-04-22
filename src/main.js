@@ -1009,8 +1009,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 获取当前价格 / Get current price
       getCurrentPrice: async (symbol) => { // getCurrent价格
         try { // 尝试执行
-          const exchangeId = Object.keys(this.exchanges)[0]; // 定义常量 exchangeId
-          const exchange = this.exchanges[exchangeId]; // 定义常量 exchange
+          const exchange = this._getPrimaryExchange(); // 定义常量 exchange
           if (exchange) { // 条件判断 exchange
             const ticker = await exchange.fetchTicker(symbol); // 定义常量 ticker
             return ticker.last || ticker.close; // 返回结果
@@ -1056,11 +1055,6 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         }; // 结束代码块
         this.strategy.emit('signal', signal); // 访问 strategy
 
-        // 更新虚拟持仓 / Update virtual position
-        const position = this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 }; // 定义常量 position
-        position.amount += amount; // 执行语句
-        this._virtualPositions.set(symbol, position); // 访问 _virtualPositions
-
         return signal; // 返回结果
       }, // 结束代码块
 
@@ -1083,14 +1077,6 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
           timestamp: Date.now(), // 时间戳
         }; // 结束代码块
         this.strategy.emit('signal', signal); // 访问 strategy
-
-        // 更新虚拟持仓 / Update virtual position
-        const position = this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 }; // 定义常量 position
-        position.amount -= amount; // 执行语句
-        if (position.amount <= 0) { // 条件判断 position.amount <= 0
-          position.amount = 0; // 赋值 position.amount
-        } // 结束代码块
-        this._virtualPositions.set(symbol, position); // 访问 _virtualPositions
 
         return signal; // 返回结果
       }, // 结束代码块
@@ -1125,6 +1111,67 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 设置引擎适配器给策略 / Set engine adapter to strategy
     this.strategy.engine = engineAdapter; // 访问 strategy
+  } // 结束代码块
+
+  /**
+   * 获取主交易所实例
+   * Get primary exchange instance
+   * @returns {Object|null} 交易所实例 / Exchange instance
+   * @private
+   */
+  _getPrimaryExchange() { // 调用 _getPrimaryExchange
+    if (!this.exchanges) { // 条件判断 !this.exchanges
+      return null; // 返回结果
+    } // 结束代码块
+
+    if (this.exchanges instanceof Map) { // 条件判断 this.exchanges instanceof Map
+      return this.exchanges.values().next().value || null; // 返回结果
+    } // 结束代码块
+
+    const exchangeId = Object.keys(this.exchanges)[0]; // 定义常量 exchangeId
+    return exchangeId ? this.exchanges[exchangeId] : null; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 按真实成交更新虚拟持仓
+   * Update virtual positions from filled orders
+   * @param {Object} orderInfo - 订单信息 / Order info
+   * @private
+   */
+  _applyFilledOrderToVirtualPosition(orderInfo) { // 调用 _applyFilledOrderToVirtualPosition
+    if (!orderInfo?.symbol) { // 条件判断 !orderInfo?.symbol
+      return; // 返回结果
+    } // 结束代码块
+
+    const filledAmount = Number(orderInfo.filledAmount ?? orderInfo.amount ?? 0); // 定义常量 filledAmount
+    const fillPrice = Number(orderInfo.avgPrice ?? orderInfo.currentPrice ?? orderInfo.price ?? 0); // 定义常量 fillPrice
+
+    if (!Number.isFinite(filledAmount) || filledAmount <= 0) { // 条件判断 !Number.isFinite(filledAmount) || filledAmount <= 0
+      return; // 返回结果
+    } // 结束代码块
+
+    const position = { ...(this._virtualPositions.get(orderInfo.symbol) || { amount: 0, avgPrice: 0 }) }; // 定义常量 position
+
+    if (orderInfo.side === 'buy') { // 条件判断 orderInfo.side === 'buy'
+      const nextAmount = position.amount + filledAmount; // 定义常量 nextAmount
+      if (nextAmount <= 0) { // 条件判断 nextAmount <= 0
+        position.amount = 0; // 赋值 position.amount
+        position.avgPrice = 0; // 赋值 position.avgPrice
+      } else { // 执行语句
+        const weightedCost = (position.amount * position.avgPrice) + (filledAmount * fillPrice); // 定义常量 weightedCost
+        position.amount = nextAmount; // 赋值 position.amount
+        position.avgPrice = fillPrice > 0 ? weightedCost / nextAmount : position.avgPrice; // 赋值 position.avgPrice
+      } // 结束代码块
+    } else if (orderInfo.side === 'sell') { // 条件判断 orderInfo.side === 'sell'
+      position.amount = Math.max(0, position.amount - filledAmount); // 赋值 position.amount
+      if (position.amount === 0) { // 条件判断 position.amount === 0
+        position.avgPrice = 0; // 赋值 position.avgPrice
+      } // 结束代码块
+    } else { // 执行语句
+      return; // 返回结果
+    } // 结束代码块
+
+    this._virtualPositions.set(orderInfo.symbol, position); // 访问 _virtualPositions
   } // 结束代码块
 
   /**
@@ -1823,6 +1870,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // Extract order info (executor emits { orderInfo, exchangeOrder })
       const orderInfo = data.orderInfo || data; // 定义常量 orderInfo
       const exchangeOrder = data.exchangeOrder; // 定义常量 exchangeOrder
+
+      // 只在真实成交后同步仓位，避免信号阶段与实际执行状态漂移
+      this._applyFilledOrderToVirtualPosition(orderInfo); // 调用 _applyFilledOrderToVirtualPosition
 
       // 构建交易对象供日志和通知使用 / Build trade object for logging and notifications
       const trade = { // 定义常量 trade
@@ -2725,8 +2775,13 @@ export default main; // 默认导出
 // 执行主函数 / Execute Main Function
 // ============================================
 
-// 运行主函数 / Run main function
-main(); // 调用 main
+// 仅在直接执行当前文件时运行主函数，允许兼容层安全导入
+// Run main only when this file is executed directly, so compatibility wrappers can import it safely
+const isDirectExecution = process.argv[1] && path.resolve(process.argv[1]) === __filename; // 定义常量 isDirectExecution
+
+if (isDirectExecution) { // 条件判断 isDirectExecution
+  main(); // 调用 main
+} // 结束代码块
 
 
 

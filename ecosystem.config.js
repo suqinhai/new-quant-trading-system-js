@@ -21,7 +21,8 @@ module.exports = {
       // 主交易引擎 / Main Trading Engine
       // --------------------------------------------
       name: 'trading-engine',           // 应用名称，用于 PM2 管理
-      script: 'src/index.js',           // 入口文件路径
+      script: 'src/main.js',            // 统一入口文件路径
+      args: 'shadow',                   // 兼容旧配置，默认使用影子模式
       instances: 1,                      // 实例数量，交易引擎只能运行一个实例
       autorestart: true,                // 崩溃后自动重启
       watch: false,                     // 生产环境不监听文件变化
