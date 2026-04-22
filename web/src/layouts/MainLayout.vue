@@ -147,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSystemStore } from '@/stores/system'
 
@@ -165,6 +165,14 @@ const runMode = computed(() => systemStore.runMode)
 const systemStatus = computed(() => systemStore.status)
 const notifications = computed(() => systemStore.notifications)
 
+onMounted(() => {
+  systemStore.connectWebSocket()
+})
+
+onUnmounted(() => {
+  systemStore.disconnectWebSocket()
+})
+
 const goToProfile = () => {
   router.push('/settings?tab=profile')
 }
@@ -175,6 +183,8 @@ const handleLogout = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     router.push('/login')
   })
 }

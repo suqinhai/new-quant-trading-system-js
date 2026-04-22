@@ -30,11 +30,12 @@ request.interceptors.response.use(
     return response.data
   },
   (error) => {
-    const message = error.response?.data?.message || error.message || '请求失败'
+    const message = error.response?.data?.error || error.response?.data?.message || error.message || '请求失败'
     ElMessage.error(message)
 
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       window.location.href = '/login'
     }
 
@@ -76,11 +77,11 @@ const api = {
 
   // 订单相关
   orders: {
-    getList: (params) => request.get('/orders', { params }),
-    getById: (id) => request.get(`/orders/${id}`),
-    create: (data) => request.post('/orders', data),
-    cancel: (id) => request.post(`/orders/${id}/cancel`),
-    getOpenOrders: () => request.get('/orders/open')
+    getList: (params) => request.get('/trades/orders', { params }),
+    getById: (id) => request.get(`/trades/orders/${id}`),
+    create: (data) => request.post('/trades/orders', data),
+    cancel: (id) => request.post(`/trades/orders/${id}/cancel`),
+    getOpenOrders: () => request.get('/trades/orders/open')
   },
 
   // 持仓相关
@@ -113,7 +114,13 @@ const api = {
   // 仪表板相关
   dashboard: {
     getSummary: () => request.get('/dashboard/summary'),
-    getPnL: (params) => request.get('/dashboard/pnl', { params }),
+    getPnL: (params = {}) => {
+      const { range, ...rest } = params
+      const normalizedParams = range && !rest.period
+        ? { ...rest, period: range }
+        : rest
+      return request.get('/dashboard/pnl', { params: normalizedParams })
+    },
     getPerformance: (params) => request.get('/dashboard/performance', { params }),
     getRecentTrades: (limit = 10) => request.get('/dashboard/recent-trades', { params: { limit } }),
     getAlerts: () => request.get('/dashboard/alerts')
@@ -122,10 +129,12 @@ const api = {
   // 用户相关
   user: {
     login: (data) => request.post('/auth/login', data),
-    logout: () => request.post('/auth/logout'),
+    logout: () => request.post('/auth/logout', {
+      refreshToken: localStorage.getItem('refreshToken')
+    }),
     getProfile: () => request.get('/user/profile'),
     updateProfile: (data) => request.put('/user/profile', data),
-    changePassword: (data) => request.put('/user/password', data)
+    changePassword: (data) => request.post('/user/change-password', data)
   }
 }
 

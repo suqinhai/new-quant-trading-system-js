@@ -48,6 +48,52 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
   }); // 结束代码块
 
   /**
+   * GET /api/positions/summary
+   * 获取持仓汇总
+   */
+  router.get('/summary', async (req, res) => { // 调用 router.get
+    try { // 尝试执行
+      let positions = []; // 定义变量 positions
+      if (positionStore) { // 条件判断 positionStore
+        positions = await positionStore.getAll(); // 赋值 positions
+      } // 结束代码块
+
+      const summary = { // 定义常量 summary
+        totalPositions: positions.length, // 总持仓
+        totalValue: 0, // 总Value
+        totalUnrealizedPnL: 0, // 总未实现PnL
+        byExchange: {}, // by交易所
+        bySymbol: {}, // by交易对
+      }; // 结束代码块
+
+      for (const position of positions) { // 循环 const position of positions
+        summary.totalValue += position.currentValue || 0; // 执行语句
+        summary.totalUnrealizedPnL += position.unrealizedPnL || 0; // 执行语句
+
+        const exchange = position.exchange || 'unknown'; // 定义常量 exchange
+        if (!summary.byExchange[exchange]) { // 条件判断 !summary.byExchange[exchange]
+          summary.byExchange[exchange] = { count: 0, value: 0, pnl: 0 }; // 执行语句
+        } // 结束代码块
+        summary.byExchange[exchange].count++; // 执行语句
+        summary.byExchange[exchange].value += position.currentValue || 0; // 执行语句
+        summary.byExchange[exchange].pnl += position.unrealizedPnL || 0; // 执行语句
+
+        const symbol = position.symbol || 'unknown'; // 定义常量 symbol
+        if (!summary.bySymbol[symbol]) { // 条件判断 !summary.bySymbol[symbol]
+          summary.bySymbol[symbol] = { count: 0, value: 0, pnl: 0 }; // 执行语句
+        } // 结束代码块
+        summary.bySymbol[symbol].count++; // 执行语句
+        summary.bySymbol[symbol].value += position.currentValue || 0; // 执行语句
+        summary.bySymbol[symbol].pnl += position.unrealizedPnL || 0; // 执行语句
+      } // 结束代码块
+
+      res.json({ success: true, data: summary }); // 调用 res.json
+    } catch (error) { // 执行语句
+      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
+    } // 结束代码块
+  }); // 结束代码块
+
+  /**
    * GET /api/positions/:id
    * 获取持仓详情
    */
@@ -68,7 +114,12 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         }); // 结束代码块
       } // 结束代码块
 
-      res.json({ success: true, data: position }); // 调用 res.json
+      // 执行平仓
+      if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
+        await tradingEngine.closePosition(id, percentage); // 等待异步结果
+      } // 结束代码块
+
+      res.json({ success: true, message: `Position ${percentage}% closed` }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块
@@ -105,9 +156,8 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         }); // 结束代码块
       } // 结束代码块
 
-      // 执行平仓
       if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
-        await tradingEngine.closePosition(id, percentage); // 等待异步结果
+        await tradingEngine.closePosition(position.symbol || id, percentage); // 等待异步结果
       } // 结束代码块
 
       res.json({ success: true, message: `Position ${percentage}% closed` }); // 调用 res.json
@@ -138,7 +188,6 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         positions = await positionStore.getAll(); // 赋值 positions
       } // 结束代码块
 
-      // 过滤
       if (exchange) { // 条件判断 exchange
         positions = positions.filter(p => p.exchange === exchange); // 赋值 positions
       } // 结束代码块
@@ -146,11 +195,10 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         positions = positions.filter(p => p.symbol === symbol); // 赋值 positions
       } // 结束代码块
 
-      // 执行平仓
       let closedCount = 0; // 定义变量 closedCount
       if (tradingEngine?.closePosition) { // 条件判断 tradingEngine?.closePosition
         for (const position of positions) { // 循环 const position of positions
-          await tradingEngine.closePosition(position.id, 100); // 等待异步结果
+          await tradingEngine.closePosition(position.symbol || position.id, 100); // 等待异步结果
           closedCount++; // 执行语句
         } // 结束代码块
       } // 结束代码块
@@ -160,54 +208,6 @@ export function createPositionRoutes(deps = {}) { // 导出函数 createPosition
         message: `${closedCount} positions closed`, // 消息
         data: { closedCount } // 数据
       }); // 结束代码块
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
-
-  /**
-   * GET /api/positions/summary
-   * 获取持仓汇总
-   */
-  router.get('/summary', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      let positions = []; // 定义变量 positions
-      if (positionStore) { // 条件判断 positionStore
-        positions = await positionStore.getAll(); // 赋值 positions
-      } // 结束代码块
-
-      const summary = { // 定义常量 summary
-        totalPositions: positions.length, // 总持仓
-        totalValue: 0, // 总Value
-        totalUnrealizedPnL: 0, // 总未实现PnL
-        byExchange: {}, // by交易所
-        bySymbol: {}, // by交易对
-      }; // 结束代码块
-
-      for (const position of positions) { // 循环 const position of positions
-        summary.totalValue += position.currentValue || 0; // 执行语句
-        summary.totalUnrealizedPnL += position.unrealizedPnL || 0; // 执行语句
-
-        // 按交易所统计
-        const exchange = position.exchange || 'unknown'; // 定义常量 exchange
-        if (!summary.byExchange[exchange]) { // 条件判断 !summary.byExchange[exchange]
-          summary.byExchange[exchange] = { count: 0, value: 0, pnl: 0 }; // 执行语句
-        } // 结束代码块
-        summary.byExchange[exchange].count++; // 执行语句
-        summary.byExchange[exchange].value += position.currentValue || 0; // 执行语句
-        summary.byExchange[exchange].pnl += position.unrealizedPnL || 0; // 执行语句
-
-        // 按交易对统计
-        const symbol = position.symbol || 'unknown'; // 定义常量 symbol
-        if (!summary.bySymbol[symbol]) { // 条件判断 !summary.bySymbol[symbol]
-          summary.bySymbol[symbol] = { count: 0, value: 0, pnl: 0 }; // 执行语句
-        } // 结束代码块
-        summary.bySymbol[symbol].count++; // 执行语句
-        summary.bySymbol[symbol].value += position.currentValue || 0; // 执行语句
-        summary.bySymbol[symbol].pnl += position.unrealizedPnL || 0; // 执行语句
-      } // 结束代码块
-
-      res.json({ success: true, data: summary }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块

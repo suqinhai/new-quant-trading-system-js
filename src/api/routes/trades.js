@@ -1,246 +1,544 @@
-﻿/**
- * RESTful API 路由 - 交易记录
- * Trade Records Routes
+/**
+ * RESTful API 路由 - 交易记录与订单
+ * Trade Records and Orders Routes
  *
  * @module src/api/routes/trades
  */
 
-import { Router } from 'express'; // 导入模块 express
+import { Router } from 'express';
+
+const OPEN_ORDER_STATUSES = ['open', 'pending', 'partially_filled', 'partial'];
+const TRADER_ROLES = new Set(['admin', 'trader']);
+
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeOrderStatus(status) {
+  return typeof status === 'string' ? status.toLowerCase() : '';
+}
+
+function getOrderIdentity(order = {}) {
+  return order.orderId || order.id || order.clientOrderId || order.exchangeOrderId || null;
+}
+
+function mergeOrders(...groups) {
+  const merged = new Map();
+
+  for (const group of groups) {
+    for (const order of group || []) {
+      const key = getOrderIdentity(order);
+      if (!key) {
+        continue;
+      }
+
+      const previous = merged.get(key) || {};
+      merged.set(key, { ...previous, ...order });
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => {
+    const timeA = a.updatedAt || a.createdAt || a.timestamp || 0;
+    const timeB = b.updatedAt || b.createdAt || b.timestamp || 0;
+    return timeB - timeA;
+  });
+}
+
+function getOrderExecutor(deps) {
+  return deps.executor || deps.orderExecutor || deps.tradingEngine?.executor || null;
+}
+
+function ensureTraderPermission(req, res) {
+  if (TRADER_ROLES.has(req.user?.role)) {
+    return true;
+  }
+
+  res.status(403).json({
+    success: false,
+    error: 'Trader or admin permission required',
+    code: 'FORBIDDEN',
+  });
+  return false;
+}
+
+async function getStoredOrders(orderStore, limit = 1000) {
+  if (orderStore?.getRecent) {
+    return await orderStore.getRecent(limit);
+  }
+
+  if (orderStore?.getAll) {
+    return await orderStore.getAll();
+  }
+
+  return [];
+}
+
+async function getOpenOrders(orderStore, orderExecutor) {
+  let orders = [];
+
+  if (orderStore?.getOpenOrders) {
+    orders = await orderStore.getOpenOrders();
+  } else if (orderStore?.getByStatus) {
+    const groups = await Promise.all(
+      OPEN_ORDER_STATUSES.map(status => orderStore.getByStatus(status))
+    );
+    orders = mergeOrders(...groups);
+  }
+
+  if (orderExecutor?.getActiveOrders) {
+    orders = mergeOrders(orders, orderExecutor.getActiveOrders());
+  }
+
+  return orders;
+}
+
+async function resolveOrderById(id, orderStore, orderExecutor) {
+  if (!id) {
+    return null;
+  }
+
+  if (orderStore?.getById) {
+    const direct = await orderStore.getById(id);
+    if (direct) {
+      return direct;
+    }
+  }
+
+  if (orderStore?.getByClientOrderId) {
+    const clientOrder = await orderStore.getByClientOrderId(id);
+    if (clientOrder) {
+      return clientOrder;
+    }
+  }
+
+  if (orderExecutor?.getOrderStatus) {
+    const active = orderExecutor.getOrderStatus(id);
+    if (active) {
+      return active;
+    }
+  }
+
+  if (orderExecutor?.getActiveOrders) {
+    return orderExecutor.getActiveOrders().find(order =>
+      order.clientOrderId === id ||
+      order.exchangeOrderId === id ||
+      order.orderId === id ||
+      order.id === id
+    ) || null;
+  }
+
+  return null;
+}
+
+function toOrderResponse(order = {}) {
+  return {
+    ...order,
+    id: order.id || order.clientOrderId || order.orderId || order.exchangeOrderId,
+    orderId: order.orderId || order.id || order.exchangeOrderId,
+    clientOrderId: order.clientOrderId || null,
+    exchangeOrderId: order.exchangeOrderId || null,
+  };
+}
 
 /**
  * 创建交易记录路由
  * @param {Object} deps - 依赖注入
  * @returns {Router}
  */
-export function createTradeRoutes(deps = {}) { // 导出函数 createTradeRoutes
-  const router = Router(); // 定义常量 router
-  const { tradeRepository, orderStore } = deps; // 解构赋值
+export function createTradeRoutes(deps = {}) {
+  const router = Router();
+  const { tradeRepository, orderStore } = deps;
 
   /**
    * GET /api/trades
    * 获取交易列表
    */
-  router.get('/', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const { // 解构赋值
-        page = 1, // 赋值 page
-        pageSize = 20, // 赋值 pageSize
-        symbol, // 执行语句
-        side, // 执行语句
-        strategy, // 执行语句
-        startDate, // 执行语句
-        endDate, // 执行语句
-        sortBy = 'timestamp', // 赋值 sortBy
-        sortOrder = 'desc' // 赋值 sortOrder
-      } = req.query; // 执行语句
+  router.get('/', async (req, res) => {
+    try {
+      const {
+        page = 1,
+        pageSize = 20,
+        symbol,
+        side,
+        strategy,
+        startDate,
+        endDate,
+        sortBy = 'timestamp',
+        sortOrder = 'desc',
+      } = req.query;
 
-      let trades = []; // 定义变量 trades
-      let total = 0; // 定义变量 total
+      let trades = [];
+      let total = 0;
 
-      if (tradeRepository) { // 条件判断 tradeRepository
-        const result = await tradeRepository.getTradeHistory({ // 定义常量 result
-          symbol, // 执行语句
-          side, // 执行语句
-          strategy, // 执行语句
-          startDate, // 执行语句
-          endDate, // 执行语句
-          limit: parseInt(pageSize), // 限制
-          offset: (page - 1) * pageSize, // offset
-          sortBy, // 执行语句
-          sortOrder, // 执行语句
-        }); // 结束代码块
-        trades = result.trades || []; // 赋值 trades
-        total = result.total || trades.length; // 赋值 total
-      } // 结束代码块
+      if (tradeRepository) {
+        const result = await tradeRepository.getTradeHistory({
+          symbol,
+          side,
+          strategy,
+          startDate,
+          endDate,
+          limit: parsePositiveInt(pageSize, 20),
+          offset: (parsePositiveInt(page, 1) - 1) * parsePositiveInt(pageSize, 20),
+          sortBy,
+          sortOrder,
+        });
+        trades = result.trades || [];
+        total = result.total || trades.length;
+      }
 
-      res.json({ // 调用 res.json
-        success: true, // 成功标记
-        data: trades, // 数据
-        total, // 执行语句
-        page: parseInt(page), // page
-        pageSize: parseInt(pageSize), // page大小
-      }); // 结束代码块
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({
+        success: true,
+        data: trades,
+        total,
+        page: parsePositiveInt(page, 1),
+        pageSize: parsePositiveInt(pageSize, 20),
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
   /**
    * GET /api/trades/stats
    * 获取交易统计
    */
-  router.get('/stats', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const { startDate, endDate, symbol, strategy } = req.query; // 解构赋值
+  router.get('/stats', async (req, res) => {
+    try {
+      const { startDate, endDate, symbol, strategy } = req.query;
 
-      let stats = { // 定义变量 stats
-        totalTrades: 0, // 总成交
-        buyCount: 0, // buy数量
-        sellCount: 0, // sell数量
-        totalVolume: 0, // 总成交量
-        totalFees: 0, // 总Fees
-        totalPnL: 0, // 总PnL
-        winCount: 0, // win数量
-        lossCount: 0, // 亏损数量
-        winRate: 0, // win频率
-        avgPnL: 0, // avgPnL
-        avgWin: 0, // avgWin
-        avgLoss: 0, // avg亏损
-      }; // 结束代码块
+      let stats = {
+        totalTrades: 0,
+        buyCount: 0,
+        sellCount: 0,
+        totalVolume: 0,
+        totalFees: 0,
+        totalPnL: 0,
+        winCount: 0,
+        lossCount: 0,
+        winRate: 0,
+        avgPnL: 0,
+        avgWin: 0,
+        avgLoss: 0,
+      };
 
-      if (tradeRepository) { // 条件判断 tradeRepository
-        stats = await tradeRepository.getTradeStats({ // 赋值 stats
-          startDate, // 执行语句
-          endDate, // 执行语句
-          symbol, // 执行语句
-          strategy, // 执行语句
-        }); // 结束代码块
-      } // 结束代码块
+      if (tradeRepository) {
+        stats = await tradeRepository.getTradeStats({
+          startDate,
+          endDate,
+          symbol,
+          strategy,
+        });
+      }
 
-      // 计算衍生指标
-      if (stats.totalTrades > 0) { // 条件判断 stats.totalTrades > 0
-        stats.winRate = stats.winCount / stats.totalTrades; // 赋值 stats.winRate
-        stats.avgPnL = stats.totalPnL / stats.totalTrades; // 赋值 stats.avgPnL
-      } // 结束代码块
+      if (stats.totalTrades > 0) {
+        stats.winRate = stats.winCount / stats.totalTrades;
+        stats.avgPnL = stats.totalPnL / stats.totalTrades;
+      }
 
-      res.json({ success: true, data: stats }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
-
-  /**
-   * GET /api/trades/:id
-   * 获取交易详情
-   */
-  router.get('/:id', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const { id } = req.params; // 解构赋值
-
-      let trade = null; // 定义变量 trade
-      if (tradeRepository) { // 条件判断 tradeRepository
-        trade = await tradeRepository.getById(id); // 赋值 trade
-      } // 结束代码块
-
-      if (!trade) { // 条件判断 !trade
-        return res.status(404).json({ // 返回结果
-          success: false, // 成功标记
-          error: 'Trade not found', // 错误
-          code: 'NOT_FOUND' // 代码
-        }); // 结束代码块
-      } // 结束代码块
-
-      res.json({ success: true, data: trade }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
   /**
    * GET /api/trades/export
    * 导出交易数据
    */
-  router.get('/export', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const { format = 'csv', startDate, endDate, symbol, strategy } = req.query; // 解构赋值
+  router.get('/export', async (req, res) => {
+    try {
+      const { format = 'csv', startDate, endDate, symbol, strategy } = req.query;
 
-      let trades = []; // 定义变量 trades
-      if (tradeRepository) { // 条件判断 tradeRepository
-        const result = await tradeRepository.getTradeHistory({ // 定义常量 result
-          startDate, // 执行语句
-          endDate, // 执行语句
-          symbol, // 执行语句
-          strategy, // 执行语句
-          limit: 10000, // 限制
-        }); // 结束代码块
-        trades = result.trades || []; // 赋值 trades
-      } // 结束代码块
+      let trades = [];
+      if (tradeRepository) {
+        const result = await tradeRepository.getTradeHistory({
+          startDate,
+          endDate,
+          symbol,
+          strategy,
+          limit: 10000,
+        });
+        trades = result.trades || [];
+      }
 
-      if (format === 'csv') { // 条件判断 format === 'csv'
-        // 生成 CSV
-        const headers = ['时间', '交易ID', '交易对', '方向', '类型', '数量', '价格', '金额', '手续费', '盈亏', '策略', '交易所']; // 定义常量 headers
-        const rows = trades.map(t => [ // 定义函数 rows
-          new Date(t.timestamp).toISOString(), // 创建 Date 实例
-          t.tradeId, // 执行语句
-          t.symbol, // 执行语句
-          t.side, // 执行语句
-          t.type, // 执行语句
-          t.amount, // 执行语句
-          t.price, // 执行语句
-          t.cost, // 执行语句
-          t.fee, // 执行语句
-          t.realizedPnL || '', // 执行语句
-          t.strategy || '', // 执行语句
-          t.exchange, // 执行语句
-        ]); // 结束数组或索引
+      if (format === 'csv') {
+        const headers = ['时间', '交易ID', '交易对', '方向', '类型', '数量', '价格', '金额', '手续费', '盈亏', '策略', '交易所'];
+        const rows = trades.map(t => [
+          new Date(t.timestamp).toISOString(),
+          t.tradeId,
+          t.symbol,
+          t.side,
+          t.type,
+          t.amount,
+          t.price,
+          t.cost,
+          t.fee,
+          t.realizedPnL || '',
+          t.strategy || '',
+          t.exchange,
+        ]);
 
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n'); // 定义函数 csv
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8'); // 调用 res.setHeader
-        res.setHeader('Content-Disposition', `attachment; filename=trades_${Date.now()}.csv`); // 调用 res.setHeader
-        res.send('\uFEFF' + csv); // BOM for Excel
-      } else { // 执行语句
-        res.json({ success: true, data: trades }); // 调用 res.json
-      } // 结束代码块
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=trades_${Date.now()}.csv`);
+        res.send('\uFEFF' + csv);
+        return;
+      }
+
+      res.json({ success: true, data: trades });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
   /**
-   * GET /api/orders
+   * GET /api/trades/orders
    * 获取订单列表
    */
-  router.get('/orders', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      const { page = 1, pageSize = 20, status, symbol } = req.query; // 解构赋值
+  router.get('/orders', async (req, res) => {
+    try {
+      const { page = 1, pageSize = 20, status, symbol } = req.query;
+      const orderExecutor = getOrderExecutor(deps);
 
-      let orders = []; // 定义变量 orders
-      if (orderStore) { // 条件判断 orderStore
-        orders = await orderStore.getAll(); // 赋值 orders
+      let orders = await getStoredOrders(orderStore, 1000);
+      if (orderExecutor?.getActiveOrders) {
+        orders = mergeOrders(orders, orderExecutor.getActiveOrders());
+      }
 
-        if (status) { // 条件判断 status
-          orders = orders.filter(o => o.status === status); // 赋值 orders
-        } // 结束代码块
-        if (symbol) { // 条件判断 symbol
-          orders = orders.filter(o => o.symbol === symbol); // 赋值 orders
-        } // 结束代码块
-      } // 结束代码块
+      if (status) {
+        const normalizedStatus = normalizeOrderStatus(status);
+        orders = orders.filter(order => normalizeOrderStatus(order.status) === normalizedStatus);
+      }
 
-      const total = orders.length; // 定义常量 total
-      const offset = (page - 1) * pageSize; // 定义常量 offset
-      const list = orders.slice(offset, offset + parseInt(pageSize)); // 定义常量 list
+      if (symbol) {
+        orders = orders.filter(order => order.symbol === symbol);
+      }
 
-      res.json({ // 调用 res.json
-        success: true, // 成功标记
-        data: list, // 数据
-        total, // 执行语句
-        page: parseInt(page), // page
-        pageSize: parseInt(pageSize), // page大小
-      }); // 结束代码块
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      const currentPage = parsePositiveInt(page, 1);
+      const currentPageSize = parsePositiveInt(pageSize, 20);
+      const offset = (currentPage - 1) * currentPageSize;
+      const list = orders.slice(offset, offset + currentPageSize).map(toOrderResponse);
+
+      res.json({
+        success: true,
+        data: list,
+        total: orders.length,
+        page: currentPage,
+        pageSize: currentPageSize,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
   /**
-   * GET /api/orders/open
+   * GET /api/trades/orders/open
    * 获取未完成订单
    */
-  router.get('/orders/open', async (req, res) => { // 调用 router.get
-    try { // 尝试执行
-      let orders = []; // 定义变量 orders
-      if (orderStore) { // 条件判断 orderStore
-        orders = await orderStore.getByStatus(['open', 'pending', 'partially_filled']); // 赋值 orders
-      } // 结束代码块
+  router.get('/orders/open', async (req, res) => {
+    try {
+      const orderExecutor = getOrderExecutor(deps);
+      const orders = await getOpenOrders(orderStore, orderExecutor);
 
-      res.json({ success: true, data: orders }); // 调用 res.json
-    } catch (error) { // 执行语句
-      res.status(500).json({ success: false, error: error.message }); // 调用 res.status
-    } // 结束代码块
-  }); // 结束代码块
+      res.json({ success: true, data: orders.map(toOrderResponse) });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
-  return router; // 返回结果
-} // 结束代码块
+  /**
+   * GET /api/trades/orders/:id
+   * 获取订单详情
+   */
+  router.get('/orders/:id', async (req, res) => {
+    try {
+      const orderExecutor = getOrderExecutor(deps);
+      const order = await resolveOrderById(req.params.id, orderStore, orderExecutor);
 
-export default createTradeRoutes; // 默认导出
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: 'Order not found',
+          code: 'NOT_FOUND',
+        });
+      }
+
+      res.json({ success: true, data: toOrderResponse(order) });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/trades/orders
+   * 创建订单
+   */
+  router.post('/orders', async (req, res) => {
+    try {
+      if (!ensureTraderPermission(req, res)) {
+        return;
+      }
+
+      const orderExecutor = getOrderExecutor(deps);
+      if (!orderExecutor?.executeOrder) {
+        return res.status(503).json({
+          success: false,
+          error: 'Order executor unavailable',
+          code: 'EXECUTOR_UNAVAILABLE',
+        });
+      }
+
+      const {
+        exchangeId,
+        accountId,
+        symbol,
+        side,
+        amount,
+        price,
+        type = 'market',
+        reduceOnly = false,
+        options = {},
+      } = req.body || {};
+
+      if (!exchangeId || !symbol || !side || amount == null) {
+        return res.status(400).json({
+          success: false,
+          error: 'exchangeId, symbol, side and amount are required',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+
+      if (type === 'limit' && price == null) {
+        return res.status(400).json({
+          success: false,
+          error: 'price is required for limit orders',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+
+      const result = await orderExecutor.executeOrder({
+        exchangeId,
+        accountId,
+        symbol,
+        side,
+        amount: Number(amount),
+        price: price == null ? undefined : Number(price),
+        type,
+        reduceOnly,
+        options,
+      });
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error || 'Order creation failed',
+          code: 'ORDER_CREATE_FAILED',
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        data: toOrderResponse({
+          ...result.orderInfo,
+          status: result.orderInfo?.status || result.status || 'submitted',
+          orderId: result.orderId || result.orderInfo?.exchangeOrderId,
+        }),
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/trades/orders/:id/cancel
+   * 取消订单
+   */
+  router.post('/orders/:id/cancel', async (req, res) => {
+    try {
+      if (!ensureTraderPermission(req, res)) {
+        return;
+      }
+
+      const orderExecutor = getOrderExecutor(deps);
+      if (!orderExecutor?.cancelOrder) {
+        return res.status(503).json({
+          success: false,
+          error: 'Order executor unavailable',
+          code: 'EXECUTOR_UNAVAILABLE',
+        });
+      }
+
+      const order = await resolveOrderById(req.params.id, orderStore, orderExecutor);
+      const activeOrder = orderExecutor.getOrderStatus?.(req.params.id) ||
+        orderExecutor.getActiveOrders?.().find(item =>
+          item.clientOrderId === req.params.id || item.exchangeOrderId === req.params.id
+        );
+
+      const clientOrderId = activeOrder?.clientOrderId || order?.clientOrderId || req.params.id;
+      const canceled = await orderExecutor.cancelOrder(clientOrderId);
+
+      if (!canceled) {
+        return res.status(409).json({
+          success: false,
+          error: 'Order is not cancellable',
+          code: 'ORDER_NOT_CANCELLABLE',
+        });
+      }
+
+      if (orderStore?.update) {
+        const persistedOrderId = order?.orderId || order?.id;
+        if (persistedOrderId) {
+          await orderStore.update({
+            orderId: persistedOrderId,
+            status: 'canceled',
+            closedAt: Date.now(),
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Order canceled',
+        data: {
+          id: req.params.id,
+          clientOrderId,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /**
+   * GET /api/trades/:id
+   * 获取交易详情
+   */
+  router.get('/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      let trade = null;
+      if (tradeRepository) {
+        trade = await tradeRepository.getById(id);
+      }
+
+      if (!trade) {
+        return res.status(404).json({
+          success: false,
+          error: 'Trade not found',
+          code: 'NOT_FOUND',
+        });
+      }
+
+      res.json({ success: true, data: trade });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  return router;
+}
+
+export default createTradeRoutes;

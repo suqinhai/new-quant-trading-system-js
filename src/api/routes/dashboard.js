@@ -16,6 +16,22 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
   const router = Router(); // 定义常量 router
   const { dashboardService, tradeRepository, positionStore, alertManager } = deps; // 解构赋值
 
+  const normalizePnLPoints = (payload) => { // 定义函数 normalizePnLPoints
+    if (Array.isArray(payload)) { // 条件判断 Array.isArray(payload)
+      return payload; // 返回结果
+    } // 结束代码块
+
+    const dates = payload?.dates || []; // 定义常量 dates
+    const values = payload?.values || []; // 定义常量 values
+    const cumulative = payload?.cumulative || []; // 定义常量 cumulative
+
+    return dates.map((date, index) => ({ // 返回结果
+      timestamp: date, // timestamp
+      value: values[index] ?? 0, // value
+      cumulativePnL: cumulative[index] ?? values[index] ?? 0, // cumulativePnL
+    })); // 结束代码块
+  }; // 结束代码块
+
   /**
    * GET /api/dashboard/summary
    * 获取仪表板摘要
@@ -52,7 +68,7 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
    */
   router.get('/pnl', async (req, res) => { // 调用 router.get
     try { // 尝试执行
-      const { period = '7d' } = req.query; // 解构赋值
+      const period = req.query.period || req.query.range || '7d'; // 定义常量 period
 
       let pnlData = { // 定义变量 pnlData
         dates: [], // dates
@@ -75,7 +91,9 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
         pnlData.cumulative = pnlData.values.map(v => (cum += v)); // 赋值 pnlData.cumulative
       } // 结束代码块
 
-      res.json({ success: true, data: pnlData }); // 调用 res.json
+      const points = normalizePnLPoints(pnlData); // 定义常量 points
+
+      res.json({ success: true, data: { ...pnlData, points } }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块

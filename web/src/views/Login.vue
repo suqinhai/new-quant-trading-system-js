@@ -110,6 +110,11 @@ const handleLogin = async () => {
 
       if (res.token) {
         localStorage.setItem('token', res.token)
+        if (res.refreshToken) {
+          localStorage.setItem('refreshToken', res.refreshToken)
+        } else {
+          localStorage.removeItem('refreshToken')
+        }
 
         if (loginForm.remember) {
           localStorage.setItem('saved_username', loginForm.username)

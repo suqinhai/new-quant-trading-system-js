@@ -325,7 +325,6 @@ onMounted(async () => {
     fetchAlerts(),
     fetchPnLData()
   ])
-  systemStore.connectWebSocket()
   startAutoRefresh()
 })
 
@@ -346,6 +345,30 @@ const stopAutoRefresh = () => {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
+}
+
+const normalizePnLData = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload.map(item => ({
+      timestamp: item.timestamp,
+      value: item.value ?? item.pnl ?? 0,
+      cumulativePnL: item.cumulativePnL ?? item.cumulative ?? item.value ?? item.pnl ?? 0
+    }))
+  }
+
+  if (payload?.points && Array.isArray(payload.points)) {
+    return normalizePnLData(payload.points)
+  }
+
+  if (payload?.dates && Array.isArray(payload.dates)) {
+    return payload.dates.map((timestamp, index) => ({
+      timestamp,
+      value: payload.values?.[index] ?? 0,
+      cumulativePnL: payload.cumulative?.[index] ?? payload.values?.[index] ?? 0
+    }))
+  }
+
+  return []
 }
 
 const fetchSummary = async () => {
@@ -387,7 +410,7 @@ const fetchAlerts = async () => {
 const fetchPnLData = async () => {
   try {
     const res = await api.dashboard.getPnL({ range: pnlTimeRange.value })
-    pnlData.value = res.data || res || []
+    pnlData.value = normalizePnLData(res.data || res || [])
   } catch (error) {
     console.error('Failed to fetch PnL data:', error)
   }
