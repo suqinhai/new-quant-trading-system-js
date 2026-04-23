@@ -16,6 +16,8 @@
     "test": "node --test --test-force-exit tests/api-server.test.js tests/positions-routes.test.js && npm --prefix web run test",
     "test:backend": "node --test --test-force-exit tests/api-server.test.js tests/positions-routes.test.js",
     "test:frontend": "npm --prefix web run test",
+    "staging:check": "node scripts/checkStagingEnv.js --file .env",
+    "staging:ready": "npm run test && npm run staging:check",
     "download-data": "node scripts/downloadHistoricalData.js",
     "download-history": "node scripts/download-history.js",
     "keys:encrypt": "node scripts/keyManager.js encrypt",

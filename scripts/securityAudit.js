@@ -16,6 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import { spawnSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -76,7 +77,7 @@ function checkSensitiveFiles() {
   log('\n📁 检查敏感文件 / Checking sensitive files...', 'bold');
 
   const sensitivePatterns = [
-    { pattern: '.env', exclude: ['.env.example'] },
+    { pattern: '.env', exclude: ['.env.example', '.env.staging.example'] },
     { pattern: '.keys.enc', exclude: [] },
     { pattern: 'credentials.json', exclude: [] },
     { pattern: '*.pem', exclude: [] },
@@ -123,6 +124,24 @@ function checkSensitiveFiles() {
 
     if (!foundSuspicious) {
       record('passed', 'Env File', '.env 文件未发现明文敏感数据');
+    }
+  }
+
+  const trackedSensitive = spawnSync('git', ['ls-files', '.env', '.keys.enc'], {
+    cwd: ROOT_DIR,
+    encoding: 'utf8',
+  });
+
+  if (trackedSensitive.status === 0) {
+    const trackedFiles = trackedSensitive.stdout
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    if (trackedFiles.length > 0) {
+      record('failures', 'Git Tracking', `Sensitive files are still tracked: ${trackedFiles.join(', ')}`);
+    } else {
+      record('passed', 'Git Tracking', 'No tracked sensitive files found');
     }
   }
 }
