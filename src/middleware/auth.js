@@ -91,14 +91,28 @@ class AuthManager { // 定义类 AuthManager
    * @private
    */
   _initDefaultUser() { // 调用 _initDefaultUser
-    const defaultPassword = process.env.DASHBOARD_PASSWORD || 'admin123'; // 定义常量 defaultPassword
+    const allowInsecureDefaults = process.env.ALLOW_INSECURE_DEFAULT_AUTH === 'true'; // 定义常量 allowInsecureDefaults
+    const defaultUsername = process.env.DASHBOARD_USERNAME || 'admin'; // 定义常量 defaultUsername
+    const defaultPassword = process.env.DASHBOARD_PASSWORD || null; // 定义常量 defaultPassword
 
-    // 警告：使用默认密码
-    if (defaultPassword === 'admin123') { // 条件判断 defaultPassword === 'admin123'
-      console.warn('[Auth] WARNING: Using default password. Please set DASHBOARD_PASSWORD environment variable.'); // 控制台输出
+    if (!defaultPassword) { // 条件判断 !defaultPassword
+      if (allowInsecureDefaults) { // 条件判断 allowInsecureDefaults
+        this.createUser(defaultUsername, 'admin123', { role: 'admin' }); // 调用 createUser
+      } else { // 执行语句
+        console.warn('[Auth] Bootstrap admin skipped. Set DASHBOARD_PASSWORD to enable dashboard login.'); // 控制台输出
+      } // 结束代码块
+      return; // 返回结果
     } // 结束代码块
 
-    this.createUser('admin', defaultPassword, { role: 'admin' }); // 调用 createUser
+    if (!allowInsecureDefaults && (
+      defaultPassword === 'admin123' ||
+      defaultPassword === 'your_secure_password_here'
+    )) { // 条件判断
+      console.warn('[Auth] Refusing to create bootstrap admin with placeholder or weak password.'); // 控制台输出
+      return; // 返回结果
+    } // 结束代码块
+
+    this.createUser(defaultUsername, defaultPassword, { role: 'admin' }); // 调用 createUser
   } // 结束代码块
 
   /**

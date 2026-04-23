@@ -1935,28 +1935,30 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
     // 结果对象 / Result object
     const result = { // 定义常量 result
       allowed: true, // allowed
+      reason: null, // reason
       reasons: [], // reasons
       warnings: [], // warnings
     }; // 结束代码块
 
+    const reject = (reason) => { // 定义函数 reject
+      result.allowed = false; // 赋值 result.allowed
+      result.reason = reason; // 赋值 result.reason
+      result.reasons.push(reason); // 调用 result.reasons.push
+      return result; // 返回结果
+    }; // 结束代码块
+
     // 1. 检查交易是否被暂停 / Check if trading is paused
     if (!this.state.tradingAllowed) { // 条件判断 !this.state.tradingAllowed
-      result.allowed = false; // 赋值 result.allowed
-      result.reasons.push(`交易已暂停: ${this.state.pauseReason || '未知原因'} / Trading paused`); // 调用 result.reasons.push
-      return result; // 返回结果
+      return reject(`交易已暂停: ${this.state.pauseReason || '未知原因'} / Trading paused`); // 返回结果
     } // 结束代码块
 
     // 2. 检查风险级别 / Check risk level
     if (this.state.riskLevel === RISK_LEVEL.EMERGENCY) { // 条件判断 this.state.riskLevel === RISK_LEVEL.EMERGENCY
-      result.allowed = false; // 赋值 result.allowed
-      result.reasons.push('风险级别为紧急，禁止交易 / Emergency risk level, trading forbidden'); // 调用 result.reasons.push
-      return result; // 返回结果
+      return reject('风险级别为紧急，禁止交易 / Emergency risk level, trading forbidden'); // 返回结果
     } // 结束代码块
 
     if (this.state.riskLevel === RISK_LEVEL.CRITICAL) { // 条件判断 this.state.riskLevel === RISK_LEVEL.CRITICAL
-      result.allowed = false; // 赋值 result.allowed
-      result.reasons.push('风险级别为严重，禁止交易 / Critical risk level, trading forbidden'); // 调用 result.reasons.push
-      return result; // 返回结果
+      return reject('风险级别为严重，禁止交易 / Critical risk level, trading forbidden'); // 返回结果
     } // 结束代码块
 
     // 3. 检查净值回撤 / Check equity drawdown
@@ -1965,9 +1967,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
       // 紧急回撤，禁止交易 / Emergency drawdown, forbid trading
       if (drawdown >= this.config.maxEquityDrawdown) { // 条件判断 drawdown >= this.config.maxEquityDrawdown
-        result.allowed = false; // 赋值 result.allowed
-        result.reasons.push(`净值回撤超限: ${(drawdown * 100).toFixed(2)}% / Equity drawdown exceeded`); // 调用 result.reasons.push
-        return result; // 返回结果
+        return reject(`净值回撤超限: ${(drawdown * 100).toFixed(2)}% / Equity drawdown exceeded`); // 返回结果
       } // 结束代码块
 
       // 警告级别回撤，只警告不拒绝 / Warning level drawdown, warn but don't reject
@@ -1978,9 +1978,7 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
 
     // 4. 检查每日回撤 / Check daily drawdown
     if (this.dailyEquity.currentDrawdown >= this.config.maxDailyDrawdown) { // 条件判断 this.dailyEquity.currentDrawdown >= this.conf...
-      result.allowed = false; // 赋值 result.allowed
-      result.reasons.push(`当日回撤超限: ${(this.dailyEquity.currentDrawdown * 100).toFixed(2)}% / Daily drawdown exceeded`); // 调用 result.reasons.push
-      return result; // 返回结果
+      return reject(`当日回撤超限: ${(this.dailyEquity.currentDrawdown * 100).toFixed(2)}% / Daily drawdown exceeded`); // 返回结果
     } // 结束代码块
 
     // 5. 危险级别风险，添加警告 / Danger level risk, add warning

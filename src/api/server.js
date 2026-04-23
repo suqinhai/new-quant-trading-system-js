@@ -38,10 +38,10 @@ setContextGetter(getContext); // 调用 setContextGetter
 export class ApiServer { // 导出类 ApiServer
   constructor(config = {}) { // 构造函数
     this.config = { // 设置 config
-      port: config.port || parseInt(process.env.HTTP_PORT) || 3000, // 端口
+      port: config.port || parseInt(process.env.HTTP_PORT || process.env.PORT, 10) || 3000, // 端口
       host: config.host || '0.0.0.0', // 主机
       corsOrigins: config.corsOrigins || ['http://localhost:5173', 'http://localhost:3000'], // corsOrigins
-      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || 'your-secret-key', // jwt密钥
+      jwtSecret: config.jwtSecret || process.env.JWT_SECRET || null, // jwt密钥
       ...config, // 展开对象或数组
     }; // 结束代码块
 
@@ -280,6 +280,10 @@ export class ApiServer { // 导出类 ApiServer
    * 启动服务器
    */
   async start() { // 执行语句
+    if (!this.config.jwtSecret || this.config.jwtSecret === 'your-secret-key') {
+      throw new Error('JWT_SECRET is required to start the API server');
+    }
+
     this.setupMiddleware(); // 调用 setupMiddleware
     this.setupRoutes(); // 调用 setupRoutes
 

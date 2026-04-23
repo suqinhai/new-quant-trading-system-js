@@ -55,7 +55,7 @@ function buildDefaultConfig() {
       level: process.env.LOG_LEVEL || 'info',
     },
     server: {
-      httpPort: Number(process.env.HTTP_PORT || 3000),
+      httpPort: Number(process.env.HTTP_PORT || process.env.PORT || 3000),
       wsPort: Number(process.env.WS_PORT || 3001),
     },
     database: {

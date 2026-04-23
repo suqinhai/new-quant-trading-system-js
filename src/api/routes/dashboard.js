@@ -16,6 +16,22 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
   const router = Router(); // 定义常量 router
   const { dashboardService, tradeRepository, positionStore, alertManager } = deps; // 解构赋值
 
+  const getPositions = async () => { // 定义函数 getPositions
+    if (!positionStore) { // 条件判断 !positionStore
+      return []; // 返回结果
+    } // 结束代码块
+
+    if (positionStore.getAll) { // 条件判断 positionStore.getAll
+      return await positionStore.getAll(); // 返回结果
+    } // 结束代码块
+
+    if (positionStore.getOpenPositions) { // 条件判断 positionStore.getOpenPositions
+      return await positionStore.getOpenPositions(); // 返回结果
+    } // 结束代码块
+
+    return []; // 返回结果
+  }; // 结束代码块
+
   const normalizePnLPoints = (payload) => { // 定义函数 normalizePnLPoints
     if (Array.isArray(payload)) { // 条件判断 Array.isArray(payload)
       return payload; // 返回结果
@@ -114,16 +130,44 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
       if (dashboardService?.getPnLHistory) { // 条件判断 dashboardService?.getPnLHistory
         pnlData = await dashboardService.getPnLHistory(period); // 赋值 pnlData
       } else { // 执行语句
-        // 模拟数据
-        const days = period === '1d' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : 90; // 定义常量 days
-        const now = Date.now(); // 定义常量 now
+        const days = period === '1d' ? 1 : period === '30d' ? 30 : period === '90d' ? 90 : 7; // 定义常量 days
+        const now = new Date(); // 定义常量 now
+        const buckets = new Map(); // 定义常量 buckets
+
         for (let i = days - 1; i >= 0; i--) { // 循环 let i = days - 1; i >= 0; i--
-          const date = new Date(now - i * 24 * 60 * 60 * 1000); // 定义常量 date
-          pnlData.dates.push(date.toISOString().split('T')[0]); // 调用 pnlData.dates.push
-          pnlData.values.push(Math.random() * 1000 - 200); // 调用 pnlData.values.push
+          const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // 定义常量 date
+          buckets.set(date, 0); // 调用 buckets.set
         } // 结束代码块
-        let cum = 0; // 定义变量 cum
-        pnlData.cumulative = pnlData.values.map(v => (cum += v)); // 赋值 pnlData.cumulative
+
+        const result = await tradeRepository?.getTradeHistory?.({ // 定义常量 result
+          startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(), // startDate
+          endDate: new Date().toISOString(), // endDate
+          limit: 5000, // limit
+          offset: 0, // offset
+          sortBy: 'timestamp', // sortBy
+          sortOrder: 'asc', // sortOrder
+        }); // 结束代码块
+
+        for (const trade of result?.trades || []) { // 循环 const trade of result?.trades || []
+          const date = new Date(trade.timestamp).toISOString().slice(0, 10); // 定义常量 date
+          if (!buckets.has(date)) { // 条件判断 !buckets.has(date)
+            buckets.set(date, 0); // 调用 buckets.set
+          } // 结束代码块
+          buckets.set(date, Number(buckets.get(date) || 0) + Number(
+            trade.realizedPnL
+            ?? trade.realizedPnl
+            ?? trade.pnl
+            ?? 0
+          )); // 调用 buckets.set
+        } // 结束代码块
+
+        pnlData.dates = Array.from(buckets.keys()); // 赋值 pnlData.dates
+        pnlData.values = pnlData.dates.map(date => buckets.get(date) || 0); // 赋值 pnlData.values
+        let cumulativePnL = 0; // 定义变量 cumulativePnL
+        pnlData.cumulative = pnlData.values.map((value) => { // 赋值 pnlData.cumulative
+          cumulativePnL += value; // 执行语句
+          return cumulativePnL; // 返回结果
+        }); // 结束代码块
       } // 结束代码块
 
       const points = normalizePnLPoints(pnlData); // 定义常量 points
@@ -217,14 +261,12 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
     try { // 尝试执行
       let positions = []; // 定义变量 positions
 
-      if (positionStore) { // 条件判断 positionStore
-        positions = await positionStore.getAll(); // 赋值 positions
-      } // 结束代码块
+      positions = await getPositions(); // 赋值 positions
 
       // 计算持仓摘要
       const summary = { // 定义常量 summary
         total: positions.length, // 总
-        totalValue: positions.reduce((sum, p) => sum + (p.currentValue || 0), 0), // 总Value
+        totalValue: positions.reduce((sum, p) => sum + ((p.currentValue || 0) || ((p.currentPrice || 0) * (p.amount || 0))), 0), // 总Value
         totalPnL: positions.reduce((sum, p) => sum + (p.unrealizedPnL || 0), 0), // 总PnL
         positions: positions.slice(0, 10), // 持仓
       }; // 结束代码块
@@ -244,7 +286,7 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
       const memory = process.memoryUsage(); // 定义常量 memory
       const metrics = { // 定义常量 metrics
         cpu: { // CPU
-          usage: Math.random() * 30 + 10, // 使用
+          usage: 0, // 使用
         }, // 结束代码块
         memory: { // 内存
           used: memory.heapUsed, // used
@@ -252,9 +294,13 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
           percent: (memory.heapUsed / memory.heapTotal) * 100, // 百分比
         }, // 结束代码块
         uptime: process.uptime(), // uptime
-        latency: Math.random() * 50 + 10, // latency
+        latency: 0, // latency
         timestamp: Date.now(), // 时间戳
       }; // 结束代码块
+
+      const cpuUsage = process.cpuUsage(); // 定义常量 cpuUsage
+      const uptimeMicros = Math.max(process.uptime() * 1000000, 1); // 定义常量 uptimeMicros
+      metrics.cpu.usage = ((cpuUsage.user + cpuUsage.system) / uptimeMicros) * 100; // 赋值 metrics.cpu.usage
 
       res.json({ success: true, data: metrics }); // 调用 res.json
     } catch (error) { // 执行语句

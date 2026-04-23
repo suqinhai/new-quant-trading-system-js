@@ -64,7 +64,17 @@ import createLoggerModule from './logger/index.js'; // 导入模块 ./logger/ind
 import { BacktestEngine, BacktestRunner } from './backtest/index.js'; // 导入模块 ./backtest/index.js
 
 // 导入行情订阅器 (用于共享行情服务模式) / Import market data subscriber (for shared market data service mode)
-import { MarketDataSubscriber } from './services/index.js'; // 导入模块 ./services/index.js
+import { MarketDataSubscriber } from './services/MarketDataSubscriber.js'; // 导入模块 ./services/MarketDataSubscriber.js
+import { ApiServer } from './api/server.js'; // 导入模块 ./api/server.js
+import RedisDatabaseManager from './database/RedisDatabaseManager.js'; // 导入模块 ./database/RedisDatabaseManager.js
+import {
+  RuntimeConfigManager,
+  RuntimeTradeRepository,
+  RuntimeDashboardService,
+  RuntimeExchangeManager,
+  RuntimeTradingEngine,
+  createRuntimeHealthChecker,
+} from './api/runtimeAdapters.js'; // 导入模块 ./api/runtimeAdapters.js
 
 // ============================================
 // 常量定义 / Constants Definition
@@ -373,6 +383,21 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 回测引擎 (仅回测模式) / Backtest engine (backtest mode only)
     this.backtestEngine = null; // 设置 backtestEngine
 
+    // 运行时基础设施 / Runtime infrastructure
+    this.redisDb = null; // 设置 redisDb
+    this.apiServer = null; // 设置 apiServer
+    this.configManager = null; // 设置 configManager
+    this.healthChecker = null; // 设置 healthChecker
+    this.runtimeTradeRepository = null; // 设置 runtimeTradeRepository
+    this.runtimeExchangeManager = null; // 设置 runtimeExchangeManager
+    this.runtimeTradingEngine = null; // 设置 runtimeTradingEngine
+    this.dashboardService = null; // 设置 dashboardService
+
+    // 当前策略控制状态 / Current strategy control state
+    this.runtimeStrategyId = null; // 设置 runtimeStrategyId
+    this.strategyExecutionState = 'stopped'; // 设置 strategyExecutionState
+    this.lastStrategySignal = null; // 设置 lastStrategySignal
+
     // ============================================
     // 运行时状态 / Runtime State
     // ============================================
@@ -451,6 +476,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 1. 加载配置 / Load configuration
       this._log('info', '加载配置... / Loading configuration...'); // 调用 _log
       this.config = loadConfig(); // 设置 config
+      this.configManager = new RuntimeConfigManager(this.config); // 设置 configManager
 
       // 2. 初始化日志模块 / Initialize logger module
       this._log('info', '初始化日志模块... / Initializing logger module...'); // 调用 _log
@@ -588,7 +614,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     this._initRiskManager(); // 调用 _initRiskManager
 
     // 4. 创建订单执行器 / Create order executor
-    this._initOrderExecutor(); // 调用 _initOrderExecutor
+    await this._initOrderExecutor(); // 等待异步结果
 
     // 4.5 初始化风控管理器数据源 / Initialize risk manager data sources
     if (this.riskManager && typeof this.riskManager.init === 'function') { // 条件判断 this.riskManager && typeof this.riskManager.init === 'function'
@@ -597,6 +623,9 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 5. 加载策略 / Load strategy
     await this._initStrategy(); // 等待异步结果
+
+    // 5.5 初始化运行时服务 / Initialize runtime services
+    await this._initRuntimeServices(); // 等待异步结果
 
     // 6. 连接数据源到日志模块 / Connect data sources to logger module
     this._connectLoggerDataSources(); // 调用 _connectLoggerDataSources
@@ -873,7 +902,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
    * Initialize order executor
    * @private
    */
-  _initOrderExecutor() { // 调用 _initOrderExecutor
+  async _initOrderExecutor() { // 调用 _initOrderExecutor
     // 输出日志 / Output log
     this._log('info', '初始化订单执行器... / Initializing order executor...'); // 调用 _log
 
@@ -883,9 +912,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // 创建订单执行器 / Create order executor
     const executorConfig = { // 定义常量 executorConfig
       // 交易所实例映射 / Exchange instance mapping
-      exchanges: { // 交易所实例映射
-        [this.options.exchange || 'binance']: this.exchange, // 执行语句
-      }, // 结束代码块
+      exchanges: Object.fromEntries(this.exchanges || []), // 交易所实例映射
 
       // 是否为影子模式 (干跑) / Shadow mode (dry run)
       dryRun: isShadowMode, // 是否为影子模式 (干跑)
@@ -908,6 +935,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     } // 结束代码块
 
     this.executor = new SmartOrderExecutor(executorConfig); // 设置 executor
+    await this.executor.init(this.exchanges); // 等待异步结果
 
     // 如果是影子模式，输出提示 / If shadow mode, output notice
     if (isShadowMode) { // 条件判断 isShadowMode
@@ -1193,6 +1221,292 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     }); // 结束代码块
   } // 结束代码块
 
+  /**
+   * 当前策略是否处于运行状态
+   * @returns {boolean}
+   */
+  isStrategyActive() { // 调用 isStrategyActive
+    return this.strategyExecutionState === 'running'; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 更新策略执行状态
+   * @param {string} state - 状态 / State
+   */
+  async setStrategyExecutionState(state) { // 执行语句
+    this.strategyExecutionState = state; // 赋值 strategyExecutionState
+    await this._syncRuntimeStrategyRecord(); // 等待异步结果
+  } // 结束代码块
+
+  /**
+   * 初始化运行时服务
+   * @private
+   */
+  async _initRuntimeServices() { // 执行语句
+    this.runtimeStrategyId = this.options.strategy || DEFAULT_OPTIONS.strategy; // 设置 runtimeStrategyId
+
+    const redisEnabled = this.config.database?.redis?.enabled || // 定义常量 redisEnabled
+      !!(process.env.REDIS_URL || process.env.REDIS_HOST); // 执行语句
+
+    if (redisEnabled) { // 条件判断 redisEnabled
+      this._log('info', '初始化 Redis 持久化... / Initializing Redis persistence...'); // 调用 _log
+      const redisHost = this.config.database?.redis?.host || process.env.REDIS_HOST || 'localhost'; // 定义常量 redisHost
+      const redisPort = this.config.database?.redis?.port || parseInt(process.env.REDIS_PORT || '6379', 10); // 定义常量 redisPort
+      const redisPassword = this.config.database?.redis?.password || process.env.REDIS_PASSWORD || null; // 定义常量 redisPassword
+      const redisUrl = this.config.database?.redis?.url || process.env.REDIS_URL || ( // 定义常量 redisUrl
+        redisPassword
+          ? `redis://:${redisPassword}@${redisHost}:${redisPort}`
+          : `redis://${redisHost}:${redisPort}`
+      ); // 结束代码块
+
+      this.redisDb = new RedisDatabaseManager({ // 设置 redisDb
+        redis: { // redis
+          url: redisUrl, // url
+          database: this.config.database?.redis?.db || parseInt(process.env.REDIS_DB || '0', 10), // database
+        }, // 结束代码块
+      }); // 结束代码块
+
+      await this.redisDb.initialize(); // 等待异步结果
+    } // 结束代码块
+
+    this.runtimeTradeRepository = new RuntimeTradeRepository(this.redisDb); // 设置 runtimeTradeRepository
+    this.runtimeExchangeManager = new RuntimeExchangeManager(this); // 设置 runtimeExchangeManager
+    this.runtimeTradingEngine = new RuntimeTradingEngine(this); // 设置 runtimeTradingEngine
+    this.dashboardService = new RuntimeDashboardService({ // 设置 dashboardService
+      tradeRepository: this.runtimeTradeRepository, // tradeRepository
+      positionStore: this.redisDb?.positions || null, // positionStore
+      strategyStore: this.redisDb?.strategies || null, // strategyStore
+      exchangeManager: this.runtimeExchangeManager, // exchangeManager
+    }); // 结束代码块
+    this.healthChecker = createRuntimeHealthChecker({ // 设置 healthChecker
+      runner: this, // runner
+      redisDb: this.redisDb, // redisDb
+    }); // 结束代码块
+
+    await this._syncRuntimeStrategyRecord(); // 等待异步结果
+  } // 结束代码块
+
+  /**
+   * 构建当前策略记录
+   * @returns {Object}
+   * @private
+   */
+  _buildRuntimeStrategyRecord() { // 调用 _buildRuntimeStrategyRecord
+    const symbols = this.options.symbols.length > 0 ? this.options.symbols : DEFAULT_OPTIONS.symbols; // 定义常量 symbols
+    const strategyName = this.options.strategy || DEFAULT_OPTIONS.strategy; // 定义常量 strategyName
+
+    return { // 返回结果
+      strategyId: this.runtimeStrategyId, // strategyId
+      strategyName, // strategyName
+      state: this.strategyExecutionState, // state
+      config: { // config
+        name: strategyName, // name
+        type: strategyName, // type
+        symbol: symbols[0] || '', // symbol
+        exchange: this.options.exchange || this.config.exchange?.default || 'binance', // exchange
+        initialCapital: this.options.capital ?? this.config.trading?.initialCapital ?? DEFAULT_OPTIONS.initialCapital, // initialCapital
+      }, // 结束代码块
+      parameters: this.config.strategy?.[strategyName] || {}, // parameters
+      stateData: { // stateData
+        totalReturn: 0, // totalReturn
+        todayReturn: 0, // todayReturn
+        trades: this.orderCount, // trades
+        winRate: 0, // winRate
+      }, // 结束代码块
+      lastSignal: this.lastStrategySignal || null, // lastSignal
+      lastSignalTime: this.lastStrategySignal?.timestamp || null, // lastSignalTime
+      createdAt: this.startTime || Date.now(), // createdAt
+      updatedAt: Date.now(), // updatedAt
+    }; // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 同步当前策略状态到存储
+   * @private
+   */
+  async _syncRuntimeStrategyRecord() { // 执行语句
+    if (!this.redisDb?.strategies || !this.runtimeStrategyId) { // 条件判断 !this.redisDb?.strategies || !this.runtimeStrategyId
+      return; // 返回结果
+    } // 结束代码块
+
+    await this.redisDb.strategies.save(this._buildRuntimeStrategyRecord()); // 等待异步结果
+  } // 结束代码块
+
+  /**
+   * 启动 API 服务器
+   * @private
+   */
+  async _startApiServer() { // 执行语句
+    if (this.apiServer || process.env.ENABLE_API === 'false') { // 条件判断 this.apiServer || process.env.ENABLE_API === 'false'
+      return; // 返回结果
+    } // 结束代码块
+
+    const apiPort = parseInt(process.env.HTTP_PORT || process.env.PORT, 10) // 定义常量 apiPort
+      || this.config.server?.httpPort // 执行语句
+      || this.config.server?.port // 执行语句
+      || 3000; // 执行语句
+
+    this.apiServer = new ApiServer({ // 设置 apiServer
+      port: apiPort, // port
+      host: this.config.server?.host || '0.0.0.0', // host
+      corsOrigins: this.config.server?.corsOrigins, // corsOrigins
+      jwtSecret: process.env.JWT_SECRET, // jwtSecret
+      deps: { // deps
+        strategyStore: this.redisDb?.strategies || null, // strategyStore
+        strategyRegistry: StrategyRegistry, // strategyRegistry
+        tradingEngine: this.runtimeTradingEngine, // tradingEngine
+        tradeRepository: this.runtimeTradeRepository, // tradeRepository
+        orderStore: this.redisDb?.orders || null, // orderStore
+        positionStore: this.redisDb?.positions || null, // positionStore
+        dashboardService: this.dashboardService, // dashboardService
+        alertManager: this.loggerModule?.alertManager || null, // alertManager
+        riskManager: this.riskManager, // riskManager
+        exchangeManager: this.runtimeExchangeManager, // exchangeManager
+        configManager: this.configManager, // configManager
+        healthChecker: this.healthChecker, // healthChecker
+        executor: this.executor, // executor
+        redisClient: this.redisDb?.redis?.client || this.redisDb?.redis || null, // redisClient
+        marketDataEngine: this.marketDataEngine, // marketDataEngine
+      }, // 结束代码块
+    }); // 结束代码块
+
+    await this.apiServer.start(); // 等待异步结果
+  } // 结束代码块
+
+  /**
+   * 将订单状态持久化到 Redis
+   * @param {Object} orderInfo - 订单信息 / Order info
+   * @param {string} status - 订单状态 / Order status
+   * @private
+   */
+  async _persistOrderState(orderInfo, status = null) { // 执行语句
+    if (!this.redisDb?.orders || !orderInfo) { // 条件判断 !this.redisDb?.orders || !orderInfo
+      return; // 返回结果
+    } // 结束代码块
+
+    const record = { // 定义常量 record
+      orderId: orderInfo.exchangeOrderId || orderInfo.clientOrderId, // orderId
+      clientOrderId: orderInfo.clientOrderId || null, // clientOrderId
+      symbol: orderInfo.symbol, // symbol
+      side: orderInfo.side, // side
+      type: orderInfo.type || orderInfo.orderType || 'market', // type
+      status: status || orderInfo.status || 'pending', // status
+      amount: Number(orderInfo.amount || 0), // amount
+      filled: Number(orderInfo.filledAmount || 0), // filled
+      remaining: Math.max(0, Number(orderInfo.amount || 0) - Number(orderInfo.filledAmount || 0)), // remaining
+      price: Number(orderInfo.currentPrice ?? orderInfo.price ?? 0), // price
+      averagePrice: Number(orderInfo.avgPrice ?? 0), // averagePrice
+      exchange: orderInfo.exchangeId || this.options.exchange || 'binance', // exchange
+      strategy: this.runtimeStrategyId, // strategy
+      createdAt: orderInfo.createdAt || Date.now(), // createdAt
+      updatedAt: Date.now(), // updatedAt
+      errorMessage: orderInfo.error || orderInfo.reason || null, // errorMessage
+    }; // 结束代码块
+
+    try { // 尝试执行
+      const existing = await this.redisDb.orders.getById(record.orderId); // 定义常量 existing
+      if (existing) { // 条件判断 existing
+        await this.redisDb.orders.update(record); // 等待异步结果
+      } else { // 执行语句
+        await this.redisDb.orders.insert(record); // 等待异步结果
+      } // 结束代码块
+    } catch (error) { // 执行语句
+      this._log('warn', `订单持久化失败: ${error.message} / Failed to persist order state`); // 调用 _log
+    } // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 将成交持久化到 Redis
+   * @param {Object} orderInfo - 订单信息 / Order info
+   * @param {Object} exchangeOrder - 交易所订单 / Exchange order
+   * @private
+   */
+  async _persistTrade(orderInfo, exchangeOrder) { // 执行语句
+    if (!this.redisDb || !orderInfo) { // 条件判断 !this.redisDb || !orderInfo
+      return; // 返回结果
+    } // 结束代码块
+
+    const tradeId = orderInfo.exchangeOrderId || orderInfo.clientOrderId; // 定义常量 tradeId
+    if (!tradeId) { // 条件判断 !tradeId
+      return; // 返回结果
+    } // 结束代码块
+
+    const fee = Number(exchangeOrder?.fee?.cost || 0); // 定义常量 fee
+    const price = Number(orderInfo.avgPrice ?? orderInfo.currentPrice ?? exchangeOrder?.average ?? exchangeOrder?.price ?? 0); // 定义常量 price
+    const amount = Number(orderInfo.filledAmount ?? orderInfo.amount ?? exchangeOrder?.filled ?? 0); // 定义常量 amount
+
+    await this.redisDb.insertTrade({ // 等待异步结果
+      tradeId, // tradeId
+      orderId: tradeId, // orderId
+      symbol: orderInfo.symbol, // symbol
+      side: orderInfo.side, // side
+      type: orderInfo.type || orderInfo.orderType || 'market', // type
+      amount, // amount
+      price, // price
+      cost: amount * price, // cost
+      fee, // fee
+      feeCurrency: exchangeOrder?.fee?.currency || 'USDT', // feeCurrency
+      realizedPnl: Number(orderInfo.pnl || 0), // realizedPnl
+      exchange: orderInfo.exchangeId || this.options.exchange || 'binance', // exchange
+      strategy: this.runtimeStrategyId, // strategy
+      timestamp: orderInfo.updatedAt || Date.now(), // timestamp
+      metadata: { // metadata
+        dryRun: exchangeOrder?.info?.dryRun || false, // dryRun
+      }, // 结束代码块
+    }); // 结束代码块
+  } // 结束代码块
+
+  /**
+   * 同步当前虚拟持仓到 Redis
+   * @param {string} symbol - 交易对 / Symbol
+   * @private
+   */
+  async _syncRuntimePosition(symbol) { // 执行语句
+    if (!this.redisDb?.positions || !symbol) { // 条件判断 !this.redisDb?.positions || !symbol
+      return; // 返回结果
+    } // 结束代码块
+
+    const positionId = `${this.options.exchange || 'binance'}:${symbol}`; // 定义常量 positionId
+    const currentPosition = this._virtualPositions.get(symbol) || { amount: 0, avgPrice: 0 }; // 定义常量 currentPosition
+    const currentPrice = Number(this._lastPrices?.get(symbol) || currentPosition.avgPrice || 0); // 定义常量 currentPrice
+    const unrealizedPnl = Number((currentPrice - Number(currentPosition.avgPrice || 0)) * Number(currentPosition.amount || 0)); // 定义常量 unrealizedPnl
+    const existing = await this.redisDb.positions.getById(positionId); // 定义常量 existing
+
+    if (Number(currentPosition.amount || 0) > 0) { // 条件判断 Number(currentPosition.amount || 0) > 0
+      const payload = { // 定义常量 payload
+        positionId, // positionId
+        symbol, // symbol
+        side: 'long', // side
+        entryPrice: Number(currentPosition.avgPrice || 0), // entryPrice
+        currentPrice, // currentPrice
+        amount: Number(currentPosition.amount || 0), // amount
+        leverage: 1, // leverage
+        margin: Number(currentPosition.amount || 0) * Number(currentPosition.avgPrice || 0), // margin
+        unrealizedPnl, // unrealizedPnl
+        realizedPnl: existing?.realizedPnl || 0, // realizedPnl
+        exchange: this.options.exchange || 'binance', // exchange
+        strategy: this.runtimeStrategyId, // strategy
+        openedAt: existing?.openedAt || Date.now(), // openedAt
+        updatedAt: Date.now(), // updatedAt
+        status: 'open', // status
+      }; // 结束代码块
+
+      if (existing) { // 条件判断 existing
+        await this.redisDb.positions.update(payload); // 等待异步结果
+      } else { // 执行语句
+        await this.redisDb.positions.insert(payload); // 等待异步结果
+      } // 结束代码块
+      return; // 返回结果
+    } // 结束代码块
+
+    if (existing && existing.status === 'open') { // 条件判断 existing && existing.status === 'open'
+      await this.redisDb.positions.close(positionId, { // 等待异步结果
+        currentPrice, // currentPrice
+        realizedPnl: Number(existing.realizedPnl || 0), // realizedPnl
+      }); // 结束代码块
+    } // 结束代码块
+  } // 结束代码块
+
   // ============================================
   // 事件绑定方法 / Event Binding Methods
   // ============================================
@@ -1328,7 +1642,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       } // 结束代码块
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
+      if (this.strategy && this.isStrategyActive() && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
         this.strategy.onTicker(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'ticker', data); // Log score
       } // 结束代码块
@@ -1351,7 +1665,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       if (data.isClosed !== true) { // 条件判断 data.isClosed !== true
         return; // 返回结果
       } // 结束代码块
-      if (this.strategy && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
+      if (this.strategy && this.isStrategyActive() && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
         this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
           this._recordClosedCandle(data); // 调用 _recordClosedCandle
           await this.strategy.onCandle(data); // 访问 strategy
@@ -1371,7 +1685,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._recordMarketDataEvent('orderbook', data); // 调用 _recordMarketDataEvent
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
+      if (this.strategy && this.isStrategyActive() && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
         this.strategy.onOrderBook(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'orderbook', data); // Log score
       } // 结束代码块
@@ -1386,7 +1700,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._recordMarketDataEvent('fundingRate', data); // 调用 _recordMarketDataEvent
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
+      if (this.strategy && this.isStrategyActive() && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
         this.strategy.onFundingRate(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'fundingRate', data); // Log score
       } // 结束代码块
@@ -1433,7 +1747,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       } // 结束代码块
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
+      if (this.strategy && this.isStrategyActive() && this.strategy.onTicker) { // 条件判断 this.strategy && this.strategy.onTicker
         this.strategy.onTicker(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'ticker', data); // Log score
       } // 结束代码块
@@ -1461,7 +1775,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._log('debug', `[共享行情] 收到闭合K线: ${data.exchange}:${data.symbol} close=${data.close} / Received closed kline`); // 调用 _log
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
+      if (this.strategy && this.isStrategyActive() && this.strategy.onCandle) { // 条件判断 this.strategy && this.strategy.onCandle
         this._enqueueCandle(data.symbol, async () => { // 调用 _enqueueCandle
           this._recordClosedCandle(data); // 调用 _recordClosedCandle
           await this.strategy.onCandle(data); // 访问 strategy
@@ -1481,7 +1795,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._recordMarketDataEvent('depth', data); // 调用 _recordMarketDataEvent
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
+      if (this.strategy && this.isStrategyActive() && this.strategy.onOrderBook) { // 条件判断 this.strategy && this.strategy.onOrderBook
         this.strategy.onOrderBook(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'depth', data); // Log score
       } // 结束代码块
@@ -1496,7 +1810,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._recordMarketDataEvent('trade', data); // 调用 _recordMarketDataEvent
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onTrade) { // 条件判断 this.strategy && this.strategy.onTrade
+      if (this.strategy && this.isStrategyActive() && this.strategy.onTrade) { // 条件判断 this.strategy && this.strategy.onTrade
         this.strategy.onTrade(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'trade', data); // Log score
       } // 结束代码块
@@ -1511,7 +1825,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._recordMarketDataEvent('fundingRate', data); // 调用 _recordMarketDataEvent
 
       // 传递给策略 / Pass to strategy
-      if (this.strategy && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
+      if (this.strategy && this.isStrategyActive() && this.strategy.onFundingRate) { // 条件判断 this.strategy && this.strategy.onFundingRate
         this.strategy.onFundingRate(data); // 访问 strategy
         this._logStrategyScore(this.strategy, 'fundingRate', data); // Log score
       } // 结束代码块
@@ -1787,11 +2101,20 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 信号事件 / Signal event
     this.strategy.on('signal', async (signal) => { // 访问 strategy
+      if (!this.isStrategyActive()) { // 条件判断 !this.isStrategyActive()
+        this._log('debug', `策略已停止，忽略信号: ${signal.symbol} ${signal.side} / Strategy stopped, signal ignored`); // 调用 _log
+        return; // 返回结果
+      } // 结束代码块
+
       // 链路日志: 系统收到策略信号 / Chain log: System received strategy signal
       this._log('info', `[链路] 系统收到策略信号: ${signal.symbol} ${signal.side} 数量=${signal.amount} / System received signal`); // 调用 _log
 
       // 增加信号计数 / Increment signal count
       this.signalCount++; // 访问 signalCount
+
+      // 同步当前策略最后信号 / Sync latest strategy signal
+      this.lastStrategySignal = { ...signal, timestamp: signal.timestamp || Date.now() }; // 赋值 lastStrategySignal
+      await this._syncRuntimeStrategyRecord(); // 等待异步结果
 
       // 记录信号到日志文件 / Log signal to file
       if (this.loggerModule && this.loggerModule.pnlLogger) { // 条件判断 this.loggerModule && this.loggerModule.pnlLogger
@@ -1864,6 +2187,11 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       return; // 返回结果
     } // 结束代码块
 
+    // 订单提交事件 / Order submitted event
+    this.executor.on('orderSubmitted', ({ orderInfo }) => { // 访问 executor
+      void this._persistOrderState(orderInfo, 'submitted'); // 调用 _persistOrderState
+    }); // 结束代码块
+
     // 订单成交事件 / Order filled event
     this.executor.on('orderFilled', (data) => { // 访问 executor
       // 提取订单信息 (执行器发出的是 { orderInfo, exchangeOrder })
@@ -1892,6 +2220,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 增加订单计数 / Increment order count
       this.orderCount++; // 访问 orderCount
 
+      // 持久化订单、成交和持仓 / Persist order, trade and position
+      void this._persistOrderState(orderInfo, 'filled'); // 调用 _persistOrderState
+      void this._persistTrade(orderInfo, exchangeOrder); // 调用 _persistTrade
+      void this._syncRuntimePosition(orderInfo.symbol); // 调用 _syncRuntimePosition
+      void this._syncRuntimeStrategyRecord(); // 调用 _syncRuntimeStrategyRecord
+
       // 记录到日志模块 / Log to logger module
       if (this.loggerModule) { // 条件判断 this.loggerModule
         this.loggerModule.pnlLogger.logTrade(trade); // 访问 loggerModule
@@ -1901,16 +2235,29 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 订单失败事件 / Order failed event
     this.executor.on('orderFailed', (data) => { // 访问 executor
+      const orderInfo = data?.orderInfo || data?.order || null; // 定义常量 orderInfo
+      const error = data?.error instanceof Error // 定义常量 error
+        ? data.error
+        : new Error(data?.error || data?.reason || '订单失败 / Order failed');
+
       // 链路日志: 订单失败 / Chain log: Order failed
-      this._log('error', `[链路] 订单失败: ${data.error} ${data.order?.symbol || ''} ${data.order?.side || ''} / Order failed`); // 调用 _log
+      this._log('error', `[链路] 订单失败: ${error.message} ${orderInfo?.symbol || ''} ${orderInfo?.side || ''} / Order failed`); // 调用 _log
 
       // 增加错误计数 / Increment error count
       this.errorCount++; // 访问 errorCount
 
+      // 同步失败订单状态 / Sync failed order state
+      void this._persistOrderState({ ...orderInfo, error: error.message }, 'failed'); // 调用 _persistOrderState
+
       // 触发警报 / Trigger alert
-      if (this.loggerModule) { // 条件判断 this.loggerModule
-        this.loggerModule.alertManager?.triggerOrderFailedAlert(data.order, new Error(data.error)); // 访问 loggerModule
+      if (this.loggerModule && orderInfo) { // 条件判断 this.loggerModule && orderInfo
+        this.loggerModule.alertManager?.triggerOrderFailedAlert(orderInfo, error); // 访问 loggerModule
       } // 结束代码块
+    }); // 结束代码块
+
+    // 订单取消事件 / Order canceled event
+    this.executor.on('orderCanceled', ({ orderInfo }) => { // 访问 executor
+      void this._persistOrderState(orderInfo, 'canceled'); // 调用 _persistOrderState
     }); // 结束代码块
   } // 结束代码块
 
@@ -2071,6 +2418,12 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       this._log('info', '启动策略... / Starting strategy...'); // 调用 _log
       await this.strategy.start(); // 等待异步结果
     } // 结束代码块
+
+    // 5.5 更新策略状态 / Update strategy state
+    await this.setStrategyExecutionState('running'); // 等待异步结果
+
+    // 5.6 启动业务 API / Start business API
+    await this._startApiServer(); // 等待异步结果
 
     // 6. 发送 PM2 ready 信号 / Send PM2 ready signal
     if (process.send) { // 条件判断 process.send
@@ -2259,11 +2612,16 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
         // 如果风控拒绝 / If risk rejected
         if (!riskCheck.allowed) { // 条件判断 !riskCheck.allowed
+          const rejectionReasons = Array.isArray(riskCheck.reasons) // 定义常量 rejectionReasons
+            ? riskCheck.reasons.filter(Boolean)
+            : [];
+          const rejectionReason = riskCheck.reason || rejectionReasons[0] || '风控拒绝 / Risk rejected'; // 定义常量 rejectionReason
+
           // 链路日志: 风控拒绝 / Chain log: Risk rejected
-          this._log('warn', `[链路] 风控拒绝信号: ${riskCheck.reason} / Risk rejected signal`); // 调用 _log
+          this._log('warn', `[链路] 风控拒绝信号: ${rejectionReason} / Risk rejected signal`); // 调用 _log
 
           // 发出信号拒绝事件 / Emit signal rejected event
-          this.emit('signalRejected', { signal, reason: riskCheck.reason }); // 调用 emit
+          this.emit('signalRejected', { signal, reason: rejectionReason, reasons: rejectionReasons }); // 调用 emit
 
           // 返回 / Return
           return; // 返回结果
@@ -2391,6 +2749,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         this._log('info', '停止策略... / Stopping strategy...'); // 调用 _log
         await this.strategy.stop(); // 等待异步结果
       } // 结束代码块
+      this.strategyExecutionState = 'stopped'; // 赋值 strategyExecutionState
 
       // 2. 取消所有挂单 / Cancel all pending orders
       if (this.executor && this.mode === RUN_MODE.LIVE) { // 条件判断 this.executor && this.mode === RUN_MODE.LIVE
@@ -2407,6 +2766,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       if (this.marketDataEngine) { // 条件判断 this.marketDataEngine
         this._log('info', '停止行情引擎... / Stopping market data engine...'); // 调用 _log
         this.marketDataEngine.stop(); // 访问 marketDataEngine
+      } // 结束代码块
+      if (this.marketDataSubscriber) { // 条件判断 this.marketDataSubscriber
+        this._log('info', '断开共享行情订阅器... / Disconnecting shared market data subscriber...'); // 调用 _log
+        await this.marketDataSubscriber.disconnect(); // 等待异步结果
       } // 结束代码块
 
       // 3.5 清理行情统计定时器 / Clear market data stats timer
@@ -2427,10 +2790,22 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         await this.loggerModule.stopAll(); // 等待异步结果
       } // 结束代码块
 
+      // 5.5 停止 API 服务 / Stop API server
+      if (this.apiServer) { // 条件判断 this.apiServer
+        this._log('info', '停止 API 服务... / Stopping API server...'); // 调用 _log
+        await this.apiServer.stop(); // 等待异步结果
+      } // 结束代码块
+
       // 6. 关闭交易所连接 / Close exchange connection
       if (this.exchange && this.exchange.close) { // 条件判断 this.exchange && this.exchange.close
         this._log('info', '关闭交易所连接... / Closing exchange connection...'); // 调用 _log
         await this.exchange.close(); // 等待异步结果
+      } // 结束代码块
+
+      // 7. 关闭 Redis 持久化 / Close Redis persistence
+      if (this.redisDb) { // 条件判断 this.redisDb
+        this._log('info', '关闭 Redis 持久化... / Closing Redis persistence...'); // 调用 _log
+        await this.redisDb.close(); // 等待异步结果
       } // 结束代码块
 
       // 更新状态 / Update status
@@ -2669,11 +3044,13 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
       // 组件状态 / Component status
       components: { // components组件状态
         exchange: !!this.exchange, // 交易所
-        marketData: !!this.marketDataEngine, // 市场数据
+        marketData: !!this.marketDataEngine || !!this.marketDataSubscriber, // 市场数据
         strategy: !!this.strategy, // 策略
         riskManager: !!this.riskManager, // 风险Manager
         executor: !!this.executor, // executor
         logger: !!this.loggerModule, // 日志
+        api: !!this.apiServer, // api
+        redis: !!this.redisDb, // redis
       }, // 结束代码块
     }; // 结束代码块
   } // 结束代码块

@@ -400,7 +400,7 @@ class MarketDataServer { // 定义类 MarketDataServer
 // 只有直接运行时才启动服务器，被导入时不启动
 // Only start server when run directly, not when imported
 const __filename = fileURLToPath(import.meta.url); // 定义常量 __filename
-const isMainModule = resolve(process.argv[1]) === __filename; // 定义常量 isMainModule
+const isMainModule = !!process.argv[1] && resolve(process.argv[1]) === __filename; // 定义常量 isMainModule
 
 if (isMainModule) { // 条件判断 isMainModule
   // 创建服务器实例 / Create server instance

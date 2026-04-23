@@ -500,7 +500,36 @@ export function getConfig(path, defaultValue = undefined) {
 }
 
 // 导出配置对象 / Export configuration object
-export const config = loadConfig();
+function createLazyConfigProxy() {
+  return new Proxy({}, {
+    get(_target, property) {
+      const resolvedConfig = loadConfig();
+      const value = resolvedConfig[property];
+      return typeof value === 'function' ? value.bind(resolvedConfig) : value;
+    },
+
+    set(_target, property, value) {
+      const resolvedConfig = loadConfig();
+      resolvedConfig[property] = value;
+      return true;
+    },
+
+    has(_target, property) {
+      return property in loadConfig();
+    },
+
+    ownKeys() {
+      return Reflect.ownKeys(loadConfig());
+    },
+
+    getOwnPropertyDescriptor(_target, property) {
+      const descriptor = Object.getOwnPropertyDescriptor(loadConfig(), property);
+      return descriptor ? { ...descriptor, configurable: true } : undefined;
+    },
+  });
+}
+
+export const config = createLazyConfigProxy();
 
 // 默认导出 / Default export
 export default config;

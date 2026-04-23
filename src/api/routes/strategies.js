@@ -14,7 +14,95 @@ import { Router } from 'express'; // 导入模块 express
  */
 export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategyRoutes
   const router = Router(); // 定义常量 router
-  const { strategyStore, strategyRegistry, tradingEngine } = deps; // 解构赋值
+  const { strategyStore, strategyRegistry, tradingEngine, tradeRepository, backtestService } = deps; // 解构赋值
+
+  const normalizeStrategy = (strategy = {}) => { // 定义函数 normalizeStrategy
+    const config = strategy.config || {}; // 定义常量 config
+    const stateData = strategy.stateData || {}; // 定义常量 stateData
+    const params = strategy.parameters || strategy.params || {}; // 定义常量 params
+
+    return { // 返回结果
+      id: strategy.id || strategy.strategyId, // ID
+      name: strategy.name || strategy.strategyName || config.name || stateData.name || strategy.id || strategy.strategyId, // name
+      type: strategy.type || config.type || stateData.type || strategy.strategyName || 'Unknown', // type
+      symbol: strategy.symbol || config.symbol || stateData.symbol || '', // symbol
+      exchange: strategy.exchange || config.exchange || stateData.exchange || 'binance', // exchange
+      initialCapital: Number(
+        strategy.initialCapital
+        ?? config.initialCapital
+        ?? stateData.initialCapital
+        ?? 10000
+      ), // initialCapital
+      params, // params
+      state: strategy.state || 'stopped', // state
+      createdAt: strategy.createdAt || Date.now(), // createdAt
+      updatedAt: strategy.updatedAt || Date.now(), // updatedAt
+      totalReturn: Number(stateData.totalReturn ?? strategy.totalReturn ?? 0), // totalReturn
+      todayReturn: Number(stateData.todayReturn ?? strategy.todayReturn ?? 0), // todayReturn
+      trades: Number(stateData.trades ?? strategy.trades ?? 0), // trades
+      winRate: Number(stateData.winRate ?? strategy.winRate ?? 0), // winRate
+      lastSignal: strategy.lastSignal || null, // lastSignal
+      lastSignalTime: strategy.lastSignalTime || null, // lastSignalTime
+    }; // 结束代码块
+  }; // 结束代码块
+
+  const toStorePayload = (strategy = {}) => { // 定义函数 toStorePayload
+    const normalized = normalizeStrategy(strategy); // 定义常量 normalized
+
+    return { // 返回结果
+      strategyId: normalized.id, // strategyId
+      strategyName: normalized.name, // strategyName
+      state: normalized.state, // state
+      config: { // config
+        name: normalized.name, // name
+        type: normalized.type, // type
+        symbol: normalized.symbol, // symbol
+        exchange: normalized.exchange, // exchange
+        initialCapital: normalized.initialCapital, // initialCapital
+      }, // 结束代码块
+      parameters: normalized.params || {}, // parameters
+      stateData: { // stateData
+        totalReturn: normalized.totalReturn, // totalReturn
+        todayReturn: normalized.todayReturn, // todayReturn
+        trades: normalized.trades, // trades
+        winRate: normalized.winRate, // winRate
+      }, // 结束代码块
+      lastSignal: normalized.lastSignal, // lastSignal
+      lastSignalTime: normalized.lastSignalTime, // lastSignalTime
+      createdAt: normalized.createdAt, // createdAt
+      updatedAt: normalized.updatedAt, // updatedAt
+    }; // 结束代码块
+  }; // 结束代码块
+
+  const buildStrategyStats = async (strategyId) => { // 定义函数 buildStrategyStats
+    const storedStats = await strategyStore?.getStats?.(strategyId); // 定义常量 storedStats
+    const strategy = await strategyStore?.getById?.(strategyId); // 定义常量 strategy
+    const capital = normalizeStrategy(strategy || {}).initialCapital || 10000; // 定义常量 capital
+    const result = { // 定义常量 result
+      totalReturn: Number(storedStats?.totalReturn || 0), // totalReturn
+      todayReturn: Number(storedStats?.todayReturn || 0), // todayReturn
+      trades: Number(storedStats?.trades || 0), // trades
+      winRate: Number(storedStats?.winRate || 0), // winRate
+      maxDrawdown: Number(storedStats?.maxDrawdown || 0), // maxDrawdown
+      sharpeRatio: Number(storedStats?.sharpeRatio || 0), // sharpeRatio
+      profitFactor: Number(storedStats?.profitFactor || 0), // profitFactor
+    }; // 结束代码块
+
+    if (!tradeRepository?.getTradeStats) { // 条件判断 !tradeRepository?.getTradeStats
+      return result; // 返回结果
+    } // 结束代码块
+
+    const tradeStats = await tradeRepository.getTradeStats({ strategy: strategyId }); // 定义常量 tradeStats
+    result.trades = Number(tradeStats.totalTrades || 0); // 赋值 result.trades
+    result.winRate = Number(tradeStats.winRate || 0); // 赋值 result.winRate
+    result.totalReturn = capital > 0 ? Number(tradeStats.totalPnL || 0) / capital : 0; // 赋值 result.totalReturn
+    result.todayReturn = capital > 0 ? Number(tradeStats.totalPnL || 0) / capital : 0; // 赋值 result.todayReturn
+    result.profitFactor = tradeStats.avgLoss < 0 // 赋值 result.profitFactor
+      ? Math.abs(Number(tradeStats.avgWin || 0) / Number(tradeStats.avgLoss || 1))
+      : Number(result.profitFactor || 0); // profitFactor
+
+    return result; // 返回结果
+  }; // 结束代码块
 
   /**
    * GET /api/strategies
@@ -29,6 +117,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       if (strategyStore) { // 条件判断 strategyStore
         strategies = await strategyStore.getAll(); // 赋值 strategies
       } // 结束代码块
+
+      strategies = strategies.map(normalizeStrategy); // 赋值 strategies
 
       // 过滤
       if (status) { // 条件判断 status
@@ -98,7 +188,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         }); // 结束代码块
       } // 结束代码块
 
-      res.json({ success: true, data: strategy }); // 调用 res.json
+      res.json({ success: true, data: normalizeStrategy(strategy) }); // 调用 res.json
     } catch (error) { // 执行语句
       res.status(500).json({ success: false, error: error.message }); // 调用 res.status
     } // 结束代码块
@@ -140,7 +230,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       }; // 结束代码块
 
       if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.save(strategy); // 等待异步结果
+        await strategyStore.save(toStorePayload(strategy)); // 等待异步结果
       } // 结束代码块
 
       res.status(201).json({ success: true, data: strategy }); // 调用 res.status
@@ -162,6 +252,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       if (strategyStore) { // 条件判断 strategyStore
         strategy = await strategyStore.getById(id); // 赋值 strategy
       } // 结束代码块
+
+      strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
@@ -189,7 +281,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       }; // 结束代码块
 
       if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.save(updatedStrategy); // 等待异步结果
+        await strategyStore.save(toStorePayload(updatedStrategy)); // 等待异步结果
       } // 结束代码块
 
       res.json({ success: true, data: updatedStrategy }); // 调用 res.json
@@ -210,6 +302,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       if (strategyStore) { // 条件判断 strategyStore
         strategy = await strategyStore.getById(id); // 赋值 strategy
       } // 结束代码块
+
+      strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
@@ -251,6 +345,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         strategy = await strategyStore.getById(id); // 赋值 strategy
       } // 结束代码块
 
+      strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
+
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
           success: false, // 成功标记
@@ -267,10 +363,16 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         }); // 结束代码块
       } // 结束代码块
 
-      // 启动策略
-      if (tradingEngine?.startStrategy) { // 条件判断 tradingEngine?.startStrategy
-        await tradingEngine.startStrategy(id); // 等待异步结果
+      if (!tradingEngine?.startStrategy) { // 条件判断 !tradingEngine?.startStrategy
+        return res.status(503).json({ // 返回结果
+          success: false, // 成功标记
+          error: 'Runtime strategy control is unavailable', // 错误
+          code: 'SERVICE_UNAVAILABLE' // 代码
+        }); // 结束代码块
       } // 结束代码块
+
+      // 启动策略
+      await tradingEngine.startStrategy(id); // 等待异步结果
 
       if (strategyStore) { // 条件判断 strategyStore
         await strategyStore.updateState(id, 'running'); // 等待异步结果
@@ -295,6 +397,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         strategy = await strategyStore.getById(id); // 赋值 strategy
       } // 结束代码块
 
+      strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
+
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
           success: false, // 成功标记
@@ -311,10 +415,16 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         }); // 结束代码块
       } // 结束代码块
 
-      // 停止策略
-      if (tradingEngine?.stopStrategy) { // 条件判断 tradingEngine?.stopStrategy
-        await tradingEngine.stopStrategy(id); // 等待异步结果
+      if (!tradingEngine?.stopStrategy) { // 条件判断 !tradingEngine?.stopStrategy
+        return res.status(503).json({ // 返回结果
+          success: false, // 成功标记
+          error: 'Runtime strategy control is unavailable', // 错误
+          code: 'SERVICE_UNAVAILABLE' // 代码
+        }); // 结束代码块
       } // 结束代码块
+
+      // 停止策略
+      await tradingEngine.stopStrategy(id); // 等待异步结果
 
       if (strategyStore) { // 条件判断 strategyStore
         await strategyStore.updateState(id, 'stopped'); // 等待异步结果
@@ -334,22 +444,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
     try { // 尝试执行
       const { id } = req.params; // 解构赋值
 
-      let stats = null; // 定义变量 stats
-      if (strategyStore) { // 条件判断 strategyStore
-        stats = await strategyStore.getStats(id); // 赋值 stats
-      } // 结束代码块
-
-      if (!stats) { // 条件判断 !stats
-        stats = { // 赋值 stats
-          totalReturn: 0, // 总Return
-          todayReturn: 0, // todayReturn
-          trades: 0, // 成交
-          winRate: 0, // win频率
-          maxDrawdown: 0, // 最大回撤
-          sharpeRatio: 0, // sharpe比例
-          profitFactor: 0, // 盈利Factor
-        }; // 结束代码块
-      } // 结束代码块
+      const stats = await buildStrategyStats(id); // 定义常量 stats
 
       res.json({ success: true, data: stats }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -374,21 +469,17 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         }); // 结束代码块
       } // 结束代码块
 
-      // 模拟回测结果
-      const result = { // 定义常量 result
-        strategyId: id, // 策略ID
-        startDate, // 执行语句
-        endDate, // 执行语句
-        initialCapital: initialCapital || 10000, // 初始资金
-        finalCapital: (initialCapital || 10000) * (1 + Math.random() * 0.5 - 0.1), // final资金
-        totalReturn: Math.random() * 0.5 - 0.1, // 总Return
-        maxDrawdown: Math.random() * 0.2, // 最大回撤
-        sharpeRatio: Math.random() * 3, // sharpe比例
-        trades: Math.floor(Math.random() * 100) + 10, // 成交
-        winRate: Math.random() * 0.3 + 0.4, // win频率
-        profitFactor: Math.random() * 2 + 0.5, // 盈利Factor
-        completedAt: Date.now(), // completedAt
-      }; // 结束代码块
+      if (!backtestService?.run && !tradingEngine?.runBacktest) { // 条件判断
+        return res.status(503).json({ // 返回结果
+          success: false, // 成功标记
+          error: 'Backtest service is not available in the current runtime', // 错误
+          code: 'SERVICE_UNAVAILABLE' // 代码
+        }); // 结束代码块
+      } // 结束代码块
+
+      const result = backtestService?.run // 定义常量 result
+        ? await backtestService.run({ strategyId: id, startDate, endDate, initialCapital }) // 等待异步结果
+        : await tradingEngine.runBacktest({ strategyId: id, startDate, endDate, initialCapital }); // 等待异步结果
 
       res.json({ success: true, data: result }); // 调用 res.json
     } catch (error) { // 执行语句

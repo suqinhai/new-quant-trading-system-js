@@ -16,6 +16,28 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
   const router = Router(); // 定义常量 router
   const { riskManager, alertManager } = deps; // 解构赋值
 
+  const applyRiskConfig = (updates = {}) => { // 定义函数 applyRiskConfig
+    if (riskManager?.updateConfig) { // 条件判断 riskManager?.updateConfig
+      riskManager.updateConfig(updates); // 调用 riskManager.updateConfig
+      return; // 返回结果
+    } // 结束代码块
+
+    if (riskManager?.config) { // 条件判断 riskManager?.config
+      Object.assign(riskManager.config, updates); // 调用 Object.assign
+    } // 结束代码块
+  }; // 结束代码块
+
+  const applyRiskLimits = (updates = {}) => { // 定义函数 applyRiskLimits
+    if (riskManager?.updateLimits) { // 条件判断 riskManager?.updateLimits
+      riskManager.updateLimits(updates); // 调用 riskManager.updateLimits
+      return; // 返回结果
+    } // 结束代码块
+
+    if (riskManager?.config) { // 条件判断 riskManager?.config
+      Object.assign(riskManager.config, updates); // 调用 Object.assign
+    } // 结束代码块
+  }; // 结束代码块
+
   /**
    * GET /api/risk/config
    * 获取风控配置
@@ -46,8 +68,19 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
       }; // 结束代码块
 
       if (riskManager) { // 条件判断 riskManager
-        config = riskManager.config || config; // 赋值 config
-        state = riskManager.state || state; // 赋值 state
+        const riskStatus = riskManager.getStatus ? riskManager.getStatus() : (riskManager.state || {}); // 定义常量 riskStatus
+        config = { ...config, ...(riskManager.config || {}) }; // 赋值 config
+        state = { // 赋值 state
+          ...state, // 展开对象或数组
+          ...(riskManager.state || {}), // 展开对象或数组
+          tradingAllowed: riskStatus.tradingAllowed ?? state.tradingAllowed, // tradingAllowed
+          dailyPnL: riskStatus.dailyPnL ?? state.dailyPnL, // dailyPnL
+          dailyTradeCount: riskStatus.dailyTradeCount ?? state.dailyTradeCount, // dailyTradeCount
+          currentPositions: riskStatus.currentPositions ?? riskStatus.accounts?.length ?? state.currentPositions, // currentPositions
+          consecutiveLosses: riskStatus.consecutiveLosses ?? state.consecutiveLosses, // consecutiveLosses
+          lastTradeTime: riskStatus.lastTradeTime ?? state.lastTradeTime, // lastTradeTime
+          triggerCount: riskStatus.triggerCount ?? riskStatus.recentTriggers?.length ?? riskStatus.triggers?.length ?? state.triggerCount, // triggerCount
+        }; // 结束代码块
       } // 结束代码块
 
       res.json({ success: true, data: { ...config, state } }); // 调用 res.json
@@ -99,9 +132,21 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
         } // 结束代码块
       } // 结束代码块
 
-      if (riskManager?.updateConfig) { // 条件判断 riskManager?.updateConfig
-        riskManager.updateConfig(updates); // 调用 riskManager.updateConfig
+      if (updates.tradingAllowed === true) { // 条件判断 updates.tradingAllowed === true
+        if (riskManager?.enableTrading) { // 条件判断 riskManager?.enableTrading
+          riskManager.enableTrading(); // 调用 riskManager.enableTrading
+        } else if (riskManager?.resumeTrading) { // 执行语句
+          riskManager.resumeTrading(); // 调用 riskManager.resumeTrading
+        } // 结束代码块
+      } else if (updates.tradingAllowed === false) { // 执行语句
+        if (riskManager?.disableTrading) { // 条件判断 riskManager?.disableTrading
+          riskManager.disableTrading('Manual config update'); // 调用 riskManager.disableTrading
+        } else if (riskManager?.manualPauseTrading) { // 执行语句
+          riskManager.manualPauseTrading('Manual config update'); // 调用 riskManager.manualPauseTrading
+        } // 结束代码块
       } // 结束代码块
+
+      applyRiskConfig(updates); // 调用 applyRiskConfig
 
       res.json({ success: true, message: 'Risk configuration updated' }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -124,6 +169,14 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
 
       if (riskManager?.getLimits) { // 条件判断 riskManager?.getLimits
         limits = riskManager.getLimits(); // 赋值 limits
+      } else if (riskManager?.config) { // 执行语句
+        limits = { // 赋值 limits
+          ...limits, // 展开对象或数组
+          maxDailyTrades: riskManager.config.maxDailyTrades ?? limits.maxDailyTrades, // maxDailyTrades
+          maxConsecutiveLosses: riskManager.config.maxConsecutiveLosses ?? limits.maxConsecutiveLosses, // maxConsecutiveLosses
+          maxOrderAmount: riskManager.config.maxOrderAmount ?? limits.maxOrderAmount, // maxOrderAmount
+          blacklistedSymbols: riskManager.config.blacklistedSymbols ?? limits.blacklistedSymbols, // blacklistedSymbols
+        }; // 结束代码块
       } // 结束代码块
 
       res.json({ success: true, data: limits }); // 调用 res.json
@@ -148,9 +201,7 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
         }); // 结束代码块
       } // 结束代码块
 
-      if (riskManager?.updateLimits) { // 条件判断 riskManager?.updateLimits
-        riskManager.updateLimits(updates); // 调用 riskManager.updateLimits
-      } // 结束代码块
+      applyRiskLimits(updates); // 调用 applyRiskLimits
 
       res.json({ success: true, message: 'Risk limits updated' }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -232,6 +283,11 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
 
       if (riskManager?.enableTrading) { // 条件判断 riskManager?.enableTrading
         riskManager.enableTrading(); // 调用 riskManager.enableTrading
+      } else if (riskManager?.resumeTrading) { // 执行语句
+        riskManager.resumeTrading(); // 调用 riskManager.resumeTrading
+      } else if (riskManager?.state) { // 执行语句
+        riskManager.state.tradingAllowed = true; // 赋值 riskManager.state.tradingAllowed
+        riskManager.state.pauseReason = null; // 赋值 riskManager.state.pauseReason
       } // 结束代码块
 
       res.json({ success: true, message: 'Trading enabled' }); // 调用 res.json
@@ -258,6 +314,11 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
 
       if (riskManager?.disableTrading) { // 条件判断 riskManager?.disableTrading
         riskManager.disableTrading(reason || 'Manual disable'); // 调用 riskManager.disableTrading
+      } else if (riskManager?.manualPauseTrading) { // 执行语句
+        riskManager.manualPauseTrading(reason || 'Manual disable'); // 调用 riskManager.manualPauseTrading
+      } else if (riskManager?.state) { // 执行语句
+        riskManager.state.tradingAllowed = false; // 赋值 riskManager.state.tradingAllowed
+        riskManager.state.pauseReason = reason || 'Manual disable'; // 赋值 riskManager.state.pauseReason
       } // 结束代码块
 
       res.json({ success: true, message: 'Trading disabled' }); // 调用 res.json

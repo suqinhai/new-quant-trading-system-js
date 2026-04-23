@@ -100,8 +100,8 @@ EXPOSE 9091
 EXPOSE 8080
 
 # Health check (检查 node 进程是否运行)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD pgrep -f node || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
+    CMD-SHELL curl -fsS "http://127.0.0.1:${HTTP_PORT:-3000}/api/system/health" >/dev/null || exit 1
 
 # Default command - can be overridden
 CMD ["node", "src/main.js", "shadow"]

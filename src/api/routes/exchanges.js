@@ -333,11 +333,11 @@ export function createExchangeRoutes(deps = {}) {
           message: 'API credentials not configured',
         };
       } else {
-        result = {
-          success: true,
-          latency: Math.floor(Math.random() * 200) + 50,
-          serverTime: new Date().toISOString(),
-        };
+        return res.status(503).json({
+          success: false,
+          error: 'Exchange connectivity check is unavailable',
+          code: 'SERVICE_UNAVAILABLE',
+        });
       }
 
       if (result === false || result?.success === false) {
@@ -375,11 +375,11 @@ export function createExchangeRoutes(deps = {}) {
       if (exchangeManager?.getBalance) {
         balance = await exchangeManager.getBalance(id);
       } else {
-        balance = {
-          total: { USDT: 10000, BTC: 0.5, ETH: 5 },
-          free: { USDT: 8000, BTC: 0.3, ETH: 3 },
-          used: { USDT: 2000, BTC: 0.2, ETH: 2 },
-        };
+        return res.status(503).json({
+          success: false,
+          error: 'Balance query is unavailable',
+          code: 'SERVICE_UNAVAILABLE',
+        });
       }
 
       res.json({ success: true, data: buildBalanceMap(balance) });
@@ -398,10 +398,11 @@ export function createExchangeRoutes(deps = {}) {
       if (exchangeManager?.getMarkets) {
         markets = await exchangeManager.getMarkets(id);
       } else {
-        markets = [
-          { symbol: 'BTC/USDT', base: 'BTC', quote: 'USDT', type: 'swap', active: true },
-          { symbol: 'ETH/USDT', base: 'ETH', quote: 'USDT', type: 'swap', active: true },
-        ];
+        return res.status(503).json({
+          success: false,
+          error: 'Market metadata is unavailable',
+          code: 'SERVICE_UNAVAILABLE',
+        });
       }
 
       if (quote) {
@@ -427,17 +428,11 @@ export function createExchangeRoutes(deps = {}) {
       if (exchangeManager?.getTicker) {
         ticker = await exchangeManager.getTicker(id, symbol);
       } else {
-        ticker = {
-          symbol,
-          last: 40000 + Math.random() * 1000,
-          bid: 39990,
-          ask: 40010,
-          high: 41000,
-          low: 39000,
-          volume: 1000000,
-          change: 2.5,
-          timestamp: Date.now(),
-        };
+        return res.status(503).json({
+          success: false,
+          error: 'Ticker query is unavailable',
+          code: 'SERVICE_UNAVAILABLE',
+        });
       }
 
       res.json({ success: true, data: ticker });

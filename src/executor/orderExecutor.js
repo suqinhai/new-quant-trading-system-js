@@ -970,7 +970,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       this.activeOrders.deleteSync(clientOrderId); // 访问 activeOrders
 
       // 发出失败事件 / Emit failed event
-      this.emit('orderFailed', { orderInfo, error }); // 调用 emit
+      this.emit('orderFailed', { orderInfo, order: orderInfo, error, reason: error.message }); // 调用 emit
 
       // 抛出错误 / Throw error
       throw error; // 抛出异常
@@ -1055,7 +1055,7 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       this.activeOrders.deleteSync(clientOrderId); // 访问 activeOrders
 
       // 发出事件 / Emit event
-      this.emit('orderFailed', { orderInfo, error }); // 调用 emit
+      this.emit('orderFailed', { orderInfo, order: orderInfo, error, reason: error.message }); // 调用 emit
 
       throw error; // 抛出异常
     } // 结束代码块
@@ -1113,8 +1113,8 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
         // 提交订单到交易所 / Submit order to exchange
         const exchangeOrder = await exchange.createOrder( // 定义常量 exchangeOrder
           orderInfo.symbol,           // 交易对 / Symbol
-          orderParams.type,           // 类型 / Type
           orderInfo.side,             // 方向 / Side
+          orderParams.type,           // 类型 / Type
           orderInfo.amount,           // 数量 / Amount
           orderInfo.currentPrice,     // 价格 / Price
           orderParams.params          // 额外参数 / Extra params
@@ -1332,8 +1332,8 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
         // 执行市价单 / Execute market order
         const exchangeOrder = await exchange.createOrder( // 定义常量 exchangeOrder
           orderInfo.symbol,       // 交易对 / Symbol
-          'market',               // 类型 / Type
           orderInfo.side,         // 方向 / Side
+          'market',               // 类型 / Type
           orderInfo.amount,       // 数量 / Amount
           undefined,              // 价格 (市价单无需价格) / Price (not needed for market)
           params                  // 参数 / Params
@@ -1489,7 +1489,12 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
       orderInfo.error = '超过最大重下次数 / Exceeded max resubmit attempts'; // 赋值 orderInfo.error
 
       // 发出事件 / Emit event
-      this.emit('orderFailed', { orderInfo, reason: 'max_resubmits' }); // 调用 emit
+      this.emit('orderFailed', { // 调用 emit
+        orderInfo, // 执行语句
+        order: orderInfo, // 执行语句
+        error: new Error(orderInfo.error), // 错误
+        reason: 'max_resubmits', // 原因
+      }); // 结束代码块
 
       return; // 返回结果
     } // 结束代码块
@@ -1803,6 +1808,210 @@ export class SmartOrderExecutor extends EventEmitter { // 导出类 SmartOrderEx
 
     // 未知错误 / Unknown error
     return ERROR_TYPE.UNKNOWN; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 紧急全部平仓
+   * Emergency close all positions
+   *
+   * @param {string|Object|null} target - 目标交易所或配置 / Target exchange or options
+   * @returns {Promise<Object>} 平仓结果 / Close result
+   */
+  async emergencyCloseAll(target = null) { // 执行语句
+    const { exchangeId, reason } = this._normalizeEmergencyCloseTarget(target); // 定义常量 exchangeId, reason
+    const targetExchangeIds = this._getEmergencyCloseTargets(exchangeId); // 定义常量 targetExchangeIds
+
+    const result = { // 定义常量 result
+      reason, // 执行语句
+      exchangeId, // 执行语句
+      canceledOrders: 0, // 已撤销订单数
+      closedCount: 0, // 已平仓数量
+      failedCount: 0, // 失败数量
+      results: [], // 详情
+      timestamp: Date.now(), // 时间戳
+    }; // 结束代码块
+
+    // 先撤销执行器跟踪中的挂单，避免与平仓单冲突
+    // Cancel tracked active orders first to avoid conflicts with close orders.
+    result.canceledOrders = await this.cancelAllOrders(exchangeId); // 赋值 result.canceledOrders
+
+    for (const currentExchangeId of targetExchangeIds) { // 循环 const currentExchangeId of targetExchangeIds
+      const exchange = this.exchanges.get(currentExchangeId); // 定义常量 exchange
+
+      if (!exchange) { // 条件判断 !exchange
+        result.failedCount++; // 执行语句
+        result.results.push({ // 调用 result.results.push
+          exchangeId: currentExchangeId, // 交易所
+          success: false, // 成功标记
+          error: `交易所不存在 / Exchange not found: ${currentExchangeId}`, // 错误
+        }); // 结束代码块
+        continue; // 继续下一轮循环
+      } // 结束代码块
+
+      let positions = []; // 定义变量 positions
+
+      try { // 尝试执行
+        positions = await exchange.fetchPositions(); // 赋值 positions
+      } catch (error) { // 执行语句
+        result.failedCount++; // 执行语句
+        result.results.push({ // 调用 result.results.push
+          exchangeId: currentExchangeId, // 交易所
+          success: false, // 成功标记
+          error: error.message, // 错误
+        }); // 结束代码块
+        continue; // 继续下一轮循环
+      } // 结束代码块
+
+      for (const position of positions) { // 循环 const position of positions
+        const amount = this._getPositionCloseAmount(position); // 定义常量 amount
+
+        if (!(amount > 0)) { // 条件判断 !(amount > 0)
+          continue; // 继续下一轮循环
+        } // 结束代码块
+
+        const closeSide = this._getEmergencyCloseSide(position); // 定义常量 closeSide
+
+        if (!closeSide) { // 条件判断 !closeSide
+          result.failedCount++; // 执行语句
+          result.results.push({ // 调用 result.results.push
+            exchangeId: currentExchangeId, // 交易所
+            symbol: position.symbol, // 交易对
+            success: false, // 成功标记
+            error: `无法识别持仓方向 / Unable to determine position side: ${position.side ?? 'unknown'}`, // 错误
+          }); // 结束代码块
+          continue; // 继续下一轮循环
+        } // 结束代码块
+
+        try { // 尝试执行
+          const closeResult = await this.executeMarketOrder({ // 定义常量 closeResult
+            exchangeId: currentExchangeId, // 交易所
+            accountId: currentExchangeId, // 账户
+            symbol: position.symbol, // 交易对
+            side: closeSide, // 平仓方向
+            amount, // 数量
+            price: position.markPrice || position.entryPrice || 0, // 参考价格
+            reduceOnly: true, // 只减仓
+            options: { // 额外参数
+              emergencyClose: true, // 紧急平仓标记
+              reason, // 原因
+            }, // 结束代码块
+          }); // 结束代码块
+
+          result.closedCount++; // 执行语句
+          result.results.push({ // 调用 result.results.push
+            exchangeId: currentExchangeId, // 交易所
+            symbol: position.symbol, // 交易对
+            side: closeSide, // 平仓方向
+            amount, // 数量
+            success: true, // 成功标记
+            orderId: closeResult.orderInfo?.exchangeOrderId || closeResult.exchangeOrder?.id || null, // 订单 ID
+          }); // 结束代码块
+        } catch (error) { // 执行语句
+          result.failedCount++; // 执行语句
+          result.results.push({ // 调用 result.results.push
+            exchangeId: currentExchangeId, // 交易所
+            symbol: position.symbol, // 交易对
+            side: closeSide, // 平仓方向
+            amount, // 数量
+            success: false, // 成功标记
+            error: error.message, // 错误
+          }); // 结束代码块
+        } // 结束代码块
+      } // 结束代码块
+    } // 结束代码块
+
+    this.emit('emergencyCloseCompleted', result); // 调用 emit
+
+    const logLevel = result.failedCount > 0 ? 'warn' : 'info'; // 定义常量 logLevel
+    this.log( // 调用 log
+      `紧急平仓完成: 已撤销 ${result.canceledOrders} 个订单，已平仓 ${result.closedCount} 个仓位，失败 ${result.failedCount} 个 / Emergency close completed`, // 执行语句
+      logLevel // 执行语句
+    ); // 结束调用或参数
+
+    return result; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 标准化紧急平仓目标参数
+   * Normalize emergency close target input
+   *
+   * @param {string|Object|null} target - 目标参数 / Target input
+   * @returns {{exchangeId: string|null, reason: string}} 标准化结果 / Normalized target
+   * @private
+   */
+  _normalizeEmergencyCloseTarget(target) { // 调用 _normalizeEmergencyCloseTarget
+    if (typeof target === 'string') { // 条件判断 typeof target === 'string'
+      return { exchangeId: target, reason: '紧急平仓 / Emergency close' }; // 返回结果
+    } // 结束代码块
+
+    if (target && typeof target === 'object') { // 条件判断 target && typeof target === 'object'
+      const exchangeId = typeof target.exchangeId === 'string' // 定义常量 exchangeId
+        ? target.exchangeId
+        : (typeof target.exchange === 'string' ? target.exchange : null);
+      const reason = typeof target.reason === 'string' && target.reason.trim() // 定义常量 reason
+        ? target.reason
+        : '紧急平仓 / Emergency close';
+
+      return { exchangeId, reason }; // 返回结果
+    } // 结束代码块
+
+    return { exchangeId: null, reason: '紧急平仓 / Emergency close' }; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 获取紧急平仓目标交易所
+   * Resolve emergency close target exchanges
+   *
+   * @param {string|null} exchangeId - 指定交易所 / Specific exchange
+   * @returns {string[]} 交易所列表 / Exchange IDs
+   * @private
+   */
+  _getEmergencyCloseTargets(exchangeId) { // 调用 _getEmergencyCloseTargets
+    if (exchangeId) { // 条件判断 exchangeId
+      return [exchangeId]; // 返回结果
+    } // 结束代码块
+
+    return Array.from(this.exchanges.keys()); // 返回结果
+  } // 结束代码块
+
+  /**
+   * 获取持仓平仓数量
+   * Get close amount from normalized position
+   *
+   * @param {Object} position - 持仓 / Position
+   * @returns {number} 平仓数量 / Close amount
+   * @private
+   */
+  _getPositionCloseAmount(position) { // 调用 _getPositionCloseAmount
+    const amount = Number(position.contracts ?? position.size ?? position.amount ?? 0); // 定义常量 amount
+    return Number.isFinite(amount) ? Math.abs(amount) : 0; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 根据持仓方向确定平仓方向
+   * Determine close side from position side
+   *
+   * @param {Object} position - 持仓 / Position
+   * @returns {string|null} 平仓方向 / Close side
+   * @private
+   */
+  _getEmergencyCloseSide(position) { // 调用 _getEmergencyCloseSide
+    const side = String(position.side || '').toLowerCase(); // 定义常量 side
+
+    if (side === 'long' || side === 'buy') { // 条件判断 side === 'long' || side === 'buy'
+      return SIDE.SELL; // 返回结果
+    } // 结束代码块
+
+    if (side === 'short' || side === 'sell') { // 条件判断 side === 'short' || side === 'sell'
+      return SIDE.BUY; // 返回结果
+    } // 结束代码块
+
+    const amount = Number(position.contracts ?? position.size ?? position.amount ?? 0); // 定义常量 amount
+    if (Number.isFinite(amount) && amount !== 0) { // 条件判断 Number.isFinite(amount) && amount !== 0
+      return amount > 0 ? SIDE.SELL : SIDE.BUY; // 返回结果
+    } // 结束代码块
+
+    return null; // 返回结果
   } // 结束代码块
 
   // ============================================
