@@ -1,0 +1,147 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]: feedback
+        - button "发送组合键" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]: keyboard
+        - button "“设置”菜单" [ref=e43] [cursor=pointer]:
+          - img [ref=e44]: settings
+    - generic [ref=e54]:
+      - textbox "Terminal input" [active] [ref=e55]
+      - generic:
+        - generic:
+          - generic: ng historical candle data...
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: [2026-04-24T07:07:57.349Z] [SMAStrategy] INFO:"
+          - generic: 已加载
+          - generic: "1000"
+          - generic: 根历
+        - generic:
+          - generic: 史
+          - generic: K
+          - generic: 线
+          - generic: (BTC/USDT) / Loaded 1000 historical candles
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: [2026-04-24T07:07:57.349Z]"
+          - generic: ℹ️
+          - generic: 已加载
+          - generic: BTC/USDT
+          - generic: 历史
+          - generic: K
+          - generic: 线
+          - generic: ": 1000"
+        - generic:
+          - generic: 根
+          - generic: (1h) / Loaded historical candles
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: [2026-04-24T07:07:57.350Z]"
+          - generic: ℹ️
+          - generic: 历史
+          - generic: K
+          - generic: 线预加载完成
+          - generic: / Historical
+        - generic:
+          - generic: candle preloading completed
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: [API Server] Running on http://0.0.0.0:3000"
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: [2026-04-24T07:07:57.486Z]"
+          - generic: ℹ️
+          - generic: ✅
+          - generic: 系统已启动，等待交易信号
+          - generic: ... / S
+        - generic:
+          - generic: ystem started, waiting for signals...
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: ┌──────────────────────────────────────────────────────────────"
+        - generic:
+          - generic: ────┐
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 系统状态
+          - generic: / System Status
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: ├──────────────────────────────────────────────────────────────"
+        - generic:
+          - generic: ────┤
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 运行模式
+          - generic: "/ Mode: shadow"
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 策略
+          - generic: "/ Strategy: SMA"
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 交易对
+          - generic: "/ Symbols: BTC/USDT"
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 交易所
+          - generic: "/ Exchange: binance"
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: │"
+          - generic: 启动时间
+          - generic: "/ Start Time: 2026-04-24T07:07:57.195Z"
+        - generic:
+          - generic: │
+        - generic:
+          - generic: "Apr 24 07:07:57 quant-shadow-test-1 node[5442]: └──────────────────────────────────────────────────────────────"
+        - generic:
+          - generic: ────┘
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: ~
+          - generic: $ curl -s http://127.0.0.1:3000/api/health && echo && curl -s http://127.0.0.1
+        - generic:
+          - generic: :3000/api/system/health
+        - generic:
+          - generic: "{\"status\":\"healthy\",\"timestamp\":\"2026-04-24T07:08:36.554Z\",\"uptime\":46.472086971}"
+        - generic:
+          - generic: "{\"status\":\"healthy\",\"timestamp\":\"2026-04-24T07:08:36.575Z\",\"uptime\":39,\"responseTime\":2,\"version\":\"1.0.0\",\"comp"
+        - generic:
+          - generic: "onents\":{\"database\":{\"status\":\"healthy\",\"message\":\"Redis persistence disabled\"},\"exchange\":{\"status\":\"healthy\","
+        - generic:
+          - generic: "\"message\":\"2 exchanges connected\",\"details\":{\"connected\":2}},\"strategy\":{\"status\":\"healthy\",\"message\":\"Strategy"
+        - generic:
+          - generic: "is running\",\"details\":{\"strategyId\":\"SMA\",\"state\":\"running\"}},\"memory\":{\"status\":\"healthy\",\"message\":\"Memory u"
+        - generic:
+          - generic: "sage is normal\",\"details\":{\"heapUsedMB\":111,\"heapTotalMB\":138,\"rssMB\":211,\"usagePercent\":80,\"externalMB\":3}},\"s"
+        - generic:
+          - generic: "ystem\":{\"status\":\"healthy\",\"message\":\"System load is normal\",\"details\":{\"loadAverage\":[\"0.05\",\"0.02\",\"0.00\"],\"c"
+        - generic:
+          - generic: "puCount\":2,\"freeMem\":3188,\"totalMem\":3925,\"platform\":\"linux\",\"nodeVersion\":\"v20.20.2\"}}}}"
+          - generic: suqinhai753@quant-shad
+        - generic:
+          - generic: ow-test-1
+          - generic: ":"
+          - generic: ~
+          - generic: $
+  - generic [ref=e56]: "-bash: vin: command not found suqinhai753@quant-shadow-test-1:~$ suqinhai753@quant-shadow-test-1:~$ grep -nE '^(RUN_MODE|PUBLIC_MARKET_ONLY|SHADOW_SKIP_PRIVATE_ACCOUNT_DATA|BIN"
+  - iframe [ref=e57]:
+    

@@ -191,6 +191,25 @@ run_compose() {
   RUN_MODE="$ENVIRONMENT" "${cmd[@]}" "$@"
 }
 
+check_frontend_route() {
+  local port="$1"
+  local url="http://127.0.0.1:${port}/login"
+
+  if [[ "${ENABLE_API:-true}" == "false" ]]; then
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Would run frontend check: $url"
+    return 0
+  fi
+
+  local headers
+  headers="$(curl -sS -D - -o /dev/null "$url" 2>/dev/null || true)"
+
+  grep -qi '^HTTP/.* 200' <<<"$headers" && grep -qi '^Content-Type: text/html' <<<"$headers"
+}
+
 ensure_image_available() {
   if [[ "$BUILD_LOCAL" == "true" || "$PULL_LATEST" == "true" ]]; then
     return 0
@@ -356,17 +375,17 @@ wait_for_service() {
   local service="$1"
   local port="$2"
   local elapsed=0
-  local url="http://127.0.0.1:${port}/api/system/health"
+  local api_url="http://127.0.0.1:${port}/api/system/health"
 
-  log_info "Waiting for $service on $url"
+  log_info "Waiting for $service on $api_url"
 
   while [[ "$elapsed" -lt "$HEALTH_CHECK_TIMEOUT" ]]; do
     if [[ "$DRY_RUN" == "true" ]]; then
-      echo "Would run health check: $url"
+      echo "Would run health check: $api_url"
       return 0
     fi
 
-    if curl -fsS "$url" >/dev/null 2>&1; then
+    if curl -fsS "$api_url" >/dev/null 2>&1 && check_frontend_route "$port"; then
       log_success "$service passed health check"
       return 0
     fi
@@ -375,7 +394,7 @@ wait_for_service() {
     elapsed=$((elapsed + 5))
   done
 
-  log_error "$service did not become healthy within ${HEALTH_CHECK_TIMEOUT}s"
+  log_error "$service did not become healthy and serve the frontend within ${HEALTH_CHECK_TIMEOUT}s"
   return 1
 }
 

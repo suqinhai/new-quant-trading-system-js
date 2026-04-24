@@ -216,12 +216,33 @@ ensure_image() {
   log_success "Image ready: $IMAGE_NAME"
 }
 
+check_frontend_route() {
+  local port="$1"
+  local url="http://127.0.0.1:${port}/login"
+
+  if [[ "${ENABLE_API:-true}" == "false" ]]; then
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Would run frontend check on $url"
+    return 0
+  fi
+
+  local headers
+  headers="$(curl -sS -D - -o /dev/null "$url" 2>/dev/null || true)"
+
+  grep -qi '^HTTP/.* 200' <<<"$headers" && grep -qi '^Content-Type: text/html' <<<"$headers"
+}
+
 wait_for_health() {
   local env="$1"
   local port elapsed=0
+  local api_url
   port="$(get_port "$env")"
+  api_url="http://127.0.0.1:$port/api/system/health"
 
-  log_info "Waiting for $env slot on http://127.0.0.1:$port/api/system/health"
+  log_info "Waiting for $env slot on $api_url"
 
   while [[ "$elapsed" -lt "$HEALTH_CHECK_TIMEOUT" ]]; do
     if [[ "$DRY_RUN" == "true" ]]; then
@@ -229,7 +250,7 @@ wait_for_health() {
       return 0
     fi
 
-    if curl -fsS "http://127.0.0.1:$port/api/system/health" >/dev/null 2>&1; then
+    if curl -fsS "$api_url" >/dev/null 2>&1 && check_frontend_route "$port"; then
       log_success "$env slot is healthy"
       return 0
     fi
@@ -238,7 +259,7 @@ wait_for_health() {
     elapsed=$((elapsed + 5))
   done
 
-  log_error "$env slot failed health check"
+  log_error "$env slot failed API/frontend health check"
   return 1
 }
 

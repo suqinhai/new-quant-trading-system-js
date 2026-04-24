@@ -44,7 +44,23 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm install --frozen-lockfile --prod
 
 # -----------------------------------------------------------------------------
-# Stage 3: Production Runtime
+# Stage 3: Web Builder
+# Build the dashboard frontend so /login and SPA routes work in production
+# -----------------------------------------------------------------------------
+FROM node:20-alpine AS web-builder
+
+WORKDIR /app/web
+
+COPY web/package.json web/package-lock.json ./
+
+RUN npm ci --no-audit --no-fund
+
+COPY web/ ./
+
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Stage 4: Production Runtime
 # Minimal production image
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS production
@@ -79,6 +95,7 @@ COPY --chown=nodejs:nodejs package.json ./
 COPY --chown=nodejs:nodejs src/ ./src/
 COPY --chown=nodejs:nodejs config/ ./config/
 COPY --chown=nodejs:nodejs scripts/ ./scripts/
+COPY --from=web-builder --chown=nodejs:nodejs /app/web/dist ./web/dist
 
 # Create necessary directories
 RUN mkdir -p logs data backups && \
@@ -107,7 +124,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
 CMD ["node", "src/main.js", "shadow"]
 
 # -----------------------------------------------------------------------------
-# Stage 4: Development Runtime
+# Stage 5: Development Runtime
 # Full development environment with hot reload
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS development

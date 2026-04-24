@@ -1,0 +1,124 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]: feedback
+        - button "发送组合键" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]: keyboard
+        - button "“设置”菜单" [ref=e43] [cursor=pointer]:
+          - img [ref=e44]: settings
+    - generic [ref=e54]:
+      - textbox "Terminal input" [active] [ref=e55]
+      - generic:
+        - generic:
+          - generic: "[INFO] No non-zero balances"
+        - generic:
+          - generic: "[Step 3] Fetching BTC/USDT ticker..."
+        - generic:
+          - generic: "[OK] BTC/USDT price: 77763.9"
+        - generic:
+          - generic: "[Step 4] Fetching funding rate..."
+        - generic:
+          - generic: "[OK] Funding rate: -0.0012%"
+        - generic:
+          - generic: "[SUCCESS] Production (sandbox=false) connection works!"
+        - generic:
+          - generic: "[RECOMMENDATION] Use this configuration for OKX"
+        - generic:
+          - generic: "[Done] Test completed"
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /opt/quant/app
+          - generic: $ curl -i --max-time 5 http://127.0.0.1:3000/login
+        - generic:
+          - generic: HTTP/1.1 401 Unauthorized
+        - generic:
+          - generic: Cross-Origin-Opener-Policy
+          - generic: ": same-origin"
+        - generic:
+          - generic: Cross-Origin-Resource-Policy
+          - generic: ": same-origin"
+        - generic:
+          - generic: Origin-Agent-Cluster
+          - generic: ": ?1"
+        - generic:
+          - generic: Referrer-Policy
+          - generic: ": no-referrer"
+        - generic:
+          - generic: Strict-Transport-Security
+          - generic: ": max-age=31536000; includeSubDomains"
+        - generic:
+          - generic: X-Content-Type-Options
+          - generic: ": nosniff"
+        - generic:
+          - generic: X-DNS-Prefetch-Control
+          - generic: ": off"
+        - generic:
+          - generic: X-Download-Options
+          - generic: ": noopen"
+        - generic:
+          - generic: X-Frame-Options
+          - generic: ": SAMEORIGIN"
+        - generic:
+          - generic: X-Permitted-Cross-Domain-Policies
+          - generic: ": none"
+        - generic:
+          - generic: X-XSS-Protection
+          - generic: ": 0"
+        - generic:
+          - generic: X-Request-ID
+          - generic: ": req_mocm71tn_5075c910"
+        - generic:
+          - generic: X-Trace-ID
+          - generic: ": req_mocm71tn_5075c910"
+        - generic:
+          - generic: X-RateLimit-Limit
+          - generic: ": Infinity"
+        - generic:
+          - generic: X-RateLimit-Remaining
+          - generic: ": Infinity"
+        - generic:
+          - generic: Content-Type
+          - generic: ": application/json; charset=utf-8"
+        - generic:
+          - generic: Content-Length
+          - generic: ": 78"
+        - generic:
+          - generic: ETag
+          - generic: ": W/\"4e-yN8vrfN/aNMImR1rDCjMKc7W178\""
+        - generic:
+          - generic: Vary
+          - generic: ": Accept-Encoding"
+        - generic:
+          - generic: Date
+          - generic: ": Fri, 24 Apr 2026 07:54:20 GMT"
+        - generic:
+          - generic: Connection
+          - generic: ": keep-alive"
+        - generic:
+          - generic: Keep-Alive
+          - generic: ": timeout=5"
+        - generic:
+          - generic: "{\"success\":false,\"error\":\"Authorization token required\",\"code\":\"UNAUTHORIZED\"}"
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /
+        - generic:
+          - generic: opt/quant/app
+          - generic: $
+  - generic [ref=e56]: suqinhai753@quant-shadow-test-1:/opt/quant/app$
+  - iframe [ref=e57]:
+    

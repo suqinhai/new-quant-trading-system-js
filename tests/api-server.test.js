@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { request } from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import { ApiServer } from '../src/api/server.js';
 
-function requestJson(url) {
+function requestUrl(url) {
   return new Promise((resolve, reject) => {
     const req = request(url, { agent: false }, (res) => {
       let body = '';
@@ -16,7 +19,8 @@ function requestJson(url) {
       res.on('end', () => {
         resolve({
           statusCode: res.statusCode,
-          payload: JSON.parse(body),
+          body,
+          headers: res.headers,
         });
       });
     });
@@ -24,6 +28,14 @@ function requestJson(url) {
     req.on('error', reject);
     req.end();
   });
+}
+
+async function requestJson(url) {
+  const response = await requestUrl(url);
+  return {
+    ...response,
+    payload: JSON.parse(response.body),
+  };
 }
 
 test('ApiServer refuses to start without JWT_SECRET', async () => {
@@ -75,4 +87,34 @@ test('ApiServer exposes public health endpoints', async (t) => {
 
   const systemHealthPayload = systemHealthResponse.payload;
   assert.equal(systemHealthPayload.status, 'healthy');
+});
+
+test('ApiServer serves frontend routes when a web dist directory is configured', async (t) => {
+  const webDistDir = fs.mkdtempSync(path.join(os.tmpdir(), 'quant-web-dist-'));
+  fs.writeFileSync(
+    path.join(webDistDir, 'index.html'),
+    '<!DOCTYPE html><html><body><div id="app">frontend</div></body></html>',
+    'utf8'
+  );
+
+  const server = new ApiServer({
+    host: '127.0.0.1',
+    port: 0,
+    jwtSecret: 'test-secret',
+    webDistDir,
+  });
+
+  await server.start();
+  t.after(async () => {
+    await server.stop();
+    fs.rmSync(webDistDir, { recursive: true, force: true });
+  });
+
+  const address = server.server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  const loginResponse = await requestUrl(`${baseUrl}/login`);
+  assert.equal(loginResponse.statusCode, 200);
+  assert.match(loginResponse.headers['content-type'], /text\/html/);
+  assert.match(loginResponse.body, /frontend/);
 });

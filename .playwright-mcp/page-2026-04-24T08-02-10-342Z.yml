@@ -1,0 +1,208 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e90]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e91] [cursor=pointer]:
+          - img [ref=e26]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e92] [cursor=pointer]:
+          - img [ref=e30]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e93] [cursor=pointer]:
+          - img [ref=e34]: feedback
+        - button "发送组合键" [ref=e94] [cursor=pointer]:
+          - img [ref=e39]: keyboard
+        - button "“设置”菜单" [ref=e95] [cursor=pointer]:
+          - img [ref=e44]: settings
+    - generic [ref=e54]:
+      - textbox "Terminal input" [active] [ref=e96]
+      - generic:
+        - generic:
+          - generic: dist/assets/
+          - generic: el-switch-DpR9-s4E.css
+          - generic: 3.91 kB
+          - generic: "│ gzip: 0.95 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-input-number-DExoAqKP.css
+          - generic: 4.35 kB
+          - generic: "│ gzip: 0.90 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-form-item-BUYvSc9V.css
+          - generic: 4.76 kB
+          - generic: "│ gzip: 0.90 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Dashboard-XcokBWEA.css
+          - generic: 5.23 kB
+          - generic: "│ gzip: 1.24 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-tag-1VV9QMa7.css
+          - generic: 6.02 kB
+          - generic: "│ gzip: 0.95 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: RiskControl-Bsx6r6sL.css
+          - generic: 6.32 kB
+          - generic: "│ gzip: 1.21 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-checkbox-CzNtyWdF.css
+          - generic: 6.51 kB
+          - generic: "│ gzip: 1.22 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-dropdown-item-BeIfAqTO.css
+          - generic: 10.10 kB
+          - generic: "│ gzip: 1.40 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-radio-button-C74-82TR.css
+          - generic: 11.07 kB
+          - generic: "│ gzip: 1.98 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-input-xaztPnzw.css
+          - generic: 11.08 kB
+          - generic: "│ gzip: 1.84 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-select-Csdv1ynU.css
+          - generic: 13.23 kB
+          - generic: "│ gzip: 2.35 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Settings-BuRABDjC.css
+          - generic: 16.25 kB
+          - generic: "│ gzip: 2.50 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: MainLayout-rpW0ukK9.css
+          - generic: 19.14 kB
+          - generic: "│ gzip: 3.46 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-table-column-Dp73S2HR.css
+          - generic: 19.54 kB
+          - generic: "│ gzip: 2.91 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: _plugin-vue_export-helper-DITZ5HsB.css
+          - generic: 19.93 kB
+          - generic: "│ gzip: 2.15 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-card-CbfVs4y0.css
+          - generic: 37.41 kB
+          - generic: "│ gzip: 3.82 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: el-pagination-DKvrotO_.css
+          - generic: 41.59 kB
+          - generic: "│ gzip: 6.09 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: index-DKDIV6QS.css
+          - generic: 352.88 kB
+          - generic: "│ gzip: 47.46 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: _plugin-vue_export-helper-DSnFSoud.js
+          - generic: 0.09 kB
+          - generic: "│ gzip: 0.10 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: NotFound-BaJkpHJD.js
+          - generic: 0.70 kB
+          - generic: "│ gzip: 0.54 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: logo-2uOC9CG9.js
+          - generic: 1.73 kB
+          - generic: "│ gzip: 0.92 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: system-C6XR67gI.js
+          - generic: 2.24 kB
+          - generic: "│ gzip: 1.04 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Login-BW5PLpZb.js
+          - generic: 2.76 kB
+          - generic: "│ gzip: 1.35 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: MainLayout-DJrTERxH.js
+          - generic: 5.57 kB
+          - generic: "│ gzip: 2.36 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Dashboard-IJD4NILX.js
+          - generic: 10.55 kB
+          - generic: "│ gzip: 3.74 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Trades-86tRJXZG.js
+          - generic: 10.55 kB
+          - generic: "│ gzip: 3.80 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: RiskControl-D8GgfzIk.js
+          - generic: 11.45 kB
+          - generic: "│ gzip: 3.69 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Strategies-ConXfqbN.js
+          - generic: 16.60 kB
+          - generic: "│ gzip: 5.22 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: Settings-BlvMha5l.js
+          - generic: 17.15 kB
+          - generic: "│ gzip: 5.39 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: index-Ckx3HfDT.js
+          - generic: 37.21 kB
+          - generic: "│ gzip: 16.00 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: index-BWQY2JRf.js
+          - generic: 41.43 kB
+          - generic: "│ gzip: 16.29 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: echarts-CAht_S8a.js
+          - generic: 491.83 kB
+          - generic: "│ gzip: 166.08 kB"
+        - generic:
+          - generic: dist/assets/
+          - generic: element-plus-BZVEHCX3.js
+          - generic: 1,137.87 kB
+          - generic: "│ gzip: 363.79 kB"
+        - generic:
+          - generic: ✓
+          - generic: built in 24.89s
+        - generic:
+          - generic: "% Total % Received % Xferd Average Speed Time Time Time Current"
+        - generic:
+          - generic: Dload Upload Total Spent Left Speed
+        - generic:
+          - generic: 0 0 0 0 0 0 0 0 --:--:-- --:--:-- --:--:-- 0
+        - generic:
+          - generic: "curl: (7) Failed to connect to 127.0.0.1 port 3000 after 12 ms: Couldn't connect to server"
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /opt/quant/app
+          - generic: $
+  - generic [ref=e56]: suqinhai753@quant-shadow-test-1:/opt/quant/app$
+  - iframe [ref=e57]:
+    

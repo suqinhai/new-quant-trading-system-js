@@ -10,6 +10,9 @@ import cors from 'cors'; // 导入模块 cors
 import helmet from 'helmet'; // 导入模块 helmet
 import compression from 'compression'; // 导入模块 compression
 import { createServer } from 'http'; // 导入模块 http
+import fs from 'fs'; // 导入模块 fs
+import path from 'path'; // 导入模块 path
+import { fileURLToPath } from 'url'; // 导入模块 url
 
 import { // 导入依赖
   createDashboardRoutes, // 执行语句
@@ -29,6 +32,9 @@ import { RequestTracingManager, getContext } from '../middleware/requestTracing.
 import { setContextGetter } from '../utils/logger.js'; // 导入模块 ../utils/logger.js
 import { logger } from '../utils/logger.js'; // 导入模块 ../utils/logger.js
 
+const __filename = fileURLToPath(import.meta.url); // ESM file path
+const __dirname = path.dirname(__filename); // ESM directory path
+
 // 初始化日志上下文获取器
 setContextGetter(getContext); // 调用 setContextGetter
 
@@ -42,6 +48,7 @@ export class ApiServer { // 导出类 ApiServer
       host: config.host || '0.0.0.0', // 主机
       corsOrigins: config.corsOrigins || ['http://localhost:5173', 'http://localhost:3000'], // corsOrigins
       jwtSecret: config.jwtSecret || process.env.JWT_SECRET || null, // jwt密钥
+      webDistDir: config.webDistDir || path.resolve(__dirname, '../../web/dist'), // 前端静态资源目录
       ...config, // 展开对象或数组
     }; // 结束代码块
 
@@ -135,6 +142,10 @@ export class ApiServer { // 导出类 ApiServer
    * JWT 认证中间件
    */
   authMiddleware(req, res, next) { // 调用 authMiddleware
+    if (!req.path.startsWith('/api/')) { // 仅保护 API 路由
+      return next(); // 返回结果
+    }
+
     // 跳过公开路由
     const publicPaths = [ // 定义常量 publicPaths
       '/api/auth/login', // 执行语句
@@ -233,6 +244,18 @@ export class ApiServer { // 导出类 ApiServer
         path: req.path, // 路径
       }); // 结束代码块
     }); // 结束代码块
+
+    const webIndexFile = path.join(this.config.webDistDir, 'index.html'); // 定义常量 webIndexFile
+    if (fs.existsSync(webIndexFile)) { // 条件判断 fs.existsSync(webIndexFile)
+      this.app.use(express.static(this.config.webDistDir, { index: false })); // 提供前端静态资源
+      this.app.get('*', (req, res, next) => { // SPA fallback
+        if (req.path.startsWith('/api/')) { // 条件判断 req.path.startsWith('/api/')
+          return next(); // 返回结果
+        }
+
+        return res.sendFile(webIndexFile); // 返回结果
+      }); // 结束代码块
+    }
 
     // 全局错误处理
     this.app.use((err, req, res, next) => { // 访问 app
