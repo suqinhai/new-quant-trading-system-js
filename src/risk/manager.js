@@ -1535,6 +1535,12 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
    * @private
    */
   async _refreshAccountData() { // 执行语句
+    if (this.config.skipPrivateAccountData ||
+        process.env.SHADOW_SKIP_PRIVATE_ACCOUNT_DATA === 'true' ||
+        process.env.PUBLIC_MARKET_ONLY === 'true') {
+      return;
+    }
+
     // 遍历所有交易所 / Iterate all exchanges
     for (const [exchangeName, exchange] of this.exchanges) { // 循环 const [exchangeName, exchange] of this.exchanges
       try { // 尝试执行
@@ -1572,6 +1578,12 @@ export class AdvancedRiskManager extends EventEmitter { // 导出类 AdvancedRis
    * @private
    */
   async _refreshPositionData() { // 执行语句
+    if (this.config.skipPrivateAccountData ||
+        process.env.SHADOW_SKIP_PRIVATE_ACCOUNT_DATA === 'true' ||
+        process.env.PUBLIC_MARKET_ONLY === 'true') {
+      return;
+    }
+
     // 遍历所有交易所 / Iterate all exchanges
     for (const [exchangeName, exchange] of this.exchanges) { // 循环 const [exchangeName, exchange] of this.exchanges
       try { // 尝试执行

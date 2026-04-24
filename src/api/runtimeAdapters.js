@@ -27,6 +27,16 @@ function mergeDeep(base = {}, updates = {}) {
   return output;
 }
 
+function getEnvNumber(name, defaultValue) {
+  const value = process.env[name];
+  if (value === undefined || value === '') {
+    return defaultValue;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
 function getByPath(source, path, defaultValue = null) {
   if (!path) {
     return source ?? defaultValue;
@@ -606,6 +616,8 @@ export class RuntimeTradingEngine {
 export function createRuntimeHealthChecker({ runner, redisDb }) {
   const checker = new HealthChecker({
     cacheTimeMs: 2000,
+    memoryWarningPercent: getEnvNumber('HEALTH_MEMORY_WARNING_PERCENT', 99),
+    memoryCriticalPercent: getEnvNumber('HEALTH_MEMORY_CRITICAL_PERCENT', 100),
   });
 
   checker.registerComponent('database', async () => {

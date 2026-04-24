@@ -645,6 +645,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
     // In shared mode, skip API preflight and market loading (handled by market-data service)
     const useSharedMarketData = process.env.USE_SHARED_MARKET_DATA === 'true' || // 定义常量 useSharedMarketData
                                  this.config.marketData?.useShared === true; // 访问 config
+    const publicMarketOnly = process.env.PUBLIC_MARKET_ONLY === 'true'; // Public-only shadow testing avoids private API credentials
 
     if (useSharedMarketData) { // 条件判断 useSharedMarketData
       this._log('info', '共享行情模式: 策略容器使用轻量连接 (跳过API预检查) / Shared mode: Using lightweight connection'); // 调用 _log
@@ -658,6 +659,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
 
     // 遍历所有支持的交易所 / Iterate all supported exchanges
     for (const exchangeName of supportedExchanges) { // 循环 const exchangeName of supportedExchanges
+      if (publicMarketOnly && exchangeName !== primaryExchangeName) {
+        continue;
+      }
+
       // 获取交易所配置 / Get exchange configuration
       const exchangeConfig = this.config.exchange?.[exchangeName] || {}; // 定义常量 exchangeConfig
 
@@ -677,7 +682,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
                        process.env[`${upperName}_PASSWORD`]; // 执行语句
 
       // 如果没有 API 密钥或未启用，跳过 / If no API key or not enabled, skip
-      if (!isEnabled || !apiKey || !secret) { // 条件判断 !isEnabled || !apiKey || !secret
+      if (!isEnabled || (!publicMarketOnly && (!apiKey || !secret))) { // 条件判断 !isEnabled || !apiKey || !secret
         if (this.options.verbose) { // 条件判断 this.options.verbose
           this._log('debug', `跳过交易所 ${exchangeName}: enabled=${isEnabled}, hasKey=${!!apiKey}, hasSecret=${!!secret}`); // 调用 _log
         } // 结束代码块
@@ -700,10 +705,10 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         // 创建交易所实例 / Create exchange instance
         const exchangeOptions = { // 定义常量 exchangeOptions
           // API 密钥 / API key
-          apiKey, // 执行语句
+          apiKey: publicMarketOnly ? undefined : apiKey, // 执行语句
 
           // API 密钥 / API secret
-          secret, // 执行语句
+          secret: publicMarketOnly ? undefined : secret, // 执行语句
 
           // 是否沙盒模式 / Sandbox mode
           sandbox, // 执行语句
@@ -719,7 +724,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         }; // 结束代码块
 
         // OKX 需要 password (passphrase) / OKX requires password (passphrase)
-        if (password) { // 条件判断 password
+        if (password && !publicMarketOnly) { // 条件判断 password
           exchangeOptions.password = password; // 赋值 exchangeOptions.password
         } // 结束代码块
 
@@ -739,7 +744,7 @@ class TradingSystemRunner extends EventEmitter { // 定义类 TradingSystemRunne
         // Shared mode: lightweight connect (skip preflight and market loading)
         // Non-shared mode: full connect (with preflight and market loading)
         await exchange.connect({ // 等待异步结果
-          skipPreflight: useSharedMarketData, // skipPreflight
+          skipPreflight: useSharedMarketData || publicMarketOnly, // skipPreflight
           loadMarkets: !useSharedMarketData, // loadMarkets
         }); // 结束代码块
 

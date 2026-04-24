@@ -10,6 +10,7 @@
    `bash scripts/deploy.sh deploy -e shadow -s multi`
 
 Notes:
+- For public market-data shadow tests, set `PUBLIC_MARKET_ONLY=true` and `SHADOW_SKIP_PRIVATE_ACCOUNT_DATA=true`; do not configure real exchange credentials.
 - `JWT_SECRET` must be a real random secret and at least 32 characters.
 - `DASHBOARD_PASSWORD` must not use a placeholder value.
 - If `.keys.enc` is present, `MASTER_KEY` must also be configured.
