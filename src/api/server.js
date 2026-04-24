@@ -247,6 +247,7 @@ export class ApiServer { // 导出类 ApiServer
 
     const webIndexFile = path.join(this.config.webDistDir, 'index.html'); // 定义常量 webIndexFile
     if (fs.existsSync(webIndexFile)) { // 条件判断 fs.existsSync(webIndexFile)
+      this.app.get('/login', (req, res) => res.sendFile(webIndexFile)); // 显式处理登录页，避免静态中间件卡住
       this.app.use(express.static(this.config.webDistDir, { index: false })); // 提供前端静态资源
       this.app.get('*', (req, res, next) => { // SPA fallback
         if (req.path.startsWith('/api/')) { // 条件判断 req.path.startsWith('/api/')

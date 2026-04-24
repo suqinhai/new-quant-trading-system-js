@@ -1,0 +1,1149 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - alertdialog "“免费试用”对话框" [ref=e834]:
+      - generic [ref=e835]:
+        - generic [ref=e836]:
+          - img [ref=e839]
+          - generic [ref=e842]: 免费试用状态：剩余 $270.56 赠金和 76 天时间。激活完整账号即可不受限制地访问所有 Google Cloud 服务，您可以使用任何剩余的赠金，然后只需按用量付费。
+        - generic [ref=e843]:
+          - button "关闭整个账号激活横幅" [ref=e844]:
+            - generic [ref=e845]: 关闭
+          - button "激活" [ref=e846]:
+            - generic [ref=e847]: 激活
+    - generic [ref=e4]:
+      - complementary "跳过链接" [ref=e5]:
+        - link "跳至主要内容" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: 跳至主要内容
+        - button "键盘快捷键" [ref=e8]:
+          - generic [ref=e9]: 键盘快捷键
+        - link "无障碍功能帮助 外部链接，在新窗口中打开" [ref=e10] [cursor=pointer]:
+          - /url: https://cloud.google.com/docs/accessibility?hl=zh_CN
+          - generic [ref=e11]:
+            - text: 无障碍功能帮助
+            - generic "外部链接，在新窗口中打开" [ref=e12]:
+              - img "外部链接，在新窗口中打开" [ref=e13]:
+                - img [ref=e14]
+        - link "无障碍功能反馈 外部链接，在新窗口中打开" [ref=e16] [cursor=pointer]:
+          - /url: https://support.google.com/accessibility/contact/feedback?hl=zh_CN
+          - generic [ref=e17]:
+            - text: 无障碍功能反馈
+            - generic "外部链接，在新窗口中打开" [ref=e18]:
+              - img "外部链接，在新窗口中打开" [ref=e19]:
+                - img [ref=e20]
+      - banner [ref=e23]:
+        - generic [ref=e24]:
+          - navigation [ref=e27]:
+            - button "导航菜单 (.)" [ref=e28] [cursor=pointer]:
+              - img [ref=e30]
+          - link "Google Cloud Platform 首页" [ref=e32] [cursor=pointer]:
+            - /url: /
+            - generic:
+              - img
+          - button "目前正在 My Project 29689 中执行操作。按 Enter 键即可切换项目、文件夹或组织" [ref=e848]:
+            - generic [ref=e849]:
+              - img [ref=e851]
+              - generic [ref=e854]: My Project 29689
+        - search "Google云端平台" [ref=e46]:
+          - combobox [ref=e47]:
+            - searchbox "输入查询以搜索资源、文档、产品等" [ref=e48]
+          - button "查看所有搜索结果" [disabled]:
+            - generic:
+              - img
+            - generic: 搜索
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - button "打开或关闭 Gemini Cloud Assist 对话 (Alt G)" [ref=e858] [cursor=pointer]:
+              - img [ref=e860]
+            - button "激活 Cloud Shell (G then S)" [ref=e862] [cursor=pointer]:
+              - img [ref=e864]
+            - button "7 条未读通知。 打开通知" [ref=e57] [cursor=pointer]:
+              - generic [ref=e60]: "7"
+            - button "设置与实用工具" [ref=e65] [cursor=pointer]:
+              - img [ref=e67]
+          - button "账号：SU QINHAI (suqinhai753@gmail.com)" [ref=e868]:
+            - img [ref=e869]
+    - generic [ref=e91]:
+      - navigation "Compute Engine" [ref=e98]:
+        - generic [ref=e99]:
+          - heading "Compute Engine" [level=2] [ref=e101]:
+            - link "Compute Engine" [ref=e102] [cursor=pointer]:
+              - /url: /compute
+              - img [ref=e105]
+              - generic [ref=e112]: Compute Engine
+          - generic [ref=e114]:
+            - group [ref=e115]:
+              - list "概览，1/2 更多选项 安全风险概览，2/2 更多选项" [ref=e116]:
+                - listitem [ref=e117]:
+                  - generic [ref=e120]:
+                    - link "概览，1/2" [ref=e121] [cursor=pointer]:
+                      - /url: /compute/overview
+                      - generic [ref=e122]:
+                        - img [ref=e125]
+                        - generic [ref=e127]: 概览
+                    - button "更多选项" [ref=e129] [cursor=pointer]:
+                      - img [ref=e131]
+                - listitem [ref=e133]:
+                  - generic [ref=e136]:
+                    - link "安全风险概览，2/2" [ref=e137] [cursor=pointer]:
+                      - /url: /compute/security
+                      - generic [ref=e138]:
+                        - img [ref=e141]
+                        - generic [ref=e143]: 安全风险概览
+                    - button "更多选项" [ref=e145] [cursor=pointer]:
+                      - img [ref=e147]
+            - group "虚拟机" [ref=e149]:
+              - heading "虚拟机" [level=3] [ref=e154]:
+                - button "虚拟机" [expanded] [ref=e155]:
+                  - generic [ref=e157]:
+                    - generic [ref=e158]: 虚拟机
+                    - img [ref=e162]
+              - list "虚拟机" [ref=e164]:
+                - listitem [ref=e165]:
+                  - generic [ref=e168]:
+                    - link "虚拟机实例，1/8" [ref=e169] [cursor=pointer]:
+                      - /url: /compute/instances
+                      - generic [ref=e170]:
+                        - img [ref=e173]
+                        - generic [ref=e175]: 虚拟机实例
+                    - button "更多选项" [ref=e177] [cursor=pointer]:
+                      - img [ref=e179]
+                - listitem [ref=e181]:
+                  - generic [ref=e184]:
+                    - link "实例模板，2/8" [ref=e185] [cursor=pointer]:
+                      - /url: /compute/instanceTemplates/list
+                      - generic [ref=e186]:
+                        - img [ref=e189]
+                        - generic [ref=e191]: 实例模板
+                    - button "更多选项" [ref=e193] [cursor=pointer]:
+                      - img [ref=e195]
+                - listitem [ref=e197]:
+                  - generic [ref=e200]:
+                    - link "单租户节点，3/8" [ref=e201] [cursor=pointer]:
+                      - /url: /compute/soleTenancy
+                      - generic [ref=e202]:
+                        - img [ref=e205]
+                        - generic [ref=e207]: 单租户节点
+                    - button "更多选项" [ref=e209] [cursor=pointer]:
+                      - img [ref=e211]
+                - listitem [ref=e213]:
+                  - generic [ref=e216]:
+                    - link "机器映像，4/8" [ref=e217] [cursor=pointer]:
+                      - /url: /compute/machineImages
+                      - generic [ref=e218]:
+                        - img [ref=e221]
+                        - generic [ref=e223]: 机器映像
+                    - button "更多选项" [ref=e225] [cursor=pointer]:
+                      - img [ref=e227]
+                - listitem [ref=e229]:
+                  - generic [ref=e232]:
+                    - link "TPU，5/8" [ref=e233] [cursor=pointer]:
+                      - /url: /compute/tpus
+                      - generic [ref=e234]:
+                        - img [ref=e237]
+                        - generic [ref=e239]: TPU
+                    - button "更多选项" [ref=e241] [cursor=pointer]:
+                      - img [ref=e243]
+                - listitem [ref=e245]:
+                  - generic [ref=e248]:
+                    - link "承诺使用折扣，6/8" [ref=e249] [cursor=pointer]:
+                      - /url: /compute/commitments
+                      - generic [ref=e250]:
+                        - img [ref=e253]
+                        - generic [ref=e255]: 承诺使用折扣
+                    - button "更多选项" [ref=e257] [cursor=pointer]:
+                      - img [ref=e259]
+                - listitem [ref=e261]:
+                  - generic [ref=e264]:
+                    - link "预留，7/8" [ref=e265] [cursor=pointer]:
+                      - /url: /compute/reservations
+                      - generic [ref=e266]:
+                        - img [ref=e269]
+                        - generic [ref=e271]: 预留
+                    - button "更多选项" [ref=e273] [cursor=pointer]:
+                      - img [ref=e275]
+                - listitem [ref=e277]:
+                  - generic [ref=e280]:
+                    - link "Migrate to Virtual Machines，8/8" [ref=e281] [cursor=pointer]:
+                      - /url: /compute/mfce
+                      - generic [ref=e282]:
+                        - img [ref=e285]
+                        - generic [ref=e287]: Migrate to Virtual Machines
+                    - button "更多选项" [ref=e289] [cursor=pointer]:
+                      - img [ref=e291]
+            - group "存储" [ref=e293]:
+              - heading "存储" [level=3] [ref=e298]:
+                - button "存储" [expanded] [ref=e299]:
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: 存储
+                    - img [ref=e306]
+              - list "存储" [ref=e308]:
+                - listitem [ref=e309]:
+                  - generic [ref=e312]:
+                    - link "磁盘，1/6" [ref=e313] [cursor=pointer]:
+                      - /url: /compute/disks?project=stoked-virtue-493510-f5
+                      - generic [ref=e314]:
+                        - img [ref=e317]
+                        - generic [ref=e319]: 磁盘
+                    - button "更多选项" [ref=e321] [cursor=pointer]:
+                      - img [ref=e323]
+                - listitem [ref=e325]:
+                  - generic [ref=e328]:
+                    - link "存储池，2/6" [ref=e329] [cursor=pointer]:
+                      - /url: /compute/storagePools?project=stoked-virtue-493510-f5
+                      - generic [ref=e330]:
+                        - img [ref=e333]
+                        - generic [ref=e335]: 存储池
+                    - button "更多选项" [ref=e337] [cursor=pointer]:
+                      - img [ref=e339]
+                - listitem [ref=e341]:
+                  - generic [ref=e344]:
+                    - link "快照，3/6" [ref=e345] [cursor=pointer]:
+                      - /url: /compute/snapshots?project=stoked-virtue-493510-f5
+                      - generic [ref=e346]:
+                        - img [ref=e349]
+                        - generic [ref=e351]: 快照
+                    - button "更多选项" [ref=e353] [cursor=pointer]:
+                      - img [ref=e355]
+                - listitem [ref=e357]:
+                  - generic [ref=e360]:
+                    - link "映像，4/6" [ref=e361] [cursor=pointer]:
+                      - /url: /compute/images?tab=images&project=stoked-virtue-493510-f5
+                      - generic [ref=e362]:
+                        - img [ref=e365]
+                        - generic [ref=e367]: 映像
+                    - button "更多选项" [ref=e369] [cursor=pointer]:
+                      - img [ref=e371]
+                - listitem [ref=e373]:
+                  - generic [ref=e376]:
+                    - link "异步复制，5/6" [ref=e377] [cursor=pointer]:
+                      - /url: /compute/asynchronousReplication?project=stoked-virtue-493510-f5
+                      - generic [ref=e378]:
+                        - img [ref=e381]
+                        - generic [ref=e383]: 异步复制
+                    - button "更多选项" [ref=e385] [cursor=pointer]:
+                      - img [ref=e387]
+                - listitem [ref=e389]:
+                  - generic [ref=e392]:
+                    - link "一致性组，6/6" [ref=e393] [cursor=pointer]:
+                      - /url: /compute/consistencyGroups?project=stoked-virtue-493510-f5
+                      - generic [ref=e394]:
+                        - img [ref=e397]
+                        - generic [ref=e399]: 一致性组
+                    - button "更多选项" [ref=e401] [cursor=pointer]:
+                      - img [ref=e403]
+            - group "实例组" [ref=e405]:
+              - heading "实例组" [level=3] [ref=e410]:
+                - button "实例组" [expanded] [ref=e411]:
+                  - generic [ref=e413]:
+                    - generic [ref=e414]: 实例组
+                    - img [ref=e418]
+              - list "实例组" [ref=e420]:
+                - listitem [ref=e421]:
+                  - generic [ref=e424]:
+                    - link "实例组，1/2" [ref=e425] [cursor=pointer]:
+                      - /url: /compute/instanceGroups/list?project=stoked-virtue-493510-f5
+                      - generic [ref=e426]:
+                        - img [ref=e429]
+                        - generic [ref=e431]: 实例组
+                    - button "更多选项" [ref=e433] [cursor=pointer]:
+                      - img [ref=e435]
+                - listitem [ref=e437]:
+                  - generic [ref=e440]:
+                    - link "健康检查，2/2" [ref=e441] [cursor=pointer]:
+                      - /url: /compute/healthChecks?project=stoked-virtue-493510-f5
+                      - generic [ref=e442]:
+                        - img [ref=e445]
+                        - generic [ref=e447]: 健康检查
+                    - button "更多选项" [ref=e449] [cursor=pointer]:
+                      - img [ref=e451]
+            - group "虚拟机扩展程序管理器" [ref=e453]:
+              - heading "虚拟机扩展程序管理器" [level=3] [ref=e458]:
+                - button "虚拟机扩展程序管理器" [expanded] [ref=e459]:
+                  - generic [ref=e461]:
+                    - generic [ref=e462]: 虚拟机扩展程序管理器
+                    - img [ref=e466]
+              - list "虚拟机扩展程序管理器" [ref=e468]:
+                - listitem [ref=e469]:
+                  - generic [ref=e472]:
+                    - link "虚拟机扩展程序政策，1/1" [ref=e473] [cursor=pointer]:
+                      - /url: /compute/extensionManager?project=stoked-virtue-493510-f5
+                      - generic [ref=e474]:
+                        - img [ref=e477]
+                        - generic [ref=e479]: 虚拟机扩展程序政策
+                    - button "更多选项" [ref=e481] [cursor=pointer]:
+                      - img [ref=e483]
+            - group "虚拟机管理器" [ref=e485]:
+              - heading "虚拟机管理器" [level=3] [ref=e490]:
+                - button "虚拟机管理器" [expanded] [ref=e491]:
+                  - generic [ref=e493]:
+                    - generic [ref=e494]: 虚拟机管理器
+                    - img [ref=e498]
+              - list "虚拟机管理器" [ref=e500]:
+                - listitem [ref=e501]:
+                  - generic [ref=e504]:
+                    - link "修补，1/2" [ref=e505] [cursor=pointer]:
+                      - /url: /compute/patch?project=stoked-virtue-493510-f5
+                      - generic [ref=e506]:
+                        - img [ref=e509]
+                        - generic [ref=e511]: 修补
+                    - button "更多选项" [ref=e513] [cursor=pointer]:
+                      - img [ref=e515]
+                - listitem [ref=e517]:
+                  - generic [ref=e520]:
+                    - link "操作系统政策，2/2" [ref=e521] [cursor=pointer]:
+                      - /url: /compute/config?project=stoked-virtue-493510-f5
+                      - generic [ref=e522]:
+                        - img [ref=e525]
+                        - generic [ref=e527]: 操作系统政策
+                    - button "更多选项" [ref=e529] [cursor=pointer]:
+                      - img [ref=e531]
+            - group "裸金属解决方案" [ref=e533]:
+              - heading "裸金属解决方案" [level=3] [ref=e538]:
+                - button "裸金属解决方案" [expanded] [ref=e539]:
+                  - generic [ref=e541]:
+                    - generic [ref=e542]: 裸金属解决方案
+                    - img [ref=e546]
+              - list "裸金属解决方案" [ref=e548]:
+                - listitem [ref=e549]:
+                  - generic [ref=e552]:
+                    - link "服务器，1/7" [ref=e553] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/servers?project=stoked-virtue-493510-f5
+                      - generic [ref=e554]:
+                        - img [ref=e557]
+                        - generic [ref=e559]: 服务器
+                    - button "更多选项" [ref=e561] [cursor=pointer]:
+                      - img [ref=e563]
+                - listitem [ref=e565]:
+                  - generic [ref=e568]:
+                    - link "网络，2/7" [ref=e569] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/networks?project=stoked-virtue-493510-f5
+                      - generic [ref=e570]:
+                        - img [ref=e573]
+                        - generic [ref=e575]: 网络
+                    - button "更多选项" [ref=e577] [cursor=pointer]:
+                      - img [ref=e579]
+                - listitem [ref=e581]:
+                  - generic [ref=e584]:
+                    - link "VRF，3/7" [ref=e585] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/vrfs?project=stoked-virtue-493510-f5
+                      - generic [ref=e586]:
+                        - img [ref=e589]
+                        - generic [ref=e591]: VRF
+                    - button "更多选项" [ref=e593] [cursor=pointer]:
+                      - img [ref=e595]
+                - listitem [ref=e597]:
+                  - generic [ref=e600]:
+                    - link "卷，4/7" [ref=e601] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/volumes?project=stoked-virtue-493510-f5
+                      - generic [ref=e602]:
+                        - img [ref=e605]
+                        - generic [ref=e607]: 卷
+                    - button "更多选项" [ref=e609] [cursor=pointer]:
+                      - img [ref=e611]
+                - listitem [ref=e613]:
+                  - generic [ref=e616]:
+                    - link "NFS 共享，5/7" [ref=e617] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/nfsShares?project=stoked-virtue-493510-f5
+                      - generic [ref=e618]:
+                        - img [ref=e621]
+                        - generic [ref=e623]: NFS 共享
+                    - button "更多选项" [ref=e625] [cursor=pointer]:
+                      - img [ref=e627]
+                - listitem [ref=e629]:
+                  - generic [ref=e632]:
+                    - link "采购，6/7" [ref=e633] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/procurements?project=stoked-virtue-493510-f5
+                      - generic [ref=e634]:
+                        - img [ref=e637]
+                        - generic [ref=e641]: 采购
+                    - button "更多选项" [ref=e643] [cursor=pointer]:
+                      - img [ref=e645]
+                - listitem [ref=e647]:
+                  - generic [ref=e650]:
+                    - link "维护事件，7/7" [ref=e651] [cursor=pointer]:
+                      - /url: /compute/bareMetalSolution/maintenanceEvents?project=stoked-virtue-493510-f5
+                      - generic [ref=e652]:
+                        - img [ref=e655]
+                        - generic [ref=e657]: 维护事件
+                    - button "更多选项" [ref=e659] [cursor=pointer]:
+                      - img [ref=e661]
+            - group "设置" [ref=e663]:
+              - heading "设置" [level=3] [ref=e668]:
+                - button "设置" [expanded] [ref=e669]:
+                  - generic [ref=e671]:
+                    - generic [ref=e672]: 设置
+                    - img [ref=e676]
+              - list "设置" [ref=e678]:
+                - listitem [ref=e679]:
+                  - generic [ref=e682]:
+                    - link "元数据，1/6" [ref=e683] [cursor=pointer]:
+                      - /url: /compute/metadata?project=stoked-virtue-493510-f5
+                      - generic [ref=e684]:
+                        - img [ref=e687]
+                        - generic [ref=e689]: 元数据
+                    - button "更多选项" [ref=e691] [cursor=pointer]:
+                      - img [ref=e693]
+                - listitem [ref=e695]:
+                  - generic [ref=e698]:
+                    - link "可用区，2/6" [ref=e699] [cursor=pointer]:
+                      - /url: /compute/zones?project=stoked-virtue-493510-f5
+                      - generic [ref=e700]:
+                        - img [ref=e703]
+                        - generic [ref=e705]: 可用区
+                    - button "更多选项" [ref=e707] [cursor=pointer]:
+                      - img [ref=e709]
+                - listitem [ref=e711]:
+                  - generic [ref=e714]:
+                    - link "网络端点组，3/6" [ref=e715] [cursor=pointer]:
+                      - /url: /compute/networkendpointgroups/list?project=stoked-virtue-493510-f5
+                      - generic [ref=e716]:
+                        - img [ref=e719]
+                        - generic [ref=e721]: 网络端点组
+                    - button "更多选项" [ref=e723] [cursor=pointer]:
+                      - img [ref=e725]
+                - listitem [ref=e727]:
+                  - generic [ref=e730]:
+                    - link "预览版功能，4/6" [ref=e731] [cursor=pointer]:
+                      - /url: /compute/previewFeatures?project=stoked-virtue-493510-f5
+                      - generic [ref=e732]:
+                        - img [ref=e735]
+                        - generic [ref=e738]:
+                          - text: 预览版功能
+                          - img "新" [ref=e873]
+                    - button "更多选项" [ref=e740] [cursor=pointer]:
+                      - img [ref=e742]
+                - listitem [ref=e744]:
+                  - generic [ref=e747]:
+                    - link "运维，5/6" [ref=e748] [cursor=pointer]:
+                      - /url: /compute/operations?project=stoked-virtue-493510-f5
+                      - generic [ref=e749]:
+                        - img [ref=e752]
+                        - generic [ref=e754]: 运维
+                    - button "更多选项" [ref=e756] [cursor=pointer]:
+                      - img [ref=e758]
+                - listitem [ref=e760]:
+                  - generic [ref=e763]:
+                    - link "设置，6/6" [ref=e764] [cursor=pointer]:
+                      - /url: /compute/settings?project=stoked-virtue-493510-f5
+                      - generic [ref=e765]:
+                        - img [ref=e768]
+                        - generic [ref=e770]: 设置
+                    - button "更多选项" [ref=e772] [cursor=pointer]:
+                      - img [ref=e774]
+          - generic [ref=e779]:
+            - link "探索 Marketplace 中的virtual machine解决方案" [ref=e781] [cursor=pointer]:
+              - /url: /compute/instancesDetail/zones/asia-east1-b/instances/quant-shadow-test-1(cameo:browse)?project=stoked-virtue-493510-f5&filter=solution-type:vm
+              - img [ref=e783]:
+                - img [ref=e784]
+              - generic [ref=e788]: 市场
+            - separator [ref=e789]
+            - button "探索 Compute Engine 版本说明" [ref=e791]:
+              - img [ref=e793]:
+                - img [ref=e794]
+              - generic [ref=e796]: 版本说明
+          - button "展开/收起Compute Engine导航菜单" [pressed] [ref=e799] [cursor=pointer]:
+            - img [ref=e802]
+      - main [ref=e805]:
+        - generic [ref=e882]:
+          - generic [ref=e885]:
+            - generic [ref=e888]:
+              - link "返回父页面" [ref=e892] [cursor=pointer]:
+                - /url: /compute/instances?project=stoked-virtue-493510-f5
+                - img [ref=e894]
+              - heading "quant-shadow-test-1" [level=1] [ref=e898]:
+                - generic [ref=e900]: quant-shadow-test-1
+              - generic [ref=e902]:
+                - generic [ref=e903]:
+                  - toolbar "quant-shadow-test-1" [ref=e904]:
+                    - generic [ref=e905]:
+                      - link "修改" [ref=e906] [cursor=pointer]:
+                        - /url: /compute/instancesEdit/zones/asia-east1-b/instances/quant-shadow-test-1?project=stoked-virtue-493510-f5
+                        - img [ref=e908]:
+                          - img [ref=e909]
+                        - generic [ref=e911]: 修改
+                      - button "重置" [ref=e913]:
+                        - img [ref=e915]:
+                          - img [ref=e916]
+                        - generic [ref=e918]: 重置
+                      - link "创建机器映像" [ref=e919] [cursor=pointer]:
+                        - /url: /compute/machineImages/create?instanceName=quant-shadow-test-1&instanceZone=asia-east1-b&project=stoked-virtue-493510-f5
+                        - img [ref=e921]:
+                          - img [ref=e922]
+                        - generic [ref=e924]: 创建机器映像
+                      - link "创建类似实例" [ref=e925] [cursor=pointer]:
+                        - /url: /compute/instancesAdd?instanceName=quant-shadow-test-1&instanceZone=asia-east1-b&project=stoked-virtue-493510-f5
+                        - img [ref=e927]:
+                          - img [ref=e928]
+                        - generic [ref=e930]: 创建类似实例
+                      - button "启动/恢复" [disabled] [ref=e932]:
+                        - img [ref=e934]:
+                          - img [ref=e935]
+                        - generic [ref=e937]: 启动/恢复
+                      - button "关停" [ref=e939]:
+                        - img [ref=e941]:
+                          - img [ref=e942]
+                        - generic [ref=e944]: 关停
+                      - button "暂停" [ref=e946]:
+                        - img [ref=e948]:
+                          - img [ref=e949]
+                        - generic [ref=e951]: 暂停
+                      - button "配置数据保护" [ref=e953]:
+                        - img [ref=e955]:
+                          - img [ref=e956]
+                        - generic [ref=e960]: 配置数据保护
+                      - button "运行维护作业" [disabled] [ref=e962]:
+                        - img [ref=e964]
+                        - generic [ref=e967]: 运行维护作业
+                      - button "删除" [ref=e969]:
+                        - img [ref=e971]:
+                          - img [ref=e972]
+                        - generic [ref=e974]: 删除
+                  - button "更多操作 quant-shadow-test-1" [ref=e976] [cursor=pointer]:
+                    - img [ref=e978]:
+                      - img [ref=e979]
+                - generic [ref=e981]:
+                  - button "等效代码" [ref=e984] [cursor=pointer]:
+                    - generic [ref=e985]:
+                      - img [ref=e987]:
+                        - img [ref=e988]
+                      - text: 等效代码
+                  - button "打开或关闭“学习”面板" [ref=e992]:
+                    - img [ref=e994]:
+                      - img [ref=e995]
+                    - generic [ref=e997]: 了解详情
+            - generic [ref=e999]:
+              - tablist [ref=e1002]:
+                - generic [ref=e1003]:
+                  - tab "详情" [selected] [ref=e1004] [cursor=pointer]:
+                    - generic [ref=e1006]: 详情
+                  - tab "可观测性" [ref=e1007] [cursor=pointer]:
+                    - generic [ref=e1009]: 可观测性
+                  - tab "操作系统信息" [ref=e1010] [cursor=pointer]:
+                    - generic [ref=e1013]: 操作系统信息
+                  - tab "屏幕截图" [disabled]:
+                    - generic [ref=e1014]: 屏幕截图
+              - generic [ref=e1015]:
+                - tabpanel "详情" [ref=e1016]:
+                  - generic [ref=e1020]:
+                    - complementary [ref=e1021]:
+                      - list [ref=e1022]:
+                        - listitem [ref=e1023]:
+                          - generic "Scroll to 日志" [ref=e1024] [cursor=pointer]: 日志
+                        - listitem [ref=e1025]:
+                          - generic "Scroll to 基本信息" [ref=e1026] [cursor=pointer]: 基本信息
+                        - listitem [ref=e1027]:
+                          - generic "Scroll to 机器配置" [ref=e1028] [cursor=pointer]: 机器配置
+                        - listitem [ref=e1029]:
+                          - generic "Scroll to 网络" [ref=e1030] [cursor=pointer]: 网络
+                        - listitem [ref=e1031]:
+                          - generic "Scroll to 存储" [ref=e1032] [cursor=pointer]: 存储
+                        - listitem [ref=e1033]:
+                          - generic "Scroll to 安全与访问权限" [ref=e1034] [cursor=pointer]: 安全与访问权限
+                        - listitem [ref=e1035]:
+                          - generic "Scroll to 管理" [ref=e1036] [cursor=pointer]: 管理
+                        - listitem [ref=e1037]:
+                          - generic "Scroll to 自定义元数据" [ref=e1038] [cursor=pointer]: 自定义元数据
+                    - generic [ref=e1039]:
+                      - generic [ref=e1040]:
+                        - generic [ref=e1044]:
+                          - button "SSH" [ref=e1046]:
+                            - generic [ref=e1047]: SSH
+                          - button "更多选项" [ref=e1048]:
+                            - img [ref=e1050]
+                        - generic [ref=e1056]:
+                          - button "连接到串行控制台" [disabled] [ref=e1058]:
+                            - generic [ref=e1059]: 连接到串行控制台
+                          - button "更多选项" [disabled] [ref=e1060]:
+                            - img [ref=e1062]
+                      - generic [ref=e1064]:
+                        - text: 不允许连接到串行端口
+                        - button "串行端口连接帮助按钮的标签" [ref=e1066] [cursor=pointer]:
+                          - img [ref=e1068]
+                      - heading "日志" [level=2] [ref=e1070]
+                      - generic [ref=e1071]:
+                        - link "日志记录" [ref=e1073] [cursor=pointer]:
+                          - /url: /logs/viewer?resource=gce_instance%2Finstance_id%2F3626298993405285107&project=stoked-virtue-493510-f5
+                        - link "串行端口 1（控制台）" [ref=e1075] [cursor=pointer]:
+                          - /url: /compute/instancesDetail/zones/asia-east1-b/instances/quant-shadow-test-1/console?port=1&project=stoked-virtue-493510-f5
+                        - link "串行端口 2" [ref=e1077] [cursor=pointer]:
+                          - /url: /compute/instancesDetail/zones/asia-east1-b/instances/quant-shadow-test-1/console?port=2&project=stoked-virtue-493510-f5
+                        - link "串行端口 3" [ref=e1079] [cursor=pointer]:
+                          - /url: /compute/instancesDetail/zones/asia-east1-b/instances/quant-shadow-test-1/console?port=3&project=stoked-virtue-493510-f5
+                        - link "串行端口 4" [ref=e1081] [cursor=pointer]:
+                          - /url: /compute/instancesDetail/zones/asia-east1-b/instances/quant-shadow-test-1/console?port=4&project=stoked-virtue-493510-f5
+                      - heading "基本信息" [level=2] [ref=e1082]
+                      - generic [ref=e1083]:
+                        - generic [ref=e1084]:
+                          - term [ref=e1085]: 名称
+                          - definition [ref=e1086]: quant-shadow-test-1
+                        - generic [ref=e1087]:
+                          - term [ref=e1088]: 实例 ID
+                          - definition [ref=e1089]: "3626298993405285107"
+                        - generic [ref=e1090]:
+                          - term [ref=e1091]: 说明
+                          - definition [ref=e1092]: 无
+                        - generic [ref=e1093]:
+                          - term [ref=e1094]: 类型
+                          - definition [ref=e1095]: 实例
+                        - generic [ref=e1096]:
+                          - term [ref=e1097]: 状态
+                          - definition [ref=e1098]:
+                            - img "可用。此实例正在运行" [ref=e1101]:
+                              - img [ref=e1102]
+                            - text: 正在运行
+                        - generic [ref=e1104]:
+                          - term [ref=e1105]: 创建时间
+                          - definition [ref=e1106]: 4月 24, 2026, 12:05:48 下午 UTC+08:00
+                        - generic [ref=e1107]:
+                          - term [ref=e1108]:
+                            - text: 位置
+                            - button "包含实例位置相关信息的提示" [ref=e1110] [cursor=pointer]:
+                              - img [ref=e1112]
+                          - definition [ref=e1114]: asia-east1-b
+                        - generic [ref=e1115]:
+                          - term [ref=e1116]: 启动磁盘来源映像
+                          - definition [ref=e1117]:
+                            - link "打开资源“debian-12-bookworm-v20260417”的映像详情页面。" [ref=e1119] [cursor=pointer]:
+                              - /url: /compute/imagesDetail/projects/debian-cloud/global/images/debian-12-bookworm-v20260417?project=stoked-virtue-493510-f5
+                              - text: debian-12-bookworm-v20260417
+                        - generic [ref=e1120]:
+                          - term [ref=e1121]: 启动磁盘架构
+                          - definition [ref=e1122]: X86_64
+                        - generic [ref=e1123]:
+                          - term [ref=e1124]: 启动磁盘许可类型
+                          - definition [ref=e1125]: 免费
+                        - generic [ref=e1126]:
+                          - term [ref=e1127]: 实例模板
+                          - definition [ref=e1128]: 无
+                        - generic [ref=e1129]:
+                          - term [ref=e1130]: 使用者
+                          - definition [ref=e1131]:
+                            - generic [ref=e1132]: 无
+                        - generic [ref=e1133]:
+                          - term [ref=e1134]:
+                            - text: 物理主机
+                            - button "关于实例物理主机的帮助文本。" [ref=e1136] [cursor=pointer]:
+                              - img [ref=e1138]
+                          - definition [ref=e1140]: 无
+                        - generic [ref=e1141]:
+                          - term [ref=e1142]:
+                            - text: 维护状态
+                            - button "关于实例维护状态的帮助文本" [ref=e1144] [cursor=pointer]:
+                              - img [ref=e1146]
+                          - definition [ref=e1148]:
+                            - generic [ref=e1149]: —
+                        - generic [ref=e1150]:
+                          - term [ref=e1151]: 标签
+                          - definition [ref=e1152]:
+                            - generic [ref=e1155]: 无
+                        - generic [ref=e1156]:
+                          - term [ref=e1157]:
+                            - text: 标记
+                            - button "说明标记部分的提示" [ref=e1160] [cursor=pointer]:
+                              - img [ref=e1162]
+                          - definition [ref=e1164]:
+                            - generic [ref=e1166]:
+                              - generic [ref=e1170]: —
+                              - button "修改标记" [ref=e1171] [cursor=pointer]:
+                                - img [ref=e1173]:
+                                  - img [ref=e1174]
+                        - generic [ref=e1176]:
+                          - term [ref=e1177]: 删除防护
+                          - definition [ref=e1178]: 已停用
+                        - generic [ref=e1179]:
+                          - term [ref=e1180]:
+                            - text: 机密虚拟机服务
+                            - button "机密虚拟机功能的帮助文本。" [ref=e1182] [cursor=pointer]:
+                              - img [ref=e1184]
+                          - definition [ref=e1186]: 已停用
+                        - generic [ref=e1187]:
+                          - term [ref=e1188]: 预保留的状态大小
+                          - definition [ref=e1189]: 0 GB
+                        - generic [ref=e1190]:
+                          - term [ref=e1191]:
+                            - text: 预留亲和性
+                            - button "关于预留亲和性的帮助文本。" [ref=e1193] [cursor=pointer]:
+                              - img [ref=e1195]
+                          - definition [ref=e1197]:
+                            - generic [ref=e1199]: 自动选择（默认）
+                        - generic [ref=e1200]:
+                          - term [ref=e1201]:
+                            - text: 已使用的预留
+                            - button "关于已使用的预留的帮助文本。" [ref=e1203] [cursor=pointer]:
+                              - img [ref=e1205]
+                          - definition [ref=e1207]: —
+                      - heading "机器配置" [level=2] [ref=e1208]
+                      - generic [ref=e1209]:
+                        - generic [ref=e1210]:
+                          - term [ref=e1211]: 机器类型
+                          - definition [ref=e1212]: e2-medium (2 个 vCPU, 4 GB 内存)
+                        - generic [ref=e1213]:
+                          - term [ref=e1214]: CPU 平台
+                          - definition [ref=e1215]: Intel Broadwell
+                        - generic [ref=e1216]:
+                          - term [ref=e1217]: 满足最低 CPU 要求的平台
+                          - definition [ref=e1218]: 无
+                        - generic [ref=e1219]:
+                          - term [ref=e1220]: 架构
+                          - definition [ref=e1221]: x86/64
+                        - generic [ref=e1222]:
+                          - term [ref=e1223]:
+                            - text: vCPU 与核心比率
+                            - button "包含 SMT（每个核心的线程数）相关信息的提示" [ref=e1225] [cursor=pointer]:
+                              - img [ref=e1227]
+                          - definition [ref=e1229]: —
+                        - generic [ref=e1230]:
+                          - term [ref=e1231]:
+                            - text: 自定义可见核心数
+                            - button "可见核心数相关信息的提示" [ref=e1233] [cursor=pointer]:
+                              - img [ref=e1235]
+                          - definition [ref=e1237]: —
+                        - generic [ref=e1238]:
+                          - term [ref=e1239]:
+                            - text: 全核纯 Turbo 模式
+                            - button "关于全核纯 Turbo 模式" [ref=e1241] [cursor=pointer]:
+                              - img [ref=e1243]
+                          - definition [ref=e1245]: —
+                        - generic [ref=e1246]:
+                          - term [ref=e1247]: 显示设备
+                          - definition [ref=e1248]:
+                            - generic [ref=e1249]: 已停用
+                            - generic [ref=e1250]: 启用后即可使用屏幕截取和录制工具
+                        - generic [ref=e1251]:
+                          - term [ref=e1252]: GPU
+                          - definition [ref=e1253]: 无
+                        - generic [ref=e1254]:
+                          - term [ref=e1255]: 资源政策
+                          - definition [ref=e1256]
+                      - heading "网络" [level=2] [ref=e1257]
+                      - generic [ref=e1258]:
+                        - generic [ref=e1259]:
+                          - term [ref=e1260]: 公开 DNS PTR 记录
+                          - definition [ref=e1261]: 无
+                        - generic [ref=e1262]:
+                          - term [ref=e1263]: 总出站流量带宽层级
+                          - definition [ref=e1264]: —
+                      - link "在网络拓扑中查看" [ref=e1266] [cursor=pointer]:
+                        - /url: /net-intelligence/topology?pageState=(%22netTopFilter%22:(%22chips%22:%22%255B%257B_22k_22_3A_22%25E5%25AE%259E%25E4%25BE%258B_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22quant-shadow-test-1_5C_22_22_2C_22i_22_3A_22google.compute.Instance_22%257D%255D%22))&project=stoked-virtue-493510-f5
+                        - img [ref=e1268]
+                        - generic [ref=e1270]: 在网络拓扑中查看
+                      - heading "防火墙" [level=3] [ref=e1271]
+                      - generic [ref=e1272]:
+                        - generic [ref=e1273]:
+                          - term [ref=e1274]: HTTP 流量
+                          - definition [ref=e1275]:
+                            - generic [ref=e1276]: 停用
+                        - generic [ref=e1277]:
+                          - term [ref=e1278]: HTTPS 流量
+                          - definition [ref=e1279]:
+                            - generic [ref=e1280]: 停用
+                        - generic [ref=e1281]:
+                          - term [ref=e1282]: 允许负载均衡器健康检查
+                          - definition [ref=e1283]:
+                            - generic [ref=e1284]: 停用
+                      - generic [ref=e1285]:
+                        - generic [ref=e1286]:
+                          - heading "网络标记" [level=3] [ref=e1287]
+                          - button "关于网络标记的帮助" [ref=e1289] [cursor=pointer]:
+                            - img [ref=e1291]
+                        - list [ref=e1293]:
+                          - listitem [ref=e1294]: quant-shadow
+                      - heading "网络接口" [level=3] [ref=e1295]
+                      - generic [ref=e1299]:
+                        - generic [ref=e1302]:
+                          - generic [ref=e1303]:
+                            - img [ref=e1305]
+                            - generic [ref=e1307]: 过滤条件
+                            - group "过滤条件" [ref=e1308]:
+                              - combobox "过滤条件" [ref=e1310]: 输入属性名称或值
+                            - button "关于过滤的帮助。" [ref=e1312] [cursor=pointer]:
+                              - img [ref=e1314]
+                          - button "列显示选项…" [ref=e1319] [cursor=pointer]:
+                            - img [ref=e1321]
+                        - treegrid "网络接口 , 使用向上键和向下键可浏览树网格行。按向右键和向左键可展开或收起行（如果有）。按向右键可浏览已展开或不可展开的行中的数据。按 Enter 键可与单元格交互。按 Tab 键可在单元格内导航。按 Esc 键可退出单元格。" [ref=e1326]:
+                          - rowgroup [ref=e1339]:
+                            - row "名称 网络 子网 NIC 类型 主要内部 IP 地址 别名 IP 范围 IP 栈类型 外部 IP 地址 网络层级 IP 转发 网络详情" [ref=e1340]:
+                              - columnheader "名称" [ref=e1341]:
+                                - generic [ref=e1343] [cursor=pointer]:
+                                  - generic [ref=e1344]: 名称
+                                  - button "排序依据：名称" [ref=e1345]:
+                                    - img [ref=e1347]
+                              - columnheader "网络" [ref=e1349]:
+                                - generic [ref=e1351] [cursor=pointer]:
+                                  - generic [ref=e1352]: 网络
+                                  - button "排序依据：网络" [ref=e1353]:
+                                    - img [ref=e1355]
+                              - columnheader "子网" [ref=e1357]:
+                                - generic [ref=e1359] [cursor=pointer]:
+                                  - generic [ref=e1360]: 子网
+                                  - button "排序依据：子网" [ref=e1361]:
+                                    - img [ref=e1363]
+                              - columnheader "NIC 类型" [ref=e1365]:
+                                - generic [ref=e1367] [cursor=pointer]:
+                                  - generic [ref=e1368]: NIC 类型
+                                  - button "排序依据：NIC 类型" [ref=e1369]:
+                                    - img [ref=e1371]
+                              - columnheader "主要内部 IP 地址" [ref=e1373]:
+                                - generic [ref=e1375] [cursor=pointer]:
+                                  - generic [ref=e1376]: 主要内部 IP 地址
+                                  - button "排序依据：主要内部 IP 地址" [ref=e1377]:
+                                    - img [ref=e1379]
+                              - columnheader "别名 IP 范围" [ref=e1381]:
+                                - generic [ref=e1383] [cursor=pointer]:
+                                  - generic [ref=e1384]: 别名 IP 范围
+                                  - button "排序依据：别名 IP 范围" [ref=e1385]:
+                                    - img [ref=e1387]
+                              - columnheader "IP 栈类型" [ref=e1389]:
+                                - generic [ref=e1391] [cursor=pointer]:
+                                  - generic [ref=e1392]: IP 栈类型
+                                  - button "排序依据：IP 栈类型" [ref=e1393]:
+                                    - img [ref=e1395]
+                              - columnheader "外部 IP 地址" [ref=e1397]:
+                                - generic [ref=e1399] [cursor=pointer]:
+                                  - generic [ref=e1400]: 外部 IP 地址
+                                  - button "排序依据：外部 IP 地址" [ref=e1401]:
+                                    - img [ref=e1403]
+                              - columnheader "网络层级" [ref=e1405]:
+                                - generic [ref=e1407] [cursor=pointer]:
+                                  - generic [ref=e1408]:
+                                    - text: 网络层级
+                                    - button "关于网络层级的帮助" [ref=e1410]:
+                                      - img [ref=e1412]
+                                  - button "排序依据：网络层级" [ref=e1414]:
+                                    - img [ref=e1416]
+                              - columnheader "IP 转发" [ref=e1418]:
+                                - generic [ref=e1420] [cursor=pointer]:
+                                  - generic [ref=e1421]: IP 转发
+                                  - button "排序依据：IP 转发" [ref=e1422]:
+                                    - img [ref=e1424]
+                              - columnheader "网络详情" [ref=e1426]:
+                                - generic [ref=e1428] [cursor=pointer]:
+                                  - generic [ref=e1429]: 网络详情
+                                  - button "排序依据：网络详情" [ref=e1430]:
+                                    - img [ref=e1432]
+                          - rowgroup [ref=e1434]:
+                            - row "nic0 前往 VPC 网络：default。 前往子网：default。 10.140.0.3 IPv4 35.194.133.15 (临时) 高级 停用 查看详情" [level=1] [ref=e1435]:
+                              - gridcell "nic0" [ref=e1436]:
+                                - link "nic0" [ref=e1439] [cursor=pointer]:
+                                  - /url: /networking/networkinterfaces/zones/asia-east1-b/instances/quant-shadow-test-1?networkInterface=nic0&project=stoked-virtue-493510-f5
+                              - gridcell "前往 VPC 网络：default。" [ref=e1440]:
+                                - link "前往 VPC 网络：default。" [ref=e1442] [cursor=pointer]:
+                                  - /url: /networking/networks/details/default?project=stoked-virtue-493510-f5
+                                  - text: default
+                              - gridcell "前往子网：default。" [ref=e1443]:
+                                - link "前往子网：default。" [ref=e1445] [cursor=pointer]:
+                                  - /url: /networking/subnetworks/details/asia-east1/default?project=stoked-virtue-493510-f5
+                                  - text: default
+                              - gridcell [ref=e1446]
+                              - gridcell "10.140.0.3" [ref=e1447]:
+                                - generic [ref=e1450]: 10.140.0.3
+                              - gridcell [ref=e1451]
+                              - gridcell "IPv4" [ref=e1452]
+                              - gridcell "35.194.133.15 (临时)" [ref=e1453]:
+                                - generic [ref=e1456]: 35.194.133.15 (临时)
+                              - gridcell "高级" [ref=e1457]
+                              - gridcell "停用" [ref=e1458]
+                              - gridcell "查看详情" [ref=e1459]:
+                                - link "查看详情" [ref=e1460] [cursor=pointer]:
+                                  - /url: /networking/networkinterfaces/zones/asia-east1-b/instances/quant-shadow-test-1?networkInterface=nic0&project=stoked-virtue-493510-f5
+                      - heading "存储空间" [level=2] [ref=e1461]
+                      - generic [ref=e1463]:
+                        - generic [ref=e1466]:
+                          - generic [ref=e1467]:
+                            - img [ref=e1469]
+                            - generic [ref=e1471]: 过滤条件
+                            - group "过滤条件" [ref=e1472]:
+                              - combobox "过滤条件" [ref=e1474]: 输入属性名称或值
+                            - button "关于过滤的帮助。" [ref=e1476] [cursor=pointer]:
+                              - img [ref=e1478]
+                          - button "列显示选项…" [ref=e1483] [cursor=pointer]:
+                            - img [ref=e1485]
+                        - grid "磁盘 , 按箭头键可在表中导航。按 Enter 键可与单元格交互。按 Tab 键可在单元格内导航。按 Esc 键可退出单元格。" [ref=e1490]:
+                          - rowgroup [ref=e1499]:
+                            - row "名称 大小 (GB) 类型 数据保护 模式 删除实例时" [ref=e1500] [cursor=pointer]:
+                              - columnheader "名称" [ref=e1501]:
+                                - generic [ref=e1503]:
+                                  - generic [ref=e1504]: 名称
+                                  - button "排序依据：名称" [ref=e1505]:
+                                    - img [ref=e1507]
+                              - columnheader "大小 (GB)" [ref=e1509]:
+                                - generic [ref=e1511]:
+                                  - generic [ref=e1512]: 大小 (GB)
+                                  - button "排序依据：大小 (GB)" [ref=e1513]:
+                                    - img [ref=e1515]
+                              - columnheader "类型" [ref=e1517]:
+                                - generic [ref=e1519]:
+                                  - generic [ref=e1520]: 类型
+                                  - button "排序依据：类型" [ref=e1521]:
+                                    - img [ref=e1523]
+                              - columnheader "数据保护" [ref=e1525]:
+                                - generic [ref=e1527]:
+                                  - generic [ref=e1528]: 数据保护
+                                  - button "排序依据：数据保护" [ref=e1529]:
+                                    - img [ref=e1531]
+                              - columnheader "模式" [ref=e1533]:
+                                - generic [ref=e1535]:
+                                  - generic [ref=e1536]: 模式
+                                  - button "排序依据：模式" [ref=e1537]:
+                                    - img [ref=e1539]
+                              - columnheader "删除实例时" [ref=e1541]:
+                                - generic [ref=e1543]:
+                                  - generic [ref=e1544]: 删除实例时
+                                  - button "排序依据：删除实例时" [ref=e1545]:
+                                    - img [ref=e1547]
+                          - rowgroup [ref=e1550]:
+                            - row "打开 projects/stoked-virtue-493510-f5/zones/asia-east1-b/disks/quant-shadow-test-1 磁盘详情 （启动磁盘） 30 标准永久性磁盘 读/写 删除磁盘" [ref=e1551] [cursor=pointer]:
+                              - rowheader "打开 projects/stoked-virtue-493510-f5/zones/asia-east1-b/disks/quant-shadow-test-1 磁盘详情 （启动磁盘）" [ref=e1552]:
+                                - generic [ref=e1553]:
+                                  - link "打开 projects/stoked-virtue-493510-f5/zones/asia-east1-b/disks/quant-shadow-test-1 磁盘详情" [ref=e1554]:
+                                    - /url: /compute/disksDetail/zones/asia-east1-b/disks/quant-shadow-test-1?project=stoked-virtue-493510-f5
+                                    - text: quant-shadow-test-1
+                                  - strong [ref=e1555]: （启动磁盘）
+                              - gridcell "30" [ref=e1556]:
+                                - generic [ref=e1557]: "30"
+                              - gridcell "标准永久性磁盘" [ref=e1558]:
+                                - generic [ref=e1560]: 标准永久性磁盘
+                              - gridcell [ref=e1561]
+                              - gridcell "读/写" [ref=e1562]:
+                                - generic [ref=e1565]: 读/写
+                              - gridcell "删除磁盘" [ref=e1566]:
+                                - generic [ref=e1568]: 删除磁盘
+                      - generic [ref=e1570]:
+                        - generic [ref=e1571]:
+                          - heading "备份方案" [level=2] [ref=e1573]
+                          - button "关于虚拟机备份的帮助" [ref=e1575] [cursor=pointer]:
+                            - img [ref=e1577]
+                        - paragraph [ref=e1579]:
+                          - text: 由
+                          - link "点击此链接可前往“Backup and DR Service”页面 外部链接，在新窗口中打开" [ref=e1580] [cursor=pointer]:
+                            - /url: /backupdr?project=stoked-virtue-493510-f5
+                            - generic [ref=e1581]: Backup and DR Service
+                            - img "外部链接，在新窗口中打开" [ref=e1582]:
+                              - img [ref=e1583]
+                          - text: 管理。
+                        - button "创建按需备份" [disabled] [ref=e1586]:
+                          - generic [ref=e1587]: 创建按需备份
+                        - generic [ref=e1588]:
+                          - generic [ref=e1589]:
+                            - term [ref=e1590]:
+                              - generic [ref=e1591]:
+                                - text: 备份时间表状态
+                                - button "关于备份时间表状态的帮助" [ref=e1593] [cursor=pointer]:
+                                  - img [ref=e1595]
+                            - definition [ref=e1597]: 未配置
+                          - generic [ref=e1598]:
+                            - term [ref=e1599]: 备份方案
+                            - definition [ref=e1600]: —
+                      - heading "安全与访问权限" [level=2] [ref=e1601]
+                      - generic [ref=e1602]:
+                        - heading "安全强化型虚拟机" [level=3] [ref=e1603]
+                        - button "关于安全强化型虚拟机的帮助按钮" [ref=e1605] [cursor=pointer]:
+                          - img [ref=e1607]
+                      - generic [ref=e1609]:
+                        - generic [ref=e1610]:
+                          - term [ref=e1611]:
+                            - text: 安全启动
+                            - button "帮助弹出式窗口" [ref=e1613] [cursor=pointer]:
+                              - img [ref=e1615]
+                          - definition [ref=e1617]:
+                            - generic [ref=e1618]: 停用
+                        - generic [ref=e1619]:
+                          - term [ref=e1620]:
+                            - text: vTPM
+                            - button "帮助弹出式窗口" [ref=e1622] [cursor=pointer]:
+                              - img [ref=e1624]
+                          - definition [ref=e1626]:
+                            - generic [ref=e1627]: 启用
+                        - generic [ref=e1628]:
+                          - term [ref=e1629]:
+                            - text: 完整性监控
+                            - button "关于完整性监控的帮助" [ref=e1631] [cursor=pointer]:
+                              - img [ref=e1633]
+                          - definition [ref=e1635]:
+                            - generic [ref=e1636]: 启用
+                      - heading "SSH 密钥" [level=3] [ref=e1637]
+                      - grid "SSH 密钥 , 按箭头键可在表中导航。按 Enter 键可与单元格交互。按 Tab 键可在单元格内导航。按 Esc 键可退出单元格。" [ref=e1642]:
+                        - rowgroup [ref=e1646]:
+                          - row "用户名 键" [ref=e1647]:
+                            - columnheader "用户名" [ref=e1648]:
+                              - generic [ref=e1650]: 用户名
+                            - columnheader "键" [ref=e1651]:
+                              - generic [ref=e1653]: 键
+                        - rowgroup [ref=e1654]:
+                          - 'row "suqinhai753 展开完整单元格内容 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHGRrA4tSszrXce0wJIkEVf0DiZKd6Px4uMgLIUvZwvOG6GI17kC9pmNgPSh0IucvqcSEHY+shrWZIWFpXkBSBs= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:16+0000\"}" [ref=e1655]':
+                            - gridcell "suqinhai753" [ref=e1656]
+                            - 'gridcell "展开完整单元格内容 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHGRrA4tSszrXce0wJIkEVf0DiZKd6Px4uMgLIUvZwvOG6GI17kC9pmNgPSh0IucvqcSEHY+shrWZIWFpXkBSBs= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:16+0000\"}" [ref=e1657]':
+                              - generic [ref=e1658]:
+                                - button "展开完整单元格内容" [ref=e1660] [cursor=pointer]:
+                                  - img [ref=e1662]
+                                - generic [ref=e1664]: "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHGRrA4tSszrXce0wJIkEVf0DiZKd6Px4uMgLIUvZwvOG6GI17kC9pmNgPSh0IucvqcSEHY+shrWZIWFpXkBSBs= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:16+0000\"}"
+                          - 'row "suqinhai753 展开完整单元格内容 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAHnI4Yp+V4ABtAxkfCwEtE6NVYq7/VAPYpr8OwbyATubGIdMxdVkV/+ge//lY3EoWp3cW+vQUw1KrZ4WBzbFocanPSKx/fKO034JEK6IuleKlG6XKYg673E6BnDwmdNh8R5Vea3PjvJKctIljJU6DWJ4dTeV6N7wdDNLOYvIHBWwlTcn+OUK9eJpmlw8jrpNDxUxqrrWLNC3N4rWzHBeOI+5J1FaFmeU8n94So5+nLZVpcHG1XkhE3xbOt6Ow4VxBsVDr9JK84+1onov2OSvIRHo8cC9WAB0qanbk4K2bjShTVqy0EPRbuCiDnsZ+IXNV0TD58v0O7gQNlKDWAbAnQU= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:20+0000\"}" [ref=e1665]':
+                            - gridcell "suqinhai753" [ref=e1666]
+                            - 'gridcell "展开完整单元格内容 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAHnI4Yp+V4ABtAxkfCwEtE6NVYq7/VAPYpr8OwbyATubGIdMxdVkV/+ge//lY3EoWp3cW+vQUw1KrZ4WBzbFocanPSKx/fKO034JEK6IuleKlG6XKYg673E6BnDwmdNh8R5Vea3PjvJKctIljJU6DWJ4dTeV6N7wdDNLOYvIHBWwlTcn+OUK9eJpmlw8jrpNDxUxqrrWLNC3N4rWzHBeOI+5J1FaFmeU8n94So5+nLZVpcHG1XkhE3xbOt6Ow4VxBsVDr9JK84+1onov2OSvIRHo8cC9WAB0qanbk4K2bjShTVqy0EPRbuCiDnsZ+IXNV0TD58v0O7gQNlKDWAbAnQU= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:20+0000\"}" [ref=e1667]':
+                              - generic [ref=e1668]:
+                                - button "展开完整单元格内容" [ref=e1670] [cursor=pointer]:
+                                  - img [ref=e1672]
+                                - generic [ref=e1674]: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAHnI4Yp+V4ABtAxkfCwEtE6NVYq7/VAPYpr8OwbyATubGIdMxdVkV/+ge//lY3EoWp3cW+vQUw1KrZ4WBzbFocanPSKx/fKO034JEK6IuleKlG6XKYg673E6BnDwmdNh8R5Vea3PjvJKctIljJU6DWJ4dTeV6N7wdDNLOYvIHBWwlTcn+OUK9eJpmlw8jrpNDxUxqrrWLNC3N4rWzHBeOI+5J1FaFmeU8n94So5+nLZVpcHG1XkhE3xbOt6Ow4VxBsVDr9JK84+1onov2OSvIRHo8cC9WAB0qanbk4K2bjShTVqy0EPRbuCiDnsZ+IXNV0TD58v0O7gQNlKDWAbAnQU= google-ssh {\"userName\":\"suqinhai753@gmail.com\",\"expireOn\":\"2026-04-24T07:04:20+0000\"}"
+                      - generic [ref=e1676]:
+                        - term [ref=e1677]: 屏蔽项目范围的 SSH 密钥
+                        - definition [ref=e1678]:
+                          - generic [ref=e1679]: 停用
+                      - heading "API 和身份管理" [level=3] [ref=e1680]
+                      - generic [ref=e1682]:
+                        - generic [ref=e1683]:
+                          - term [ref=e1684]: 服务账号
+                          - definition [ref=e1685]:
+                            - generic [ref=e1686]: 684754817919-compute@developer.gserviceaccount.com
+                        - generic [ref=e1687]:
+                          - term [ref=e1688]: Cloud API 访问权限范围
+                          - definition [ref=e1689]:
+                            - generic [ref=e1690]: 允许自定义访问
+                        - generic [ref=e1691]:
+                          - term [ref=e1692]: 存储
+                          - definition [ref=e1693]: 只读
+                        - generic [ref=e1694]:
+                          - term [ref=e1695]: 服务管理
+                          - definition [ref=e1696]: 只读
+                        - generic [ref=e1697]:
+                          - term [ref=e1698]: 任务队列
+                          - definition [ref=e1699]: 已停用
+                        - generic [ref=e1700]:
+                          - term [ref=e1701]: 用户信息
+                          - definition [ref=e1702]: 已停用
+                        - generic [ref=e1703]:
+                          - term [ref=e1704]: BigQuery
+                          - definition [ref=e1705]: 已停用
+                        - generic [ref=e1706]:
+                          - term [ref=e1707]: Bigtable 管理员
+                          - definition [ref=e1708]: 已停用
+                        - generic [ref=e1709]:
+                          - term [ref=e1710]: Bigtable 数据
+                          - definition [ref=e1711]: 已停用
+                        - generic [ref=e1712]:
+                          - term [ref=e1713]: Cloud Datastore
+                          - definition [ref=e1714]: 已停用
+                        - generic [ref=e1715]:
+                          - term [ref=e1716]: Cloud Debugger
+                          - definition [ref=e1717]: 已停用
+                        - generic [ref=e1718]:
+                          - term [ref=e1719]: Cloud Platform
+                          - definition [ref=e1720]: 已停用
+                        - generic [ref=e1721]:
+                          - term [ref=e1722]: Cloud Pub/Sub
+                          - definition [ref=e1723]: 已启用
+                        - generic [ref=e1724]:
+                          - term [ref=e1725]: Cloud Source Repositories
+                          - definition [ref=e1726]: 已停用
+                        - generic [ref=e1727]:
+                          - term [ref=e1728]: Cloud SQL
+                          - definition [ref=e1729]: 已停用
+                        - generic [ref=e1730]:
+                          - term [ref=e1731]: Compute Engine
+                          - definition [ref=e1732]: 已停用
+                        - generic [ref=e1733]:
+                          - term [ref=e1734]: Service Control
+                          - definition [ref=e1735]: 已启用
+                        - generic [ref=e1736]:
+                          - term [ref=e1737]: Stackdriver Logging API
+                          - definition [ref=e1738]: 只写
+                        - generic [ref=e1739]:
+                          - term [ref=e1740]: Stackdriver Monitoring API
+                          - definition [ref=e1741]: 只写
+                        - generic [ref=e1742]:
+                          - term [ref=e1743]: Stackdriver Trace
+                          - definition [ref=e1744]: 只写
+                      - heading "管理层" [level=2] [ref=e1745]
+                      - heading "数据加密" [level=3] [ref=e1746]
+                      - generic [ref=e1747]:
+                        - generic [ref=e1748]:
+                          - term [ref=e1749]: 密钥 ID
+                          - definition [ref=e1750]: —
+                        - generic [ref=e1751]:
+                          - term [ref=e1752]: 密钥名称
+                          - definition [ref=e1753]: —
+                      - heading "可用性政策" [level=3] [ref=e1754]
+                      - generic [ref=e1755]:
+                        - generic [ref=e1756]:
+                          - term [ref=e1757]:
+                            - text: 虚拟机预配模型
+                            - button "帮助弹出式窗口" [ref=e1759] [cursor=pointer]:
+                              - img [ref=e1761]
+                          - definition [ref=e1763]: 标准
+                        - generic [ref=e1764]:
+                          - term [ref=e1765]:
+                            - text: 最大时长
+                            - button "用于说明虚拟机运行时长上限的提示。" [ref=e1767] [cursor=pointer]:
+                              - img [ref=e1769]
+                          - definition [ref=e1771]: 无
+                        - generic [ref=e1772]:
+                          - term [ref=e1773]: 可抢占性
+                          - definition [ref=e1774]:
+                            - generic [ref=e1775]: 停用（推荐）
+                        - generic [ref=e1776]:
+                          - term [ref=e1777]:
+                            - text: 虚拟机终止时
+                            - button "用于介绍虚拟机的“虚拟机终止”选项的提示" [ref=e1779] [cursor=pointer]:
+                              - img [ref=e1781]
+                          - definition [ref=e1783]: —
+                        - generic [ref=e1784]:
+                          - term [ref=e1785]: 正常关停时长上限
+                          - definition [ref=e1786]: —
+                        - generic [ref=e1787]:
+                          - term [ref=e1788]: 主机维护时
+                          - definition [ref=e1789]:
+                            - generic [ref=e1791]: 迁移虚拟机实例（推荐）
+                        - generic [ref=e1792]:
+                          - term [ref=e1793]:
+                            - text: 主机错误超时时长
+                            - button "关于主机错误超时时长的帮助文本" [ref=e1795] [cursor=pointer]:
+                              - img [ref=e1797]
+                          - definition [ref=e1799]: —
+                        - generic [ref=e1800]:
+                          - term [ref=e1801]: 自动重启
+                          - definition [ref=e1802]:
+                            - generic [ref=e1803]: 启用（推荐）
+                        - generic [ref=e1804]:
+                          - term [ref=e1805]: 客户管理的加密密钥 (CMEK) 撤消政策
+                          - definition [ref=e1806]: 不执行任何操作
+                      - heading "单租户" [level=3] [ref=e1807]
+                      - generic [ref=e1809]:
+                        - term [ref=e1810]: CPU 过度使用
+                        - definition [ref=e1811]: 已停用
+                      - generic [ref=e1812]:
+                        - heading "自定义元数据" [level=2] [ref=e1813]
+                        - grid "自定义元数据表 , 按箭头键可在表中导航。按 Enter 键可与单元格交互。按 Tab 键可在单元格内导航。按 Esc 键可退出单元格。" [ref=e1818]:
+                          - rowgroup [ref=e1822]:
+                            - row "键 值" [ref=e1823]:
+                              - columnheader "键" [ref=e1824]:
+                                - generic [ref=e1826]: 键
+                              - columnheader "值" [ref=e1827]:
+                                - generic [ref=e1829]: 值
+                          - rowgroup [ref=e1830]:
+                            - row [ref=e1831]:
+                              - gridcell "startup-script" [ref=e1832]
+                              - gridcell [ref=e1833]:
+                                - generic [ref=e1834]:
+                                  - button "展开完整单元格内容" [ref=e1836] [cursor=pointer]:
+                                    - img [ref=e1838]
+                                  - generic [ref=e1841]: "#!/bin/bash set -euxo pipefail exec > >(tee -a /var/log/quant-startup.log) 2>&1 export DEBIAN_FRONTEND=noninteractive apt-get update apt-get install -y ca-certificates curl git redis-server openssl systemctl enable --now redis-server if ! command -v node >/dev/null 2>&1; then curl -fsSL https://deb.nodesource.com/setup_20.x | bash - apt-get install -y nodejs fi id quant >/dev/null 2>&1 || useradd -m -d /opt/quant -s /bin/bash quant mkdir -p /opt/quant if [ ! -d /opt/quant/app/.git ]; then rm -rf /opt/quant/app git clone --depth=1 https://github.com/suqinhai/new-quant-trading-system-js.git /opt/quant/app fi cd /opt/quant/app if [ ! -f .env ]; then J=\"$(openssl rand -hex 32)\" P=\"$(openssl rand -base64 24 | tr -d '\\n' | tr '/+' '_-')\" cat > .env <<ENV NODE_ENV=production RUN_MODE=shadow LOG_LEVEL=info ENABLE_API=true HTTP_PORT=3000 WS_PORT=3001 METRICS_PORT=9090 JWT_SECRET=$J DASHBOARD_USERNAME=staging-admin DASHBOARD_PASSWORD=$P ALLOW_INSECURE_DEFAULT_AUTH=false TRADING_INITIAL_CAPITAL=10000 TRADING_TYPE=swap DEFAULT_SYMBOLS=BTC/USDT DEFAULT_TIMEFRAME=1h TELEGRAM_ENABLED=false MAX_LOSS_PER_TRADE=0.01 MAX_DAILY_LOSS=0.02 MAX_POSITIONS=2 MAX_POSITION_SIZE=0.05 MAX_LEVERAGE=1 ENV fi grep -Ev '^(REDIS_|USE_SHARED_MARKET_DATA=|MARKET_DATA_|SUBSCRIBE_ALL=|BINANCE_API_KEY=|BINANCE_API_SECRET=|BINANCE_SECRET=|BINANCE_TESTNET=|DEFAULT_EXCHANGE=)' .env > .env.new cat >> .env.new <<'ENV' USE_SHARED_MARKET_DATA=true DEFAULT_EXCHANGE=binance MARKET_DATA_EXCHANGES=binance MARKET_DATA_SYMBOLS=BTC/USDT SUBSCRIBE_ALL=false BINANCE_API_KEY=shadow-public-only BINANCE_API_SECRET=shadow-public-only BINANCE_TESTNET=false ENV mv .env.new .env chmod 600 .env if [ ! -f /root/quant-credentials.txt ]; then { echo project=stoked-virtue-493510-f5 echo instance=quant-shadow-test-1 echo mode=shadow echo api_port=3000 echo dashboard_username=staging-admin grep '^DASHBOARD_PASSWORD=' .env | sed 's/^/dashboard_/' grep '^JWT_SECRET=' .env | sed 's/^/jwt_/' echo repo=https://github.com/suqinhai/new-quant-trading-system-js.git } > /root/quant-credentials.txt chmod 600 /root/quant-credentials.txt fi npm install --omit=dev --no-audit --no-fund chown -R quant:quant /opt/quant/app cat > /etc/systemd/system/quant-marketdata.service <<'SERVICE' [Unit] Description=Quant Shared Market Data Service After=network-online.target redis-server.service Wants=network-online.target Requires=redis-server.service [Service] Type=simple WorkingDirectory=/opt/quant/app EnvironmentFile=/opt/quant/app/.env ExecStart=/usr/bin/node /opt/quant/app/src/services/market-data-service.js --exchanges binance --symbols BTC/USDT --trading-type swap Restart=always RestartSec=10 User=quant Group=quant StandardOutput=journal StandardError=journal [Install] WantedBy=multi-user.target SERVICE cat > /etc/systemd/system/quant-shadow.service <<'SERVICE' [Unit] Description=Quant Trading System Shadow Test After=network-online.target redis-server.service quant-marketdata.service Wants=network-online.target quant-marketdata.service Requires=redis-server.service [Service] Type=simple WorkingDirectory=/opt/quant/app EnvironmentFile=/opt/quant/app/.env ExecStart=/usr/bin/node /opt/quant/app/src/main.js shadow --strategy SMA --symbols BTC/USDT --exchange binance Restart=always RestartSec=10 User=quant Group=quant StandardOutput=journal StandardError=journal [Install] WantedBy=multi-user.target SERVICE systemctl daemon-reload systemctl enable --now quant-marketdata.service quant-shadow.service systemctl restart quant-marketdata.service quant-shadow.service"
+                - tabpanel [ref=e1842]
+                - tabpanel [ref=e1843]
+                - tabpanel [ref=e1844]
+            - button "等效代码" [ref=e1849] [cursor=pointer]:
+              - generic [ref=e1850]:
+                - img [ref=e1852]:
+                  - img [ref=e1853]
+                - text: 等效代码
+          - region "等效代码" [ref=e1855]:
+            - button "切换“等效代码”面板" [ref=e1858] [cursor=pointer]:
+              - img [ref=e1860]
+  - iframe [ref=e829]:
+    
+  - iframe [ref=e831]:
+    
+  - generic [ref=e1862]:
+    - alert
+    - alert
+    - complementary
+    - complementary
