@@ -22,7 +22,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install pnpm and dependencies
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@8.15.9 --activate
 RUN pnpm install --frozen-lockfile --prod=false
 
 # -----------------------------------------------------------------------------
@@ -40,7 +40,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@8.15.9 --activate
 RUN pnpm install --frozen-lockfile --prod
 
 # -----------------------------------------------------------------------------
