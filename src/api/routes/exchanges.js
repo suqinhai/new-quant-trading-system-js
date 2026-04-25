@@ -34,6 +34,10 @@ function mergeDeep(base = {}, updates = {}) {
   const output = isPlainObject(base) ? deepClone(base) : {};
 
   for (const [key, value] of Object.entries(updates || {})) {
+    if (value === undefined) {
+      continue;
+    }
+
     if (isPlainObject(value) && isPlainObject(output[key])) {
       output[key] = mergeDeep(output[key], value);
       continue;
@@ -85,18 +89,23 @@ function toPlainExchangeData(exchange = {}) {
     return {};
   }
 
-  return {
-    id: exchange.id,
-    name: exchange.name,
+  const config = exchange.config || {};
+  const data = {
+    id: exchange.id || exchange.name,
+    name: exchange.displayName || exchange.name,
     status: exchange.status,
     connected: exchange.connected,
-    sandbox: exchange.sandbox ?? exchange.testnet,
-    testnet: exchange.testnet,
-    apiKey: exchange.apiKey,
-    secret: exchange.secret,
-    password: exchange.password,
-    passphrase: exchange.passphrase,
+    sandbox: exchange.sandbox ?? exchange.testnet ?? config.sandbox ?? config.testnet,
+    testnet: exchange.testnet ?? config.testnet,
+    apiKey: exchange.apiKey ?? config.apiKey,
+    secret: exchange.secret ?? config.secret,
+    password: exchange.password ?? config.password,
+    passphrase: exchange.passphrase ?? config.passphrase,
   };
+
+  return Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined)
+  );
 }
 
 function normalizeExchangeConfigPayload(payload = {}) {

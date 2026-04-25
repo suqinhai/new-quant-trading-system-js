@@ -324,14 +324,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import api from '@/api'
 
 const route = useRoute()
-const activeTab = ref(route.query.tab || 'basic')
+const router = useRouter()
+const settingTabs = new Set(['basic', 'exchange', 'notification', 'profile'])
+const resolveTab = (tab) => settingTabs.has(tab) ? tab : 'basic'
+const activeTab = ref(resolveTab(route.query.tab))
 
 const savingBasic = ref(false)
 const savingExchange = ref(false)
@@ -422,6 +425,31 @@ onMounted(async () => {
     fetchNotificationConfig(),
     fetchProfile()
   ])
+})
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeTab.value = resolveTab(tab)
+  }
+)
+
+watch(activeTab, (tab) => {
+  const resolvedTab = resolveTab(tab)
+  const currentTab = resolveTab(route.query.tab)
+
+  if (resolvedTab === currentTab) {
+    return
+  }
+
+  const query = { ...route.query }
+  if (resolvedTab === 'basic') {
+    delete query.tab
+  } else {
+    query.tab = resolvedTab
+  }
+
+  router.replace({ path: '/settings', query })
 })
 
 const fetchSystemConfig = async () => {

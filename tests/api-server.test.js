@@ -4,9 +4,12 @@ import { request } from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import express from 'express';
 
 import { ApiServer } from '../src/api/server.js';
 import { DEFAULT_RATE_LIMIT_CONFIG, RateLimiter } from '../src/api/rateLimit.js';
+import { createExchangeRoutes } from '../src/api/routes/exchanges.js';
+import { createStrategyRoutes } from '../src/api/routes/strategies.js';
 
 function requestUrl(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -40,6 +43,31 @@ async function requestJson(url, options = {}) {
   return {
     ...response,
     payload: JSON.parse(response.body),
+  };
+}
+
+async function startRouteServer(pathPrefix, router, user = { role: 'admin', username: 'tester' }) {
+  const app = express();
+  app.use(express.json());
+  app.use((req, res, next) => {
+    req.user = user;
+    next();
+  });
+  app.use(pathPrefix, router);
+
+  const server = await new Promise((resolve) => {
+    const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
+  });
+
+  const address = server.address();
+
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    async close() {
+      await new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      });
+    },
   };
 }
 
@@ -236,6 +264,85 @@ test('ApiServer clears login rate limits after a successful login', async (t) =>
   });
   assert.equal(retriedFailedLogin.statusCode, 401);
   assert.equal(retriedFailedLogin.payload.code, 'UNAUTHORIZED');
+});
+
+test('strategy routes keep created strategies when Redis store is unavailable', async (t) => {
+  const server = await startRouteServer('/api/strategies', createStrategyRoutes());
+  t.after(async () => {
+    await server.close();
+  });
+
+  const createResponse = await requestJson(`${server.baseUrl}/api/strategies`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: 'Admin Created Strategy',
+      type: 'SMA',
+      symbol: 'BTC/USDT',
+      exchange: 'binance',
+      initialCapital: 10000,
+      params: {
+        shortPeriod: 10,
+        longPeriod: 30,
+      },
+    }),
+  });
+
+  assert.equal(createResponse.statusCode, 201);
+  assert.equal(createResponse.payload.success, true);
+
+  const listResponse = await requestJson(`${server.baseUrl}/api/strategies`);
+  assert.equal(listResponse.statusCode, 200);
+  assert.equal(listResponse.payload.success, true);
+  assert.equal(listResponse.payload.data.length, 1);
+  assert.equal(listResponse.payload.data[0].name, 'Admin Created Strategy');
+});
+
+test('exchange routes expose masked API key for connected runtime exchanges', async (t) => {
+  const server = await startRouteServer('/api/exchanges', createExchangeRoutes({
+    configManager: {
+      getAll() {
+        return {
+          exchange: {
+            binance: {
+              apiKey: 'abc123456789',
+              secret: 'configured-secret',
+              sandbox: false,
+            },
+          },
+        };
+      },
+    },
+    exchangeManager: {
+      getExchanges() {
+        return new Map([
+          ['binance', {
+            name: 'binance',
+            connected: true,
+            config: {
+              apiKey: 'abc123456789',
+              secret: 'configured-secret',
+              sandbox: false,
+            },
+          }],
+        ]);
+      },
+    },
+  }));
+  t.after(async () => {
+    await server.close();
+  });
+
+  const response = await requestJson(`${server.baseUrl}/api/exchanges`);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.payload.success, true);
+
+  const binance = response.payload.data.find(exchange => exchange.id === 'binance');
+  assert.equal(binance.connected, true);
+  assert.equal(binance.configured, true);
+  assert.equal(binance.apiKey, 'abc12345******');
 });
 
 test('ApiServer alert routes support AlertManager compatibility methods', async (t) => {

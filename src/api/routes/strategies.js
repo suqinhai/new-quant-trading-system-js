@@ -7,6 +7,74 @@
 
 import { Router } from 'express'; // 导入模块 express
 
+function deepClone(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return JSON.parse(JSON.stringify(value));
+}
+
+function createMemoryStrategyStore() {
+  const strategies = new Map();
+  const stats = new Map();
+
+  return {
+    async getAll() {
+      return Array.from(strategies.values()).map(deepClone);
+    },
+
+    async getById(id) {
+      return deepClone(strategies.get(id)) || null;
+    },
+
+    async save(strategy) {
+      const strategyId = strategy.strategyId || strategy.id;
+      if (!strategyId) {
+        throw new Error('Strategy ID is required');
+      }
+
+      strategies.set(strategyId, deepClone({
+        ...strategy,
+        strategyId,
+        updatedAt: Date.now(),
+      }));
+
+      return { strategyId, changes: 1 };
+    },
+
+    async delete(id) {
+      strategies.delete(id);
+      stats.delete(id);
+      return { changes: 1 };
+    },
+
+    async updateState(id, state) {
+      const strategy = strategies.get(id);
+      if (!strategy) {
+        throw new Error(`Strategy not found: ${id}`);
+      }
+
+      strategies.set(id, {
+        ...strategy,
+        state,
+        updatedAt: Date.now(),
+      });
+
+      return { strategyId: id, state };
+    },
+
+    async getStats(id) {
+      return deepClone(stats.get(id)) || null;
+    },
+
+    async updateStats(id, value) {
+      stats.set(id, deepClone(value));
+      return { strategyId: id };
+    },
+  };
+}
+
 /**
  * 创建策略管理路由
  * @param {Object} deps - 依赖注入
@@ -15,6 +83,7 @@ import { Router } from 'express'; // 导入模块 express
 export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategyRoutes
   const router = Router(); // 定义常量 router
   const { strategyStore, strategyRegistry, tradingEngine, tradeRepository, backtestService } = deps; // 解构赋值
+  const store = strategyStore || createMemoryStrategyStore();
 
   const normalizeStrategy = (strategy = {}) => { // 定义函数 normalizeStrategy
     const config = strategy.config || {}; // 定义常量 config
@@ -75,8 +144,8 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
   }; // 结束代码块
 
   const buildStrategyStats = async (strategyId) => { // 定义函数 buildStrategyStats
-    const storedStats = await strategyStore?.getStats?.(strategyId); // 定义常量 storedStats
-    const strategy = await strategyStore?.getById?.(strategyId); // 定义常量 strategy
+    const storedStats = await store?.getStats?.(strategyId); // 定义常量 storedStats
+    const strategy = await store?.getById?.(strategyId); // 定义常量 strategy
     const capital = normalizeStrategy(strategy || {}).initialCapital || 10000; // 定义常量 capital
     const result = { // 定义常量 result
       totalReturn: Number(storedStats?.totalReturn || 0), // totalReturn
@@ -114,11 +183,11 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
 
       let strategies = []; // 定义变量 strategies
 
-      if (strategyStore) { // 条件判断 strategyStore
-        strategies = await strategyStore.getAll(); // 赋值 strategies
-      } // 结束代码块
+      strategies = await store.getAll(); // 赋值 strategies
 
-      strategies = strategies.map(normalizeStrategy); // 赋值 strategies
+      strategies = strategies
+        .map(normalizeStrategy)
+        .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0)); // 赋值 strategies
 
       // 过滤
       if (status) { // 条件判断 status
@@ -176,9 +245,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const { id } = req.params; // 解构赋值
 
       let strategy = null; // 定义变量 strategy
-      if (strategyStore) { // 条件判断 strategyStore
-        strategy = await strategyStore.getById(id); // 赋值 strategy
-      } // 结束代码块
+      strategy = await store.getById(id); // 赋值 strategy
 
       if (!strategy) { // 条件判断 !strategy
         return res.status(404).json({ // 返回结果
@@ -229,9 +296,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         winRate: 0, // win频率
       }; // 结束代码块
 
-      if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.save(toStorePayload(strategy)); // 等待异步结果
-      } // 结束代码块
+      await store.save(toStorePayload(strategy)); // 等待异步结果
 
       res.status(201).json({ success: true, data: strategy }); // 调用 res.status
     } catch (error) { // 执行语句
@@ -249,9 +314,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const updates = req.body; // 定义常量 updates
 
       let strategy = null; // 定义变量 strategy
-      if (strategyStore) { // 条件判断 strategyStore
-        strategy = await strategyStore.getById(id); // 赋值 strategy
-      } // 结束代码块
+      strategy = await store.getById(id); // 赋值 strategy
 
       strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
@@ -280,9 +343,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         updatedAt: Date.now(), // updatedAt
       }; // 结束代码块
 
-      if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.save(toStorePayload(updatedStrategy)); // 等待异步结果
-      } // 结束代码块
+      await store.save(toStorePayload(updatedStrategy)); // 等待异步结果
 
       res.json({ success: true, data: updatedStrategy }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -299,9 +360,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const { id } = req.params; // 解构赋值
 
       let strategy = null; // 定义变量 strategy
-      if (strategyStore) { // 条件判断 strategyStore
-        strategy = await strategyStore.getById(id); // 赋值 strategy
-      } // 结束代码块
+      strategy = await store.getById(id); // 赋值 strategy
 
       strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
@@ -322,9 +381,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
         }); // 结束代码块
       } // 结束代码块
 
-      if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.delete(id); // 等待异步结果
-      } // 结束代码块
+      await store.delete(id); // 等待异步结果
 
       res.json({ success: true, message: 'Strategy deleted' }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -341,9 +398,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const { id } = req.params; // 解构赋值
 
       let strategy = null; // 定义变量 strategy
-      if (strategyStore) { // 条件判断 strategyStore
-        strategy = await strategyStore.getById(id); // 赋值 strategy
-      } // 结束代码块
+      strategy = await store.getById(id); // 赋值 strategy
 
       strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
@@ -374,9 +429,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       // 启动策略
       await tradingEngine.startStrategy(id); // 等待异步结果
 
-      if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.updateState(id, 'running'); // 等待异步结果
-      } // 结束代码块
+      await store.updateState(id, 'running'); // 等待异步结果
 
       res.json({ success: true, message: 'Strategy started' }); // 调用 res.json
     } catch (error) { // 执行语句
@@ -393,9 +446,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       const { id } = req.params; // 解构赋值
 
       let strategy = null; // 定义变量 strategy
-      if (strategyStore) { // 条件判断 strategyStore
-        strategy = await strategyStore.getById(id); // 赋值 strategy
-      } // 结束代码块
+      strategy = await store.getById(id); // 赋值 strategy
 
       strategy = strategy ? normalizeStrategy(strategy) : null; // 赋值 strategy
 
@@ -426,9 +477,7 @@ export function createStrategyRoutes(deps = {}) { // 导出函数 createStrategy
       // 停止策略
       await tradingEngine.stopStrategy(id); // 等待异步结果
 
-      if (strategyStore) { // 条件判断 strategyStore
-        await strategyStore.updateState(id, 'stopped'); // 等待异步结果
-      } // 结束代码块
+      await store.updateState(id, 'stopped'); // 等待异步结果
 
       res.json({ success: true, message: 'Strategy stopped' }); // 调用 res.json
     } catch (error) { // 执行语句

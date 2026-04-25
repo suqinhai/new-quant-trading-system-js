@@ -160,7 +160,9 @@ const username = ref('Admin')
 const userAvatar = ref('')
 
 const currentRoute = computed(() => route)
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => (
+  route.path === '/settings' ? route.fullPath : route.path
+))
 const runMode = computed(() => systemStore.runMode)
 const systemStatus = computed(() => systemStore.status)
 const notifications = computed(() => systemStore.notifications)
