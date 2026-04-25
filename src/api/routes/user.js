@@ -34,7 +34,15 @@ function buildAuthResponse({ accessToken, refreshToken, user, expiresIn }) { // 
  */
 export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
   const router = Router(); // 定义常量 router
-  const { authManager, userStore } = deps; // 解构赋值
+  const { authManager, userStore, rateLimiter } = deps; // 解构赋值
+
+  const resetLoginRateLimit = async (req) => { // 定义函数 resetLoginRateLimit
+    if (!rateLimiter?.reset || !rateLimiter?.getClientKey) { // 条件判断 !rateLimiter?.reset || !rateLimiter?.getClientKey
+      return; // 返回结果
+    } // 结束代码块
+
+    await rateLimiter.reset(rateLimiter.getClientKey(req)); // 等待异步结果
+  }; // 结束代码块
 
   /**
    * POST /api/auth/login
@@ -55,6 +63,7 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
       if (authManager?.login) { // 条件判断 authManager?.login
         const result = await authManager.login(username, password); // 定义常量 result
         if (result.success) { // 条件判断 result.success
+          await resetLoginRateLimit(req); // 等待异步结果
           return res.json(buildAuthResponse({ // 返回结果
             accessToken: result.token || result.accessToken, // accessToken
             refreshToken: result.refreshToken, // refreshToken
@@ -93,6 +102,7 @@ export function createUserRoutes(deps = {}) { // 导出函数 createUserRoutes
           ? await authManager.generateRefreshToken(user.username, getClientIp(req)) // 等待异步结果
           : undefined; // 执行语句
 
+        await resetLoginRateLimit(req); // 等待异步结果
         return res.json(buildAuthResponse({ // 返回结果
           accessToken, // accessToken
           refreshToken, // refreshToken

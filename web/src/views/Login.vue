@@ -31,23 +31,22 @@
             prefix-icon="Lock"
             size="large"
             show-password
-            @keyup.enter="handleLogin"
           />
         </el-form-item>
 
         <el-form-item>
           <div class="login-options">
-            <el-checkbox v-model="loginForm.remember">记住密码</el-checkbox>
+            <el-checkbox v-model="loginForm.remember">记住用户名</el-checkbox>
           </div>
         </el-form-item>
 
         <el-form-item>
           <el-button
             type="primary"
+            native-type="submit"
             size="large"
             :loading="loading"
             class="login-btn"
-            @click="handleLogin"
           >
             {{ loading ? '登录中...' : '登录' }}
           </el-button>
@@ -83,7 +82,7 @@ const loginRules = {
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 6, message: '密码长度不能少于 6 位', trigger: 'blur' }
   ]
 }
 
@@ -96,41 +95,40 @@ onMounted(() => {
 })
 
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
+  if (!loginFormRef.value || loading.value) return
 
-  await loginFormRef.value.validate(async (valid) => {
+  loading.value = true
+  try {
+    const valid = await loginFormRef.value.validate().catch(() => false)
     if (!valid) return
 
-    loading.value = true
-    try {
-      const res = await api.user.login({
-        username: loginForm.username,
-        password: loginForm.password
-      })
+    const res = await api.user.login({
+      username: loginForm.username,
+      password: loginForm.password
+    })
 
-      if (res.token) {
-        localStorage.setItem('token', res.token)
-        if (res.refreshToken) {
-          localStorage.setItem('refreshToken', res.refreshToken)
-        } else {
-          localStorage.removeItem('refreshToken')
-        }
-
-        if (loginForm.remember) {
-          localStorage.setItem('saved_username', loginForm.username)
-        } else {
-          localStorage.removeItem('saved_username')
-        }
-
-        ElMessage.success('登录成功')
-        router.push('/dashboard')
+    if (res.token) {
+      localStorage.setItem('token', res.token)
+      if (res.refreshToken) {
+        localStorage.setItem('refreshToken', res.refreshToken)
+      } else {
+        localStorage.removeItem('refreshToken')
       }
-    } catch (error) {
-      console.error('Login failed:', error)
-    } finally {
-      loading.value = false
+
+      if (loginForm.remember) {
+        localStorage.setItem('saved_username', loginForm.username)
+      } else {
+        localStorage.removeItem('saved_username')
+      }
+
+      ElMessage.success('登录成功')
+      router.push('/dashboard')
     }
-  })
+  } catch (error) {
+    console.error('Login failed:', error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

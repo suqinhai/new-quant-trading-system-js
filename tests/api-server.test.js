@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { ApiServer } from '../src/api/server.js';
-import { RateLimiter } from '../src/api/rateLimit.js';
+import { DEFAULT_RATE_LIMIT_CONFIG, RateLimiter } from '../src/api/rateLimit.js';
 
 function requestUrl(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -146,6 +146,96 @@ test('RateLimiter handles repeated sliding-window checks for non-whitelisted cli
   assert.equal(first.allowed, true);
   assert.equal(second.allowed, true);
   assert.equal(limiter.stores.get('ip:203.0.113.10:/api/system/health').length, 2);
+});
+
+test('RateLimiter isolates login attempts by username on the same IP', async (t) => {
+  const limiter = new RateLimiter({
+    ...DEFAULT_RATE_LIMIT_CONFIG,
+    whitelist: [],
+    routes: {
+      ...DEFAULT_RATE_LIMIT_CONFIG.routes,
+      '/api/auth/login': {
+        windowMs: 60 * 1000,
+        maxRequests: 1,
+        blockDuration: 60 * 1000,
+      },
+    },
+  });
+
+  t.after(() => {
+    limiter.destroy();
+  });
+
+  const baseReq = {
+    path: '/api/auth/login',
+    headers: {},
+    ip: '203.0.113.10',
+    connection: {},
+  };
+
+  const aliceFirst = await limiter.check({ ...baseReq, body: { username: 'alice' } });
+  const aliceSecond = await limiter.check({ ...baseReq, body: { username: 'alice' } });
+  const bobFirst = await limiter.check({ ...baseReq, body: { username: 'bob' } });
+
+  assert.equal(aliceFirst.allowed, true);
+  assert.equal(aliceSecond.allowed, false);
+  assert.equal(bobFirst.allowed, true);
+});
+
+test('ApiServer clears login rate limits after a successful login', async (t) => {
+  const server = new ApiServer({
+    host: '127.0.0.1',
+    port: 0,
+    jwtSecret: 'test-secret',
+    rateLimit: {
+      ...DEFAULT_RATE_LIMIT_CONFIG,
+      whitelist: [],
+      routes: {
+        ...DEFAULT_RATE_LIMIT_CONFIG.routes,
+        '/api/auth/login': {
+          windowMs: 15 * 60 * 1000,
+          maxRequests: 2,
+          blockDuration: 60 * 1000,
+        },
+      },
+    },
+  });
+
+  server.authManager.createUser('ops-admin', 'StrongPass123', { role: 'admin' });
+
+  await server.start();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const address = server.server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  const failedLogin = await requestJson(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ username: 'ops-admin', password: 'wrong-password' }),
+  });
+  assert.equal(failedLogin.statusCode, 401);
+
+  const successfulLogin = await requestJson(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ username: 'ops-admin', password: 'StrongPass123' }),
+  });
+  assert.equal(successfulLogin.statusCode, 200);
+  assert.equal(successfulLogin.payload.success, true);
+
+  const retriedFailedLogin = await requestJson(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ username: 'ops-admin', password: 'wrong-password' }),
+  });
+  assert.equal(retriedFailedLogin.statusCode, 401);
+  assert.equal(retriedFailedLogin.payload.code, 'UNAUTHORIZED');
 });
 
 test('ApiServer alert routes support AlertManager compatibility methods', async (t) => {

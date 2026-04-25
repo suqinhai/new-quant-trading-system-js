@@ -64,6 +64,7 @@ export class ApiServer { // 导出类 ApiServer
 
     // 初始化中间件
     this.rateLimiter = new RateLimiter(config.rateLimit); // 设置 rateLimiter
+    this.deps.rateLimiter = this.rateLimiter; // 暴露给路由，用于登录成功后清理限流状态
     this.rbacManager = new RBACManager(); // 设置 rbacManager
 
     // 初始化请求追踪管理器

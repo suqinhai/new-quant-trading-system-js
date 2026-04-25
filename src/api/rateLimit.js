@@ -33,8 +33,13 @@ export const DEFAULT_RATE_LIMIT_CONFIG = { // 导出常量 DEFAULT_RATE_LIMIT_CO
     // 认证相关 - 严格限流
     '/api/auth/login': { // 执行语句
       windowMs: 15 * 60 * 1000,  // 窗口毫秒
-      maxRequests: 5,            // 最大Requests
-      blockDuration: 30 * 60 * 1000, // blockDuration
+      maxRequests: 20,           // 最大Requests
+      blockDuration: 5 * 60 * 1000, // blockDuration
+    }, // 结束代码块
+    '/api/user/login': { // 执行语句
+      windowMs: 15 * 60 * 1000,  // 窗口毫秒
+      maxRequests: 20,           // 最大Requests
+      blockDuration: 5 * 60 * 1000, // blockDuration
     }, // 结束代码块
     '/api/auth/refresh': { // 执行语句
       windowMs: 60 * 1000, // 窗口毫秒
@@ -150,16 +155,45 @@ export class RateLimiter { // 导出类 RateLimiter
   } // 结束代码块
 
   /**
+   * 获取客户端 IP
+   */
+  getClientIp(req) { // 调用 getClientIp
+    const forwarded = req.headers?.['x-forwarded-for']; // 定义常量 forwarded
+    const rawIp = forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection?.remoteAddress || 'unknown'; // 定义常量 rawIp
+    return typeof rawIp === 'string' && rawIp.startsWith('::ffff:') ? rawIp.slice(7) : rawIp; // 返回结果
+  } // 结束代码块
+
+  /**
+   * 获取规范化请求路径
+   */
+  getRequestPath(req) { // 调用 getRequestPath
+    if (req.baseUrl) { // 条件判断 req.baseUrl
+      return `${req.baseUrl}${req.path}`; // 返回结果
+    } // 结束代码块
+
+    return req.path; // 返回结果
+  } // 结束代码块
+
+  /**
    * 获取客户端标识
    */
   getClientKey(req) { // 调用 getClientKey
+    const requestPath = this.getRequestPath(req); // 定义常量 requestPath
+    const loginPath = requestPath === '/api/auth/login' || requestPath === '/api/user/login'; // 定义常量 loginPath
+    const ip = this.getClientIp(req); // 定义常量 ip
+
+    if (loginPath && req.body?.username) { // 条件判断 loginPath && req.body?.username
+      const username = String(req.body.username).trim().toLowerCase(); // 定义常量 username
+      if (username) { // 条件判断 username
+        return `login:${ip}:${username}`; // 返回结果
+      } // 结束代码块
+    } // 结束代码块
+
     // 优先使用用户 ID，否则使用 IP
     if (req.user?.sub) { // 条件判断 req.user?.sub
       return `user:${req.user.sub}`; // 返回结果
     } // 结束代码块
 
-    const forwarded = req.headers['x-forwarded-for']; // 定义常量 forwarded
-    const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection.remoteAddress; // 定义常量 ip
     return `ip:${ip}`; // 返回结果
   } // 结束代码块
 
@@ -197,8 +231,7 @@ export class RateLimiter { // 导出类 RateLimiter
    * 检查是否在白名单
    */
   isWhitelisted(req) { // 调用 isWhitelisted
-    const forwarded = req.headers['x-forwarded-for']; // 定义常量 forwarded
-    const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection.remoteAddress; // 定义常量 ip
+    const ip = this.getClientIp(req); // 定义常量 ip
     return this.config.whitelist.includes(ip); // 返回结果
   } // 结束代码块
 
