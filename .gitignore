@@ -164,6 +164,8 @@ backtest-results/
 
 # 调试文件
 debug/
+.playwright-mcp/
+gcp-ssh-output*.txt
 
 # --------------------------------------------
 # Docker 数据卷 / Docker Volumes
