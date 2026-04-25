@@ -16,6 +16,38 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
   const router = Router(); // 定义常量 router
   const { riskManager, alertManager } = deps; // 解构赋值
 
+  const loadAlerts = async (filter = {}) => { // 定义函数 loadAlerts
+    if (!alertManager) { // 条件判断 !alertManager
+      return []; // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getAlerts === 'function') { // 条件判断 typeof alertManager.getAlerts === 'function'
+      return await alertManager.getAlerts(filter); // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getActiveAlerts === 'function') { // 条件判断 typeof alertManager.getActiveAlerts === 'function'
+      return await alertManager.getActiveAlerts(filter); // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getHistory === 'function') { // 条件判断 typeof alertManager.getHistory === 'function'
+      return await alertManager.getHistory(filter); // 返回结果
+    } // 结束代码块
+
+    return []; // 返回结果
+  }; // 结束代码块
+
+  const dismissAlert = async (id) => { // 定义函数 dismissAlert
+    if (typeof alertManager?.dismissAlert === 'function') { // 条件判断 typeof alertManager?.dismissAlert === 'function'
+      return await alertManager.dismissAlert(id); // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager?.clearAlert === 'function') { // 条件判断 typeof alertManager?.clearAlert === 'function'
+      return await alertManager.clearAlert(id); // 返回结果
+    } // 结束代码块
+
+    return false; // 返回结果
+  }; // 结束代码块
+
   const applyRiskConfig = (updates = {}) => { // 定义函数 applyRiskConfig
     if (riskManager?.updateConfig) { // 条件判断 riskManager?.updateConfig
       riskManager.updateConfig(updates); // 调用 riskManager.updateConfig
@@ -217,11 +249,7 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
     try { // 尝试执行
       const { page = 1, pageSize = 50, level, dismissed } = req.query; // 解构赋值
 
-      let alerts = []; // 定义变量 alerts
-
-      if (alertManager) { // 条件判断 alertManager
-        alerts = await alertManager.getAlerts(); // 赋值 alerts
-      } // 结束代码块
+      let alerts = await loadAlerts(); // 定义变量 alerts
 
       // 过滤
       if (level) { // 条件判断 level
@@ -257,9 +285,7 @@ export function createRiskRoutes(deps = {}) { // 导出函数 createRiskRoutes
     try { // 尝试执行
       const { id } = req.params; // 解构赋值
 
-      if (alertManager?.dismissAlert) { // 条件判断 alertManager?.dismissAlert
-        await alertManager.dismissAlert(id); // 等待异步结果
-      } // 结束代码块
+      await dismissAlert(id); // 等待异步结果
 
       res.json({ success: true, message: 'Alert dismissed' }); // 调用 res.json
     } catch (error) { // 执行语句

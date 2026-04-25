@@ -1298,6 +1298,17 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   } // 结束代码块
 
   /**
+   * 兼容旧 API：获取警报
+   * Backward-compatible alert accessor
+   *
+   * @param {Object} filter - 过滤条件 / Filter conditions
+   * @returns {Array} 活跃警报列表 / Active alerts list
+   */
+  getAlerts(filter = {}) { // 调用 getAlerts
+    return this.getActiveAlerts(filter); // 返回结果
+  } // 结束代码块
+
+  /**
    * 获取统计信息
    * Get statistics
    *
@@ -1329,6 +1340,17 @@ export class AlertManager extends EventEmitter { // 导出类 AlertManager
   clearAlert(alertId) { // 调用 clearAlert
     // 从活跃警报中移除 / Remove from active alerts
     return this.activeAlerts.delete(alertId); // 返回结果
+  } // 结束代码块
+
+  /**
+   * 兼容旧 API：消除警报
+   * Backward-compatible alert dismissal
+   *
+   * @param {string} alertId - 警报 ID / Alert ID
+   * @returns {boolean} 是否成功 / Whether successful
+   */
+  dismissAlert(alertId) { // 调用 dismissAlert
+    return this.clearAlert(alertId); // 返回结果
   } // 结束代码块
 
   /**

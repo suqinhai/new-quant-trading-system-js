@@ -16,6 +16,26 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
   const router = Router(); // 定义常量 router
   const { dashboardService, tradeRepository, positionStore, alertManager } = deps; // 解构赋值
 
+  const loadAlerts = async (filter = {}) => { // 定义函数 loadAlerts
+    if (!alertManager) { // 条件判断 !alertManager
+      return []; // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getAlerts === 'function') { // 条件判断 typeof alertManager.getAlerts === 'function'
+      return await alertManager.getAlerts(filter); // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getActiveAlerts === 'function') { // 条件判断 typeof alertManager.getActiveAlerts === 'function'
+      return await alertManager.getActiveAlerts(filter); // 返回结果
+    } // 结束代码块
+
+    if (typeof alertManager.getHistory === 'function') { // 条件判断 typeof alertManager.getHistory === 'function'
+      return await alertManager.getHistory(filter); // 返回结果
+    } // 结束代码块
+
+    return []; // 返回结果
+  }; // 结束代码块
+
   const getPositions = async () => { // 定义函数 getPositions
     if (!positionStore) { // 条件判断 !positionStore
       return []; // 返回结果
@@ -240,12 +260,8 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
     try { // 尝试执行
       const { limit = 5 } = req.query; // 解构赋值
 
-      let alerts = []; // 定义变量 alerts
-
-      if (alertManager) { // 条件判断 alertManager
-        alerts = await alertManager.getAlerts(); // 赋值 alerts
-        alerts = alerts.filter(a => !a.dismissed).slice(0, parseInt(limit)); // 赋值 alerts
-      } // 结束代码块
+      let alerts = await loadAlerts({ limit: parseInt(limit, 10) }); // 定义变量 alerts
+      alerts = alerts.filter(a => !a.dismissed).slice(0, parseInt(limit, 10)); // 赋值 alerts
 
       res.json({ success: true, data: alerts }); // 调用 res.json
     } catch (error) { // 执行语句

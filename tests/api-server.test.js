@@ -8,9 +8,10 @@ import path from 'node:path';
 import { ApiServer } from '../src/api/server.js';
 import { RateLimiter } from '../src/api/rateLimit.js';
 
-function requestUrl(url) {
+function requestUrl(url, options = {}) {
   return new Promise((resolve, reject) => {
-    const req = request(url, { agent: false }, (res) => {
+    const { body, ...requestOptions } = options;
+    const req = request(url, { agent: false, ...requestOptions }, (res) => {
       let body = '';
 
       res.setEncoding('utf8');
@@ -27,12 +28,15 @@ function requestUrl(url) {
     });
 
     req.on('error', reject);
+    if (body) {
+      req.write(body);
+    }
     req.end();
   });
 }
 
-async function requestJson(url) {
-  const response = await requestUrl(url);
+async function requestJson(url, options = {}) {
+  const response = await requestUrl(url, options);
   return {
     ...response,
     payload: JSON.parse(response.body),
@@ -142,4 +146,58 @@ test('RateLimiter handles repeated sliding-window checks for non-whitelisted cli
   assert.equal(first.allowed, true);
   assert.equal(second.allowed, true);
   assert.equal(limiter.stores.get('ip:203.0.113.10:/api/system/health').length, 2);
+});
+
+test('ApiServer alert routes support AlertManager compatibility methods', async (t) => {
+  const dismissedIds = [];
+  const server = new ApiServer({
+    host: '127.0.0.1',
+    port: 0,
+    jwtSecret: 'test-secret',
+    deps: {
+      alertManager: {
+        getActiveAlerts() {
+          return [
+            { id: 'alert-1', level: 'warning', category: 'risk', dismissed: false, timestamp: Date.now() },
+            { id: 'alert-2', level: 'info', category: 'system', dismissed: true, timestamp: Date.now() - 1000 },
+          ];
+        },
+        clearAlert(id) {
+          dismissedIds.push(id);
+          return true;
+        },
+      },
+    },
+  });
+
+  await server.start();
+  t.after(async () => {
+    await server.stop();
+  });
+
+  const address = server.server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const token = server.authManager.generateToken({ username: 'admin', role: 'admin' });
+  const headers = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  const dashboardAlertsResponse = await requestJson(`${baseUrl}/api/dashboard/alerts`, { headers });
+  assert.equal(dashboardAlertsResponse.statusCode, 200);
+  assert.equal(dashboardAlertsResponse.payload.success, true);
+  assert.equal(dashboardAlertsResponse.payload.data.length, 1);
+  assert.equal(dashboardAlertsResponse.payload.data[0].id, 'alert-1');
+
+  const riskAlertsResponse = await requestJson(`${baseUrl}/api/risk/alerts`, { headers });
+  assert.equal(riskAlertsResponse.statusCode, 200);
+  assert.equal(riskAlertsResponse.payload.success, true);
+  assert.equal(riskAlertsResponse.payload.total, 2);
+
+  const dismissResponse = await requestJson(`${baseUrl}/api/risk/alerts/alert-1/dismiss`, {
+    method: 'POST',
+    headers,
+  });
+  assert.equal(dismissResponse.statusCode, 200);
+  assert.equal(dismissResponse.payload.success, true);
+  assert.deepEqual(dismissedIds, ['alert-1']);
 });
