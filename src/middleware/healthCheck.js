@@ -215,20 +215,28 @@ class HealthChecker { // 定义类 HealthChecker
    */
   _checkMemory() { // 调用 _checkMemory
     const memUsage = process.memoryUsage(); // 定义常量 memUsage
+    const systemTotalMB = Math.round(os.totalmem() / 1024 / 1024);
+    const systemFreeMB = Math.round(os.freemem() / 1024 / 1024);
+    const systemUsedMB = Math.max(0, systemTotalMB - systemFreeMB);
     const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024); // 定义常量 heapUsedMB
     const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024); // 定义常量 heapTotalMB
     const rssMB = Math.round(memUsage.rss / 1024 / 1024); // 定义常量 rssMB
-    const usagePercent = Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100); // 定义常量 usagePercent
+    const usagePercent = systemTotalMB > 0
+      ? Math.round((systemUsedMB / systemTotalMB) * 100)
+      : 0;
+    const heapUsagePercent = heapTotalMB > 0
+      ? Math.round((heapUsedMB / heapTotalMB) * 100)
+      : 0;
 
     let status = HealthStatus.HEALTHY; // 定义变量 status
     let message = 'Memory usage is normal'; // 定义变量 message
 
     if (usagePercent >= this.config.memoryCriticalPercent) { // 条件判断 usagePercent >= this.config.memoryCriticalPer...
       status = HealthStatus.UNHEALTHY; // 赋值 status
-      message = `Memory usage critical: ${usagePercent}%`; // 赋值 message
+      message = `System memory usage critical: ${usagePercent}%`; // 赋值 message
     } else if (usagePercent >= this.config.memoryWarningPercent) { // 执行语句
       status = HealthStatus.DEGRADED; // 赋值 status
-      message = `Memory usage high: ${usagePercent}%`; // 赋值 message
+      message = `System memory usage high: ${usagePercent}%`; // 赋值 message
     } else if (heapUsedMB >= this.config.memoryThresholdMB) { // 执行语句
       status = HealthStatus.DEGRADED; // 赋值 status
       message = `Heap usage high: ${heapUsedMB}MB`; // 赋值 message
@@ -238,10 +246,14 @@ class HealthChecker { // 定义类 HealthChecker
       status, // 执行语句
       message, // 执行语句
       details: { // details
+        systemUsedMB,
+        systemFreeMB,
+        systemTotalMB,
+        usagePercent, // 执行语句
         heapUsedMB, // 执行语句
         heapTotalMB, // 执行语句
+        heapUsagePercent,
         rssMB, // 执行语句
-        usagePercent, // 执行语句
         externalMB: Math.round(memUsage.external / 1024 / 1024), // externalMB
       }, // 结束代码块
     }; // 结束代码块

@@ -5,6 +5,7 @@
  * @module src/api/routes/dashboard
  */
 
+import os from 'os';
 import { Router } from 'express'; // 导入模块 express
 
 /**
@@ -299,15 +300,24 @@ export function createDashboardRoutes(deps = {}) { // 导出函数 createDashboa
    */
   router.get('/system-metrics', async (req, res) => { // 调用 router.get
     try { // 尝试执行
-      const memory = process.memoryUsage(); // 定义常量 memory
+      const processMemory = process.memoryUsage(); // 定义常量 memory
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const usedMemory = Math.max(0, totalMemory - freeMemory);
       const metrics = { // 定义常量 metrics
         cpu: { // CPU
           usage: 0, // 使用
         }, // 结束代码块
         memory: { // 内存
-          used: memory.heapUsed, // used
-          total: memory.heapTotal, // 总
-          percent: (memory.heapUsed / memory.heapTotal) * 100, // 百分比
+          used: usedMemory, // used
+          free: freeMemory,
+          total: totalMemory, // 总
+          percent: totalMemory > 0 ? (usedMemory / totalMemory) * 100 : 0, // 百分比
+          process: {
+            rss: processMemory.rss,
+            heapUsed: processMemory.heapUsed,
+            heapTotal: processMemory.heapTotal,
+          },
         }, // 结束代码块
         uptime: process.uptime(), // uptime
         latency: 0, // latency
