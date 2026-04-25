@@ -233,11 +233,13 @@ export class RateLimiter { // 导出类 RateLimiter
     const roleConfig = this.config.roles[role] || { multiplier: 1 }; // 定义常量 roleConfig
     const maxRequests = Math.floor(config.maxRequests * roleConfig.multiplier); // 定义常量 maxRequests
 
+    let allowed = false; // 是否允许请求
+
     // 使用原子操作更新时间戳数组
     // Use atomic operation to update timestamps array
-    const result = await this.stores.compute(key, (k, timestamps) => { // 定义函数 result
+    const timestamps = await this.stores.compute(key, (k, currentTimestamps) => { // 定义函数 timestamps
       // 初始化或获取时间戳数组
-      let arr = timestamps || []; // 定义变量 arr
+      let arr = Array.isArray(currentTimestamps) ? currentTimestamps : []; // 定义变量 arr
 
       // 移除窗口外的时间戳 (原子操作内)
       // Remove expired timestamps (within atomic operation)
@@ -245,17 +247,15 @@ export class RateLimiter { // 导出类 RateLimiter
 
       // 检查是否超限
       if (arr.length >= maxRequests) { // 条件判断 arr.length >= maxRequests
-        // 超限，不添加新时间戳，返回当前数组
-        return { timestamps: arr, allowed: false }; // 返回结果
+        allowed = false; // 超限，不添加新时间戳
+        return arr; // 返回结果
       } // 结束代码块
 
       // 未超限，添加新时间戳
       arr.push(now); // 调用 arr.push
-      return { timestamps: arr, allowed: true }; // 返回结果
+      allowed = true; // 允许请求
+      return arr; // 返回结果
     }); // 结束代码块
-
-    const timestamps = result.timestamps; // 定义常量 timestamps
-    const allowed = result.allowed; // 定义常量 allowed
 
     if (!allowed) { // 条件判断 !allowed
       return { // 返回结果
@@ -372,26 +372,30 @@ export class RateLimiter { // 导出类 RateLimiter
    */
   middleware() { // 调用 middleware
     return async (req, res, next) => { // 返回结果
-      const result = await this.check(req); // 定义常量 result
+      try {
+        const result = await this.check(req); // 定义常量 result
 
-      // 设置响应头
-      res.setHeader(this.config.headers.limit, result.limit); // 调用 res.setHeader
-      res.setHeader(this.config.headers.remaining, result.remaining); // 调用 res.setHeader
-      if (result.reset) { // 条件判断 result.reset
-        res.setHeader(this.config.headers.reset, Math.ceil(result.reset / 1000)); // 调用 res.setHeader
-      } // 结束代码块
+        // 设置响应头
+        res.setHeader(this.config.headers.limit, result.limit); // 调用 res.setHeader
+        res.setHeader(this.config.headers.remaining, result.remaining); // 调用 res.setHeader
+        if (result.reset) { // 条件判断 result.reset
+          res.setHeader(this.config.headers.reset, Math.ceil(result.reset / 1000)); // 调用 res.setHeader
+        } // 结束代码块
 
-      if (!result.allowed) { // 条件判断 !result.allowed
-        res.setHeader(this.config.headers.retryAfter, result.retryAfter); // 调用 res.setHeader
-        return res.status(429).json({ // 返回结果
-          success: false, // 成功标记
-          error: result.blocked ? 'Client blocked due to too many requests' : 'Too many requests', // 错误
-          code: 'RATE_LIMIT_EXCEEDED', // 代码
-          retryAfter: result.retryAfter, // 重试之后
-        }); // 结束代码块
-      } // 结束代码块
+        if (!result.allowed) { // 条件判断 !result.allowed
+          res.setHeader(this.config.headers.retryAfter, result.retryAfter); // 调用 res.setHeader
+          return res.status(429).json({ // 返回结果
+            success: false, // 成功标记
+            error: result.blocked ? 'Client blocked due to too many requests' : 'Too many requests', // 错误
+            code: 'RATE_LIMIT_EXCEEDED', // 代码
+            retryAfter: result.retryAfter, // 重试之后
+          }); // 结束代码块
+        } // 结束代码块
 
-      next(); // 调用 next
+        next(); // 调用 next
+      } catch (error) {
+        next(error); // 交给 Express 错误处理，避免请求挂起
+      }
     }; // 结束代码块
   } // 结束代码块
 

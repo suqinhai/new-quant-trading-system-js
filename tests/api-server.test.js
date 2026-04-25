@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { ApiServer } from '../src/api/server.js';
+import { RateLimiter } from '../src/api/rateLimit.js';
 
 function requestUrl(url) {
   return new Promise((resolve, reject) => {
@@ -117,4 +118,28 @@ test('ApiServer serves frontend routes when a web dist directory is configured',
   assert.equal(loginResponse.statusCode, 200);
   assert.match(loginResponse.headers['content-type'], /text\/html/);
   assert.match(loginResponse.body, /frontend/);
+});
+
+test('RateLimiter handles repeated sliding-window checks for non-whitelisted clients', async (t) => {
+  const limiter = new RateLimiter({
+    whitelist: [],
+  });
+
+  t.after(() => {
+    limiter.destroy();
+  });
+
+  const req = {
+    path: '/api/system/health',
+    headers: {},
+    ip: '203.0.113.10',
+    connection: {},
+  };
+
+  const first = await limiter.check(req);
+  const second = await limiter.check(req);
+
+  assert.equal(first.allowed, true);
+  assert.equal(second.allowed, true);
+  assert.equal(limiter.stores.get('ip:203.0.113.10:/api/system/health').length, 2);
 });
