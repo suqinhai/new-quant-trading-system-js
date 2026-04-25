@@ -1,0 +1,107 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e59] [cursor=pointer]:
+          - img [ref=e60]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]: feedback
+        - button "发送组合键" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]: keyboard
+        - button "“设置”菜单" [ref=e31] [cursor=pointer]:
+          - img [ref=e32]: settings
+    - generic [ref=e73]:
+      - textbox "Terminal input" [active] [ref=e74]
+      - generic:
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1049 Apr 24 07:07 .env"
+        - generic:
+          - generic: "-rw-r--r-- 1 root root 739 Apr 24 07:06 .env.bak.20260424070626"
+        - generic:
+          - generic: "-rw------- 1 quant quant 608 Apr 24 04:15 .env.before-shared-market.20260424041552"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1664 Apr 24 04:07 .env.example"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1959 Apr 24 04:07 .env.hf-arbitrage.example"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1377 Apr 24 04:07 .env.staging.example"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1066 Apr 24 04:07 .eslintrc.json"
+        - generic:
+          - generic: drwxr-xr-x 8 quant quant 4096 Apr 25 03:48 .git
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 45 Apr 24 04:07 .gitattributes"
+        - generic:
+          - generic: drwxr-xr-x 3 quant quant 4096 Apr 24 04:07 .github
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 3826 Apr 24 04:07 .gitignore"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 1195 Apr 24 04:07 .trivy.yaml"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 701 Apr 24 04:07 .trivyignore"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 3679 Apr 24 04:07 Dockerfile"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 688 Apr 24 04:07 STAGING.md"
+        - generic:
+          - generic: drwxr-xr-x 3 quant quant 4096 Apr 24 04:07 backups
+        - generic:
+          - generic: drwxr-xr-x 9 quant quant 4096 Apr 24 04:07 config
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 18243 Apr 24 04:07 docker-compose.multi-strategy.yml"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 9021 Apr 24 04:07 docker-compose.single-strategy.yml"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 133 Apr 24 04:07 docker-logs.tar.gz"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 16292 Apr 24 04:07 ecosystem.config.cjs"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 8041 Apr 24 04:07 ecosystem.config.js"
+        - generic:
+          - generic: drwxr-xr-x 2 quant quant 4096 Apr 24 04:07 examples
+        - generic:
+          - generic: drwxr-xr-x 5 quant quant 4096 Apr 24 04:12 logs
+        - generic:
+          - generic: drwxr-xr-x 297 quant quant 12288 Apr 24 04:12 node_modules
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 191749 Apr 24 04:12 package-lock.json"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 3760 Apr 24 04:07 package.json"
+        - generic:
+          - generic: "-rw-r--r-- 1 quant quant 106502 Apr 24 04:07 pnpm-lock.yaml"
+        - generic:
+          - generic: drwxr-xr-x 2 quant quant 4096 Apr 24 04:07 scripts
+        - generic:
+          - generic: drwxr-xr-x 24 quant quant 4096 Apr 24 04:07 src
+        - generic:
+          - generic: "-rwxr-xr-x 1 quant quant 8531 Apr 24 04:07 start-all-strategies.sh"
+        - generic:
+          - generic: drwxr-xr-x 2 quant quant 4096 Apr 24 04:07 tests
+        - generic:
+          - generic: drwxr-xr-x 5 quant quant 4096 Apr 25 04:39 web
+        - generic:
+          - generic: "-bash: docker: command not found"
+        - generic:
+          - generic: "-bash: pm2: command not found"
+        - generic:
+          - generic: quant-marketdata.service loaded active running Quant Shared Market Data Service
+        - generic:
+          - generic: quant-shadow.service loaded active running Quant Trading System Shadow Test
+        - generic:
+          - generic: LISTEN 0 511 0.0.0.0:3000 0.0.0.0:*
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /opt/quant/app
+          - generic: $
+  - iframe [ref=e54]:
+    

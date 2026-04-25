@@ -1,0 +1,31 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e59] [cursor=pointer]:
+          - img [ref=e60]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]: feedback
+        - button "发送组合键" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]: keyboard
+        - button "“设置”菜单" [ref=e31] [cursor=pointer]:
+          - img [ref=e32]: settings
+    - generic [ref=e73]:
+      - textbox "Terminal input" [active] [ref=e74]
+      - generic:
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /opt/quant/app
+          - generic: $
+  - iframe [ref=e54]:
+    

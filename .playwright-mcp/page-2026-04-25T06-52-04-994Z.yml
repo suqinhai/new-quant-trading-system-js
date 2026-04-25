@@ -1,0 +1,133 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - toolbar [ref=e6]:
+      - img [ref=e7]:
+        - img [ref=e9]
+      - generic [ref=e17]:
+        - heading [level=1] [ref=e20]
+        - heading "SSH-in-browser" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - button "上传文件" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]: file_upload
+          - text: 上传文件
+        - button "下载文件" [ref=e59] [cursor=pointer]:
+          - img [ref=e60]: file_download
+          - text: 下载文件
+        - button "用户反馈" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]: feedback
+        - button "发送组合键" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]: keyboard
+        - button "“设置”菜单" [ref=e31] [cursor=pointer]:
+          - img [ref=e32]: settings
+    - generic [ref=e73]:
+      - textbox "Terminal input" [active] [ref=e74]
+      - generic:
+        - generic:
+          - generic: listener started
+        - generic:
+          - generic: "Apr 25 06:50:02 quant-shadow-test-1 node[27437]: [MarketDataService]"
+          - generic: 共享行情服务已启动
+          - generic: / Shared market data se
+        - generic:
+          - generic: rvice started
+        - generic:
+          - generic: "Apr 25 06:50:02 quant-shadow-test-1 node[27437]: [MarketDataServiceRunner]"
+          - generic: ✓
+          - generic: 服务启动成功
+          - generic: / Service started suc
+        - generic:
+          - generic: cessfully
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataEngine] ["
+          - generic: 链路
+          - generic: "]"
+          - generic: 订阅行情
+          - generic: ": BTC/USDT"
+          - generic: 类型
+          - generic: =[kline]
+          - generic: 交易
+        - generic:
+          - generic: 所
+          - generic: =[binance] / Subscribing market data
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataEngine] Binance subscribed [conn_1777099802375_vmzi"
+        - generic:
+          - generic: "pz5yf]: kline:BTC/USDT"
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataService]"
+          - generic: 动态订阅
+          - generic: "/ Dynamic subscribe: binance:BTC/"
+        - generic:
+          - generic: USDT
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataEngine] ["
+          - generic: 链路
+          - generic: "]"
+          - generic: 订阅行情
+          - generic: ": BTC/USDT"
+          - generic: 类型
+          - generic: =[kline]
+          - generic: 交易
+        - generic:
+          - generic: 所
+          - generic: =[okx] / Subscribing market data
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataEngine]"
+          - generic: 交易所未连接
+          - generic: "/ Exchange not connected: okx"
+        - generic:
+          - generic: "Apr 25 06:50:07 quant-shadow-test-1 node[27437]: [MarketDataService]"
+          - generic: 动态订阅
+          - generic: "/ Dynamic subscribe: okx:BTC/USDT"
+        - generic:
+          - generic: suqinhai753@quant-shadow-test-1
+          - generic: ":"
+          - generic: /opt/quant/app
+          - generic: $ cd /opt/quant/app; echo CHECK_START; echo -n HEAD=; sudo -u qua
+        - generic:
+          - generic: nt git rev-parse --short HEAD; echo SERVICES; systemctl --no-pager is-active quant-marketdata.service quant-sha
+        - generic:
+          - generic: "dow.service; echo HEALTH; curl -sS -w '\\nHTTP=%{http_code}\\n' http://127.0.0.1:3000/api/system/health; echo STA"
+        - generic:
+          - generic: TUS_MEM; curl -sS http://127.0.0.1:3000/api/system/status | node -e "let s='';process.stdin.on('data',d=>s+=d).
+        - generic:
+          - generic: "on('end',()=>{const j=JSON.parse(s);const d=j.data||j;console.log(JSON.stringify({ok:j.success,systemMemory:d.s"
+        - generic:
+          - generic: "ystemMemory,processMemory:{rss:d.processMemory?.rss,heapUsed:d.processMemory?.heapUsed,heapTotal:d.processMemor"
+        - generic:
+          - generic: "y?.heapTotal},uptime:d.uptime},null,2))})\"; echo LOGIN; curl -sS -D - -o /tmp/login.out http://127.0.0.1:3000/l"
+        - generic:
+          - generic: ogin | head -12; wc -c /tmp/login.out; echo CHECK_END
+        - generic:
+          - generic: CHECK_START
+        - generic:
+          - generic: HEAD=0236bee
+        - generic:
+          - generic: SERVICES
+        - generic:
+          - generic: active
+        - generic:
+          - generic: active
+        - generic:
+          - generic: HEALTH
+        - generic:
+          - generic: "{\"status\":\"healthy\",\"timestamp\":\"2026-04-25T06:52:04.139Z\",\"uptime\":116,\"responseTime\":1,\"version\":\"1.0.0\",\"com"
+        - generic:
+          - generic: "ponents\":{\"database\":{\"status\":\"healthy\",\"message\":\"Redis persistence disabled\"},\"exchange\":{\"status\":\"healthy\""
+        - generic:
+          - generic: ",\"message\":\"2 exchanges connected\",\"details\":{\"connected\":2}},\"strategy\":{\"status\":\"healthy\",\"message\":\"Strateg"
+        - generic:
+          - generic: "y is running\",\"details\":{\"strategyId\":\"SMA\",\"state\":\"running\"}},\"memory\":{\"status\":\"healthy\",\"message\":\"Memory"
+        - generic:
+          - generic: "usage is normal\",\"details\":{\"heapUsedMB\":90,\"heapTotalMB\":93,\"rssMB\":173,\"usagePercent\":96,\"externalMB\":3}},\"sy"
+        - generic:
+          - generic: "stem\":{\"status\":\"healthy\",\"message\":\"System load is normal\",\"details\":{\"loadAverage\":[\"0.33\",\"0.42\",\"0.18\"],\"cp"
+        - generic:
+          - generic: "uCount\":2,\"freeMem\":3232,\"totalMem\":3925,\"platform\":\"linux\",\"nodeVersion\":\"v20.20.2\"}}}}"
+        - generic:
+          - generic: HTTP=200
+        - generic:
+          - generic: STATUS_MEM
+  - generic [ref=e53]: suqinhai753@quant-shadow-test-1:/opt/quant/app$
+  - iframe [ref=e54]:
+    
