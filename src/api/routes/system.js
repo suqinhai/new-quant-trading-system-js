@@ -5,6 +5,7 @@
  * @module src/api/routes/system
  */
 
+import os from 'os';
 import { Router } from 'express';
 
 function isPlainObject(value) {
@@ -112,6 +113,12 @@ function buildSafeConfig(config) {
 
 function buildSystemStatus(config, deps = {}, tradingEngine) {
   const memoryUsage = process.memoryUsage();
+  const systemTotalMemory = os.totalmem();
+  const systemFreeMemory = os.freemem();
+  const systemUsedMemory = Math.max(0, systemTotalMemory - systemFreeMemory);
+  const systemMemoryUsagePercent = systemTotalMemory > 0
+    ? (systemUsedMemory / systemTotalMemory) * 100
+    : 0;
   const cpuUsage = process.cpuUsage();
   const startTime = new Date(Date.now() - (process.uptime() * 1000)).toISOString();
   const databaseConfig = config.database || {};
@@ -134,6 +141,13 @@ function buildSystemStatus(config, deps = {}, tradingEngine) {
     nodeVersion: process.version,
     uptime: process.uptime(),
     memoryUsage,
+    processMemory: memoryUsage,
+    systemMemory: {
+      total: systemTotalMemory,
+      free: systemFreeMemory,
+      used: systemUsedMemory,
+      usagePercent: systemMemoryUsagePercent,
+    },
     cpuUsage,
     timestamp: new Date().toISOString(),
     startTime,

@@ -29,15 +29,20 @@ export const useSystemStore = defineStore('system', () => {
   function normalizeStatusPayload(payload = {}) {
     const uptime = Number(payload.uptime || 0)
     const memory = payload.memoryUsage || payload.memory || {}
+    const systemMemory = payload.systemMemory || {}
     const cpu = payload.cpuUsage || payload.cpu || {}
 
     const memoryUsed = Number(memory.heapUsed ?? memory.used ?? memory.rss ?? 0)
     const memoryTotal = Number(memory.heapTotal ?? memory.total ?? 0)
-    const memoryUsage = typeof memory === 'number'
-      ? memory
-      : memoryTotal > 0
-        ? (memoryUsed / memoryTotal) * 100
-        : 0
+    const systemMemoryUsage = Number(systemMemory.usagePercent)
+    let memoryUsage = 0
+    if (typeof memory === 'number') {
+      memoryUsage = memory
+    } else if (Number.isFinite(systemMemoryUsage)) {
+      memoryUsage = systemMemoryUsage
+    } else if (memoryTotal > 0) {
+      memoryUsage = (memoryUsed / memoryTotal) * 100
+    }
 
     const cpuMicros = typeof cpu === 'number'
       ? cpu
